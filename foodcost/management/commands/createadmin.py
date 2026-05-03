@@ -3,19 +3,27 @@ from django.contrib.auth import get_user_model
 
 
 class Command(BaseCommand):
-    help = "Create default admin user"
+    help = "Create or reset default admin user"
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
 
-        if User.objects.filter(username="admin").exists():
-            self.stdout.write("Admin already exists")
-            return
-
-        User.objects.create_superuser(
+        user, created = User.objects.get_or_create(
             username="admin",
-            email="admin@mail.com",
-            password="admin123",
+            defaults={
+                "email": "admin@mail.com",
+                "is_staff": True,
+                "is_superuser": True,
+            }
         )
 
-        self.stdout.write(self.style.SUCCESS("Admin created"))
+        user.email = "admin@mail.com"
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password("admin123")
+        user.save()
+
+        if created:
+            self.stdout.write(self.style.SUCCESS("Admin created"))
+        else:
+            self.stdout.write(self.style.SUCCESS("Admin password reset"))
