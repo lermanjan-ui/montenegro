@@ -5,80 +5,45 @@
 {% block content %}
 
 <style>
-    .top {
+    .page-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 28px;
     }
 
-    h1 {
-        margin: 0;
-        font-size: 36px;
-    }
-
-    .grid {
+    .create-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 20px;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto;
+        gap: 14px;
+        align-items: end;
     }
 
-    .dish-card {
-        background: white;
-        border-radius: 18px;
-        padding: 22px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    .dish-title {
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-
-    .muted {
-        color: #6b7280;
-    }
-
-    .metrics {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
+    .filters {
+        display: flex;
+        flex-wrap: wrap;
         gap: 10px;
-        margin-top: 14px;
+        align-items: center;
     }
 
-    .metric {
-        background: #f9fafb;
-        padding: 10px;
-        border-radius: 10px;
-        font-size: 14px;
-    }
-
-    .price {
-        color: #047857;
-        font-weight: bold;
-    }
-
-    .warn {
-        color: #dc2626;
-        font-weight: bold;
-    }
-
-    .open {
-        display: inline-block;
-        margin-top: 14px;
-        font-weight: bold;
+    .filter-link {
+        padding: 10px 14px;
+        border-radius: 999px;
         text-decoration: none;
+        background: #f3f4f6;
         color: #111827;
+        font-weight: 800;
     }
 
-    input {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 12px;
-        font-size: 15px;
-        box-sizing: border-box;
+    .filter-link.active {
+        background: #111827;
+        color: white;
+    }
+
+    .sort-form {
+        margin-left: auto;
+        display: flex;
+        gap: 10px;
+        align-items: center;
     }
 
     label {
@@ -88,29 +53,124 @@
         margin-bottom: 6px;
     }
 
+    input, select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        font-size: 15px;
+        box-sizing: border-box;
+    }
+
     button {
         background: #111827;
         color: white;
         border: 0;
         border-radius: 12px;
-        padding: 12px 16px;
+        padding: 12px 18px;
         font-weight: bold;
         cursor: pointer;
+        height: 44px;
     }
 
-    .create-grid {
+    .dish-card {
+        background: white;
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+    }
+
+    .dish-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .dish-title {
+        font-size: 26px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .muted {
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .open {
+        color: #111827;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .metrics {
+        margin-top: 18px;
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr auto;
-        gap: 14px;
-        align-items: end;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .metric {
+        background: #f9fafb;
+        border-radius: 14px;
+        padding: 14px;
+        font-weight: 800;
+    }
+
+    .metric span {
+        display: block;
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 6px;
+        font-weight: 700;
+    }
+
+    .metric.good {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .metric.warning {
+        background: #fffbeb;
+        color: #92400e;
+    }
+
+    .metric.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .empty {
+        text-align: center;
+        padding: 40px;
+        color: #6b7280;
+        font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+        .create-grid,
+        .metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .dish-head {
+            flex-direction: column;
+        }
+
+        .sort-form {
+            margin-left: 0;
+            width: 100%;
+        }
     }
 </style>
 
-<div class="card top">
+<div class="card page-title">
     <h1>Блюда</h1>
 </div>
 
-<!-- 🔥 ДОБАВЛЕНИЕ БЛЮДА -->
 <div class="card">
     <h2>Добавить блюдо</h2>
 
@@ -141,48 +201,90 @@
     </form>
 </div>
 
-<!-- 🔥 СПИСОК БЛЮД -->
-<div class="grid">
-
-    {% for dish in dishes %}
-    <div class="dish-card">
-
-        <div class="dish-title">{{ dish.name }}</div>
-
-        <div class="muted">
-            Выход: {{ dish.final_weight }} кг
-        </div>
-
-        <div class="metrics">
-            <div class="metric">
-                Себестоимость: <span class="price">{{ dish.calculate_cost|floatformat:0 }}</span>
-            </div>
-
-            <div class="metric">
-                Цена: <span class="price">{{ dish.selling_price|floatformat:0 }}</span>
-            </div>
-
-            <div class="metric">
-                Фудкост:
-                {% if dish.foodcost > 35 %}
-                    <span class="warn">{{ dish.foodcost|floatformat:1 }}%</span>
-                {% else %}
-                    <span class="price">{{ dish.foodcost|floatformat:1 }}%</span>
-                {% endif %}
-            </div>
-
-            <div class="metric">
-                Маржа: <span class="price">{{ dish.margin|floatformat:0 }}</span>
-            </div>
-        </div>
-
-        <a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">
-            Открыть →
+<div class="card">
+    <div class="filters">
+        <a class="filter-link {% if filter_type == 'all' %}active{% endif %}"
+           href="/c/{{ country.slug }}/?filter=all&sort={{ sort_type }}">
+            Все
         </a>
 
-    </div>
-    {% endfor %}
+        <a class="filter-link {% if filter_type == 'loss' %}active{% endif %}"
+           href="/c/{{ country.slug }}/?filter=loss&sort={{ sort_type }}">
+            Убыточные
+        </a>
 
+        <a class="filter-link {% if filter_type == 'high_foodcost' %}active{% endif %}"
+           href="/c/{{ country.slug }}/?filter=high_foodcost&sort={{ sort_type }}">
+            Фудкост &gt; 40%
+        </a>
+
+        <a class="filter-link {% if filter_type == 'normal' %}active{% endif %}"
+           href="/c/{{ country.slug }}/?filter=normal&sort={{ sort_type }}">
+            Нормальные
+        </a>
+
+        <form method="get" class="sort-form">
+            <input type="hidden" name="filter" value="{{ filter_type }}">
+
+            <select name="sort">
+                <option value="name" {% if sort_type == "name" %}selected{% endif %}>По названию</option>
+                <option value="margin" {% if sort_type == "margin" %}selected{% endif %}>По марже</option>
+                <option value="foodcost" {% if sort_type == "foodcost" %}selected{% endif %}>По фудкосту</option>
+                <option value="cost" {% if sort_type == "cost" %}selected{% endif %}>По себестоимости</option>
+            </select>
+
+            <button type="submit">Сортировать</button>
+        </form>
+    </div>
 </div>
+
+{% for dish in dishes %}
+<div class="dish-card">
+    <div class="dish-head">
+        <div>
+            <div class="dish-title">{{ dish.name }}</div>
+            <div class="muted">Выход: {{ dish.final_weight }} кг</div>
+        </div>
+
+        <a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">Открыть →</a>
+    </div>
+
+    <div class="metrics">
+        <div class="metric">
+            <span>Себестоимость</span>
+            {{ dish.calculate_cost|floatformat:0 }}
+        </div>
+
+        <div class="metric good">
+            <span>Цена</span>
+            {{ dish.selling_price|floatformat:0 }}
+        </div>
+
+        {% if dish.foodcost > 40 %}
+            <div class="metric danger">
+        {% elif dish.foodcost > 30 %}
+            <div class="metric warning">
+        {% else %}
+            <div class="metric good">
+        {% endif %}
+                <span>Фудкост</span>
+                {{ dish.foodcost|floatformat:1 }}%
+            </div>
+
+        {% if dish.margin < 0 %}
+            <div class="metric danger">
+        {% else %}
+            <div class="metric good">
+        {% endif %}
+                <span>Маржа</span>
+                {{ dish.margin|floatformat:0 }}
+            </div>
+    </div>
+</div>
+{% empty %}
+<div class="card empty">
+    Блюд по выбранному фильтру пока нет
+</div>
+{% endfor %}
 
 {% endblock %}

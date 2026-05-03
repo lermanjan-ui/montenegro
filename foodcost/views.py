@@ -53,13 +53,38 @@ def dish_list(request, country_slug):
             )
             return redirect(f"/c/{country.slug}/dish/{dish.id}/")
 
-    dishes = Dish.objects.filter(country=country)
+    dishes = list(Dish.objects.filter(country=country))
+
+    filter_type = request.GET.get("filter", "all")
+    sort_type = request.GET.get("sort", "name")
+
+    if filter_type == "loss":
+        dishes = [dish for dish in dishes if dish.margin() < 0]
+
+    if filter_type == "high_foodcost":
+        dishes = [dish for dish in dishes if dish.foodcost() > 40]
+
+    if filter_type == "normal":
+        dishes = [dish for dish in dishes if dish.foodcost() <= 40 and dish.margin() >= 0]
+
+    if sort_type == "margin":
+        dishes.sort(key=lambda dish: dish.margin(), reverse=True)
+
+    elif sort_type == "foodcost":
+        dishes.sort(key=lambda dish: dish.foodcost(), reverse=True)
+
+    elif sort_type == "cost":
+        dishes.sort(key=lambda dish: dish.calculate_cost(), reverse=True)
+
+    else:
+        dishes.sort(key=lambda dish: dish.name.lower())
 
     return render(request, "foodcost/dish_list.html", {
         "country": country,
         "dishes": dishes,
+        "filter_type": filter_type,
+        "sort_type": sort_type,
     })
-
 
 def live_calculate(request, country_slug):
     country = get_country(country_slug)
