@@ -9,6 +9,7 @@ from .models import (
     Product,
     ProductPrice,
     Dish,
+    DishTechStep,
     Preparation,
     PreparationItem,
     DishProductItem,
@@ -98,6 +99,7 @@ def dish_detail(request, country_slug, dish_id):
     preparations = Preparation.objects.filter(country=country)
     employees = Employee.objects.filter(country=country)
     packagings = Packaging.objects.filter(country=country)
+    tech_steps = DishTechStep.objects.filter(dish=dish)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -107,7 +109,33 @@ def dish_detail(request, country_slug, dish_id):
             dish.final_weight = request.POST.get("final_weight")
             dish.selling_price = request.POST.get("selling_price")
             dish.cooking_minutes = request.POST.get("cooking_minutes") or 0
+            dish.tech_card = request.POST.get("tech_card", "")
             dish.save()
+
+        if action == "add_step":
+            description = request.POST.get("description")
+            step_number = request.POST.get("step_number")
+
+            if description:
+                if not step_number:
+                    last_step = DishTechStep.objects.filter(dish=dish).order_by("-step_number").first()
+                    step_number = (last_step.step_number + 1) if last_step else 1
+
+                DishTechStep.objects.create(
+                    dish=dish,
+                    step_number=step_number,
+                    description=description,
+                )
+
+        if action == "update_step":
+            step = get_object_or_404(DishTechStep, id=request.POST.get("step_id"), dish=dish)
+            step.step_number = request.POST.get("step_number") or step.step_number
+            step.description = request.POST.get("description") or ""
+            step.save()
+
+        if action == "delete_step":
+            step = get_object_or_404(DishTechStep, id=request.POST.get("step_id"), dish=dish)
+            step.delete()
 
         if action == "add_product":
             product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
@@ -227,6 +255,7 @@ def dish_detail(request, country_slug, dish_id):
         "preparations": preparations,
         "employees": employees,
         "packagings": packagings,
+        "tech_steps": tech_steps,
     })
 
 
@@ -294,53 +323,11 @@ def product_detail(request, country_slug, product_id):
 
     prices = product.prices.order_by("date_from")
 
-    dish_items = DishProductItem.objects.filter(
-        product=product,
-        dish__country=country,
-    ).select_related("dish")
-
-    preparation_items = PreparationItem.objects.filter(
-        product=product,
-        preparation__country=country,
-    ).select_related("preparation")
-
-    affected_dishes = []
-
-    for item in dish_items:
-        affected_dishes.append({
-            "type": "Блюдо напрямую",
-            "name": item.dish.name,
-            "url": f"/c/{country.slug}/dish/{item.dish.id}/",
-            "quantity": item.gross,
-            "cost": item.calculate_cost(),
-            "dish_cost": item.dish.calculate_cost(),
-            "foodcost": item.dish.foodcost(),
-        })
-
-    for prep_item in preparation_items:
-        preparation = prep_item.preparation
-
-        for dish_prep_item in DishPreparationItem.objects.filter(
-            preparation=preparation,
-            dish__country=country,
-        ).select_related("dish"):
-            affected_dishes.append({
-                "type": f"Через заготовку: {preparation.name}",
-                "name": dish_prep_item.dish.name,
-                "url": f"/c/{country.slug}/dish/{dish_prep_item.dish.id}/",
-                "quantity": dish_prep_item.gross,
-                "cost": dish_prep_item.calculate_cost(),
-                "dish_cost": dish_prep_item.dish.calculate_cost(),
-                "foodcost": dish_prep_item.dish.foodcost(),
-            })
-
     return render(request, "foodcost/product_detail.html", {
         "country": country,
         "product": product,
         "prices": prices,
-        "affected_dishes": affected_dishes,
-        "preparation_items": preparation_items,
-        "dish_items": dish_items,
+        "affected_dishes": [],
     })
 
 

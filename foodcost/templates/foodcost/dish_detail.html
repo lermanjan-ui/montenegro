@@ -5,100 +5,427 @@
 {% block content %}
 
 <style>
-    .container { max-width: 1250px; }
-
-    .back {
-        display: inline-block;
-        margin-bottom: 16px;
-        color: #374151;
-        text-decoration: none;
-        font-weight: bold;
-    }
-
+    .back { display: inline-block; margin-bottom: 16px; color: #374151; text-decoration: none; font-weight: bold; }
     .muted { color: #6b7280; }
-
-    .summary {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 12px;
-    }
-
-    .metric {
-        background: #ecfdf5;
-        color: #047857;
-        border-radius: 16px;
-        padding: 14px;
-        font-weight: bold;
-    }
-
-    .metric span {
-        display: block;
-        color: #065f46;
-        font-size: 13px;
-        margin-bottom: 4px;
-    }
-
-    .main-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1fr auto;
-        gap: 14px;
-        align-items: end;
-    }
-
-    input, select {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 12px;
-        font-size: 15px;
-    }
-
-    button {
-        background: #111827;
-        color: white;
-        border: 0;
-        border-radius: 12px;
-        padding: 12px 16px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-
+    .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .metric { background: #ecfdf5; color: #047857; border-radius: 16px; padding: 14px; font-weight: bold; }
+    .metric span { display: block; color: #065f46; font-size: 13px; margin-bottom: 4px; }
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 14px; align-items: end; }
+    label { font-weight: bold; font-size: 14px; margin-bottom: 6px; display: block; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 12px; font-size: 15px; box-sizing: border-box; background: white; }
+    textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+    button { background: #111827; color: white; border: 0; border-radius: 12px; padding: 12px 16px; cursor: pointer; font-weight: bold; white-space: nowrap; }
     .danger { background: #fee2e2; color: #991b1b; }
-
     table { width: 100%; border-collapse: collapse; }
-
-    th {
-        background: #111827;
-        color: white;
-        padding: 14px;
-    }
-
-    td {
-        padding: 12px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .price { color: #047857; font-weight: bold; }
+    th { background: #111827; color: white; padding: 14px; text-align: left; }
+    td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+    .price { color: #047857; font-weight: bold; white-space: nowrap; }
+    .add-row { background: #f9fafb; }
+    .line-6 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 120px 120px; gap: 10px; align-items: center; }
+    .line-5 { display: grid; grid-template-columns: 2fr 1fr 1fr 120px 120px; gap: 10px; align-items: center; }
+    .line-extra { display: grid; grid-template-columns: 2fr 1fr 1fr 120px 120px; gap: 10px; align-items: center; }
+    .add-line-6 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 120px; gap: 10px; align-items: center; }
+    .add-line-5 { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; gap: 10px; align-items: center; }
+    .step-row { display: grid; grid-template-columns: 90px 1fr 120px 120px; gap: 10px; align-items: center; }
+    .step-add { display: grid; grid-template-columns: 90px 1fr 120px; gap: 10px; align-items: center; }
 </style>
 
-<!-- ✅ исправлено -->
 <a class="back" href="/c/{{ country.slug }}/">← Назад к блюдам</a>
 
 <div class="card">
     <h1>Блюдо: {{ dish.name }}</h1>
+    <p class="muted">Полная экономика блюда: ингредиенты, упаковка, ФОТ, коммуналка, доп расходы и техкарта.</p>
 
     <div class="summary">
         <div class="metric"><span>Себестоимость</span>{{ dish.calculate_cost|floatformat:0 }}</div>
         <div class="metric"><span>Фудкост</span>{{ dish.foodcost|floatformat:1 }}%</div>
         <div class="metric"><span>Маржа</span>{{ dish.margin|floatformat:0 }}</div>
-        <div class="metric"><span>Время</span>{{ dish.total_cooking_minutes|floatformat:1 }}</div>
+        <div class="metric"><span>Время</span>{{ dish.total_cooking_minutes|floatformat:1 }} мин</div>
         <div class="metric"><span>Цена</span>{{ dish.selling_price|floatformat:0 }}</div>
     </div>
 </div>
 
-<!-- остальные блоки оставлены без изменений -->
+<div class="card">
+    <h2>Основные данные</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save">
+
+        <div class="main-grid">
+            <div>
+                <label>Название</label>
+                <input name="name" value="{{ dish.name }}">
+            </div>
+
+            <div>
+                <label>Выход, кг</label>
+                <input type="number" step="0.001" name="final_weight" value="{{ dish.final_weight }}">
+            </div>
+
+            <div>
+                <label>Цена продажи</label>
+                <input type="number" step="0.01" name="selling_price" value="{{ dish.selling_price }}">
+            </div>
+
+            <div>
+                <label>Время блюда, мин</label>
+                <input type="number" step="0.1" name="cooking_minutes" value="{{ dish.cooking_minutes }}">
+            </div>
+
+            <button type="submit">Сохранить</button>
+        </div>
+
+        <div style="margin-top:18px;">
+            <label>Общая техкарта / заметки</label>
+            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача...">{{ dish.tech_card }}</textarea>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Шаги приготовления</h2>
+
+    {% for step in tech_steps %}
+        <form method="post" class="step-row" style="margin-bottom:10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_step">
+            <input type="hidden" name="step_id" value="{{ step.id }}">
+
+            <input type="number" name="step_number" value="{{ step.step_number }}">
+            <textarea name="description">{{ step.description }}</textarea>
+            <button type="submit">Сохранить</button>
+
+            <button type="submit" name="action" value="delete_step" class="danger" onclick="return confirm('Удалить шаг?')">
+                Удалить
+            </button>
+        </form>
+    {% endfor %}
+
+    <form method="post" class="step-add" style="margin-top:16px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_step">
+
+        <input type="number" name="step_number" placeholder="№">
+        <textarea name="description" placeholder="Описание шага приготовления"></textarea>
+        <button type="submit">Добавить шаг</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Разбор себестоимости</h2>
+
+    <table>
+        <tr><th>Статья</th><th>Сумма</th></tr>
+        <tr><td>Продукты и заготовки</td><td class="price">{{ dish.ingredient_cost|floatformat:0 }}</td></tr>
+        <tr><td>Упаковка</td><td class="price">{{ dish.packaging_cost|floatformat:0 }}</td></tr>
+        <tr><td>ФОТ</td><td class="price">{{ dish.labor_cost|floatformat:0 }}</td></tr>
+        <tr><td>Коммунальные</td><td class="price">{{ dish.utilities_cost|floatformat:0 }}</td></tr>
+        <tr><td>Доп расходы</td><td class="price">{{ dish.additional_expenses_cost|floatformat:0 }}</td></tr>
+        <tr><th>Итого</th><th>{{ dish.calculate_cost|floatformat:0 }}</th></tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Продукты</h2>
+
+    <table>
+        <tr>
+            <th>Продукт</th>
+            <th>Брутто</th>
+            <th>Нетто</th>
+            <th>Стоимость</th>
+            <th>Сохранить</th>
+            <th>Удалить</th>
+        </tr>
+
+        {% for item in dish.product_items.all %}
+        <tr>
+            <td colspan="6">
+                <form method="post" class="line-6" data-type="product">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <select name="product_id">
+                        {% for product in products %}
+                            <option value="{{ product.id }}" {% if item.product_id == product.id %}selected{% endif %}>{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.001" name="gross" value="{{ item.gross }}">
+                    <input type="number" step="0.001" name="net" value="{{ item.net }}">
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+
+                    <button type="submit" name="action" value="update_product">Сохранить</button>
+                    <button type="submit" name="action" value="delete_product" class="danger" onclick="return confirm('Удалить продукт из блюда?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+
+        <tr class="add-row">
+            <td colspan="6">
+                <form method="post" class="add-line-6" data-type="product">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_product">
+
+                    <select name="product_id">
+                        {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.001" name="gross" placeholder="Брутто">
+                    <input type="number" step="0.001" name="net" placeholder="Нетто">
+                    <span class="price muted">после сохранения</span>
+                    <button type="submit">Добавить</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Заготовки</h2>
+
+    <table>
+        <tr>
+            <th>Заготовка</th>
+            <th>Брутто</th>
+            <th>Нетто</th>
+            <th>Стоимость</th>
+            <th>Сохранить</th>
+            <th>Удалить</th>
+        </tr>
+
+        {% for item in dish.preparation_items.all %}
+        <tr>
+            <td colspan="6">
+                <form method="post" class="line-6" data-type="preparation">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <select name="preparation_id">
+                        {% for preparation in preparations %}
+                            <option value="{{ preparation.id }}" {% if item.preparation_id == preparation.id %}selected{% endif %}>{{ preparation.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.001" name="gross" value="{{ item.gross }}">
+                    <input type="number" step="0.001" name="net" value="{{ item.net }}">
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+
+                    <button type="submit" name="action" value="update_preparation">Сохранить</button>
+                    <button type="submit" name="action" value="delete_preparation" class="danger" onclick="return confirm('Удалить заготовку из блюда?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+
+        <tr class="add-row">
+            <td colspan="6">
+                <form method="post" class="add-line-6" data-type="preparation">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_preparation">
+
+                    <select name="preparation_id">
+                        {% for preparation in preparations %}
+                            <option value="{{ preparation.id }}">{{ preparation.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.001" name="gross" placeholder="Брутто">
+                    <input type="number" step="0.001" name="net" placeholder="Нетто">
+                    <span class="price muted">после сохранения</span>
+                    <button type="submit">Добавить</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Упаковка</h2>
+
+    <table>
+        <tr>
+            <th>Упаковка</th>
+            <th>Количество</th>
+            <th>Стоимость</th>
+            <th>Сохранить</th>
+            <th>Удалить</th>
+        </tr>
+
+        {% for item in dish.packaging_items.all %}
+        <tr>
+            <td colspan="5">
+                <form method="post" class="line-5" data-type="packaging">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <select name="packaging_id">
+                        {% for packaging in packagings %}
+                            <option value="{{ packaging.id }}" {% if item.packaging_id == packaging.id %}selected{% endif %}>
+                                {{ packaging.name }} — {{ packaging.cost }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.001" name="quantity" value="{{ item.quantity }}">
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+
+                    <button type="submit" name="action" value="update_packaging">Сохранить</button>
+                    <button type="submit" name="action" value="delete_packaging" class="danger" onclick="return confirm('Удалить упаковку из блюда?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+
+        <tr class="add-row">
+            <td colspan="5">
+                <form method="post" class="add-line-5" data-type="packaging">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_packaging">
+
+                    <select name="packaging_id">
+                        {% for packaging in packagings %}
+                            <option value="{{ packaging.id }}">{{ packaging.name }} — {{ packaging.cost }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.001" name="quantity" value="1">
+                    <span class="price muted">после сохранения</span>
+                    <button type="submit">Добавить</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>ФОТ</h2>
+
+    <table>
+        <tr>
+            <th>Сотрудник</th>
+            <th>Минуты</th>
+            <th>Стоимость</th>
+            <th>Сохранить</th>
+            <th>Удалить</th>
+        </tr>
+
+        {% for item in dish.labor_items.all %}
+        <tr>
+            <td colspan="5">
+                <form method="post" class="line-5" data-type="labor">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <select name="employee_id">
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}" {% if item.employee_id == employee.id %}selected{% endif %}>
+                                {{ employee.name }} — {{ employee.hourly_rate|floatformat:0 }}/час
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.1" name="minutes" value="{{ item.minutes }}">
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+
+                    <button type="submit" name="action" value="update_labor">Сохранить</button>
+                    <button type="submit" name="action" value="delete_labor" class="danger" onclick="return confirm('Удалить ФОТ из блюда?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+
+        <tr class="add-row">
+            <td colspan="5">
+                <form method="post" class="add-line-5" data-type="labor">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_labor">
+
+                    <select name="employee_id">
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}">{{ employee.name }} — {{ employee.hourly_rate|floatformat:0 }}/час</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="number" step="0.1" name="minutes" placeholder="Минуты">
+                    <span class="price muted">после сохранения</span>
+                    <button type="submit">Добавить</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Доп расходы</h2>
+
+    <table>
+        <tr>
+            <th>Комментарий</th>
+            <th>Сумма</th>
+            <th>Стоимость</th>
+            <th>Сохранить</th>
+            <th>Удалить</th>
+        </tr>
+
+        {% for item in dish.additional_expenses.all %}
+        <tr>
+            <td colspan="5">
+                <form method="post" class="line-extra">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <input name="comment" value="{{ item.comment }}">
+                    <input type="number" step="0.01" name="cost" value="{{ item.cost }}">
+                    <div class="price">{{ item.cost|floatformat:0 }}</div>
+
+                    <button type="submit" name="action" value="update_extra">Сохранить</button>
+                    <button type="submit" name="action" value="delete_extra" class="danger" onclick="return confirm('Удалить доп расход?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+
+        <tr class="add-row">
+            <td colspan="5">
+                <form method="post" class="add-line-5">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_extra">
+
+                    <input name="comment" placeholder="Например: салфетки">
+                    <input type="number" step="0.01" name="cost" placeholder="Стоимость">
+                    <span class="price muted">после сохранения</span>
+                    <button type="submit">Добавить</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
 
 <script>
+function syncGrossToNet() {
+    document.querySelectorAll('input[name="gross"]').forEach(function(grossInput) {
+        grossInput.addEventListener("input", function() {
+            const form = grossInput.closest("form");
+            const netInput = form.querySelector('input[name="net"]');
+
+            if (netInput && !netInput.dataset.changed) {
+                netInput.value = grossInput.value;
+            }
+        });
+    });
+
+    document.querySelectorAll('input[name="net"]').forEach(function(netInput) {
+        netInput.addEventListener("input", function() {
+            netInput.dataset.changed = "true";
+        });
+    });
+}
+
 function setupLiveCalculation() {
     async function calculate(form) {
         const type = form.dataset.type;
@@ -126,7 +453,6 @@ function setupLiveCalculation() {
 
         if (!id || !value) return;
 
-        // ✅ ВАЖНОЕ ИСПРАВЛЕНИЕ
         const response = await fetch(`/c/{{ country.slug }}/live-calculate/?type=${type}&id=${id}&quantity=${value}`);
         const data = await response.json();
 
@@ -145,6 +471,7 @@ function setupLiveCalculation() {
     });
 }
 
+syncGrossToNet();
 setupLiveCalculation();
 </script>
 
