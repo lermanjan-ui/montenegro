@@ -35,6 +35,23 @@ def country_list(request):
 
 def dish_list(request, country_slug):
     country = get_country(country_slug)
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        final_weight = request.POST.get("final_weight") or 0
+        selling_price = request.POST.get("selling_price") or 0
+        cooking_minutes = request.POST.get("cooking_minutes") or 0
+
+        if name:
+            dish = Dish.objects.create(
+                country=country,
+                name=name,
+                final_weight=final_weight,
+                selling_price=selling_price,
+                cooking_minutes=cooking_minutes,
+            )
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+
     dishes = Dish.objects.filter(country=country)
 
     return render(request, "foodcost/dish_list.html", {
@@ -93,16 +110,18 @@ def dish_detail(request, country_slug, dish_id):
             dish.save()
 
         if action == "add_product":
+            product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
             DishProductItem.objects.create(
                 dish=dish,
-                product_id=request.POST.get("product_id"),
-                gross=request.POST.get("gross"),
-                net=request.POST.get("net") or request.POST.get("gross"),
+                product=product,
+                gross=request.POST.get("gross") or 0,
+                net=request.POST.get("net") or request.POST.get("gross") or 0,
             )
 
         if action == "update_product":
             item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"), dish=dish)
-            item.product_id = request.POST.get("product_id")
+            product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
+            item.product = product
             item.gross = request.POST.get("gross") or 0
             item.net = request.POST.get("net") or item.gross
             item.save()
@@ -112,16 +131,18 @@ def dish_detail(request, country_slug, dish_id):
             item.delete()
 
         if action == "add_preparation":
+            preparation = get_object_or_404(Preparation, id=request.POST.get("preparation_id"), country=country)
             DishPreparationItem.objects.create(
                 dish=dish,
-                preparation_id=request.POST.get("preparation_id"),
-                gross=request.POST.get("gross"),
-                net=request.POST.get("net") or request.POST.get("gross"),
+                preparation=preparation,
+                gross=request.POST.get("gross") or 0,
+                net=request.POST.get("net") or request.POST.get("gross") or 0,
             )
 
         if action == "update_preparation":
             item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"), dish=dish)
-            item.preparation_id = request.POST.get("preparation_id")
+            preparation = get_object_or_404(Preparation, id=request.POST.get("preparation_id"), country=country)
+            item.preparation = preparation
             item.gross = request.POST.get("gross") or 0
             item.net = request.POST.get("net") or item.gross
             item.save()
@@ -135,15 +156,17 @@ def dish_detail(request, country_slug, dish_id):
             quantity = request.POST.get("quantity") or 1
 
             if packaging_id:
+                packaging = get_object_or_404(Packaging, id=packaging_id, country=country)
                 DishPackagingItem.objects.create(
                     dish=dish,
-                    packaging_id=packaging_id,
+                    packaging=packaging,
                     quantity=quantity,
                 )
 
         if action == "update_packaging":
             item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"), dish=dish)
-            item.packaging_id = request.POST.get("packaging_id")
+            packaging = get_object_or_404(Packaging, id=request.POST.get("packaging_id"), country=country)
+            item.packaging = packaging
             item.quantity = request.POST.get("quantity") or 1
             item.save()
 
@@ -156,15 +179,17 @@ def dish_detail(request, country_slug, dish_id):
             minutes = request.POST.get("minutes")
 
             if employee_id and minutes:
+                employee = get_object_or_404(Employee, id=employee_id, country=country)
                 DishLaborItem.objects.create(
                     dish=dish,
-                    employee_id=employee_id,
+                    employee=employee,
                     minutes=minutes,
                 )
 
         if action == "update_labor":
             item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"), dish=dish)
-            item.employee_id = request.POST.get("employee_id")
+            employee = get_object_or_404(Employee, id=request.POST.get("employee_id"), country=country)
+            item.employee = employee
             item.minutes = request.POST.get("minutes") or 0
             item.save()
 
@@ -214,6 +239,7 @@ def product_list(request, country_slug):
 
         if form_type == "create":
             create_form = ProductWithPriceForm(request.POST)
+
             if create_form.is_valid():
                 product = Product.objects.create(
                     country=country,
@@ -359,16 +385,18 @@ def preparation_detail(request, country_slug, prep_id):
             preparation.save()
 
         if action == "add_item":
+            product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
             PreparationItem.objects.create(
                 preparation=preparation,
-                product_id=request.POST.get("product_id"),
-                gross=request.POST.get("gross"),
-                net=request.POST.get("net") or request.POST.get("gross"),
+                product=product,
+                gross=request.POST.get("gross") or 0,
+                net=request.POST.get("net") or request.POST.get("gross") or 0,
             )
 
         if action == "update_item":
             item = get_object_or_404(PreparationItem, id=request.POST.get("item_id"), preparation=preparation)
-            item.product_id = request.POST.get("product_id")
+            product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
+            item.product = product
             item.gross = request.POST.get("gross") or 0
             item.net = request.POST.get("net") or item.gross
             item.save()
