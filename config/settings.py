@@ -39,8 +39,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'foodcost_project.urls'
-WSGI_APPLICATION = 'foodcost_project.wsgi.application'  # ⚠️ если у тебя другое имя — скажи
+ROOT_URLCONF = 'config.urls'
+WSGI_APPLICATION = 'config.wsgi.application'  # ⚠️ если у тебя другое имя — скажи
 
 TEMPLATES = [
     {
