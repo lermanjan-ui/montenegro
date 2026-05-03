@@ -1,0 +1,126 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Коммунальные расходы{% endblock %}
+
+{% block content %}
+
+<style>
+    .button, button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 18px;
+        text-decoration: none;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    label {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    input {
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #111827;
+        color: white;
+        padding: 14px;
+        text-align: left;
+    }
+
+    td {
+        padding: 14px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .total {
+        font-weight: bold;
+        color: #047857;
+    }
+</style>
+
+<div class="card">
+    <h1>Коммунальные расходы</h1>
+</div>
+
+<div class="card">
+    <h2>Добавить месяц</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="grid">
+            <div class="field">
+                <label>Месяц</label>
+                <input type="date" name="month">
+            </div>
+
+            <div class="field">
+                <label>Вода</label>
+                <input type="number" name="water">
+            </div>
+
+            <div class="field">
+                <label>Электричество</label>
+                <input type="number" name="electricity">
+            </div>
+
+            <div class="field">
+                <label>Аренда</label>
+                <input type="number" name="rent">
+            </div>
+
+            <button>Добавить</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>История расходов</h2>
+
+    <table>
+        <tr>
+            <th>Месяц</th>
+            <th>Вода</th>
+            <th>Электричество</th>
+            <th>Аренда</th>
+            <th>Итого</th>
+        </tr>
+
+        {% for u in utilities %}
+        <tr>
+            <td>{{ u.month }}</td>
+            <td>{{ u.water }}</td>
+            <td>{{ u.electricity }}</td>
+            <td>{{ u.rent }}</td>
+            <td class="total">{{ u.total }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

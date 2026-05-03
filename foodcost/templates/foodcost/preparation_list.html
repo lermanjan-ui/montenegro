@@ -1,0 +1,86 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Заготовки{% endblock %}
+
+{% block content %}
+
+<style>
+    .container {
+        max-width: 1100px;
+        margin: auto;
+        background: white;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 36px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #111827;
+        color: white;
+        padding: 14px;
+    }
+
+    td {
+        padding: 14px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: center;
+    }
+
+    tr:hover {
+        background: #f9fafb;
+    }
+
+    .price {
+        font-weight: bold;
+        color: #047857;
+    }
+</style>
+
+<div class="container">
+
+    <div class="top">
+        <h1>Заготовки</h1>
+    </div>
+
+    <table>
+        <tr>
+            <th>Название</th>
+            <th>Выход (кг)</th>
+            <th>Себестоимость</th>
+            <th>Цена за кг</th>
+            <th>Открыть</th>
+        </tr>
+
+        {% for prep in preparations %}
+        <tr>
+            <td><strong>{{ prep.name }}</strong></td>
+            <td>{{ prep.final_weight }}</td>
+            <td>{{ prep.calculate_cost|floatformat:0 }}</td>
+            <td class="price">{{ prep.cost_per_kg|floatformat:0 }}</td>
+            <td>
+                <a href="/preparations/{{ prep.id }}/">→</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+
+{% endblock %}

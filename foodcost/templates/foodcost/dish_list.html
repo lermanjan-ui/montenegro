@@ -1,0 +1,92 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Фудкост{% endblock %}
+
+{% block content %}
+
+<style>
+    h1 {
+        margin-top: 0;
+        font-size: 36px;
+    }
+
+    .muted {
+        color: #6b7280;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #111827;
+        color: white;
+        padding: 14px;
+        text-align: left;
+    }
+
+    td {
+        padding: 14px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    tr:hover {
+        background: #f9fafb;
+    }
+
+    .good {
+        color: #047857;
+        font-weight: bold;
+    }
+
+    .bad {
+        color: #dc2626;
+        font-weight: bold;
+    }
+
+    .open {
+        color: #111827;
+        font-weight: bold;
+        text-decoration: none;
+    }
+</style>
+
+<div class="card">
+    <h1>Блюда</h1>
+    <p class="muted">Список блюд, себестоимость, фудкост и маржа.</p>
+</div>
+
+<div class="card">
+    <table>
+        <tr>
+            <th>Блюдо</th>
+            <th>Вес, кг</th>
+            <th>Цена продажи</th>
+            <th>Себестоимость</th>
+            <th>Фудкост</th>
+            <th>Маржа</th>
+            <th>Карточка</th>
+        </tr>
+
+        {% for dish in dishes %}
+        <tr>
+            <td><strong>{{ dish.name }}</strong></td>
+            <td>{{ dish.final_weight }}</td>
+            <td>{{ dish.selling_price|floatformat:0 }}</td>
+            <td>{{ dish.calculate_cost|floatformat:0 }}</td>
+
+            {% if dish.foodcost <= 30 %}
+                <td class="good">{{ dish.foodcost|floatformat:1 }}%</td>
+            {% else %}
+                <td class="bad">{{ dish.foodcost|floatformat:1 }}%</td>
+            {% endif %}
+
+            <td>{{ dish.margin|floatformat:0 }}</td>
+            <td><a class="open" href="/dishes/{{ dish.id }}/">Открыть →</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

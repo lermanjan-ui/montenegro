@@ -1,0 +1,146 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Заготовка: {{ preparation.name }}{% endblock %}
+
+{% block content %}
+
+<style>
+    .back { display: inline-block; margin-bottom: 16px; color: #374151; text-decoration: none; font-weight: bold; }
+    .muted { color: #6b7280; }
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .metric { background: #ecfdf5; color: #047857; border-radius: 16px; padding: 14px; font-weight: bold; }
+    .metric span { display: block; color: #065f46; font-size: 13px; margin-bottom: 4px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: end; }
+    input, select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 12px; font-size: 15px; box-sizing: border-box; }
+    label { font-weight: bold; font-size: 14px; margin-bottom: 6px; display: block; }
+    button { background: #111827; color: white; border: 0; border-radius: 12px; padding: 12px 16px; cursor: pointer; font-weight: bold; }
+    .danger { background: #fee2e2; color: #991b1b; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #111827; color: white; padding: 14px; text-align: left; }
+    td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+    .price { color: #047857; font-weight: bold; }
+    .add-row { background: #f9fafb; }
+    .actions { display: flex; gap: 8px; }
+</style>
+
+<a class="back" href="/preparations/">← Назад к заготовкам</a>
+
+<div class="card">
+    <h1>Заготовка: {{ preparation.name }}</h1>
+    <p class="muted">Состав, выход, время приготовления и себестоимость.</p>
+
+    <div class="summary">
+        <div class="metric"><span>Выход</span>{{ preparation.final_weight }} кг</div>
+        <div class="metric"><span>Себестоимость</span>{{ preparation.calculate_cost|floatformat:0 }}</div>
+        <div class="metric"><span>Цена за кг</span>{{ preparation.cost_per_kg|floatformat:0 }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Основные данные</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save">
+
+        <div class="grid">
+            <div>
+                <label>Название</label>
+                <input name="name" value="{{ preparation.name }}">
+            </div>
+
+            <div>
+                <label>Выход, кг</label>
+                <input type="number" step="0.001" name="final_weight" value="{{ preparation.final_weight }}">
+            </div>
+
+            <div>
+                <label>Время приготовления, мин</label>
+                <input type="number" step="0.1" name="cooking_minutes" value="{{ preparation.cooking_minutes }}">
+            </div>
+
+            <button type="submit">Сохранить</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Ингредиенты</h2>
+
+    <table>
+        <tr>
+            <th>Продукт</th>
+            <th>Брутто</th>
+            <th>Нетто</th>
+            <th>Стоимость</th>
+            <th>Действия</th>
+        </tr>
+
+        {% for item in preparation.items.all %}
+        <tr>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_item">
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                <td>
+                    <select name="product_id">
+                        {% for product in products %}
+                            <option value="{{ product.id }}" {% if item.product_id == product.id %}selected{% endif %}>
+                                {{ product.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+
+                <td>
+                    <input type="number" step="0.001" name="gross" value="{{ item.gross }}">
+                </td>
+
+                <td>
+                    <input type="number" step="0.001" name="net" value="{{ item.net }}">
+                </td>
+
+                <td class="price">{{ item.calculate_cost|floatformat:0 }}</td>
+
+                <td>
+                    <div class="actions">
+                        <button type="submit">Сохранить</button>
+                    </div>
+                </td>
+            </form>
+
+            <td style="display:none;">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_item">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <button class="danger" type="submit" onclick="return confirm('Удалить ингредиент?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+
+        <tr class="add-row">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_item">
+
+                <td>
+                    <select name="product_id">
+                        {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+
+                <td><input type="number" step="0.001" name="gross" placeholder="1.000"></td>
+                <td><input type="number" step="0.001" name="net" placeholder="0.800"></td>
+                <td class="muted">после сохранения</td>
+                <td><button type="submit">Добавить</button></td>
+            </form>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}

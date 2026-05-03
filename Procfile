@@ -1,0 +1,1 @@
+web: gunicorn foodcost_project.wsgi:application --log-file -

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}FoodCost{% endblock %}</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f6f7fb;
+            margin: 0;
+            color: #111827;
+        }
+
+        .header {
+            background: white;
+            padding: 18px 32px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .nav a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .nav a:hover {
+            color: #047857;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+        }
+
+        h1, h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <div class="logo">🍽 FoodCost</div>
+
+    <div class="nav">
+        <a href="/">Блюда</a>
+        <a href="/products/">Продукты</a>
+        <a href="/preparations/">Заготовки</a>
+        <a href="/employees/">Сотрудники</a>
+        <a href="/packaging/">Упаковка</a>
+        <a href="/utilities/">Коммуналка</a>
+    </div>
+</div>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
