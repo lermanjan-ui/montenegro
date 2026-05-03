@@ -83,7 +83,7 @@
             {% endif %}
 
             <td>{{ dish.margin|floatformat:0 }}</td>
-            <td><a class="open" href="/dishes/{{ dish.id }}/">Открыть →</a></td>
+            <td><a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">Открыть →</a></td>
         </tr>
         {% endfor %}
     </table>

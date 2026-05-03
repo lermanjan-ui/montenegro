@@ -1,142 +1,130 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Продукты</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f6f7fb;
-            margin: 0;
-            padding: 40px;
-            color: #111827;
-        }
+{% extends "foodcost/base.html" %}
 
-        .container {
-            max-width: 1100px;
-            margin: auto;
-        }
+{% block title %}Продукты{% endblock %}
 
-        .card {
-            background: white;
-            border-radius: 18px;
-            padding: 28px;
-            margin-bottom: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }
+{% block content %}
 
-        .top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
+<style>
+    .container-inner {
+        max-width: 1100px;
+        margin: auto;
+    }
 
-        h1, h2 {
-            margin-top: 0;
-        }
+    .card {
+        background: white;
+        border-radius: 18px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
 
-        .button, button {
-            background: #111827;
-            color: white;
-            border: 0;
-            border-radius: 10px;
-            padding: 12px 18px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 15px;
-        }
+    .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
 
+    h1, h2 {
+        margin-top: 0;
+    }
+
+    .button, button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px 18px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 15px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 16px;
+        align-items: end;
+    }
+
+    label {
+        font-weight: bold;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        margin-top: 6px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 15px;
+        box-sizing: border-box;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+    }
+
+    th {
+        background: #111827;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    tr:hover {
+        background: #f9fafb;
+    }
+
+    .price {
+        font-weight: bold;
+        color: #047857;
+    }
+
+    .muted {
+        color: #6b7280;
+    }
+
+    .open {
+        color: #111827;
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    .badge {
+        display: inline-block;
+        background: #ecfdf5;
+        color: #047857;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-weight: bold;
+        font-size: 13px;
+    }
+
+    @media (max-width: 800px) {
         .grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 16px;
-            align-items: end;
+            grid-template-columns: 1fr;
         }
+    }
+</style>
 
-        label {
-            font-weight: bold;
-            font-size: 14px;
-            color: #374151;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin-top: 6px;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            font-size: 15px;
-            box-sizing: border-box;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 14px;
-        }
-
-        th {
-            background: #111827;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        tr:hover {
-            background: #f9fafb;
-        }
-
-        .price {
-            font-weight: bold;
-            color: #047857;
-        }
-
-        .muted {
-            color: #6b7280;
-        }
-
-        .open {
-            color: #111827;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .badge {
-            display: inline-block;
-            background: #ecfdf5;
-            color: #047857;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-weight: bold;
-            font-size: 13px;
-        }
-
-        @media (max-width: 800px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            body {
-                padding: 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
+<div class="container-inner">
 
     <div class="card top">
         <div>
             <h1>Продукты</h1>
             <p class="muted">Добавление продуктов, закупочных цен и просмотр актуальной стоимости.</p>
         </div>
-        <a class="button" href="/">Блюда</a>
+        <a class="button" href="/c/{{ country.slug }}/">Блюда</a>
     </div>
 
     <div class="card">
@@ -189,6 +177,7 @@
             <tr>
                 <td><strong>{{ product.name }}</strong></td>
                 <td><span class="badge">{{ product.unit }}</span></td>
+
                 <td>
                     {% if price %}
                         <span class="price">{{ price.price }}</span>
@@ -196,6 +185,7 @@
                         <span class="muted">—</span>
                     {% endif %}
                 </td>
+
                 <td>
                     {% if price %}
                         {{ price.date_from }}
@@ -203,8 +193,9 @@
                         <span class="muted">—</span>
                     {% endif %}
                 </td>
+
                 <td>
-                    <a class="open" href="/products/{{ product.id }}/">Открыть →</a>
+                    <a class="open" href="/c/{{ country.slug }}/products/{{ product.id }}/">Открыть →</a>
                 </td>
             </tr>
             {% endwith %}
@@ -214,5 +205,4 @@
 
 </div>
 
-</body>
-</html>
+{% endblock %}
