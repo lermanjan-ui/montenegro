@@ -320,6 +320,22 @@ def product_detail(request, country_slug, product_id):
 
 def preparation_list(request, country_slug):
     country = get_country(country_slug)
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        final_weight = request.POST.get("final_weight") or 0
+        cooking_minutes = request.POST.get("cooking_minutes") or 0
+
+        if name:
+            Preparation.objects.create(
+                country=country,
+                name=name,
+                final_weight=final_weight,
+                cooking_minutes=cooking_minutes,
+            )
+
+        return redirect(f"/c/{country.slug}/preparations/")
+
     preparations = Preparation.objects.filter(country=country)
 
     return render(request, "foodcost/preparation_list.html", {

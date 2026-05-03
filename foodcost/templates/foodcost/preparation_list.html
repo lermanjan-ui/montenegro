@@ -5,15 +5,6 @@
 {% block content %}
 
 <style>
-    .container {
-        max-width: 1100px;
-        margin: auto;
-        background: white;
-        padding: 30px;
-        border-radius: 18px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
     .top {
         display: flex;
         justify-content: space-between;
@@ -24,6 +15,39 @@
     h1 {
         margin: 0;
         font-size: 36px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        font-size: 15px;
+        box-sizing: border-box;
+    }
+
+    label {
+        font-weight: bold;
+        font-size: 14px;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-weight: bold;
+        cursor: pointer;
     }
 
     table {
@@ -51,14 +75,48 @@
         font-weight: bold;
         color: #047857;
     }
+
+    .open {
+        color: #111827;
+        font-weight: bold;
+        text-decoration: none;
+    }
 </style>
 
-<div class="container">
-
+<div class="card">
     <div class="top">
         <h1>Заготовки</h1>
     </div>
+</div>
 
+<div class="card">
+    <h2>Добавить заготовку</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="grid">
+            <div>
+                <label>Название</label>
+                <input name="name" placeholder="Например: соус цезарь">
+            </div>
+
+            <div>
+                <label>Выход, кг</label>
+                <input type="number" step="0.001" name="final_weight" placeholder="1.000">
+            </div>
+
+            <div>
+                <label>Время, мин</label>
+                <input type="number" step="0.1" name="cooking_minutes" placeholder="30">
+            </div>
+
+            <button type="submit">Добавить</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
     <table>
         <tr>
             <th>Название</th>
@@ -75,12 +133,11 @@
             <td>{{ prep.calculate_cost|floatformat:0 }}</td>
             <td class="price">{{ prep.cost_per_kg|floatformat:0 }}</td>
             <td>
-                <a href="/preparations/{{ prep.id }}/">→</a>
+                <a class="open" href="/c/{{ country.slug }}/preparations/{{ prep.id }}/">Открыть →</a>
             </td>
         </tr>
         {% endfor %}
     </table>
-
 </div>
 
 {% endblock %}
