@@ -419,12 +419,16 @@ def preparation_detail(request, country_slug, prep_id):
 
         return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
+    total_gross = sum(item.gross for item in preparation.items.all())
+    total_net = sum(item.net for item in preparation.items.all())
+
     return render(request, "foodcost/preparation_detail.html", {
         "country": country,
         "preparation": preparation,
         "products": products,
+        "total_gross": total_gross,
+        "total_net": total_net,
     })
-
 
 def employee_list(request, country_slug):
     country = get_country(country_slug)

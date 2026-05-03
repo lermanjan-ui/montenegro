@@ -5,34 +5,173 @@
 {% block content %}
 
 <style>
-    .back { display: inline-block; margin-bottom: 16px; color: #374151; text-decoration: none; font-weight: bold; }
-    .muted { color: #6b7280; }
-    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .metric { background: #ecfdf5; color: #047857; border-radius: 16px; padding: 14px; font-weight: bold; }
-    .metric span { display: block; color: #065f46; font-size: 13px; margin-bottom: 4px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: end; }
-    input, select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 12px; font-size: 15px; box-sizing: border-box; }
-    label { font-weight: bold; font-size: 14px; margin-bottom: 6px; display: block; }
-    button { background: #111827; color: white; border: 0; border-radius: 12px; padding: 12px 16px; cursor: pointer; font-weight: bold; }
-    .danger { background: #fee2e2; color: #991b1b; }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: #111827; color: white; padding: 14px; text-align: left; }
-    td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
-    .price { color: #047857; font-weight: bold; }
-    .add-row { background: #f9fafb; }
-    .actions { display: flex; gap: 8px; }
+    .back {
+        display: inline-block;
+        margin-bottom: 16px;
+        color: #374151;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .muted {
+        color: #6b7280;
+    }
+
+    .summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .metric {
+        background: #ecfdf5;
+        color: #047857;
+        border-radius: 16px;
+        padding: 14px;
+        font-weight: bold;
+    }
+
+    .metric span {
+        display: block;
+        color: #065f46;
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    .ingredient-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .ingredient-card {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .ingredient-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .ingredient-info {
+        margin-top: 10px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 14px;
+        color: #6b7280;
+        font-weight: bold;
+    }
+
+    .pill {
+        background: white;
+        border-radius: 999px;
+        padding: 7px 11px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .add-card {
+        background: #f3f4f6;
+        border-radius: 18px;
+        padding: 18px;
+        margin-top: 18px;
+    }
+
+    .add-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    label {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        font-size: 15px;
+        box-sizing: border-box;
+        background: white;
+    }
+
+    button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .price {
+        color: #047857;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 1000px) {
+        .summary,
+        .main-grid,
+        .ingredient-form,
+        .add-form {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
-<a class="back" href="/preparations/">← Назад к заготовкам</a>
+<a class="back" href="/c/{{ country.slug }}/preparations/">← Назад к заготовкам</a>
 
 <div class="card">
     <h1>Заготовка: {{ preparation.name }}</h1>
-    <p class="muted">Состав, выход, время приготовления и себестоимость.</p>
+    <p class="muted">Состав, выход, общий вес ингредиентов и себестоимость.</p>
 
     <div class="summary">
-        <div class="metric"><span>Выход</span>{{ preparation.final_weight }} кг</div>
-        <div class="metric"><span>Себестоимость</span>{{ preparation.calculate_cost|floatformat:0 }}</div>
-        <div class="metric"><span>Цена за кг</span>{{ preparation.cost_per_kg|floatformat:0 }}</div>
+        <div class="metric">
+            <span>Итого брутто</span>
+            {{ total_gross|floatformat:3 }} кг
+        </div>
+
+        <div class="metric">
+            <span>Итого нетто</span>
+            {{ total_net|floatformat:3 }} кг
+        </div>
+
+        <div class="metric">
+            <span>Себестоимость</span>
+            {{ preparation.calculate_cost|floatformat:0 }}
+        </div>
+
+        <div class="metric">
+            <span>Цена за кг</span>
+            {{ preparation.cost_per_kg|floatformat:0 }}
+        </div>
     </div>
 </div>
 
@@ -43,7 +182,7 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="save">
 
-        <div class="grid">
+        <div class="main-grid">
             <div>
                 <label>Название</label>
                 <input name="name" value="{{ preparation.name }}">
@@ -55,7 +194,7 @@
             </div>
 
             <div>
-                <label>Время приготовления, мин</label>
+                <label>Время, мин</label>
                 <input type="number" step="0.1" name="cooking_minutes" value="{{ preparation.cooking_minutes }}">
             </div>
 
@@ -67,23 +206,16 @@
 <div class="card">
     <h2>Ингредиенты</h2>
 
-    <table>
-        <tr>
-            <th>Продукт</th>
-            <th>Брутто</th>
-            <th>Нетто</th>
-            <th>Стоимость</th>
-            <th>Действия</th>
-        </tr>
-
+    <div class="ingredient-list">
         {% for item in preparation.items.all %}
-        <tr>
-            <form method="post">
+        <div class="ingredient-card">
+            <form method="post" class="ingredient-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_item">
                 <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                <td>
+                <div>
+                    <label>Продукт</label>
                     <select name="product_id">
                         {% for product in products %}
                             <option value="{{ product.id }}" {% if item.product_id == product.id %}selected{% endif %}>
@@ -91,56 +223,101 @@
                             </option>
                         {% endfor %}
                     </select>
-                </td>
+                </div>
 
-                <td>
+                <div>
+                    <label>Брутто, кг</label>
                     <input type="number" step="0.001" name="gross" value="{{ item.gross }}">
-                </td>
+                </div>
 
-                <td>
+                <div>
+                    <label>Нетто, кг</label>
                     <input type="number" step="0.001" name="net" value="{{ item.net }}">
-                </td>
+                </div>
 
-                <td class="price">{{ item.calculate_cost|floatformat:0 }}</td>
+                <div>
+                    <label>Стоимость</label>
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                </div>
 
-                <td>
-                    <div class="actions">
-                        <button type="submit">Сохранить</button>
-                    </div>
-                </td>
+                <button type="submit">Сохранить</button>
+
+                <button type="submit"
+                        name="action"
+                        value="delete_item"
+                        class="danger"
+                        onclick="return confirm('Удалить ингредиент из заготовки?')">
+                    Удалить
+                </button>
             </form>
 
-            <td style="display:none;">
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_item">
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <button class="danger" type="submit" onclick="return confirm('Удалить ингредиент?')">Удалить</button>
-                </form>
-            </td>
-        </tr>
+            <div class="ingredient-info">
+                <span class="pill">Добавлено брутто: {{ item.gross|floatformat:3 }} кг</span>
+                <span class="pill">Добавлено нетто: {{ item.net|floatformat:3 }} кг</span>
+                <span class="pill">Стоимость: {{ item.calculate_cost|floatformat:0 }}</span>
+            </div>
+        </div>
+        {% empty %}
+            <p class="muted">Ингредиентов пока нет.</p>
         {% endfor %}
+    </div>
 
-        <tr class="add-row">
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="add_item">
+    <div class="add-card">
+        <h3>Добавить ингредиент</h3>
 
-                <td>
-                    <select name="product_id">
-                        {% for product in products %}
-                            <option value="{{ product.id }}">{{ product.name }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
+        <form method="post" class="add-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_item">
 
-                <td><input type="number" step="0.001" name="gross" placeholder="1.000"></td>
-                <td><input type="number" step="0.001" name="net" placeholder="0.800"></td>
-                <td class="muted">после сохранения</td>
-                <td><button type="submit">Добавить</button></td>
-            </form>
-        </tr>
-    </table>
+            <div>
+                <label>Продукт</label>
+                <select name="product_id">
+                    {% for product in products %}
+                        <option value="{{ product.id }}">{{ product.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Брутто, кг</label>
+                <input type="number" step="0.001" name="gross" placeholder="1.000">
+            </div>
+
+            <div>
+                <label>Нетто, кг</label>
+                <input type="number" step="0.001" name="net" placeholder="0.800">
+            </div>
+
+            <button type="submit">Добавить</button>
+        </form>
+    </div>
 </div>
+
+<script>
+function syncGrossToNet() {
+    const grossInputs = document.querySelectorAll('input[name="gross"]');
+
+    grossInputs.forEach(function(grossInput) {
+        grossInput.addEventListener("input", function() {
+            const form = grossInput.closest("form");
+            const netInput = form.querySelector('input[name="net"]');
+
+            if (netInput && !netInput.dataset.changed) {
+                netInput.value = grossInput.value;
+            }
+        });
+    });
+
+    const netInputs = document.querySelectorAll('input[name="net"]');
+
+    netInputs.forEach(function(netInput) {
+        netInput.addEventListener("input", function() {
+            netInput.dataset.changed = "true";
+        });
+    });
+}
+
+syncGrossToNet();
+</script>
 
 {% endblock %}
