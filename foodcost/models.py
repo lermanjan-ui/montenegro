@@ -2,6 +2,14 @@ from decimal import Decimal
 from django.db import models
 
 
+class Country(models.Model):
+    name = models.CharField("Страна", max_length=255)
+    slug = models.SlugField("URL", unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     UNIT_CHOICES = [
         ("kg", "кг"),
@@ -10,6 +18,14 @@ class Product(models.Model):
         ("ml", "мл"),
         ("pcs", "шт"),
     ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="products",
+        null=True,
+        blank=True,
+    )
 
     name = models.CharField(max_length=255)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
@@ -31,6 +47,14 @@ class ProductPrice(models.Model):
 
 
 class Preparation(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="preparations",
+        null=True,
+        blank=True,
+    )
+
     name = models.CharField(max_length=255)
     final_weight = models.DecimalField(max_digits=10, decimal_places=3)
     cooking_minutes = models.DecimalField("Время приготовления, мин", max_digits=8, decimal_places=2, default=0)
@@ -69,6 +93,14 @@ class PreparationItem(models.Model):
 
 
 class Employee(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="employees",
+        null=True,
+        blank=True,
+    )
+
     name = models.CharField("Имя сотрудника", max_length=255)
     monthly_salary = models.DecimalField("Зарплата в месяц", max_digits=12, decimal_places=2)
     monthly_hours = models.DecimalField("Часов в месяц", max_digits=8, decimal_places=2)
@@ -86,6 +118,14 @@ class Employee(models.Model):
 
 
 class Packaging(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="packagings",
+        null=True,
+        blank=True,
+    )
+
     name = models.CharField("Название упаковки", max_length=255)
     cost = models.DecimalField("Стоимость упаковки", max_digits=10, decimal_places=2)
 
@@ -94,6 +134,14 @@ class Packaging(models.Model):
 
 
 class MonthlyUtilityExpense(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="utilities",
+        null=True,
+        blank=True,
+    )
+
     month = models.DateField("Месяц")
     water = models.DecimalField("Вода", max_digits=12, decimal_places=2, default=0)
     electricity = models.DecimalField("Электричество", max_digits=12, decimal_places=2, default=0)
@@ -113,6 +161,14 @@ class MonthlyUtilityExpense(models.Model):
 
 
 class Dish(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="dishes",
+        null=True,
+        blank=True,
+    )
+
     name = models.CharField(max_length=255)
     final_weight = models.DecimalField(max_digits=10, decimal_places=3)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -170,10 +226,12 @@ class Dish(models.Model):
         return self.cooking_minutes + self.preparations_cooking_minutes() + self.direct_labor_minutes()
 
     def utilities_cost(self):
-        utility = MonthlyUtilityExpense.objects.order_by("-month", "-id").first()
-        if not utility:
+        utilities = MonthlyUtilityExpense.objects.filter(country=self.country).order_by("-month", "-id").first()
+
+        if not utilities:
             return Decimal("0")
-        return self.total_cooking_minutes() * utility.minute_rate()
+
+        return self.total_cooking_minutes() * utilities.minute_rate()
 
     def calculate_cost(self):
         return (

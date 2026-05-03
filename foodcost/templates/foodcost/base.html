@@ -25,6 +25,12 @@
             font-size: 20px;
         }
 
+        .country {
+            color: #047857;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
         .nav a {
             margin-left: 20px;
             text-decoration: none;
@@ -59,15 +65,26 @@
 <body>
 
 <div class="header">
-    <div class="logo">🍽 FoodCost</div>
+    <div class="logo">
+        🍽 FoodCost
+        {% if country %}
+            <span class="country">/ {{ country.name }}</span>
+        {% endif %}
+    </div>
 
     <div class="nav">
-        <a href="/">Блюда</a>
-        <a href="/products/">Продукты</a>
-        <a href="/preparations/">Заготовки</a>
-        <a href="/employees/">Сотрудники</a>
-        <a href="/packaging/">Упаковка</a>
-        <a href="/utilities/">Коммуналка</a>
+        {% if country %}
+            <a href="/c/{{ country.slug }}/">Блюда</a>
+            <a href="/c/{{ country.slug }}/products/">Продукты</a>
+            <a href="/c/{{ country.slug }}/preparations/">Заготовки</a>
+            <a href="/c/{{ country.slug }}/employees/">Сотрудники</a>
+            <a href="/c/{{ country.slug }}/packaging/">Упаковка</a>
+            <a href="/c/{{ country.slug }}/utilities/">Коммуналка</a>
+            <a href="/">Сменить страну</a>
+        {% else %}
+            <a href="/">Страны</a>
+            <a href="/admin/">Админка</a>
+        {% endif %}
     </div>
 </div>
 

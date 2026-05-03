@@ -1,26 +1,23 @@
 from django.urls import path
-from .views import (
-    dish_list,
-    dish_detail,
-    live_calculate,
-    product_list,
-    product_detail,
-    preparation_list,
-    preparation_detail,
-    employee_list,
-    packaging_list,
-    utilities_list,
-)
+from . import views
+
 
 urlpatterns = [
-    path("", dish_list),
-    path("dishes/<int:pk>/", dish_detail),
-    path("live-calculate/", live_calculate),
-    path("products/", product_list),
-    path("products/<int:pk>/", product_detail),
-    path("preparations/", preparation_list),
-    path("preparations/<int:pk>/", preparation_detail),
-    path("employees/", employee_list),
-    path("packaging/", packaging_list),
-    path("utilities/", utilities_list),
+    # выбор страны
+    path("", views.country_list, name="country_list"),
+
+    # ВСЕ внутри страны
+    path("c/<slug:country_slug>/", views.dish_list, name="dish_list"),
+
+    path("c/<slug:country_slug>/products/", views.product_list, name="product_list"),
+    path("c/<slug:country_slug>/products/<int:product_id>/", views.product_detail, name="product_detail"),
+
+    path("c/<slug:country_slug>/preparations/", views.preparation_list, name="preparation_list"),
+    path("c/<slug:country_slug>/preparations/<int:prep_id>/", views.preparation_detail, name="preparation_detail"),
+
+    path("c/<slug:country_slug>/employees/", views.employee_list, name="employee_list"),
+    path("c/<slug:country_slug>/packaging/", views.packaging_list, name="packaging_list"),
+    path("c/<slug:country_slug>/utilities/", views.utilities_list, name="utilities_list"),
+
+    path("c/<slug:country_slug>/dish/<int:dish_id>/", views.dish_detail, name="dish_detail"),
 ]

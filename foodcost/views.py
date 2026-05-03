@@ -1,9 +1,11 @@
 from decimal import Decimal
+
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from .forms import ProductWithPriceForm
 from .models import (
+    Country,
     Product,
     ProductPrice,
     Dish,
@@ -20,12 +22,30 @@ from .models import (
 )
 
 
-def dish_list(request):
-    dishes = Dish.objects.all()
-    return render(request, "foodcost/dish_list.html", {"dishes": dishes})
+def get_country(country_slug):
+    return get_object_or_404(Country, slug=country_slug)
 
 
-def live_calculate(request):
+def country_list(request):
+    countries = Country.objects.all()
+    return render(request, "foodcost/country_list.html", {
+        "countries": countries,
+    })
+
+
+def dish_list(request, country_slug):
+    country = get_country(country_slug)
+    dishes = Dish.objects.filter(country=country)
+
+    return render(request, "foodcost/dish_list.html", {
+        "country": country,
+        "dishes": dishes,
+    })
+
+
+def live_calculate(request, country_slug):
+    country = get_country(country_slug)
+
     item_type = request.GET.get("type")
     item_id = request.GET.get("id")
     quantity = Decimal(request.GET.get("quantity") or "0")
@@ -33,32 +53,34 @@ def live_calculate(request):
     cost = Decimal("0")
 
     if item_type == "product":
-        product = get_object_or_404(Product, id=item_id)
+        product = get_object_or_404(Product, id=item_id, country=country)
         price = product.get_price()
         if price:
             cost = quantity * price.price
 
     if item_type == "preparation":
-        preparation = get_object_or_404(Preparation, id=item_id)
+        preparation = get_object_or_404(Preparation, id=item_id, country=country)
         cost = quantity * preparation.cost_per_kg()
 
     if item_type == "packaging":
-        packaging = get_object_or_404(Packaging, id=item_id)
+        packaging = get_object_or_404(Packaging, id=item_id, country=country)
         cost = quantity * packaging.cost
 
     if item_type == "labor":
-        employee = get_object_or_404(Employee, id=item_id)
+        employee = get_object_or_404(Employee, id=item_id, country=country)
         cost = quantity * employee.minute_rate()
 
     return JsonResponse({"cost": round(cost, 2)})
 
 
-def dish_detail(request, pk):
-    dish = get_object_or_404(Dish, pk=pk)
-    products = Product.objects.all()
-    preparations = Preparation.objects.all()
-    employees = Employee.objects.all()
-    packagings = Packaging.objects.all()
+def dish_detail(request, country_slug, dish_id):
+    country = get_country(country_slug)
+    dish = get_object_or_404(Dish, id=dish_id, country=country)
+
+    products = Product.objects.filter(country=country)
+    preparations = Preparation.objects.filter(country=country)
+    employees = Employee.objects.filter(country=country)
+    packagings = Packaging.objects.filter(country=country)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -79,14 +101,14 @@ def dish_detail(request, pk):
             )
 
         if action == "update_product":
-            item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"), dish=dish)
             item.product_id = request.POST.get("product_id")
             item.gross = request.POST.get("gross") or 0
             item.net = request.POST.get("net") or item.gross
             item.save()
 
         if action == "delete_product":
-            item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_preparation":
@@ -98,14 +120,14 @@ def dish_detail(request, pk):
             )
 
         if action == "update_preparation":
-            item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"), dish=dish)
             item.preparation_id = request.POST.get("preparation_id")
             item.gross = request.POST.get("gross") or 0
             item.net = request.POST.get("net") or item.gross
             item.save()
 
         if action == "delete_preparation":
-            item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_packaging":
@@ -120,13 +142,13 @@ def dish_detail(request, pk):
                 )
 
         if action == "update_packaging":
-            item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"), dish=dish)
             item.packaging_id = request.POST.get("packaging_id")
             item.quantity = request.POST.get("quantity") or 1
             item.save()
 
         if action == "delete_packaging":
-            item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_labor":
@@ -141,13 +163,13 @@ def dish_detail(request, pk):
                 )
 
         if action == "update_labor":
-            item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"), dish=dish)
             item.employee_id = request.POST.get("employee_id")
             item.minutes = request.POST.get("minutes") or 0
             item.save()
 
         if action == "delete_labor":
-            item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_extra":
@@ -162,18 +184,19 @@ def dish_detail(request, pk):
                 )
 
         if action == "update_extra":
-            item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"), dish=dish)
             item.comment = request.POST.get("comment")
             item.cost = request.POST.get("cost") or 0
             item.save()
 
         if action == "delete_extra":
-            item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"))
+            item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
-        return redirect(f"/dishes/{dish.id}/")
+        return redirect(f"/c/{country.slug}/dish/{dish.id}/")
 
     return render(request, "foodcost/dish_detail.html", {
+        "country": country,
         "dish": dish,
         "products": products,
         "preparations": preparations,
@@ -182,7 +205,8 @@ def dish_detail(request, pk):
     })
 
 
-def product_list(request):
+def product_list(request, country_slug):
+    country = get_country(country_slug)
     create_form = ProductWithPriceForm()
 
     if request.method == "POST":
@@ -192,6 +216,7 @@ def product_list(request):
             create_form = ProductWithPriceForm(request.POST)
             if create_form.is_valid():
                 product = Product.objects.create(
+                    country=country,
                     name=create_form.cleaned_data["name"],
                     unit=create_form.cleaned_data["unit"],
                 )
@@ -202,18 +227,20 @@ def product_list(request):
                     date_from=create_form.cleaned_data["date"],
                 )
 
-                return redirect("/products/")
+                return redirect(f"/c/{country.slug}/products/")
 
-    products = Product.objects.all()
+    products = Product.objects.filter(country=country)
 
     return render(request, "foodcost/product_list.html", {
+        "country": country,
         "products": products,
         "create_form": create_form,
     })
 
 
-def product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk)
+def product_detail(request, country_slug, product_id):
+    country = get_country(country_slug)
+    product = get_object_or_404(Product, id=product_id, country=country)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -233,16 +260,23 @@ def product_detail(request, pk):
                     date_from=date,
                 )
 
-            return redirect(f"/products/{product.id}/")
+            return redirect(f"/c/{country.slug}/products/{product.id}/")
 
         if action == "delete":
             product.delete()
-            return redirect("/products/")
+            return redirect(f"/c/{country.slug}/products/")
 
     prices = product.prices.order_by("date_from")
 
-    dish_items = DishProductItem.objects.filter(product=product).select_related("dish")
-    preparation_items = PreparationItem.objects.filter(product=product).select_related("preparation")
+    dish_items = DishProductItem.objects.filter(
+        product=product,
+        dish__country=country,
+    ).select_related("dish")
+
+    preparation_items = PreparationItem.objects.filter(
+        product=product,
+        preparation__country=country,
+    ).select_related("preparation")
 
     affected_dishes = []
 
@@ -250,7 +284,7 @@ def product_detail(request, pk):
         affected_dishes.append({
             "type": "Блюдо напрямую",
             "name": item.dish.name,
-            "url": f"/dishes/{item.dish.id}/",
+            "url": f"/c/{country.slug}/dish/{item.dish.id}/",
             "quantity": item.gross,
             "cost": item.calculate_cost(),
             "dish_cost": item.dish.calculate_cost(),
@@ -260,11 +294,14 @@ def product_detail(request, pk):
     for prep_item in preparation_items:
         preparation = prep_item.preparation
 
-        for dish_prep_item in DishPreparationItem.objects.filter(preparation=preparation).select_related("dish"):
+        for dish_prep_item in DishPreparationItem.objects.filter(
+            preparation=preparation,
+            dish__country=country,
+        ).select_related("dish"):
             affected_dishes.append({
                 "type": f"Через заготовку: {preparation.name}",
                 "name": dish_prep_item.dish.name,
-                "url": f"/dishes/{dish_prep_item.dish.id}/",
+                "url": f"/c/{country.slug}/dish/{dish_prep_item.dish.id}/",
                 "quantity": dish_prep_item.gross,
                 "cost": dish_prep_item.calculate_cost(),
                 "dish_cost": dish_prep_item.dish.calculate_cost(),
@@ -272,6 +309,7 @@ def product_detail(request, pk):
             })
 
     return render(request, "foodcost/product_detail.html", {
+        "country": country,
         "product": product,
         "prices": prices,
         "affected_dishes": affected_dishes,
@@ -280,14 +318,20 @@ def product_detail(request, pk):
     })
 
 
-def preparation_list(request):
-    preparations = Preparation.objects.all()
-    return render(request, "foodcost/preparation_list.html", {"preparations": preparations})
+def preparation_list(request, country_slug):
+    country = get_country(country_slug)
+    preparations = Preparation.objects.filter(country=country)
+
+    return render(request, "foodcost/preparation_list.html", {
+        "country": country,
+        "preparations": preparations,
+    })
 
 
-def preparation_detail(request, pk):
-    preparation = get_object_or_404(Preparation, pk=pk)
-    products = Product.objects.all()
+def preparation_detail(request, country_slug, prep_id):
+    country = get_country(country_slug)
+    preparation = get_object_or_404(Preparation, id=prep_id, country=country)
+    products = Product.objects.filter(country=country)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -307,25 +351,28 @@ def preparation_detail(request, pk):
             )
 
         if action == "update_item":
-            item = get_object_or_404(PreparationItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(PreparationItem, id=request.POST.get("item_id"), preparation=preparation)
             item.product_id = request.POST.get("product_id")
             item.gross = request.POST.get("gross") or 0
             item.net = request.POST.get("net") or item.gross
             item.save()
 
         if action == "delete_item":
-            item = get_object_or_404(PreparationItem, id=request.POST.get("item_id"))
+            item = get_object_or_404(PreparationItem, id=request.POST.get("item_id"), preparation=preparation)
             item.delete()
 
-        return redirect(f"/preparations/{preparation.id}/")
+        return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
     return render(request, "foodcost/preparation_detail.html", {
+        "country": country,
         "preparation": preparation,
         "products": products,
     })
 
 
-def employee_list(request):
+def employee_list(request, country_slug):
+    country = get_country(country_slug)
+
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -336,60 +383,84 @@ def employee_list(request):
 
             if name and monthly_salary and monthly_hours:
                 Employee.objects.create(
+                    country=country,
                     name=name,
                     monthly_salary=monthly_salary,
                     monthly_hours=monthly_hours,
                 )
 
         if action == "update":
-            employee = get_object_or_404(Employee, id=request.POST.get("employee_id"))
+            employee = get_object_or_404(Employee, id=request.POST.get("employee_id"), country=country)
             employee.name = request.POST.get("name")
             employee.monthly_salary = request.POST.get("monthly_salary") or 0
             employee.monthly_hours = request.POST.get("monthly_hours") or 0
             employee.save()
 
         if action == "delete":
-            employee = get_object_or_404(Employee, id=request.POST.get("employee_id"))
+            employee = get_object_or_404(Employee, id=request.POST.get("employee_id"), country=country)
             employee.delete()
 
-        return redirect("/employees/")
+        return redirect(f"/c/{country.slug}/employees/")
 
-    employees = Employee.objects.all()
-    return render(request, "foodcost/employee_list.html", {"employees": employees})
+    employees = Employee.objects.filter(country=country)
+
+    return render(request, "foodcost/employee_list.html", {
+        "country": country,
+        "employees": employees,
+    })
 
 
-def packaging_list(request):
+def packaging_list(request, country_slug):
+    country = get_country(country_slug)
+
     if request.method == "POST":
         action = request.POST.get("action")
 
         if action == "create":
-            Packaging.objects.create(
-                name=request.POST.get("name"),
-                cost=request.POST.get("cost"),
-            )
+            name = request.POST.get("name")
+            cost = request.POST.get("cost")
+
+            if name and cost:
+                Packaging.objects.create(
+                    country=country,
+                    name=name,
+                    cost=cost,
+                )
 
         if action == "update":
-            packaging = get_object_or_404(Packaging, id=request.POST.get("packaging_id"))
+            packaging = get_object_or_404(Packaging, id=request.POST.get("packaging_id"), country=country)
             packaging.name = request.POST.get("name")
             packaging.cost = request.POST.get("cost")
             packaging.save()
 
-        return redirect("/packaging/")
+        return redirect(f"/c/{country.slug}/packaging/")
 
-    packagings = Packaging.objects.all()
-    return render(request, "foodcost/packaging_list.html", {"packagings": packagings})
+    packagings = Packaging.objects.filter(country=country)
+
+    return render(request, "foodcost/packaging_list.html", {
+        "country": country,
+        "packagings": packagings,
+    })
 
 
-def utilities_list(request):
+def utilities_list(request, country_slug):
+    country = get_country(country_slug)
+
     if request.method == "POST":
         MonthlyUtilityExpense.objects.create(
+            country=country,
             month=request.POST.get("month"),
             water=request.POST.get("water") or 0,
             electricity=request.POST.get("electricity") or 0,
             rent=request.POST.get("rent") or 0,
             working_hours=request.POST.get("working_hours") or 1,
         )
-        return redirect("/utilities/")
 
-    utilities = MonthlyUtilityExpense.objects.all().order_by("-month")
-    return render(request, "foodcost/utilities_list.html", {"utilities": utilities})
+        return redirect(f"/c/{country.slug}/utilities/")
+
+    utilities = MonthlyUtilityExpense.objects.filter(country=country).order_by("-month")
+
+    return render(request, "foodcost/utilities_list.html", {
+        "country": country,
+        "utilities": utilities,
+    })
