@@ -11,24 +11,132 @@
     .metric { background: #ecfdf5; color: #047857; border-radius: 16px; padding: 14px; font-weight: bold; }
     .metric span { display: block; color: #065f46; font-size: 13px; margin-bottom: 4px; }
     .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 14px; align-items: end; }
+
     label { font-weight: bold; font-size: 14px; margin-bottom: 6px; display: block; }
-    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 12px; font-size: 15px; box-sizing: border-box; background: white; }
+
+    input, textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        font-size: 15px;
+        box-sizing: border-box;
+        background: white;
+    }
+
     textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
-    button { background: #111827; color: white; border: 0; border-radius: 12px; padding: 12px 16px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+
+    button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
     .danger { background: #fee2e2; color: #991b1b; }
+
     table { width: 100%; border-collapse: collapse; }
     th { background: #111827; color: white; padding: 14px; text-align: left; }
     td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+
     .price { color: #047857; font-weight: bold; white-space: nowrap; }
     .add-row { background: #f9fafb; }
-    .line-6 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 120px 120px; gap: 10px; align-items: center; }
-    .line-5 { display: grid; grid-template-columns: 2fr 1fr 1fr 120px 120px; gap: 10px; align-items: center; }
-    .line-extra { display: grid; grid-template-columns: 2fr 1fr 1fr 120px 120px; gap: 10px; align-items: center; }
-    .add-line-6 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 120px; gap: 10px; align-items: center; }
-    .add-line-5 { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; gap: 10px; align-items: center; }
-    .step-row { display: grid; grid-template-columns: 90px 1fr 120px 120px; gap: 10px; align-items: center; }
-    .step-add { display: grid; grid-template-columns: 90px 1fr 120px; gap: 10px; align-items: center; }
+
+    .line-6 {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 120px 120px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .line-5 {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 120px 120px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .line-extra {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 120px 120px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .add-line-6 {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 120px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .add-line-5 {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 120px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .search-field { background: #f9fafb; }
+
+    .pill-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
+    .pill {
+        background: #f3f4f6;
+        color: #374151;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .ajax-added { animation: flash 0.6s ease; }
+
+    @keyframes flash {
+        from { background:#ecfdf5; }
+        to { background:transparent; }
+    }
+
+    @media (max-width: 1000px) {
+        .summary,
+        .main-grid,
+        .line-6,
+        .line-5,
+        .line-extra,
+        .add-line-6,
+        .add-line-5 {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
+
+<datalist id="products-options">
+    {% for product in products %}
+        <option value="{{ product.name }}" data-id="{{ product.id }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="preparations-options">
+    {% for preparation in preparations %}
+        <option value="{{ preparation.name }}" data-id="{{ preparation.id }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="packagings-options">
+    {% for packaging in packagings %}
+        <option value="{{ packaging.name }} — {{ packaging.cost }}" data-id="{{ packaging.id }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="employees-options">
+    {% for employee in employees %}
+        <option value="{{ employee.name }} — {{ employee.hourly_rate|floatformat:0 }}/час" data-id="{{ employee.id }}"></option>
+    {% endfor %}
+</datalist>
 
 <a class="back" href="/c/{{ country.slug }}/">← Назад к блюдам</a>
 
@@ -37,9 +145,9 @@
     <p class="muted">Полная экономика блюда: ингредиенты, упаковка, ФОТ, коммуналка, доп расходы и техкарта.</p>
 
     <div class="summary">
-        <div class="metric"><span>Себестоимость</span>{{ dish.calculate_cost|floatformat:0 }}</div>
-        <div class="metric"><span>Фудкост</span>{{ dish.foodcost|floatformat:1 }}%</div>
-        <div class="metric"><span>Маржа</span>{{ dish.margin|floatformat:0 }}</div>
+        <div class="metric"><span>Себестоимость</span><b id="summary-cost">{{ dish.calculate_cost|floatformat:0 }}</b></div>
+        <div class="metric"><span>Фудкост</span><b id="summary-foodcost">{{ dish.foodcost|floatformat:1 }}</b>%</div>
+        <div class="metric"><span>Маржа</span><b id="summary-margin">{{ dish.margin|floatformat:0 }}</b></div>
         <div class="metric"><span>Время</span>{{ dish.total_cooking_minutes|floatformat:1 }} мин</div>
         <div class="metric"><span>Цена</span>{{ dish.selling_price|floatformat:0 }}</div>
     </div>
@@ -60,17 +168,17 @@
 
             <div>
                 <label>Выход, кг</label>
-                <input type="number" step="0.001" name="final_weight" value="{{ dish.final_weight }}">
+                <input type="text" name="final_weight" value="{{ dish.final_weight }}">
             </div>
 
             <div>
                 <label>Цена продажи</label>
-                <input type="number" step="0.01" name="selling_price" value="{{ dish.selling_price }}">
+                <input type="text" name="selling_price" value="{{ dish.selling_price }}">
             </div>
 
             <div>
                 <label>Время блюда, мин</label>
-                <input type="number" step="0.1" name="cooking_minutes" value="{{ dish.cooking_minutes }}">
+                <input type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}">
             </div>
 
             <button type="submit">Сохранить</button>
@@ -84,35 +192,6 @@
 </div>
 
 <div class="card">
-    <h2>Шаги приготовления</h2>
-
-    {% for step in tech_steps %}
-        <form method="post" class="step-row" style="margin-bottom:10px;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="update_step">
-            <input type="hidden" name="step_id" value="{{ step.id }}">
-
-            <input type="number" name="step_number" value="{{ step.step_number }}">
-            <textarea name="description">{{ step.description }}</textarea>
-            <button type="submit">Сохранить</button>
-
-            <button type="submit" name="action" value="delete_step" class="danger" onclick="return confirm('Удалить шаг?')">
-                Удалить
-            </button>
-        </form>
-    {% endfor %}
-
-    <form method="post" class="step-add" style="margin-top:16px;">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="add_step">
-
-        <input type="number" name="step_number" placeholder="№">
-        <textarea name="description" placeholder="Описание шага приготовления"></textarea>
-        <button type="submit">Добавить шаг</button>
-    </form>
-</div>
-
-<div class="card">
     <h2>Разбор себестоимости</h2>
 
     <table>
@@ -122,7 +201,7 @@
         <tr><td>ФОТ</td><td class="price">{{ dish.labor_cost|floatformat:0 }}</td></tr>
         <tr><td>Коммунальные</td><td class="price">{{ dish.utilities_cost|floatformat:0 }}</td></tr>
         <tr><td>Доп расходы</td><td class="price">{{ dish.additional_expenses_cost|floatformat:0 }}</td></tr>
-        <tr><th>Итого</th><th>{{ dish.calculate_cost|floatformat:0 }}</th></tr>
+        <tr><th>Итого</th><th id="summary-total-table">{{ dish.calculate_cost|floatformat:0 }}</th></tr>
     </table>
 </div>
 
@@ -139,22 +218,33 @@
             <th>Удалить</th>
         </tr>
 
+        <tbody id="products-body">
         {% for item in dish.product_items.all %}
         <tr>
             <td colspan="6">
                 <form method="post" class="line-6" data-type="product">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="product_id" id="product-existing-{{ item.id }}" value="{{ item.product_id }}">
 
-                    <select name="product_id">
-                        {% for product in products %}
-                            <option value="{{ product.id }}" {% if item.product_id == product.id %}selected{% endif %}>{{ product.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="products-options"
+                        value="{{ item.product.name }}"
+                        data-hidden-input="product-existing-{{ item.id }}"
+                        placeholder="Начните вводить продукт..."
+                    >
 
-                    <input type="number" step="0.001" name="gross" value="{{ item.gross }}">
-                    <input type="number" step="0.001" name="net" value="{{ item.net }}">
-                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                    <input type="text" name="gross" value="{{ item.gross }}">
+                    <input type="text" name="net" value="{{ item.net }}">
+
+                    <div>
+                        <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                        <div class="pill-row">
+                            <span class="pill">Брутто: {{ item.gross }}</span>
+                            <span class="pill">Нетто: {{ item.net }}</span>
+                        </div>
+                    </div>
 
                     <button type="submit" name="action" value="update_product">Сохранить</button>
                     <button type="submit" name="action" value="delete_product" class="danger" onclick="return confirm('Удалить продукт из блюда?')">Удалить</button>
@@ -162,21 +252,24 @@
             </td>
         </tr>
         {% endfor %}
+        </tbody>
 
         <tr class="add-row">
             <td colspan="6">
-                <form method="post" class="add-line-6" data-type="product">
+                <form method="post" class="add-line-6 ajax-add-form" data-type="product" data-target="products-body">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_product">
+                    <input type="hidden" name="product_id" id="product-add-hidden">
 
-                    <select name="product_id">
-                        {% for product in products %}
-                            <option value="{{ product.id }}">{{ product.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="products-options"
+                        data-hidden-input="product-add-hidden"
+                        placeholder="Начните вводить продукт..."
+                    >
 
-                    <input type="number" step="0.001" name="gross" placeholder="Брутто">
-                    <input type="number" step="0.001" name="net" placeholder="Нетто">
+                    <input type="text" name="gross" placeholder="Брутто">
+                    <input type="text" name="net" placeholder="Нетто">
                     <span class="price muted">после сохранения</span>
                     <button type="submit">Добавить</button>
                 </form>
@@ -198,22 +291,33 @@
             <th>Удалить</th>
         </tr>
 
+        <tbody id="preparations-body">
         {% for item in dish.preparation_items.all %}
         <tr>
             <td colspan="6">
                 <form method="post" class="line-6" data-type="preparation">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="preparation_id" id="preparation-existing-{{ item.id }}" value="{{ item.preparation_id }}">
 
-                    <select name="preparation_id">
-                        {% for preparation in preparations %}
-                            <option value="{{ preparation.id }}" {% if item.preparation_id == preparation.id %}selected{% endif %}>{{ preparation.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="preparations-options"
+                        value="{{ item.preparation.name }}"
+                        data-hidden-input="preparation-existing-{{ item.id }}"
+                        placeholder="Начните вводить заготовку..."
+                    >
 
-                    <input type="number" step="0.001" name="gross" value="{{ item.gross }}">
-                    <input type="number" step="0.001" name="net" value="{{ item.net }}">
-                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                    <input type="text" name="gross" value="{{ item.gross }}">
+                    <input type="text" name="net" value="{{ item.net }}">
+
+                    <div>
+                        <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                        <div class="pill-row">
+                            <span class="pill">Брутто: {{ item.gross }}</span>
+                            <span class="pill">Нетто: {{ item.net }}</span>
+                        </div>
+                    </div>
 
                     <button type="submit" name="action" value="update_preparation">Сохранить</button>
                     <button type="submit" name="action" value="delete_preparation" class="danger" onclick="return confirm('Удалить заготовку из блюда?')">Удалить</button>
@@ -221,21 +325,24 @@
             </td>
         </tr>
         {% endfor %}
+        </tbody>
 
         <tr class="add-row">
             <td colspan="6">
-                <form method="post" class="add-line-6" data-type="preparation">
+                <form method="post" class="add-line-6 ajax-add-form" data-type="preparation" data-target="preparations-body">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_preparation">
+                    <input type="hidden" name="preparation_id" id="preparation-add-hidden">
 
-                    <select name="preparation_id">
-                        {% for preparation in preparations %}
-                            <option value="{{ preparation.id }}">{{ preparation.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="preparations-options"
+                        data-hidden-input="preparation-add-hidden"
+                        placeholder="Начните вводить заготовку..."
+                    >
 
-                    <input type="number" step="0.001" name="gross" placeholder="Брутто">
-                    <input type="number" step="0.001" name="net" placeholder="Нетто">
+                    <input type="text" name="gross" placeholder="Брутто">
+                    <input type="text" name="net" placeholder="Нетто">
                     <span class="price muted">после сохранения</span>
                     <button type="submit">Добавить</button>
                 </form>
@@ -256,22 +363,24 @@
             <th>Удалить</th>
         </tr>
 
+        <tbody id="packaging-body">
         {% for item in dish.packaging_items.all %}
         <tr>
             <td colspan="5">
                 <form method="post" class="line-5" data-type="packaging">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="packaging_id" id="packaging-existing-{{ item.id }}" value="{{ item.packaging_id }}">
 
-                    <select name="packaging_id">
-                        {% for packaging in packagings %}
-                            <option value="{{ packaging.id }}" {% if item.packaging_id == packaging.id %}selected{% endif %}>
-                                {{ packaging.name }} — {{ packaging.cost }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="packagings-options"
+                        value="{{ item.packaging.name }} — {{ item.packaging.cost }}"
+                        data-hidden-input="packaging-existing-{{ item.id }}"
+                        placeholder="Начните вводить упаковку..."
+                    >
 
-                    <input type="number" step="0.001" name="quantity" value="{{ item.quantity }}">
+                    <input type="text" name="quantity" value="{{ item.quantity }}">
                     <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
 
                     <button type="submit" name="action" value="update_packaging">Сохранить</button>
@@ -280,20 +389,23 @@
             </td>
         </tr>
         {% endfor %}
+        </tbody>
 
         <tr class="add-row">
             <td colspan="5">
-                <form method="post" class="add-line-5" data-type="packaging">
+                <form method="post" class="add-line-5 ajax-add-form" data-type="packaging" data-target="packaging-body">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_packaging">
+                    <input type="hidden" name="packaging_id" id="packaging-add-hidden">
 
-                    <select name="packaging_id">
-                        {% for packaging in packagings %}
-                            <option value="{{ packaging.id }}">{{ packaging.name }} — {{ packaging.cost }}</option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="packagings-options"
+                        data-hidden-input="packaging-add-hidden"
+                        placeholder="Начните вводить упаковку..."
+                    >
 
-                    <input type="number" step="0.001" name="quantity" value="1">
+                    <input type="text" name="quantity" value="1">
                     <span class="price muted">после сохранения</span>
                     <button type="submit">Добавить</button>
                 </form>
@@ -314,22 +426,24 @@
             <th>Удалить</th>
         </tr>
 
+        <tbody id="labor-body">
         {% for item in dish.labor_items.all %}
         <tr>
             <td colspan="5">
                 <form method="post" class="line-5" data-type="labor">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="employee_id" id="employee-existing-{{ item.id }}" value="{{ item.employee_id }}">
 
-                    <select name="employee_id">
-                        {% for employee in employees %}
-                            <option value="{{ employee.id }}" {% if item.employee_id == employee.id %}selected{% endif %}>
-                                {{ employee.name }} — {{ employee.hourly_rate|floatformat:0 }}/час
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="employees-options"
+                        value="{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час"
+                        data-hidden-input="employee-existing-{{ item.id }}"
+                        placeholder="Начните вводить сотрудника..."
+                    >
 
-                    <input type="number" step="0.1" name="minutes" value="{{ item.minutes }}">
+                    <input type="text" name="minutes" value="{{ item.minutes }}">
                     <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
 
                     <button type="submit" name="action" value="update_labor">Сохранить</button>
@@ -338,20 +452,23 @@
             </td>
         </tr>
         {% endfor %}
+        </tbody>
 
         <tr class="add-row">
             <td colspan="5">
-                <form method="post" class="add-line-5" data-type="labor">
+                <form method="post" class="add-line-5 ajax-add-form" data-type="labor" data-target="labor-body">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_labor">
+                    <input type="hidden" name="employee_id" id="employee-add-hidden">
 
-                    <select name="employee_id">
-                        {% for employee in employees %}
-                            <option value="{{ employee.id }}">{{ employee.name }} — {{ employee.hourly_rate|floatformat:0 }}/час</option>
-                        {% endfor %}
-                    </select>
+                    <input
+                        class="search-field"
+                        list="employees-options"
+                        data-hidden-input="employee-add-hidden"
+                        placeholder="Начните вводить сотрудника..."
+                    >
 
-                    <input type="number" step="0.1" name="minutes" placeholder="Минуты">
+                    <input type="text" name="minutes" placeholder="Минуты">
                     <span class="price muted">после сохранения</span>
                     <button type="submit">Добавить</button>
                 </form>
@@ -372,6 +489,7 @@
             <th>Удалить</th>
         </tr>
 
+        <tbody id="extra-body">
         {% for item in dish.additional_expenses.all %}
         <tr>
             <td colspan="5">
@@ -380,7 +498,7 @@
                     <input type="hidden" name="item_id" value="{{ item.id }}">
 
                     <input name="comment" value="{{ item.comment }}">
-                    <input type="number" step="0.01" name="cost" value="{{ item.cost }}">
+                    <input type="text" name="cost" value="{{ item.cost }}">
                     <div class="price">{{ item.cost|floatformat:0 }}</div>
 
                     <button type="submit" name="action" value="update_extra">Сохранить</button>
@@ -389,15 +507,16 @@
             </td>
         </tr>
         {% endfor %}
+        </tbody>
 
         <tr class="add-row">
             <td colspan="5">
-                <form method="post" class="add-line-5">
+                <form method="post" class="add-line-5 ajax-add-form" data-type="extra" data-target="extra-body">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_extra">
 
                     <input name="comment" placeholder="Например: салфетки">
-                    <input type="number" step="0.01" name="cost" placeholder="Стоимость">
+                    <input type="text" name="cost" placeholder="Стоимость">
                     <span class="price muted">после сохранения</span>
                     <button type="submit">Добавить</button>
                 </form>
@@ -407,6 +526,29 @@
 </div>
 
 <script>
+function normalizeDecimalInputs(form) {
+    form.querySelectorAll(
+        'input[name="gross"], input[name="net"], input[name="quantity"], input[name="minutes"], input[name="cost"], input[name="final_weight"], input[name="selling_price"], input[name="cooking_minutes"]'
+    ).forEach(input => {
+        input.value = input.value.replace(",", ".");
+    });
+}
+
+function setupDatalistHiddenInputs() {
+    document.querySelectorAll("input[list]").forEach(input => {
+        input.addEventListener("input", function () {
+            const datalist = document.getElementById(input.getAttribute("list"));
+            const hiddenInput = document.getElementById(input.dataset.hiddenInput);
+
+            if (!datalist || !hiddenInput) return;
+
+            const option = Array.from(datalist.options).find(option => option.value === input.value);
+
+            hiddenInput.value = option ? option.dataset.id : "";
+        });
+    });
+}
+
 function syncGrossToNet() {
     document.querySelectorAll('input[name="gross"]').forEach(function(grossInput) {
         grossInput.addEventListener("input", function() {
@@ -431,19 +573,19 @@ function setupLiveCalculation() {
         const type = form.dataset.type;
         if (!type) return;
 
-        let selectName = "";
-        if (type === "product") selectName = "product_id";
-        if (type === "preparation") selectName = "preparation_id";
-        if (type === "packaging") selectName = "packaging_id";
-        if (type === "labor") selectName = "employee_id";
+        let idInputName = "";
+        if (type === "product") idInputName = "product_id";
+        if (type === "preparation") idInputName = "preparation_id";
+        if (type === "packaging") idInputName = "packaging_id";
+        if (type === "labor") idInputName = "employee_id";
 
-        const select = form.querySelector(`[name="${selectName}"]`);
+        const idInput = form.querySelector(`[name="${idInputName}"]`);
         const gross = form.querySelector('[name="gross"]');
         const net = form.querySelector('[name="net"]');
         const minutes = form.querySelector('[name="minutes"]');
         const quantity = form.querySelector('[name="quantity"]');
 
-        let id = select ? select.value : null;
+        let id = idInput ? idInput.value : null;
         let value = 0;
 
         if (gross) value = gross.value;
@@ -464,15 +606,140 @@ function setupLiveCalculation() {
     }
 
     document.querySelectorAll("form[data-type]").forEach(form => {
-        form.querySelectorAll("input, select").forEach(el => {
+        form.querySelectorAll("input").forEach(el => {
             el.addEventListener("input", () => calculate(form));
             el.addEventListener("change", () => calculate(form));
         });
     });
 }
 
+function updateSummary(data) {
+    if (data.dish_cost !== undefined) {
+        document.getElementById("summary-cost").innerText = Math.round(data.dish_cost);
+        document.getElementById("summary-total-table").innerText = Math.round(data.dish_cost);
+    }
+
+    if (data.foodcost !== undefined) {
+        document.getElementById("summary-foodcost").innerText = Number(data.foodcost).toFixed(1);
+    }
+
+    if (data.margin !== undefined) {
+        document.getElementById("summary-margin").innerText = Math.round(data.margin);
+    }
+}
+
+function buildAjaxRow(data) {
+    const tr = document.createElement("tr");
+    tr.classList.add("ajax-added");
+
+    if (data.type === "product" || data.type === "preparation") {
+        tr.innerHTML = `
+            <td colspan="6">
+                <div class="line-6">
+                    <strong>${data.name}</strong>
+                    <div>${data.gross}</div>
+                    <div>${data.net}</div>
+                    <div>
+                        <div class="price">${Math.round(data.cost)}</div>
+                        <div class="pill-row">
+                            <span class="pill">Брутто: ${data.gross}</span>
+                            <span class="pill">Нетто: ${data.net}</span>
+                        </div>
+                    </div>
+                    <span class="muted">добавлено</span>
+                    <span></span>
+                </div>
+            </td>
+        `;
+    }
+
+    if (data.type === "packaging") {
+        tr.innerHTML = `
+            <td colspan="5">
+                <div class="line-5">
+                    <strong>${data.name}</strong>
+                    <div>${data.quantity}</div>
+                    <div class="price">${Math.round(data.cost)}</div>
+                    <span class="muted">добавлено</span>
+                    <span></span>
+                </div>
+            </td>
+        `;
+    }
+
+    if (data.type === "labor") {
+        tr.innerHTML = `
+            <td colspan="5">
+                <div class="line-5">
+                    <strong>${data.name}</strong>
+                    <div>${data.minutes}</div>
+                    <div class="price">${Math.round(data.cost)}</div>
+                    <span class="muted">добавлено</span>
+                    <span></span>
+                </div>
+            </td>
+        `;
+    }
+
+    if (data.type === "extra") {
+        tr.innerHTML = `
+            <td colspan="5">
+                <div class="line-extra">
+                    <strong>${data.name}</strong>
+                    <div>${Math.round(data.cost)}</div>
+                    <div class="price">${Math.round(data.cost)}</div>
+                    <span class="muted">добавлено</span>
+                    <span></span>
+                </div>
+            </td>
+        `;
+    }
+
+    return tr;
+}
+
+function setupAjaxAddForms() {
+    document.querySelectorAll(".ajax-add-form").forEach(form => {
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            normalizeDecimalInputs(form);
+
+            const formData = new FormData(form);
+            const response = await fetch(window.location.href, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.ok) {
+                const target = document.getElementById(form.dataset.target);
+                target.appendChild(buildAjaxRow(data));
+                updateSummary(data);
+                form.reset();
+
+                form.querySelectorAll('input[type="hidden"]').forEach(hidden => {
+                    if (hidden.name !== "action") hidden.value = "";
+                });
+            }
+        });
+    });
+}
+
+document.querySelectorAll("form").forEach(form => {
+    form.addEventListener("submit", function() {
+        normalizeDecimalInputs(form);
+    });
+});
+
+setupDatalistHiddenInputs();
 syncGrossToNet();
 setupLiveCalculation();
+setupAjaxAddForms();
 </script>
 
 {% endblock %}

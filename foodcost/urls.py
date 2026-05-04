@@ -6,10 +6,9 @@ urlpatterns = [
     # выбор страны
     path("", views.country_list, name="country_list"),
 
-    # внутри страны
-    path("c/<slug:country_slug>/", views.dish_list, name="dish_list"),
-
     # блюда
+    path("c/<slug:country_slug>/", views.dish_list, name="dish_list"),
+    path("c/<slug:country_slug>/dish/create/", views.dish_create, name="dish_create"),
     path("c/<slug:country_slug>/dish/<int:dish_id>/", views.dish_detail, name="dish_detail"),
 
     # продукты
@@ -29,6 +28,6 @@ urlpatterns = [
     # коммуналка
     path("c/<slug:country_slug>/utilities/", views.utilities_list, name="utilities_list"),
 
-    # 🔥 ВАЖНО — live расчёт
+    # live расчёт
     path("c/<slug:country_slug>/live-calculate/", views.live_calculate, name="live_calculate"),
 ]

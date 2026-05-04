@@ -23,6 +23,14 @@ from .models import (
 )
 
 
+def is_ajax(request):
+    return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+def clean_decimal(value, default="0"):
+    if value is None or value == "":
+        return default
+    return str(value).replace(",", ".")
+
 def get_country(country_slug):
     return get_object_or_404(Country, slug=country_slug)
 
@@ -34,24 +42,22 @@ def country_list(request):
     })
 
 
-def dish_list(request, country_slug):
+def dish_create(request, country_slug):
     country = get_country(country_slug)
 
-    if request.method == "POST":
-        name = request.POST.get("name")
-        final_weight = request.POST.get("final_weight") or 0
-        selling_price = request.POST.get("selling_price") or 0
-        cooking_minutes = request.POST.get("cooking_minutes") or 0
+    dish = Dish.objects.create(
+        country=country,
+        name="Новое блюдо",
+        final_weight=0,
+        selling_price=0,
+        cooking_minutes=0,
+    )
 
-        if name:
-            dish = Dish.objects.create(
-                country=country,
-                name=name,
-                final_weight=final_weight,
-                selling_price=selling_price,
-                cooking_minutes=cooking_minutes,
-            )
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+    return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+
+
+def dish_list(request, country_slug):
+    country = get_country(country_slug)
 
     dishes = list(Dish.objects.filter(country=country))
 
@@ -69,13 +75,10 @@ def dish_list(request, country_slug):
 
     if sort_type == "margin":
         dishes.sort(key=lambda dish: dish.margin(), reverse=True)
-
     elif sort_type == "foodcost":
         dishes.sort(key=lambda dish: dish.foodcost(), reverse=True)
-
     elif sort_type == "cost":
         dishes.sort(key=lambda dish: dish.calculate_cost(), reverse=True)
-
     else:
         dishes.sort(key=lambda dish: dish.name.lower())
 
@@ -85,6 +88,7 @@ def dish_list(request, country_slug):
         "filter_type": filter_type,
         "sort_type": sort_type,
     })
+
 
 def live_calculate(request, country_slug):
     country = get_country(country_slug)
@@ -130,9 +134,9 @@ def dish_detail(request, country_slug, dish_id):
         action = request.POST.get("action")
 
         if action == "save":
-            dish.name = request.POST.get("name")
-            dish.final_weight = request.POST.get("final_weight")
-            dish.selling_price = request.POST.get("selling_price")
+            dish.name = request.POST.get("name") or dish.name
+            dish.final_weight = request.POST.get("final_weight") or 0
+            dish.selling_price = request.POST.get("selling_price") or 0
             dish.cooking_minutes = request.POST.get("cooking_minutes") or 0
             dish.tech_card = request.POST.get("tech_card", "")
             dish.save()
@@ -146,11 +150,20 @@ def dish_detail(request, country_slug, dish_id):
                     last_step = DishTechStep.objects.filter(dish=dish).order_by("-step_number").first()
                     step_number = (last_step.step_number + 1) if last_step else 1
 
-                DishTechStep.objects.create(
+                step = DishTechStep.objects.create(
                     dish=dish,
                     step_number=step_number,
                     description=description,
                 )
+
+                if is_ajax(request):
+                    return JsonResponse({
+                        "ok": True,
+                        "type": "step",
+                        "id": step.id,
+                        "step_number": step.step_number,
+                        "description": step.description,
+                    })
 
         if action == "update_step":
             step = get_object_or_404(DishTechStep, id=request.POST.get("step_id"), dish=dish)
@@ -164,19 +177,34 @@ def dish_detail(request, country_slug, dish_id):
 
         if action == "add_product":
             product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
-            DishProductItem.objects.create(
+
+            item = DishProductItem.objects.create(
                 dish=dish,
                 product=product,
-                gross=request.POST.get("gross") or 0,
-                net=request.POST.get("net") or request.POST.get("gross") or 0,
+                gross=clean_decimal(request.POST.get("gross")),
+                net=clean_decimal(request.POST.get("net") or request.POST.get("gross")),
             )
+
+            if is_ajax(request):
+                return JsonResponse({
+                    "ok": True,
+                    "type": "product",
+                    "id": item.id,
+                    "name": item.product.name,
+                    "gross": str(item.gross),
+                    "net": str(item.net),
+                    "cost": round(item.calculate_cost(), 2),
+                    "dish_cost": round(dish.calculate_cost(), 2),
+                    "foodcost": round(dish.foodcost(), 2),
+                    "margin": round(dish.margin(), 2),
+                })
 
         if action == "update_product":
             item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"), dish=dish)
             product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
             item.product = product
-            item.gross = request.POST.get("gross") or 0
-            item.net = request.POST.get("net") or item.gross
+            item.gross = clean_decimal(request.POST.get("gross"))
+            item.net = clean_decimal(request.POST.get("net") or request.POST.get("gross"))
             item.save()
 
         if action == "delete_product":
@@ -185,19 +213,34 @@ def dish_detail(request, country_slug, dish_id):
 
         if action == "add_preparation":
             preparation = get_object_or_404(Preparation, id=request.POST.get("preparation_id"), country=country)
-            DishPreparationItem.objects.create(
+
+            item = DishPreparationItem.objects.create(
                 dish=dish,
                 preparation=preparation,
-                gross=request.POST.get("gross") or 0,
-                net=request.POST.get("net") or request.POST.get("gross") or 0,
+                gross=clean_decimal(request.POST.get("gross")),
+                net=clean_decimal(request.POST.get("net") or request.POST.get("gross")),
             )
+
+            if is_ajax(request):
+                return JsonResponse({
+                    "ok": True,
+                    "type": "preparation",
+                    "id": item.id,
+                    "name": item.preparation.name,
+                    "gross": str(item.gross),
+                    "net": str(item.net),
+                    "cost": round(item.calculate_cost(), 2),
+                    "dish_cost": round(dish.calculate_cost(), 2),
+                    "foodcost": round(dish.foodcost(), 2),
+                    "margin": round(dish.margin(), 2),
+                })
 
         if action == "update_preparation":
             item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"), dish=dish)
             preparation = get_object_or_404(Preparation, id=request.POST.get("preparation_id"), country=country)
             item.preparation = preparation
-            item.gross = request.POST.get("gross") or 0
-            item.net = request.POST.get("net") or item.gross
+            item.gross = clean_decimal(request.POST.get("gross"))
+            item.net = clean_decimal(request.POST.get("net") or request.POST.get("gross"))
             item.save()
 
         if action == "delete_preparation":
@@ -206,21 +249,35 @@ def dish_detail(request, country_slug, dish_id):
 
         if action == "add_packaging":
             packaging_id = request.POST.get("packaging_id")
-            quantity = request.POST.get("quantity") or 1
+            quantity = clean_decimal(request.POST.get("quantity"), "1")
 
             if packaging_id:
                 packaging = get_object_or_404(Packaging, id=packaging_id, country=country)
-                DishPackagingItem.objects.create(
+
+                item = DishPackagingItem.objects.create(
                     dish=dish,
                     packaging=packaging,
                     quantity=quantity,
                 )
 
+                if is_ajax(request):
+                    return JsonResponse({
+                        "ok": True,
+                        "type": "packaging",
+                        "id": item.id,
+                        "name": item.packaging.name,
+                        "quantity": str(item.quantity),
+                        "cost": round(item.calculate_cost(), 2),
+                        "dish_cost": round(dish.calculate_cost(), 2),
+                        "foodcost": round(dish.foodcost(), 2),
+                        "margin": round(dish.margin(), 2),
+                    })
+
         if action == "update_packaging":
             item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"), dish=dish)
             packaging = get_object_or_404(Packaging, id=request.POST.get("packaging_id"), country=country)
             item.packaging = packaging
-            item.quantity = request.POST.get("quantity") or 1
+            item.quantity = clean_decimal(request.POST.get("quantity"), "1")
             item.save()
 
         if action == "delete_packaging":
@@ -229,21 +286,35 @@ def dish_detail(request, country_slug, dish_id):
 
         if action == "add_labor":
             employee_id = request.POST.get("employee_id")
-            minutes = request.POST.get("minutes")
+            minutes = clean_decimal(request.POST.get("minutes"))
 
             if employee_id and minutes:
                 employee = get_object_or_404(Employee, id=employee_id, country=country)
-                DishLaborItem.objects.create(
+
+                item = DishLaborItem.objects.create(
                     dish=dish,
                     employee=employee,
                     minutes=minutes,
                 )
 
+                if is_ajax(request):
+                    return JsonResponse({
+                        "ok": True,
+                        "type": "labor",
+                        "id": item.id,
+                        "name": item.employee.name,
+                        "minutes": str(item.minutes),
+                        "cost": round(item.calculate_cost(), 2),
+                        "dish_cost": round(dish.calculate_cost(), 2),
+                        "foodcost": round(dish.foodcost(), 2),
+                        "margin": round(dish.margin(), 2),
+                    })
+
         if action == "update_labor":
             item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"), dish=dish)
             employee = get_object_or_404(Employee, id=request.POST.get("employee_id"), country=country)
             item.employee = employee
-            item.minutes = request.POST.get("minutes") or 0
+            item.minutes = clean_decimal(request.POST.get("minutes"))
             item.save()
 
         if action == "delete_labor":
@@ -252,24 +323,44 @@ def dish_detail(request, country_slug, dish_id):
 
         if action == "add_extra":
             comment = request.POST.get("comment")
-            cost = request.POST.get("cost")
+            cost = clean_decimal(request.POST.get("cost"))
 
             if comment and cost:
-                DishAdditionalExpense.objects.create(
+                item = DishAdditionalExpense.objects.create(
                     dish=dish,
                     comment=comment,
                     cost=cost,
                 )
 
+                if is_ajax(request):
+                    return JsonResponse({
+                        "ok": True,
+                        "type": "extra",
+                        "id": item.id,
+                        "name": item.comment,
+                        "cost": round(item.cost, 2),
+                        "dish_cost": round(dish.calculate_cost(), 2),
+                        "foodcost": round(dish.foodcost(), 2),
+                        "margin": round(dish.margin(), 2),
+                    })
+
         if action == "update_extra":
             item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"), dish=dish)
             item.comment = request.POST.get("comment")
-            item.cost = request.POST.get("cost") or 0
+            item.cost = clean_decimal(request.POST.get("cost"))
             item.save()
 
         if action == "delete_extra":
             item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"), dish=dish)
             item.delete()
+
+        if is_ajax(request):
+            return JsonResponse({
+                "ok": True,
+                "dish_cost": round(dish.calculate_cost(), 2),
+                "foodcost": round(dish.foodcost(), 2),
+                "margin": round(dish.margin(), 2),
+            })
 
         return redirect(f"/c/{country.slug}/dish/{dish.id}/")
 
@@ -348,11 +439,53 @@ def product_detail(request, country_slug, product_id):
 
     prices = product.prices.order_by("date_from")
 
+    dish_items = DishProductItem.objects.filter(
+        product=product,
+        dish__country=country,
+    ).select_related("dish")
+
+    preparation_items = PreparationItem.objects.filter(
+        product=product,
+        preparation__country=country,
+    ).select_related("preparation")
+
+    affected_dishes = []
+
+    for item in dish_items:
+        affected_dishes.append({
+            "type": "Блюдо напрямую",
+            "name": item.dish.name,
+            "url": f"/c/{country.slug}/dish/{item.dish.id}/",
+            "quantity": item.gross,
+            "cost": item.calculate_cost(),
+            "dish_cost": item.dish.calculate_cost(),
+            "foodcost": item.dish.foodcost(),
+        })
+
+    for prep_item in preparation_items:
+        preparation = prep_item.preparation
+
+        for dish_prep_item in DishPreparationItem.objects.filter(
+            preparation=preparation,
+            dish__country=country,
+        ).select_related("dish"):
+            affected_dishes.append({
+                "type": f"Через заготовку: {preparation.name}",
+                "name": dish_prep_item.dish.name,
+                "url": f"/c/{country.slug}/dish/{dish_prep_item.dish.id}/",
+                "quantity": dish_prep_item.gross,
+                "cost": dish_prep_item.calculate_cost(),
+                "dish_cost": dish_prep_item.dish.calculate_cost(),
+                "foodcost": dish_prep_item.dish.foodcost(),
+            })
+
     return render(request, "foodcost/product_detail.html", {
         "country": country,
         "product": product,
         "prices": prices,
-        "affected_dishes": [],
+        "affected_dishes": affected_dishes,
+        "preparation_items": preparation_items,
+        "dish_items": dish_items,
     })
 
 
@@ -429,6 +562,7 @@ def preparation_detail(request, country_slug, prep_id):
         "total_gross": total_gross,
         "total_net": total_net,
     })
+
 
 def employee_list(request, country_slug):
     country = get_country(country_slug)
