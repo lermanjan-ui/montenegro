@@ -5,146 +5,171 @@
 {% block content %}
 
 <style>
-    .back {
-        display: inline-block;
-        margin-bottom: 16px;
-        color: #374151;
-        text-decoration: none;
-        font-weight: bold;
-    }
-
-    .muted {
-        color: #6b7280;
-    }
+    .back { display:inline-block; margin-bottom:16px; color:#374151; text-decoration:none; font-weight:bold; }
+    .muted { color:#6b7280; }
 
     .summary {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        margin-top: 16px;
+        display:grid;
+        grid-template-columns:repeat(4, 1fr);
+        gap:12px;
+        margin-top:16px;
     }
 
     .metric {
-        background: #ecfdf5;
-        color: #047857;
-        border-radius: 16px;
-        padding: 14px;
-        font-weight: bold;
+        background:#ecfdf5;
+        color:#047857;
+        border-radius:16px;
+        padding:14px;
+        font-weight:bold;
     }
 
     .metric span {
-        display: block;
-        color: #065f46;
-        font-size: 13px;
-        margin-bottom: 4px;
+        display:block;
+        color:#065f46;
+        font-size:13px;
+        margin-bottom:4px;
     }
 
     .main-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr auto;
-        gap: 14px;
-        align-items: end;
-    }
-
-    .ingredient-list {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .ingredient-card {
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
-        padding: 18px;
-    }
-
-    .ingredient-form {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
-        gap: 12px;
-        align-items: end;
-    }
-
-    .ingredient-info {
-        margin-top: 10px;
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        font-size: 14px;
-        color: #6b7280;
-        font-weight: bold;
-    }
-
-    .pill {
-        background: white;
-        border-radius: 999px;
-        padding: 7px 11px;
-        border: 1px solid #e5e7eb;
-    }
-
-    .add-card {
-        background: #f3f4f6;
-        border-radius: 18px;
-        padding: 18px;
-        margin-top: 18px;
-    }
-
-    .add-form {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr auto;
-        gap: 12px;
-        align-items: end;
+        display:grid;
+        grid-template-columns:2fr 1fr 1fr auto;
+        gap:14px;
+        align-items:end;
     }
 
     label {
-        font-weight: bold;
-        font-size: 14px;
-        margin-bottom: 6px;
-        display: block;
+        font-weight:bold;
+        font-size:14px;
+        margin-bottom:6px;
+        display:block;
     }
 
-    input, select {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 12px;
-        font-size: 15px;
-        box-sizing: border-box;
-        background: white;
+    input {
+        width:100%;
+        padding:12px;
+        border:1px solid #d1d5db;
+        border-radius:12px;
+        font-size:15px;
+        box-sizing:border-box;
+        background:white;
     }
 
     button {
-        background: #111827;
-        color: white;
-        border: 0;
-        border-radius: 12px;
-        padding: 12px 16px;
-        cursor: pointer;
-        font-weight: bold;
-        white-space: nowrap;
+        background:#111827;
+        color:white;
+        border:0;
+        border-radius:12px;
+        padding:12px 16px;
+        cursor:pointer;
+        font-weight:bold;
+        white-space:nowrap;
     }
 
-    .danger {
-        background: #fee2e2;
-        color: #991b1b;
+    .danger { background:#fee2e2; color:#991b1b; }
+
+    .edit-btn {
+        background:#e5e7eb;
+        color:#111827;
+        padding:8px 14px;
+        border-radius:10px;
+        font-size:14px;
+        width:auto;
+        height:auto;
+    }
+
+    table {
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    th {
+        background:#111827;
+        color:white;
+        padding:14px;
+        text-align:left;
+    }
+
+    td {
+        padding:12px;
+        border-bottom:1px solid #e5e7eb;
     }
 
     .price {
-        color: #047857;
-        font-weight: bold;
-        white-space: nowrap;
+        color:#047857;
+        font-weight:bold;
+        white-space:nowrap;
     }
 
-    @media (max-width: 1000px) {
+    .add-row {
+        background:#f9fafb;
+    }
+
+    .line-6 {
+        display:grid;
+        grid-template-columns:2fr 1fr 1fr 1fr auto auto;
+        gap:10px;
+        align-items:center;
+    }
+
+    .add-line-6 {
+        display:grid;
+        grid-template-columns:2fr 1fr 1fr 1fr auto;
+        gap:10px;
+        align-items:center;
+    }
+
+    .view-mode {
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .edit-mode {
+        display:none;
+    }
+
+    .editing .view-mode {
+        display:none;
+    }
+
+    .editing .edit-mode {
+        display:block;
+    }
+
+    .search-field {
+        background:#f9fafb;
+    }
+
+    .pill-row {
+        display:flex;
+        gap:6px;
+        flex-wrap:wrap;
+        margin-top:6px;
+    }
+
+    .pill {
+        background:#f3f4f6;
+        color:#374151;
+        border-radius:999px;
+        padding:5px 9px;
+        font-size:12px;
+        font-weight:bold;
+    }
+
+    @media (max-width:1000px) {
         .summary,
         .main-grid,
-        .ingredient-form,
-        .add-form {
-            grid-template-columns: 1fr;
+        .line-6,
+        .add-line-6 {
+            grid-template-columns:1fr;
         }
     }
 </style>
+
+<datalist id="products-options">
+    {% for product in products %}
+        <option value="{{ product.name }}" data-id="{{ product.id }}"></option>
+    {% endfor %}
+</datalist>
 
 <a class="back" href="/c/{{ country.slug }}/preparations/">← Назад к заготовкам</a>
 
@@ -190,12 +215,12 @@
 
             <div>
                 <label>Выход, кг</label>
-                <input type="number" step="0.001" name="final_weight" value="{{ preparation.final_weight }}">
+                <input type="text" name="final_weight" value="{{ preparation.final_weight }}">
             </div>
 
             <div>
                 <label>Время, мин</label>
-                <input type="number" step="0.1" name="cooking_minutes" value="{{ preparation.cooking_minutes }}">
+                <input type="text" name="cooking_minutes" value="{{ preparation.cooking_minutes }}">
             </div>
 
             <button type="submit">Сохранить</button>
@@ -206,98 +231,125 @@
 <div class="card">
     <h2>Ингредиенты</h2>
 
-    <div class="ingredient-list">
+    <table>
+        <tr>
+            <th>Продукт</th>
+            <th>Брутто</th>
+            <th>Нетто</th>
+            <th>Стоимость</th>
+            <th></th>
+            <th></th>
+        </tr>
+
+        <tbody id="ingredients-body">
         {% for item in preparation.items.all %}
-        <div class="ingredient-card">
-            <form method="post" class="ingredient-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="update_item">
-                <input type="hidden" name="item_id" value="{{ item.id }}">
+        <tr id="ingredient-row-{{ item.id }}">
+            <td colspan="6">
+                <form method="post" class="line-6 editable-row">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_item">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="product_id" id="product-existing-{{ item.id }}" value="{{ item.product_id }}">
 
-                <div>
-                    <label>Продукт</label>
-                    <select name="product_id">
-                        {% for product in products %}
-                            <option value="{{ product.id }}" {% if item.product_id == product.id %}selected{% endif %}>
-                                {{ product.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+                    <div>
+                        <div class="view-mode">{{ item.product.name }}</div>
+                        <input
+                            class="edit-mode search-field"
+                            list="products-options"
+                            value="{{ item.product.name }}"
+                            data-hidden-input="product-existing-{{ item.id }}"
+                            placeholder="Начните вводить продукт..."
+                        >
+                    </div>
 
-                <div>
-                    <label>Брутто, кг</label>
-                    <input type="number" step="0.001" name="gross" value="{{ item.gross }}">
-                </div>
+                    <div>
+                        <div class="view-mode">{{ item.gross }}</div>
+                        <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                    </div>
 
-                <div>
-                    <label>Нетто, кг</label>
-                    <input type="number" step="0.001" name="net" value="{{ item.net }}">
-                </div>
+                    <div>
+                        <div class="view-mode">{{ item.net }}</div>
+                        <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                    </div>
 
-                <div>
-                    <label>Стоимость</label>
-                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
-                </div>
+                   <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
 
-                <button type="submit">Сохранить</button>
+                    <button type="button" class="edit-btn">Редактировать</button>
 
-                <button type="submit"
-                        name="action"
-                        value="delete_item"
-                        class="danger"
-                        onclick="return confirm('Удалить ингредиент из заготовки?')">
-                    Удалить
-                </button>
-            </form>
-
-            <div class="ingredient-info">
-                <span class="pill">Добавлено брутто: {{ item.gross|floatformat:3 }} кг</span>
-                <span class="pill">Добавлено нетто: {{ item.net|floatformat:3 }} кг</span>
-                <span class="pill">Стоимость: {{ item.calculate_cost|floatformat:0 }}</span>
-            </div>
-        </div>
+                    <button type="submit"
+                            name="action"
+                            value="delete_item"
+                            class="danger"
+                            onclick="return confirm('Удалить ингредиент из заготовки?')">
+                        Удалить
+                    </button>
+                </form>
+            </td>
+        </tr>
         {% empty %}
-            <p class="muted">Ингредиентов пока нет.</p>
+        <tr>
+            <td colspan="6" class="muted">Ингредиентов пока нет.</td>
+        </tr>
         {% endfor %}
-    </div>
+        </tbody>
 
-    <div class="add-card">
-        <h3>Добавить ингредиент</h3>
+        <tr class="add-row">
+            <td colspan="6">
+                <form method="post" class="add-line-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_item">
+                    <input type="hidden" name="product_id" id="product-add-hidden">
 
-        <form method="post" class="add-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="add_item">
+                    <input
+                        class="search-field"
+                        list="products-options"
+                        data-hidden-input="product-add-hidden"
+                        placeholder="Начните вводить продукт..."
+                    >
 
-            <div>
-                <label>Продукт</label>
-                <select name="product_id">
-                    {% for product in products %}
-                        <option value="{{ product.id }}">{{ product.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                    <input type="text" name="gross" placeholder="Брутто">
+                    <input type="text" name="net" placeholder="Нетто">
 
-            <div>
-                <label>Брутто, кг</label>
-                <input type="number" step="0.001" name="gross" placeholder="1.000">
-            </div>
+                    <span class="price muted">после сохранения</span>
 
-            <div>
-                <label>Нетто, кг</label>
-                <input type="number" step="0.001" name="net" placeholder="0.800">
-            </div>
-
-            <button type="submit">Добавить</button>
-        </form>
-    </div>
+                    <button type="submit">Добавить</button>
+                </form>
+            </td>
+        </tr>
+    </table>
 </div>
 
 <script>
-function syncGrossToNet() {
-    const grossInputs = document.querySelectorAll('input[name="gross"]');
+function normalizeDecimalInputs(form) {
+    form.querySelectorAll('input[name="gross"], input[name="net"], input[name="final_weight"], input[name="cooking_minutes"]').forEach(input => {
+        input.value = input.value.replace(",", ".");
+    });
+}
 
-    grossInputs.forEach(function(grossInput) {
+function fillHiddenFromDatalist(input) {
+    const datalist = document.getElementById(input.getAttribute("list"));
+    const hiddenInput = document.getElementById(input.dataset.hiddenInput);
+
+    if (!datalist || !hiddenInput) return;
+
+    const option = Array.from(datalist.options).find(option => option.value === input.value);
+    hiddenInput.value = option ? option.dataset.id : "";
+}
+
+function setupDatalistHiddenInputs() {
+    document.querySelectorAll("input[list]").forEach(input => {
+        input.addEventListener("input", function () {
+            fillHiddenFromDatalist(input);
+        });
+
+        input.addEventListener("change", function () {
+            fillHiddenFromDatalist(input);
+        });
+    });
+}
+
+function syncGrossToNet() {
+    document.querySelectorAll('input[name="gross"]').forEach(function(grossInput) {
         grossInput.addEventListener("input", function() {
             const form = grossInput.closest("form");
             const netInput = form.querySelector('input[name="net"]');
@@ -308,15 +360,63 @@ function syncGrossToNet() {
         });
     });
 
-    const netInputs = document.querySelectorAll('input[name="net"]');
-
-    netInputs.forEach(function(netInput) {
+    document.querySelectorAll('input[name="net"]').forEach(function(netInput) {
         netInput.addEventListener("input", function() {
             netInput.dataset.changed = "true";
         });
     });
 }
 
+document.addEventListener("click", function(e) {
+    const btn = e.target.closest(".edit-btn");
+    if (!btn) return;
+
+    e.preventDefault();
+
+    const form = btn.closest("form");
+
+    if (!form.classList.contains("editing")) {
+        form.classList.add("editing");
+
+        form.querySelectorAll(".view-mode").forEach(el => el.style.display = "none");
+        form.querySelectorAll(".edit-mode").forEach(el => el.style.display = "block");
+
+        btn.textContent = "Сохранить";
+        return;
+    }
+
+    form.querySelectorAll("input[list]").forEach(input => {
+        fillHiddenFromDatalist(input);
+    });
+
+    normalizeDecimalInputs(form);
+
+    localStorage.setItem("preparationDetailScrollY", window.scrollY);
+    form.submit();
+});
+
+document.querySelectorAll("form").forEach(form => {
+    form.addEventListener("submit", function() {
+        normalizeDecimalInputs(form);
+
+        form.querySelectorAll("input[list]").forEach(input => {
+            fillHiddenFromDatalist(input);
+        });
+
+        localStorage.setItem("preparationDetailScrollY", window.scrollY);
+    });
+});
+
+window.addEventListener("load", function() {
+    const savedScroll = localStorage.getItem("preparationDetailScrollY");
+
+    if (savedScroll !== null) {
+        window.scrollTo(0, parseInt(savedScroll));
+        localStorage.removeItem("preparationDetailScrollY");
+    }
+});
+
+setupDatalistHiddenInputs();
 syncGrossToNet();
 </script>
 

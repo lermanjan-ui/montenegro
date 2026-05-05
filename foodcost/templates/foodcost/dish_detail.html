@@ -48,7 +48,7 @@
 
     .line-6 {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr 120px 120px;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
         gap: 10px;
         align-items: center;
     }
@@ -112,6 +112,30 @@
             grid-template-columns: 1fr;
         }
     }
+	.edit-mode {
+	    display: none;
+	}
+	.edit-btn {
+	    background: #e5e7eb;
+	    color: #111827;
+	    padding: 8px 14px;
+	    border-radius: 10px;
+	    font-size: 14px;
+	    width: auto;
+	    height: auto;
+	}
+
+	.line-6 {
+	    align-items: center;
+	}
+
+	.line-6 button {
+	    width: auto;
+	}
+	.edit-btn {
+	    background: #e5e7eb;
+	    color: #111827;
+	}
 </style>
 
 <datalist id="products-options">
@@ -214,40 +238,53 @@
             <th>Брутто</th>
             <th>Нетто</th>
             <th>Стоимость</th>
-            <th>Сохранить</th>
-            <th>Удалить</th>
+            <th></th>
+            <th></th>
         </tr>
 
         <tbody id="products-body">
         {% for item in dish.product_items.all %}
-        <tr>
+        <tr id="product-row-{{ item.id }}">
             <td colspan="6">
-                <form method="post" class="line-6" data-type="product">
+                <form method="post" class="line-6 editable-row" data-type="product">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
                     <input type="hidden" name="product_id" id="product-existing-{{ item.id }}" value="{{ item.product_id }}">
 
-                    <input
-                        class="search-field"
-                        list="products-options"
-                        value="{{ item.product.name }}"
-                        data-hidden-input="product-existing-{{ item.id }}"
-                        placeholder="Начните вводить продукт..."
-                    >
-
-                    <input type="text" name="gross" value="{{ item.gross }}">
-                    <input type="text" name="net" value="{{ item.net }}">
-
                     <div>
-                        <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
-                        <div class="pill-row">
-                            <span class="pill">Брутто: {{ item.gross }}</span>
-                            <span class="pill">Нетто: {{ item.net }}</span>
-                        </div>
+                        <div class="view-mode"><strong>{{ item.product.name }}</strong></div>
+                        <input
+                            class="edit-mode search-field"
+                            list="products-options"
+                            value="{{ item.product.name }}"
+                            data-hidden-input="product-existing-{{ item.id }}"
+                            placeholder="Начните вводить продукт..."
+                        >
                     </div>
 
-                    <button type="submit" name="action" value="update_product">Сохранить</button>
-                    <button type="submit" name="action" value="delete_product" class="danger" onclick="return confirm('Удалить продукт из блюда?')">Удалить</button>
+                    <div>
+                        <div class="view-mode">{{ item.gross }}</div>
+                        <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                    </div>
+
+                    <div>
+                        <div class="view-mode">{{ item.net }}</div>
+                        <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                    </div>
+
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+
+                    <button type="button" class="edit-btn" data-action="update_product">
+                        Редактировать
+                    </button>
+
+                    <button type="submit"
+                            name="action"
+                            value="delete_product"
+                            class="danger"
+                            onclick="return confirm('Удалить продукт?')">
+                        Удалить
+                    </button>
                 </form>
             </td>
         </tr>
@@ -256,7 +293,7 @@
 
         <tr class="add-row">
             <td colspan="6">
-                <form method="post" class="add-line-6 ajax-add-form" data-type="product" data-target="products-body">
+                <form method="post" class="add-line-6">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_product">
                     <input type="hidden" name="product_id" id="product-add-hidden">
@@ -287,40 +324,55 @@
             <th>Брутто</th>
             <th>Нетто</th>
             <th>Стоимость</th>
-            <th>Сохранить</th>
-            <th>Удалить</th>
+            <th></th>
+            <th></th>
         </tr>
 
         <tbody id="preparations-body">
         {% for item in dish.preparation_items.all %}
-        <tr>
+        <tr id="prep-row-{{ item.id }}">
             <td colspan="6">
-                <form method="post" class="line-6" data-type="preparation">
+                <form method="post" class="line-6 editable-row" data-type="preparation">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <input type="hidden" name="preparation_id" id="preparation-existing-{{ item.id }}" value="{{ item.preparation_id }}">
-
-                    <input
-                        class="search-field"
-                        list="preparations-options"
-                        value="{{ item.preparation.name }}"
-                        data-hidden-input="preparation-existing-{{ item.id }}"
-                        placeholder="Начните вводить заготовку..."
-                    >
-
-                    <input type="text" name="gross" value="{{ item.gross }}">
-                    <input type="text" name="net" value="{{ item.net }}">
+                    <input type="hidden" name="preparation_id" id="prep-{{ item.id }}" value="{{ item.preparation_id }}">
 
                     <div>
-                        <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
-                        <div class="pill-row">
-                            <span class="pill">Брутто: {{ item.gross }}</span>
-                            <span class="pill">Нетто: {{ item.net }}</span>
-                        </div>
+                        <div class="view-mode"><strong>{{ item.preparation.name }}</strong></div>
+                        <input
+                            class="edit-mode search-field"
+                            list="preparations-options"
+                            value="{{ item.preparation.name }}"
+                            data-hidden-input="prep-{{ item.id }}"
+                            placeholder="Начните вводить заготовку..."
+                        >
                     </div>
 
-                    <button type="submit" name="action" value="update_preparation">Сохранить</button>
-                    <button type="submit" name="action" value="delete_preparation" class="danger" onclick="return confirm('Удалить заготовку из блюда?')">Удалить</button>
+                    <div>
+                        <div class="view-mode">{{ item.gross }}</div>
+                        <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                    </div>
+
+                    <div>
+                        <div class="view-mode">{{ item.net }}</div>
+                        <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                    </div>
+
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+
+                    <button type="button"
+                            class="edit-btn"
+                            data-action="update_preparation">
+                        Редактировать
+                    </button>
+
+                    <button type="submit"
+                            name="action"
+                            value="delete_preparation"
+                            class="danger"
+                            onclick="return confirm('Удалить заготовку?')">
+                        Удалить
+                    </button>
                 </form>
             </td>
         </tr>
@@ -329,21 +381,23 @@
 
         <tr class="add-row">
             <td colspan="6">
-                <form method="post" class="add-line-6 ajax-add-form" data-type="preparation" data-target="preparations-body">
+                <form method="post" class="add-line-6">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_preparation">
-                    <input type="hidden" name="preparation_id" id="preparation-add-hidden">
+                    <input type="hidden" name="preparation_id" id="prep-add-hidden">
 
                     <input
                         class="search-field"
                         list="preparations-options"
-                        data-hidden-input="preparation-add-hidden"
+                        data-hidden-input="prep-add-hidden"
                         placeholder="Начните вводить заготовку..."
                     >
 
                     <input type="text" name="gross" placeholder="Брутто">
                     <input type="text" name="net" placeholder="Нетто">
+
                     <span class="price muted">после сохранения</span>
+
                     <button type="submit">Добавить</button>
                 </form>
             </td>
@@ -359,32 +413,50 @@
             <th>Упаковка</th>
             <th>Количество</th>
             <th>Стоимость</th>
-            <th>Сохранить</th>
-            <th>Удалить</th>
+            <th></th>
+            <th></th>
         </tr>
 
         <tbody id="packaging-body">
         {% for item in dish.packaging_items.all %}
-        <tr>
+        <tr id="packaging-row-{{ item.id }}">
             <td colspan="5">
-                <form method="post" class="line-5" data-type="packaging">
+                <form method="post" class="line-5 editable-row" data-type="packaging">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
                     <input type="hidden" name="packaging_id" id="packaging-existing-{{ item.id }}" value="{{ item.packaging_id }}">
 
-                    <input
-                        class="search-field"
-                        list="packagings-options"
-                        value="{{ item.packaging.name }} — {{ item.packaging.cost }}"
-                        data-hidden-input="packaging-existing-{{ item.id }}"
-                        placeholder="Начните вводить упаковку..."
-                    >
+                    <div>
+                        <div class="view-mode"><strong>{{ item.packaging.name }} — {{ item.packaging.cost }}</strong></div>
+                        <input
+                            class="edit-mode search-field"
+                            list="packagings-options"
+                            value="{{ item.packaging.name }} — {{ item.packaging.cost }}"
+                            data-hidden-input="packaging-existing-{{ item.id }}"
+                            placeholder="Начните вводить упаковку..."
+                        >
+                    </div>
 
-                    <input type="text" name="quantity" value="{{ item.quantity }}">
+                    <div>
+                        <div class="view-mode">{{ item.quantity }}</div>
+                        <input class="edit-mode" type="text" name="quantity" value="{{ item.quantity }}">
+                    </div>
+
                     <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
 
-                    <button type="submit" name="action" value="update_packaging">Сохранить</button>
-                    <button type="submit" name="action" value="delete_packaging" class="danger" onclick="return confirm('Удалить упаковку из блюда?')">Удалить</button>
+                    <button type="button"
+                            class="edit-btn"
+                            data-action="update_packaging">
+                        Редактировать
+                    </button>
+
+                    <button type="submit"
+                            name="action"
+                            value="delete_packaging"
+                            class="danger"
+                            onclick="return confirm('Удалить упаковку?')">
+                        Удалить
+                    </button>
                 </form>
             </td>
         </tr>
@@ -393,7 +465,7 @@
 
         <tr class="add-row">
             <td colspan="5">
-                <form method="post" class="add-line-5 ajax-add-form" data-type="packaging" data-target="packaging-body">
+                <form method="post" class="add-line-5">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_packaging">
                     <input type="hidden" name="packaging_id" id="packaging-add-hidden">
@@ -406,14 +478,15 @@
                     >
 
                     <input type="text" name="quantity" value="1">
+
                     <span class="price muted">после сохранения</span>
+
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
     </table>
 </div>
-
 <div class="card">
     <h2>ФОТ</h2>
 
@@ -422,41 +495,67 @@
             <th>Сотрудник</th>
             <th>Минуты</th>
             <th>Стоимость</th>
-            <th>Сохранить</th>
-            <th>Удалить</th>
+            <th></th>
+            <th></th>
         </tr>
 
         <tbody id="labor-body">
         {% for item in dish.labor_items.all %}
-        <tr>
+        <tr id="labor-row-{{ item.id }}">
             <td colspan="5">
-                <form method="post" class="line-5" data-type="labor">
+                <form method="post" class="line-5 editable-row" data-type="labor">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
                     <input type="hidden" name="employee_id" id="employee-existing-{{ item.id }}" value="{{ item.employee_id }}">
 
-                    <input
-                        class="search-field"
-                        list="employees-options"
-                        value="{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час"
-                        data-hidden-input="employee-existing-{{ item.id }}"
-                        placeholder="Начните вводить сотрудника..."
-                    >
+                    <!-- СОТРУДНИК -->
+                    <div>
+                        <div class="view-mode">
+                            <strong>{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час</strong>
+                        </div>
+                        <input
+                            class="edit-mode search-field"
+                            list="employees-options"
+                            value="{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час"
+                            data-hidden-input="employee-existing-{{ item.id }}"
+                            placeholder="Начните вводить сотрудника..."
+                        >
+                    </div>
 
-                    <input type="text" name="minutes" value="{{ item.minutes }}">
+                    <!-- МИНУТЫ -->
+                    <div>
+                        <div class="view-mode">{{ item.minutes }}</div>
+                        <input class="edit-mode" type="text" name="minutes" value="{{ item.minutes }}">
+                    </div>
+
+                    <!-- СТОИМОСТЬ -->
                     <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
 
-                    <button type="submit" name="action" value="update_labor">Сохранить</button>
-                    <button type="submit" name="action" value="delete_labor" class="danger" onclick="return confirm('Удалить ФОТ из блюда?')">Удалить</button>
+                    <!-- РЕДАКТИРОВАТЬ -->
+                    <button type="button"
+                            class="edit-btn"
+                            data-action="update_labor">
+                        Редактировать
+                    </button>
+
+                    <!-- УДАЛИТЬ -->
+                    <button type="submit"
+                            name="action"
+                            value="delete_labor"
+                            class="danger"
+                            onclick="return confirm('Удалить сотрудника?')">
+                        Удалить
+                    </button>
                 </form>
             </td>
         </tr>
         {% endfor %}
         </tbody>
 
+        <!-- ДОБАВЛЕНИЕ -->
         <tr class="add-row">
             <td colspan="5">
-                <form method="post" class="add-line-5 ajax-add-form" data-type="labor" data-target="labor-body">
+                <form method="post" class="add-line-5">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_labor">
                     <input type="hidden" name="employee_id" id="employee-add-hidden">
@@ -469,11 +568,14 @@
                     >
 
                     <input type="text" name="minutes" placeholder="Минуты">
+
                     <span class="price muted">после сохранения</span>
+
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
+
     </table>
 </div>
 
@@ -485,43 +587,71 @@
             <th>Комментарий</th>
             <th>Сумма</th>
             <th>Стоимость</th>
-            <th>Сохранить</th>
-            <th>Удалить</th>
+            <th></th>
+            <th></th>
         </tr>
 
         <tbody id="extra-body">
         {% for item in dish.additional_expenses.all %}
-        <tr>
+        <tr id="extra-row-{{ item.id }}">
             <td colspan="5">
-                <form method="post" class="line-extra">
+                <form method="post" class="line-extra editable-row">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                    <input name="comment" value="{{ item.comment }}">
-                    <input type="text" name="cost" value="{{ item.cost }}">
+                    <!-- КОММЕНТ -->
+                    <div>
+                        <div class="view-mode"><strong>{{ item.comment }}</strong></div>
+                        <input class="edit-mode" name="comment" value="{{ item.comment }}">
+                    </div>
+
+                    <!-- СУММА -->
+                    <div>
+                        <div class="view-mode">{{ item.cost }}</div>
+                        <input class="edit-mode" type="text" name="cost" value="{{ item.cost }}">
+                    </div>
+
+                    <!-- СТОИМОСТЬ -->
                     <div class="price">{{ item.cost|floatformat:0 }}</div>
 
-                    <button type="submit" name="action" value="update_extra">Сохранить</button>
-                    <button type="submit" name="action" value="delete_extra" class="danger" onclick="return confirm('Удалить доп расход?')">Удалить</button>
+                    <!-- РЕДАКТИРОВАТЬ -->
+                    <button type="button"
+                            class="edit-btn"
+                            data-action="update_extra">
+                        Редактировать
+                    </button>
+
+                    <!-- УДАЛИТЬ -->
+                    <button type="submit"
+                            name="action"
+                            value="delete_extra"
+                            class="danger"
+                            onclick="return confirm('Удалить расход?')">
+                        Удалить
+                    </button>
                 </form>
             </td>
         </tr>
         {% endfor %}
         </tbody>
 
+        <!-- ДОБАВЛЕНИЕ -->
         <tr class="add-row">
             <td colspan="5">
-                <form method="post" class="add-line-5 ajax-add-form" data-type="extra" data-target="extra-body">
+                <form method="post" class="add-line-5">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_extra">
 
                     <input name="comment" placeholder="Например: салфетки">
                     <input type="text" name="cost" placeholder="Стоимость">
+
                     <span class="price muted">после сохранения</span>
+
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
+
     </table>
 </div>
 
@@ -537,16 +667,24 @@ function normalizeDecimalInputs(form) {
 function setupDatalistHiddenInputs() {
     document.querySelectorAll("input[list]").forEach(input => {
         input.addEventListener("input", function () {
-            const datalist = document.getElementById(input.getAttribute("list"));
-            const hiddenInput = document.getElementById(input.dataset.hiddenInput);
+            fillHiddenFromDatalist(input);
+        });
 
-            if (!datalist || !hiddenInput) return;
-
-            const option = Array.from(datalist.options).find(option => option.value === input.value);
-
-            hiddenInput.value = option ? option.dataset.id : "";
+        input.addEventListener("change", function () {
+            fillHiddenFromDatalist(input);
         });
     });
+}
+
+function fillHiddenFromDatalist(input) {
+    const datalist = document.getElementById(input.getAttribute("list"));
+    const hiddenInput = document.getElementById(input.dataset.hiddenInput);
+
+    if (!datalist || !hiddenInput) return;
+
+    const option = Array.from(datalist.options).find(option => option.value === input.value);
+
+    hiddenInput.value = option ? option.dataset.id : "";
 }
 
 function syncGrossToNet() {
@@ -705,7 +843,19 @@ function setupAjaxAddForms() {
 
             normalizeDecimalInputs(form);
 
+            form.querySelectorAll("input[list]").forEach(input => {
+                fillHiddenFromDatalist(input);
+            });
+
+            const requiredHidden = form.querySelector('input[type="hidden"][name$="_id"]');
+
+            if (requiredHidden && !requiredHidden.value) {
+                alert("Выберите значение из списка");
+                return;
+            }
+
             const formData = new FormData(form);
+
             const response = await fetch(window.location.href, {
                 method: "POST",
                 body: formData,
@@ -716,16 +866,26 @@ function setupAjaxAddForms() {
 
             const data = await response.json();
 
-            if (data.ok) {
-                const target = document.getElementById(form.dataset.target);
-                target.appendChild(buildAjaxRow(data));
-                updateSummary(data);
-                form.reset();
-
-                form.querySelectorAll('input[type="hidden"]').forEach(hidden => {
-                    if (hidden.name !== "action") hidden.value = "";
-                });
+            if (!data.ok) {
+                alert("Ошибка добавления");
+                console.log(data);
+                return;
             }
+
+            const target = document.getElementById(form.dataset.target);
+
+            if (target) {
+                target.appendChild(buildAjaxRow(data));
+            }
+
+            updateSummary(data);
+            form.reset();
+
+            form.querySelectorAll('input[type="hidden"]').forEach(hidden => {
+                if (hidden.name !== "action") {
+                    hidden.value = "";
+                }
+            });
         });
     });
 }
@@ -733,13 +893,83 @@ function setupAjaxAddForms() {
 document.querySelectorAll("form").forEach(form => {
     form.addEventListener("submit", function() {
         normalizeDecimalInputs(form);
+
+        if (!form.classList.contains("ajax-add-form")) {
+            localStorage.setItem("dishDetailScrollY", window.scrollY);
+        }
     });
+});
+
+document.addEventListener("click", function(e) {
+    const btn = e.target.closest(".edit-btn");
+    if (!btn) return;
+
+    e.preventDefault();
+
+    const form = btn.closest("form");
+
+    if (!form.classList.contains("editing")) {
+        form.classList.add("editing");
+
+        form.querySelectorAll(".view-mode").forEach(el => el.style.display = "none");
+        form.querySelectorAll(".edit-mode").forEach(el => el.style.display = "block");
+
+        btn.textContent = "Сохранить";
+        return;
+    }
+
+    form.querySelectorAll("input[list]").forEach(input => {
+        fillHiddenFromDatalist(input);
+    });
+
+    let actionInput = form.querySelector('input[name="action"]');
+
+    if (!actionInput) {
+        actionInput = document.createElement("input");
+        actionInput.type = "hidden";
+        actionInput.name = "action";
+        form.appendChild(actionInput);
+    }
+
+    actionInput.value = btn.dataset.action;
+
+    normalizeDecimalInputs(form);
+
+    localStorage.setItem("dishDetailScrollY", window.scrollY);
+    form.submit();
+});
+
+window.addEventListener("load", function() {
+    const savedScroll = localStorage.getItem("dishDetailScrollY");
+
+    if (savedScroll !== null) {
+        window.scrollTo(0, parseInt(savedScroll));
+        localStorage.removeItem("dishDetailScrollY");
+    }
 });
 
 setupDatalistHiddenInputs();
 syncGrossToNet();
 setupLiveCalculation();
 setupAjaxAddForms();
+
+window.addEventListener("load", function() {
+    const savedScroll = localStorage.getItem("dishDetailScrollY");
+
+    if (savedScroll !== null) {
+        window.scrollTo(0, parseInt(savedScroll));
+        localStorage.removeItem("dishDetailScrollY");
+    }
+});
+
+window.addEventListener("load", function() {
+    const savedScroll = localStorage.getItem("dishDetailScrollY");
+
+    if (savedScroll !== null) {
+        window.scrollTo(0, parseInt(savedScroll));
+        localStorage.removeItem("dishDetailScrollY");
+    }
+});
 </script>
 
 {% endblock %}
