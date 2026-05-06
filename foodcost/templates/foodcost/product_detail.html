@@ -47,6 +47,7 @@
         border:1px solid #d1d5db;
         border-radius:12px;
         font-size:15px;
+        box-sizing:border-box;
     }
 
     button {
@@ -84,12 +85,26 @@
     .price { color:#047857; font-weight:bold; }
     .warn { color:#dc2626; font-weight:bold; }
     .open { font-weight:bold; text-decoration:none; color:#111827; }
+    .muted { color:#6b7280; }
+
+    .readonly-note {
+        background:#f3f4f6;
+        color:#374151;
+        border-radius:12px;
+        padding:12px;
+        font-weight:bold;
+        margin-top:12px;
+    }
 </style>
 
 <a class="back" href="/c/{{ country.slug }}/products/">← Назад к продуктам</a>
 
 <div class="card">
     <h1>Продукт: {{ product.name }}</h1>
+
+    {% if not can_edit %}
+        <div class="readonly-note">Режим просмотра: редактирование продукта недоступно.</div>
+    {% endif %}
 
     <div class="summary">
         <div class="metric">
@@ -120,21 +135,28 @@
         <div class="grid">
             <div>
                 <label>Название</label>
-                <input type="text" name="name" value="{{ product.name }}">
+                <input type="text" name="name" value="{{ product.name }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Единица</label>
-                <select name="unit">
-                    <option value="kg" {% if product.unit == "kg" %}selected{% endif %}>кг</option>
-                    <option value="g" {% if product.unit == "g" %}selected{% endif %}>г</option>
-                    <option value="l" {% if product.unit == "l" %}selected{% endif %}>л</option>
-                    <option value="ml" {% if product.unit == "ml" %}selected{% endif %}>мл</option>
-                    <option value="pcs" {% if product.unit == "pcs" %}selected{% endif %}>шт</option>
-                </select>
+
+                {% if can_edit %}
+                    <select name="unit">
+                        <option value="kg" {% if product.unit == "kg" %}selected{% endif %}>кг</option>
+                        <option value="g" {% if product.unit == "g" %}selected{% endif %}>г</option>
+                        <option value="l" {% if product.unit == "l" %}selected{% endif %}>л</option>
+                        <option value="ml" {% if product.unit == "ml" %}selected{% endif %}>мл</option>
+                        <option value="pcs" {% if product.unit == "pcs" %}selected{% endif %}>шт</option>
+                    </select>
+                {% else %}
+                    <input type="text" value="{{ product.unit }}" readonly>
+                {% endif %}
             </div>
 
-            <button type="submit">Сохранить</button>
+            {% if can_edit %}
+                <button type="submit">Сохранить</button>
+            {% endif %}
         </div>
     </form>
 </div>
@@ -186,35 +208,41 @@
         <tr>
             <th>Дата</th>
             <th>Цена</th>
-            <th></th>
+            {% if can_edit %}
+                <th></th>
+            {% endif %}
         </tr>
 
         {% for price in prices %}
         <tr>
             <td>{{ price.date_from }}</td>
             <td class="price">{{ price.price }}</td>
-            <td></td>
+            {% if can_edit %}
+                <td></td>
+            {% endif %}
         </tr>
         {% endfor %}
 
+        {% if can_edit %}
         <tr>
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="save">
-
-                <td><input type="date" name="date"></td>
-                <td><input type="number" step="0.01" name="price"></td>
-
-                <td>
+            <td colspan="3">
+                <form method="post" style="display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:center;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="save">
                     <input type="hidden" name="name" value="{{ product.name }}">
                     <input type="hidden" name="unit" value="{{ product.unit }}">
+
+                    <input type="date" name="date">
+                    <input type="number" step="0.01" name="price">
                     <button type="submit">Добавить</button>
-                </td>
-            </form>
+                </form>
+            </td>
         </tr>
+        {% endif %}
     </table>
 </div>
 
+{% if can_edit %}
 <div class="card">
     <h2>Удаление</h2>
 
@@ -227,5 +255,6 @@
         </button>
     </form>
 </div>
+{% endif %}
 
 {% endblock %}

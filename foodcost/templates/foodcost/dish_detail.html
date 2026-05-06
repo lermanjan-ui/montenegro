@@ -55,14 +55,14 @@
 
     .line-5 {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 120px 120px;
+        grid-template-columns: 2fr 1fr 1fr auto auto;
         gap: 10px;
         align-items: center;
     }
 
     .line-extra {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 120px 120px;
+        grid-template-columns: 2fr 1fr 1fr auto auto;
         gap: 10px;
         align-items: center;
     }
@@ -94,11 +94,31 @@
         font-weight: bold;
     }
 
-    .ajax-added { animation: flash 0.6s ease; }
+    .edit-mode { display: none; }
 
-    @keyframes flash {
-        from { background:#ecfdf5; }
-        to { background:transparent; }
+    .edit-btn {
+        background: #e5e7eb;
+        color: #111827;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        width: auto;
+        height: auto;
+    }
+
+    .line-6 button,
+    .line-5 button,
+    .line-extra button {
+        width: auto;
+    }
+
+    .readonly-note {
+        background: #f3f4f6;
+        color: #374151;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: bold;
+        margin-top: 12px;
     }
 
     @media (max-width: 1000px) {
@@ -112,30 +132,6 @@
             grid-template-columns: 1fr;
         }
     }
-	.edit-mode {
-	    display: none;
-	}
-	.edit-btn {
-	    background: #e5e7eb;
-	    color: #111827;
-	    padding: 8px 14px;
-	    border-radius: 10px;
-	    font-size: 14px;
-	    width: auto;
-	    height: auto;
-	}
-
-	.line-6 {
-	    align-items: center;
-	}
-
-	.line-6 button {
-	    width: auto;
-	}
-	.edit-btn {
-	    background: #e5e7eb;
-	    color: #111827;
-	}
 </style>
 
 <datalist id="products-options">
@@ -168,12 +164,16 @@
     <h1>Блюдо: {{ dish.name }}</h1>
     <p class="muted">Полная экономика блюда: ингредиенты, упаковка, ФОТ, коммуналка, доп расходы и техкарта.</p>
 
+    {% if not can_edit %}
+        <div class="readonly-note">Режим просмотра: редактирование недоступно.</div>
+    {% endif %}
+
     <div class="summary">
-        <div class="metric"><span>Себестоимость</span><b id="summary-cost">{{ dish.calculate_cost|floatformat:0 }}</b></div>
+        <div class="metric"><span>Себестоимость</span><b id="summary-cost">{{ dish.calculate_cost|floatformat:2 }}</b></div>
         <div class="metric"><span>Фудкост</span><b id="summary-foodcost">{{ dish.foodcost|floatformat:1 }}</b>%</div>
-        <div class="metric"><span>Маржа</span><b id="summary-margin">{{ dish.margin|floatformat:0 }}</b></div>
+        <div class="metric"><span>Маржа</span><b id="summary-margin">{{ dish.margin|floatformat:2 }}</b></div>
         <div class="metric"><span>Время</span>{{ dish.total_cooking_minutes|floatformat:1 }} мин</div>
-        <div class="metric"><span>Цена</span>{{ dish.selling_price|floatformat:0 }}</div>
+        <div class="metric"><span>Цена</span>{{ dish.selling_price|floatformat:2 }}</div>
     </div>
 </div>
 
@@ -187,30 +187,32 @@
         <div class="main-grid">
             <div>
                 <label>Название</label>
-                <input name="name" value="{{ dish.name }}">
+                <input name="name" value="{{ dish.name }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Выход, кг</label>
-                <input type="text" name="final_weight" value="{{ dish.final_weight }}">
+                <input type="text" name="final_weight" value="{{ dish.final_weight }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Цена продажи</label>
-                <input type="text" name="selling_price" value="{{ dish.selling_price }}">
+                <input type="text" name="selling_price" value="{{ dish.selling_price }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Время блюда, мин</label>
-                <input type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}">
+                <input type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
-            <button type="submit">Сохранить</button>
+            {% if can_edit %}
+                <button type="submit">Сохранить</button>
+            {% endif %}
         </div>
 
         <div style="margin-top:18px;">
             <label>Общая техкарта / заметки</label>
-            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача...">{{ dish.tech_card }}</textarea>
+            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача..." {% if not can_edit %}readonly{% endif %}>{{ dish.tech_card }}</textarea>
         </div>
     </form>
 </div>
@@ -220,12 +222,12 @@
 
     <table>
         <tr><th>Статья</th><th>Сумма</th></tr>
-        <tr><td>Продукты и заготовки</td><td class="price">{{ dish.ingredient_cost|floatformat:0 }}</td></tr>
-        <tr><td>Упаковка</td><td class="price">{{ dish.packaging_cost|floatformat:0 }}</td></tr>
-        <tr><td>ФОТ</td><td class="price">{{ dish.labor_cost|floatformat:0 }}</td></tr>
-        <tr><td>Коммунальные</td><td class="price">{{ dish.utilities_cost|floatformat:0 }}</td></tr>
-        <tr><td>Доп расходы</td><td class="price">{{ dish.additional_expenses_cost|floatformat:0 }}</td></tr>
-        <tr><th>Итого</th><th id="summary-total-table">{{ dish.calculate_cost|floatformat:0 }}</th></tr>
+        <tr><td>Продукты и заготовки</td><td class="price">{{ dish.ingredient_cost|floatformat:2 }}</td></tr>
+        <tr><td>Упаковка</td><td class="price">{{ dish.packaging_cost|floatformat:2 }}</td></tr>
+        <tr><td>ФОТ</td><td class="price">{{ dish.labor_cost|floatformat:2 }}</td></tr>
+        <tr><td>Коммунальные</td><td class="price">{{ dish.utilities_cost|floatformat:2 }}</td></tr>
+        <tr><td>Доп расходы</td><td class="price">{{ dish.additional_expenses_cost|floatformat:2 }}</td></tr>
+        <tr><th>Итого</th><th id="summary-total-table">{{ dish.calculate_cost|floatformat:2 }}</th></tr>
     </table>
 </div>
 
@@ -235,17 +237,16 @@
     <table>
         <tr>
             <th>Продукт</th>
-            <th>Брутто</th>
-            <th>Нетто</th>
+			<th>Брутто / кол-во</th>
+			<th>Нетто / кол-во</th>
             <th>Стоимость</th>
-            <th></th>
-            <th></th>
+            {% if can_edit %}<th></th><th></th>{% endif %}
         </tr>
 
         <tbody id="products-body">
         {% for item in dish.product_items.all %}
         <tr id="product-row-{{ item.id }}">
-            <td colspan="6">
+            <td colspan="{% if can_edit %}6{% else %}4{% endif %}">
                 <form method="post" class="line-6 editable-row" data-type="product">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
@@ -253,44 +254,38 @@
 
                     <div>
                         <div class="view-mode"><strong>{{ item.product.name }}</strong></div>
-                        <input
-                            class="edit-mode search-field"
-                            list="products-options"
-                            value="{{ item.product.name }}"
-                            data-hidden-input="product-existing-{{ item.id }}"
-                            placeholder="Начните вводить продукт..."
-                        >
+                        {% if can_edit %}
+                            <input class="edit-mode search-field" list="products-options" value="{{ item.product.name }}" data-hidden-input="product-existing-{{ item.id }}" placeholder="Начните вводить продукт...">
+                        {% endif %}
                     </div>
 
                     <div>
-                        <div class="view-mode">{{ item.gross }}</div>
-                        <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                        <div class="view-mode">{{ item.gross }} {{ item.unit_label }}</div>
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                        {% endif %}
                     </div>
 
                     <div>
-                        <div class="view-mode">{{ item.net }}</div>
-                        <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                        <div class="view-mode">{{ item.net }} {{ item.unit_label }}</div>
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                        {% endif %}
                     </div>
 
-                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                    <div class="price">{{ item.calculate_cost|floatformat:2 }}</div>
 
-                    <button type="button" class="edit-btn" data-action="update_product">
-                        Редактировать
-                    </button>
-
-                    <button type="submit"
-                            name="action"
-                            value="delete_product"
-                            class="danger"
-                            onclick="return confirm('Удалить продукт?')">
-                        Удалить
-                    </button>
+                    {% if can_edit %}
+                        <button type="button" class="edit-btn" data-action="update_product">Редактировать</button>
+                        <button type="submit" name="action" value="delete_product" class="danger" onclick="return confirm('Удалить продукт?')">Удалить</button>
+                    {% endif %}
                 </form>
             </td>
         </tr>
         {% endfor %}
         </tbody>
 
+        {% if can_edit %}
         <tr class="add-row">
             <td colspan="6">
                 <form method="post" class="add-line-6">
@@ -298,20 +293,15 @@
                     <input type="hidden" name="action" value="add_product">
                     <input type="hidden" name="product_id" id="product-add-hidden">
 
-                    <input
-                        class="search-field"
-                        list="products-options"
-                        data-hidden-input="product-add-hidden"
-                        placeholder="Начните вводить продукт..."
-                    >
-
-                    <input type="text" name="gross" placeholder="Брутто">
-                    <input type="text" name="net" placeholder="Нетто">
+                    <input class="search-field" list="products-options" data-hidden-input="product-add-hidden" placeholder="Начните вводить продукт...">
+					<input type="text" name="gross" placeholder="Брутто / кол-во">
+					<input type="text" name="net" placeholder="Нетто / кол-во">
                     <span class="price muted">после сохранения</span>
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
+        {% endif %}
     </table>
 </div>
 
@@ -324,14 +314,13 @@
             <th>Брутто</th>
             <th>Нетто</th>
             <th>Стоимость</th>
-            <th></th>
-            <th></th>
+            {% if can_edit %}<th></th><th></th>{% endif %}
         </tr>
 
         <tbody id="preparations-body">
         {% for item in dish.preparation_items.all %}
         <tr id="prep-row-{{ item.id }}">
-            <td colspan="6">
+            <td colspan="{% if can_edit %}6{% else %}4{% endif %}">
                 <form method="post" class="line-6 editable-row" data-type="preparation">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
@@ -339,46 +328,38 @@
 
                     <div>
                         <div class="view-mode"><strong>{{ item.preparation.name }}</strong></div>
-                        <input
-                            class="edit-mode search-field"
-                            list="preparations-options"
-                            value="{{ item.preparation.name }}"
-                            data-hidden-input="prep-{{ item.id }}"
-                            placeholder="Начните вводить заготовку..."
-                        >
+                        {% if can_edit %}
+                            <input class="edit-mode search-field" list="preparations-options" value="{{ item.preparation.name }}" data-hidden-input="prep-{{ item.id }}" placeholder="Начните вводить заготовку...">
+                        {% endif %}
                     </div>
 
                     <div>
                         <div class="view-mode">{{ item.gross }}</div>
-                        <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                        {% endif %}
                     </div>
 
                     <div>
                         <div class="view-mode">{{ item.net }}</div>
-                        <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                        {% endif %}
                     </div>
 
-                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                    <div class="price">{{ item.calculate_cost|floatformat:2 }}</div>
 
-                    <button type="button"
-                            class="edit-btn"
-                            data-action="update_preparation">
-                        Редактировать
-                    </button>
-
-                    <button type="submit"
-                            name="action"
-                            value="delete_preparation"
-                            class="danger"
-                            onclick="return confirm('Удалить заготовку?')">
-                        Удалить
-                    </button>
+                    {% if can_edit %}
+                        <button type="button" class="edit-btn" data-action="update_preparation">Редактировать</button>
+                        <button type="submit" name="action" value="delete_preparation" class="danger" onclick="return confirm('Удалить заготовку?')">Удалить</button>
+                    {% endif %}
                 </form>
             </td>
         </tr>
         {% endfor %}
         </tbody>
 
+        {% if can_edit %}
         <tr class="add-row">
             <td colspan="6">
                 <form method="post" class="add-line-6">
@@ -386,22 +367,15 @@
                     <input type="hidden" name="action" value="add_preparation">
                     <input type="hidden" name="preparation_id" id="prep-add-hidden">
 
-                    <input
-                        class="search-field"
-                        list="preparations-options"
-                        data-hidden-input="prep-add-hidden"
-                        placeholder="Начните вводить заготовку..."
-                    >
-
+                    <input class="search-field" list="preparations-options" data-hidden-input="prep-add-hidden" placeholder="Начните вводить заготовку...">
                     <input type="text" name="gross" placeholder="Брутто">
                     <input type="text" name="net" placeholder="Нетто">
-
                     <span class="price muted">после сохранения</span>
-
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
+        {% endif %}
     </table>
 </div>
 
@@ -413,14 +387,13 @@
             <th>Упаковка</th>
             <th>Количество</th>
             <th>Стоимость</th>
-            <th></th>
-            <th></th>
+            {% if can_edit %}<th></th><th></th>{% endif %}
         </tr>
 
         <tbody id="packaging-body">
         {% for item in dish.packaging_items.all %}
         <tr id="packaging-row-{{ item.id }}">
-            <td colspan="5">
+            <td colspan="{% if can_edit %}5{% else %}3{% endif %}">
                 <form method="post" class="line-5 editable-row" data-type="packaging">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
@@ -428,41 +401,31 @@
 
                     <div>
                         <div class="view-mode"><strong>{{ item.packaging.name }} — {{ item.packaging.cost }}</strong></div>
-                        <input
-                            class="edit-mode search-field"
-                            list="packagings-options"
-                            value="{{ item.packaging.name }} — {{ item.packaging.cost }}"
-                            data-hidden-input="packaging-existing-{{ item.id }}"
-                            placeholder="Начните вводить упаковку..."
-                        >
+                        {% if can_edit %}
+                            <input class="edit-mode search-field" list="packagings-options" value="{{ item.packaging.name }} — {{ item.packaging.cost }}" data-hidden-input="packaging-existing-{{ item.id }}" placeholder="Начните вводить упаковку...">
+                        {% endif %}
                     </div>
 
                     <div>
                         <div class="view-mode">{{ item.quantity }}</div>
-                        <input class="edit-mode" type="text" name="quantity" value="{{ item.quantity }}">
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="quantity" value="{{ item.quantity }}">
+                        {% endif %}
                     </div>
 
-                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                    <div class="price">{{ item.calculate_cost|floatformat:2 }}</div>
 
-                    <button type="button"
-                            class="edit-btn"
-                            data-action="update_packaging">
-                        Редактировать
-                    </button>
-
-                    <button type="submit"
-                            name="action"
-                            value="delete_packaging"
-                            class="danger"
-                            onclick="return confirm('Удалить упаковку?')">
-                        Удалить
-                    </button>
+                    {% if can_edit %}
+                        <button type="button" class="edit-btn" data-action="update_packaging">Редактировать</button>
+                        <button type="submit" name="action" value="delete_packaging" class="danger" onclick="return confirm('Удалить упаковку?')">Удалить</button>
+                    {% endif %}
                 </form>
             </td>
         </tr>
         {% endfor %}
         </tbody>
 
+        {% if can_edit %}
         <tr class="add-row">
             <td colspan="5">
                 <form method="post" class="add-line-5">
@@ -470,23 +433,17 @@
                     <input type="hidden" name="action" value="add_packaging">
                     <input type="hidden" name="packaging_id" id="packaging-add-hidden">
 
-                    <input
-                        class="search-field"
-                        list="packagings-options"
-                        data-hidden-input="packaging-add-hidden"
-                        placeholder="Начните вводить упаковку..."
-                    >
-
+                    <input class="search-field" list="packagings-options" data-hidden-input="packaging-add-hidden" placeholder="Начните вводить упаковку...">
                     <input type="text" name="quantity" value="1">
-
                     <span class="price muted">после сохранения</span>
-
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
+        {% endif %}
     </table>
 </div>
+
 <div class="card">
     <h2>ФОТ</h2>
 
@@ -495,64 +452,45 @@
             <th>Сотрудник</th>
             <th>Минуты</th>
             <th>Стоимость</th>
-            <th></th>
-            <th></th>
+            {% if can_edit %}<th></th><th></th>{% endif %}
         </tr>
 
         <tbody id="labor-body">
         {% for item in dish.labor_items.all %}
         <tr id="labor-row-{{ item.id }}">
-            <td colspan="5">
+            <td colspan="{% if can_edit %}5{% else %}3{% endif %}">
                 <form method="post" class="line-5 editable-row" data-type="labor">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
                     <input type="hidden" name="employee_id" id="employee-existing-{{ item.id }}" value="{{ item.employee_id }}">
 
-                    <!-- СОТРУДНИК -->
                     <div>
-                        <div class="view-mode">
-                            <strong>{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час</strong>
-                        </div>
-                        <input
-                            class="edit-mode search-field"
-                            list="employees-options"
-                            value="{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час"
-                            data-hidden-input="employee-existing-{{ item.id }}"
-                            placeholder="Начните вводить сотрудника..."
-                        >
+                        <div class="view-mode"><strong>{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час</strong></div>
+                        {% if can_edit %}
+                            <input class="edit-mode search-field" list="employees-options" value="{{ item.employee.name }} — {{ item.employee.hourly_rate|floatformat:0 }}/час" data-hidden-input="employee-existing-{{ item.id }}" placeholder="Начните вводить сотрудника...">
+                        {% endif %}
                     </div>
 
-                    <!-- МИНУТЫ -->
                     <div>
                         <div class="view-mode">{{ item.minutes }}</div>
-                        <input class="edit-mode" type="text" name="minutes" value="{{ item.minutes }}">
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="minutes" value="{{ item.minutes }}">
+                        {% endif %}
                     </div>
 
-                    <!-- СТОИМОСТЬ -->
-                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                    <div class="price">{{ item.calculate_cost|floatformat:2 }}</div>
 
-                    <!-- РЕДАКТИРОВАТЬ -->
-                    <button type="button"
-                            class="edit-btn"
-                            data-action="update_labor">
-                        Редактировать
-                    </button>
-
-                    <!-- УДАЛИТЬ -->
-                    <button type="submit"
-                            name="action"
-                            value="delete_labor"
-                            class="danger"
-                            onclick="return confirm('Удалить сотрудника?')">
-                        Удалить
-                    </button>
+                    {% if can_edit %}
+                        <button type="button" class="edit-btn" data-action="update_labor">Редактировать</button>
+                        <button type="submit" name="action" value="delete_labor" class="danger" onclick="return confirm('Удалить сотрудника?')">Удалить</button>
+                    {% endif %}
                 </form>
             </td>
         </tr>
         {% endfor %}
         </tbody>
 
-        <!-- ДОБАВЛЕНИЕ -->
+        {% if can_edit %}
         <tr class="add-row">
             <td colspan="5">
                 <form method="post" class="add-line-5">
@@ -560,22 +498,14 @@
                     <input type="hidden" name="action" value="add_labor">
                     <input type="hidden" name="employee_id" id="employee-add-hidden">
 
-                    <input
-                        class="search-field"
-                        list="employees-options"
-                        data-hidden-input="employee-add-hidden"
-                        placeholder="Начните вводить сотрудника..."
-                    >
-
+                    <input class="search-field" list="employees-options" data-hidden-input="employee-add-hidden" placeholder="Начните вводить сотрудника...">
                     <input type="text" name="minutes" placeholder="Минуты">
-
                     <span class="price muted">после сохранения</span>
-
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
-
+        {% endif %}
     </table>
 </div>
 
@@ -587,55 +517,44 @@
             <th>Комментарий</th>
             <th>Сумма</th>
             <th>Стоимость</th>
-            <th></th>
-            <th></th>
+            {% if can_edit %}<th></th><th></th>{% endif %}
         </tr>
 
         <tbody id="extra-body">
         {% for item in dish.additional_expenses.all %}
         <tr id="extra-row-{{ item.id }}">
-            <td colspan="5">
+            <td colspan="{% if can_edit %}5{% else %}3{% endif %}">
                 <form method="post" class="line-extra editable-row">
                     {% csrf_token %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                    <!-- КОММЕНТ -->
                     <div>
                         <div class="view-mode"><strong>{{ item.comment }}</strong></div>
-                        <input class="edit-mode" name="comment" value="{{ item.comment }}">
+                        {% if can_edit %}
+                            <input class="edit-mode" name="comment" value="{{ item.comment }}">
+                        {% endif %}
                     </div>
 
-                    <!-- СУММА -->
                     <div>
                         <div class="view-mode">{{ item.cost }}</div>
-                        <input class="edit-mode" type="text" name="cost" value="{{ item.cost }}">
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="cost" value="{{ item.cost }}">
+                        {% endif %}
                     </div>
 
-                    <!-- СТОИМОСТЬ -->
-                    <div class="price">{{ item.cost|floatformat:0 }}</div>
+                    <div class="price">{{ item.cost|floatformat:2 }}</div>
 
-                    <!-- РЕДАКТИРОВАТЬ -->
-                    <button type="button"
-                            class="edit-btn"
-                            data-action="update_extra">
-                        Редактировать
-                    </button>
-
-                    <!-- УДАЛИТЬ -->
-                    <button type="submit"
-                            name="action"
-                            value="delete_extra"
-                            class="danger"
-                            onclick="return confirm('Удалить расход?')">
-                        Удалить
-                    </button>
+                    {% if can_edit %}
+                        <button type="button" class="edit-btn" data-action="update_extra">Редактировать</button>
+                        <button type="submit" name="action" value="delete_extra" class="danger" onclick="return confirm('Удалить расход?')">Удалить</button>
+                    {% endif %}
                 </form>
             </td>
         </tr>
         {% endfor %}
         </tbody>
 
-        <!-- ДОБАВЛЕНИЕ -->
+        {% if can_edit %}
         <tr class="add-row">
             <td colspan="5">
                 <form method="post" class="add-line-5">
@@ -644,14 +563,12 @@
 
                     <input name="comment" placeholder="Например: салфетки">
                     <input type="text" name="cost" placeholder="Стоимость">
-
                     <span class="price muted">после сохранения</span>
-
                     <button type="submit">Добавить</button>
                 </form>
             </td>
         </tr>
-
+        {% endif %}
     </table>
 </div>
 
@@ -738,7 +655,7 @@ function setupLiveCalculation() {
 
         const price = form.querySelector(".price");
         if (price) {
-            price.innerText = data.cost;
+            price.innerText = Number(data.cost).toFixed(2);
             price.style.opacity = "0.7";
         }
     }
@@ -747,145 +664,6 @@ function setupLiveCalculation() {
         form.querySelectorAll("input").forEach(el => {
             el.addEventListener("input", () => calculate(form));
             el.addEventListener("change", () => calculate(form));
-        });
-    });
-}
-
-function updateSummary(data) {
-    if (data.dish_cost !== undefined) {
-        document.getElementById("summary-cost").innerText = Math.round(data.dish_cost);
-        document.getElementById("summary-total-table").innerText = Math.round(data.dish_cost);
-    }
-
-    if (data.foodcost !== undefined) {
-        document.getElementById("summary-foodcost").innerText = Number(data.foodcost).toFixed(1);
-    }
-
-    if (data.margin !== undefined) {
-        document.getElementById("summary-margin").innerText = Math.round(data.margin);
-    }
-}
-
-function buildAjaxRow(data) {
-    const tr = document.createElement("tr");
-    tr.classList.add("ajax-added");
-
-    if (data.type === "product" || data.type === "preparation") {
-        tr.innerHTML = `
-            <td colspan="6">
-                <div class="line-6">
-                    <strong>${data.name}</strong>
-                    <div>${data.gross}</div>
-                    <div>${data.net}</div>
-                    <div>
-                        <div class="price">${Math.round(data.cost)}</div>
-                        <div class="pill-row">
-                            <span class="pill">Брутто: ${data.gross}</span>
-                            <span class="pill">Нетто: ${data.net}</span>
-                        </div>
-                    </div>
-                    <span class="muted">добавлено</span>
-                    <span></span>
-                </div>
-            </td>
-        `;
-    }
-
-    if (data.type === "packaging") {
-        tr.innerHTML = `
-            <td colspan="5">
-                <div class="line-5">
-                    <strong>${data.name}</strong>
-                    <div>${data.quantity}</div>
-                    <div class="price">${Math.round(data.cost)}</div>
-                    <span class="muted">добавлено</span>
-                    <span></span>
-                </div>
-            </td>
-        `;
-    }
-
-    if (data.type === "labor") {
-        tr.innerHTML = `
-            <td colspan="5">
-                <div class="line-5">
-                    <strong>${data.name}</strong>
-                    <div>${data.minutes}</div>
-                    <div class="price">${Math.round(data.cost)}</div>
-                    <span class="muted">добавлено</span>
-                    <span></span>
-                </div>
-            </td>
-        `;
-    }
-
-    if (data.type === "extra") {
-        tr.innerHTML = `
-            <td colspan="5">
-                <div class="line-extra">
-                    <strong>${data.name}</strong>
-                    <div>${Math.round(data.cost)}</div>
-                    <div class="price">${Math.round(data.cost)}</div>
-                    <span class="muted">добавлено</span>
-                    <span></span>
-                </div>
-            </td>
-        `;
-    }
-
-    return tr;
-}
-
-function setupAjaxAddForms() {
-    document.querySelectorAll(".ajax-add-form").forEach(form => {
-        form.addEventListener("submit", async function(event) {
-            event.preventDefault();
-
-            normalizeDecimalInputs(form);
-
-            form.querySelectorAll("input[list]").forEach(input => {
-                fillHiddenFromDatalist(input);
-            });
-
-            const requiredHidden = form.querySelector('input[type="hidden"][name$="_id"]');
-
-            if (requiredHidden && !requiredHidden.value) {
-                alert("Выберите значение из списка");
-                return;
-            }
-
-            const formData = new FormData(form);
-
-            const response = await fetch(window.location.href, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            });
-
-            const data = await response.json();
-
-            if (!data.ok) {
-                alert("Ошибка добавления");
-                console.log(data);
-                return;
-            }
-
-            const target = document.getElementById(form.dataset.target);
-
-            if (target) {
-                target.appendChild(buildAjaxRow(data));
-            }
-
-            updateSummary(data);
-            form.reset();
-
-            form.querySelectorAll('input[type="hidden"]').forEach(hidden => {
-                if (hidden.name !== "action") {
-                    hidden.value = "";
-                }
-            });
         });
     });
 }
@@ -951,25 +729,6 @@ window.addEventListener("load", function() {
 setupDatalistHiddenInputs();
 syncGrossToNet();
 setupLiveCalculation();
-setupAjaxAddForms();
-
-window.addEventListener("load", function() {
-    const savedScroll = localStorage.getItem("dishDetailScrollY");
-
-    if (savedScroll !== null) {
-        window.scrollTo(0, parseInt(savedScroll));
-        localStorage.removeItem("dishDetailScrollY");
-    }
-});
-
-window.addEventListener("load", function() {
-    const savedScroll = localStorage.getItem("dishDetailScrollY");
-
-    if (savedScroll !== null) {
-        window.scrollTo(0, parseInt(savedScroll));
-        localStorage.removeItem("dishDetailScrollY");
-    }
-});
 </script>
 
 {% endblock %}

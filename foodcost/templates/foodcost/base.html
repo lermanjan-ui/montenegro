@@ -80,6 +80,11 @@
             <a href="/c/{{ country.slug }}/employees/">Сотрудники</a>
             <a href="/c/{{ country.slug }}/packaging/">Упаковка</a>
             <a href="/c/{{ country.slug }}/utilities/">Коммуналка</a>
+
+            {% if request.user.is_authenticated and request.user.is_superuser %}
+                <a href="/c/{{ country.slug }}/users/">Пользователи</a>
+            {% endif %}
+
             <a href="/">Сменить страну</a>
         {% else %}
             <a href="/">Страны</a>

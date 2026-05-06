@@ -3,6 +3,10 @@ from . import views
 
 
 urlpatterns = [
+    
+    path("login/", views.login_page, name="login_page"),
+    path("logout/", views.logout_page, name="logout_page"),
+    
     # выбор страны
     path("", views.country_list, name="country_list"),
 
@@ -27,6 +31,9 @@ urlpatterns = [
 
     # коммуналка
     path("c/<slug:country_slug>/utilities/", views.utilities_list, name="utilities_list"),
+
+    # 👇 НОВОЕ — пользователи и доступы (ТОЛЬКО ДЛЯ ГЛАВНОГО АДМИНА)
+    path("c/<slug:country_slug>/users/", views.user_access_list, name="user_access_list"),
 
     # live расчёт
     path("c/<slug:country_slug>/live-calculate/", views.live_calculate, name="live_calculate"),

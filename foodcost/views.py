@@ -1,7 +1,10 @@
 from decimal import Decimal
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden, Http404
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 from .forms import ProductWithPriceForm
 from .models import (
@@ -20,6 +23,7 @@ from .models import (
     DishLaborItem,
     DishAdditionalExpense,
     MonthlyUtilityExpense,
+    UserProfile,
 )
 
 
@@ -31,19 +35,69 @@ def clean_decimal(value, default="0"):
         return default
     return str(value).replace(",", ".")
 
-def get_country(country_slug):
-    return get_object_or_404(Country, slug=country_slug)
+def get_country(country_slug, user=None):
+    country = get_object_or_404(Country, slug=country_slug)
+
+    if user is not None and not user_can_access_country(user, country):
+        raise Http404("Страна не найдена")
+
+    return country
 
 
+def user_can_access_country(user, country):
+    if user.is_superuser:
+        return True
+
+    if not hasattr(user, "profile"):
+        return False
+
+    return user.profile.can_access_country(country)
+
+
+def user_can_edit(user):
+    if user.is_superuser:
+        return True
+
+    if not hasattr(user, "profile"):
+        return False
+
+    return user.profile.can_edit()
+
+
+def user_can_access_country(user, country):
+    if user.is_superuser:
+        return True
+
+    if not hasattr(user, "profile"):
+        return False
+
+    return user.profile.can_access_country(country)
+
+
+def user_can_edit(user):
+    if user.is_superuser:
+        return True
+
+    if not hasattr(user, "profile"):
+        return False
+
+    return user.profile.can_edit()
+
+
+@login_required(login_url="/login/")
 def country_list(request):
-    countries = Country.objects.all()
+    if request.user.is_superuser:
+        countries = Country.objects.all()
+    else:
+        countries = Country.objects.filter(user_profiles__user=request.user)
+
     return render(request, "foodcost/country_list.html", {
         "countries": countries,
     })
 
-
+@login_required(login_url="/login/")
 def dish_create(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
 
     dish = Dish.objects.create(
         country=country,
@@ -55,9 +109,9 @@ def dish_create(request, country_slug):
 
     return redirect(f"/c/{country.slug}/dish/{dish.id}/")
 
-
+@login_required(login_url="/login/")
 def dish_list(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
 
     dishes = list(Dish.objects.filter(country=country))
 
@@ -89,9 +143,9 @@ def dish_list(request, country_slug):
         "sort_type": sort_type,
     })
 
-
+@login_required(login_url="/login/")
 def live_calculate(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
 
     item_type = request.GET.get("type")
     item_id = request.GET.get("id")
@@ -119,9 +173,10 @@ def live_calculate(request, country_slug):
 
     return JsonResponse({"cost": round(cost, 2)})
 
-
+@login_required(login_url="/login/")
+@login_required(login_url="/login/")
 def dish_detail(request, country_slug, dish_id):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
     dish = get_object_or_404(Dish, id=dish_id, country=country)
 
     products = Product.objects.filter(country=country)
@@ -131,6 +186,9 @@ def dish_detail(request, country_slug, dish_id):
     tech_steps = DishTechStep.objects.filter(dish=dish)
 
     if request.method == "POST":
+        if not user_can_edit(request.user):
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+
         action = request.POST.get("action")
 
         if action == "save":
@@ -372,14 +430,18 @@ def dish_detail(request, country_slug, dish_id):
         "employees": employees,
         "packagings": packagings,
         "tech_steps": tech_steps,
+        "can_edit": user_can_edit(request.user),
     })
 
-
+@login_required(login_url="/login/")
 def product_list(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
     create_form = ProductWithPriceForm()
 
     if request.method == "POST":
+        if not user_can_edit(request.user):
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+
         form_type = request.POST.get("form_type")
 
         if form_type == "create":
@@ -406,14 +468,18 @@ def product_list(request, country_slug):
         "country": country,
         "products": products,
         "create_form": create_form,
+        "can_edit": user_can_edit(request.user),
     })
 
-
+@login_required(login_url="/login/")
 def product_detail(request, country_slug, product_id):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
     product = get_object_or_404(Product, id=product_id, country=country)
 
     if request.method == "POST":
+        if not user_can_edit(request.user):
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+
         action = request.POST.get("action")
 
         if action == "save":
@@ -486,13 +552,17 @@ def product_detail(request, country_slug, product_id):
         "affected_dishes": affected_dishes,
         "preparation_items": preparation_items,
         "dish_items": dish_items,
+        "can_edit": user_can_edit(request.user),
     })
 
-
+@login_required(login_url="/login/")
 def preparation_list(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
 
     if request.method == "POST":
+        if not user_can_edit(request.user):
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+
         name = request.POST.get("name")
         final_weight = request.POST.get("final_weight") or 0
         cooking_minutes = request.POST.get("cooking_minutes") or 0
@@ -512,15 +582,19 @@ def preparation_list(request, country_slug):
     return render(request, "foodcost/preparation_list.html", {
         "country": country,
         "preparations": preparations,
+        "can_edit": user_can_edit(request.user),
     })
 
-
+@login_required(login_url="/login/")
 def preparation_detail(request, country_slug, prep_id):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
     preparation = get_object_or_404(Preparation, id=prep_id, country=country)
     products = Product.objects.filter(country=country)
 
     if request.method == "POST":
+        if not user_can_edit(request.user):
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+
         action = request.POST.get("action")
 
         if action == "save":
@@ -531,6 +605,7 @@ def preparation_detail(request, country_slug, prep_id):
 
         if action == "add_item":
             product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
+
             PreparationItem.objects.create(
                 preparation=preparation,
                 product=product,
@@ -539,15 +614,30 @@ def preparation_detail(request, country_slug, prep_id):
             )
 
         if action == "update_item":
-            item = get_object_or_404(PreparationItem, id=request.POST.get("item_id"), preparation=preparation)
-            product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
+            item = get_object_or_404(
+                PreparationItem,
+                id=request.POST.get("item_id"),
+                preparation=preparation,
+            )
+
+            product = get_object_or_404(
+                Product,
+                id=request.POST.get("product_id"),
+                country=country,
+            )
+
             item.product = product
             item.gross = request.POST.get("gross") or 0
             item.net = request.POST.get("net") or item.gross
             item.save()
 
         if action == "delete_item":
-            item = get_object_or_404(PreparationItem, id=request.POST.get("item_id"), preparation=preparation)
+            item = get_object_or_404(
+                PreparationItem,
+                id=request.POST.get("item_id"),
+                preparation=preparation,
+            )
+
             item.delete()
 
         return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
@@ -561,11 +651,12 @@ def preparation_detail(request, country_slug, prep_id):
         "products": products,
         "total_gross": total_gross,
         "total_net": total_net,
+        "can_edit": user_can_edit(request.user),
     })
 
-
+@login_required(login_url="/login/")
 def employee_list(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -605,7 +696,7 @@ def employee_list(request, country_slug):
 
 
 def packaging_list(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -637,8 +728,9 @@ def packaging_list(request, country_slug):
     })
 
 
+@login_required(login_url="/login/")
 def utilities_list(request, country_slug):
-    country = get_country(country_slug)
+    country = get_country(country_slug, request.user)
 
     if request.method == "POST":
         MonthlyUtilityExpense.objects.create(
@@ -658,3 +750,113 @@ def utilities_list(request, country_slug):
         "country": country,
         "utilities": utilities,
     })
+    
+    from django.shortcuts import render, get_object_or_404
+    from django.http import HttpResponseForbidden
+    from django.contrib.auth.models import User
+    from .models import Country, UserProfile
+    
+@login_required(login_url="/login/")    
+def user_access_list(request, country_slug):
+    country = get_country(country_slug, request.user)
+
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Нет доступа")
+
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Только главный админ может управлять пользователями")
+
+    error = None
+
+    for user in User.objects.all():
+        UserProfile.objects.get_or_create(user=user)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "create_user":
+            username = request.POST.get("username")
+            password = request.POST.get("password")
+            role = request.POST.get("role")
+            country_ids = request.POST.getlist("countries")
+
+            if not username or not password or not role:
+                error = "Заполни логин, пароль и роль"
+            elif User.objects.filter(username=username).exists():
+                error = "Пользователь с таким логином уже существует"
+            else:
+                user = User.objects.create_user(
+                    username=username,
+                    password=password,
+                )
+
+                profile, created = UserProfile.objects.get_or_create(user=user)
+                profile.role = role
+                profile.save()
+                profile.countries.set(country_ids)
+
+                return redirect(f"/c/{country.slug}/users/")
+
+        if action == "update_user":
+            user = get_object_or_404(User, id=request.POST.get("user_id"))
+            profile, created = UserProfile.objects.get_or_create(user=user)
+
+            username = request.POST.get("username")
+            password = request.POST.get("password")
+            role = request.POST.get("role")
+            country_ids = request.POST.getlist("countries")
+
+            if username:
+                user.username = username
+
+            if password:
+                user.set_password(password)
+
+            user.save()
+
+            if role:
+                profile.role = role
+                profile.save()
+
+            profile.countries.set(country_ids)
+
+            return redirect(f"/c/{country.slug}/users/")
+
+    users = User.objects.all().order_by("username")
+    countries = Country.objects.all().order_by("name")
+
+    return render(request, "foodcost/user_access_list.html", {
+        "country": country,
+        "users": users,
+        "countries": countries,
+        "roles": UserProfile.ROLE_CHOICES,
+        "error": error,
+    })
+    
+def login_page(request):
+    error = None
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password
+        )
+
+        if user is not None:
+            login(request, user)
+            return redirect("/")
+        else:
+            error = "Неверный логин или пароль"
+
+    return render(request, "foodcost/login.html", {
+        "error": error,
+    })
+
+
+def logout_page(request):
+    logout(request)
+    return redirect("/login/")

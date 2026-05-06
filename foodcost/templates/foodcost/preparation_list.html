@@ -81,14 +81,34 @@
         font-weight: bold;
         text-decoration: none;
     }
+
+    .muted {
+        color: #6b7280;
+    }
+
+    .readonly-note {
+        background: #f3f4f6;
+        color: #374151;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: bold;
+        margin-top: 12px;
+    }
 </style>
 
 <div class="card">
     <div class="top">
-        <h1>Заготовки</h1>
+        <div>
+            <h1>Заготовки</h1>
+
+            {% if not can_edit %}
+                <div class="readonly-note">Режим просмотра: добавление заготовок недоступно.</div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
+{% if can_edit %}
 <div class="card">
     <h2>Добавить заготовку</h2>
 
@@ -115,6 +135,7 @@
         </div>
     </form>
 </div>
+{% endif %}
 
 <div class="card">
     <table>

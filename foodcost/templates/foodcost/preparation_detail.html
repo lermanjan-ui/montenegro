@@ -139,20 +139,13 @@
         background:#f9fafb;
     }
 
-    .pill-row {
-        display:flex;
-        gap:6px;
-        flex-wrap:wrap;
-        margin-top:6px;
-    }
-
-    .pill {
+    .readonly-note {
         background:#f3f4f6;
         color:#374151;
-        border-radius:999px;
-        padding:5px 9px;
-        font-size:12px;
+        border-radius:12px;
+        padding:12px;
         font-weight:bold;
+        margin-top:12px;
     }
 
     @media (max-width:1000px) {
@@ -177,15 +170,19 @@
     <h1>Заготовка: {{ preparation.name }}</h1>
     <p class="muted">Состав, выход, общий вес ингредиентов и себестоимость.</p>
 
+    {% if not can_edit %}
+        <div class="readonly-note">Режим просмотра: редактирование заготовки недоступно.</div>
+    {% endif %}
+
     <div class="summary">
         <div class="metric">
             <span>Итого брутто</span>
-            {{ total_gross|floatformat:3 }} кг
+            {{ total_gross|floatformat:3 }}
         </div>
 
         <div class="metric">
             <span>Итого нетто</span>
-            {{ total_net|floatformat:3 }} кг
+            {{ total_net|floatformat:3 }}
         </div>
 
         <div class="metric">
@@ -210,20 +207,22 @@
         <div class="main-grid">
             <div>
                 <label>Название</label>
-                <input name="name" value="{{ preparation.name }}">
+                <input name="name" value="{{ preparation.name }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Выход, кг</label>
-                <input type="text" name="final_weight" value="{{ preparation.final_weight }}">
+                <input type="text" name="final_weight" value="{{ preparation.final_weight }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Время, мин</label>
-                <input type="text" name="cooking_minutes" value="{{ preparation.cooking_minutes }}">
+                <input type="text" name="cooking_minutes" value="{{ preparation.cooking_minutes }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
-            <button type="submit">Сохранить</button>
+            {% if can_edit %}
+                <button type="submit">Сохранить</button>
+            {% endif %}
         </div>
     </form>
 </div>
@@ -234,17 +233,19 @@
     <table>
         <tr>
             <th>Продукт</th>
-            <th>Брутто</th>
-            <th>Нетто</th>
+            <th>Брутто / кол-во</th>
+            <th>Нетто / кол-во</th>
             <th>Стоимость</th>
-            <th></th>
-            <th></th>
+            {% if can_edit %}
+                <th></th>
+                <th></th>
+            {% endif %}
         </tr>
 
         <tbody id="ingredients-body">
         {% for item in preparation.items.all %}
         <tr id="ingredient-row-{{ item.id }}">
-            <td colspan="6">
+            <td colspan="{% if can_edit %}6{% else %}4{% endif %}">
                 <form method="post" class="line-6 editable-row">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="update_item">
@@ -253,46 +254,58 @@
 
                     <div>
                         <div class="view-mode">{{ item.product.name }}</div>
-                        <input
-                            class="edit-mode search-field"
-                            list="products-options"
-                            value="{{ item.product.name }}"
-                            data-hidden-input="product-existing-{{ item.id }}"
-                            placeholder="Начните вводить продукт..."
-                        >
+
+                        {% if can_edit %}
+                            <input
+                                class="edit-mode search-field"
+                                list="products-options"
+                                value="{{ item.product.name }}"
+                                data-hidden-input="product-existing-{{ item.id }}"
+                                placeholder="Начните вводить продукт..."
+                            >
+                        {% endif %}
                     </div>
 
                     <div>
-                        <div class="view-mode">{{ item.gross }}</div>
-                        <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                        <div class="view-mode">{{ item.gross }} {{ item.unit_label }}</div>
+
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
+                        {% endif %}
                     </div>
 
                     <div>
-                        <div class="view-mode">{{ item.net }}</div>
-                        <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                        <div class="view-mode">{{ item.net }} {{ item.unit_label }}</div>
+
+                        {% if can_edit %}
+                            <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
+                        {% endif %}
                     </div>
 
-                   <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
+                    <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
 
-                    <button type="button" class="edit-btn">Редактировать</button>
+                    {% if can_edit %}
+                        <button type="button" class="edit-btn">Редактировать</button>
 
-                    <button type="submit"
-                            name="action"
-                            value="delete_item"
-                            class="danger"
-                            onclick="return confirm('Удалить ингредиент из заготовки?')">
-                        Удалить
-                    </button>
+                        <button type="submit"
+                                name="action"
+                                value="delete_item"
+                                class="danger"
+                                onclick="return confirm('Удалить ингредиент из заготовки?')">
+                            Удалить
+                        </button>
+                    {% endif %}
                 </form>
             </td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="6" class="muted">Ингредиентов пока нет.</td>
+            <td colspan="{% if can_edit %}6{% else %}4{% endif %}" class="muted">Ингредиентов пока нет.</td>
         </tr>
         {% endfor %}
         </tbody>
 
+        {% if can_edit %}
         <tr class="add-row">
             <td colspan="6">
                 <form method="post" class="add-line-6">
@@ -307,8 +320,8 @@
                         placeholder="Начните вводить продукт..."
                     >
 
-                    <input type="text" name="gross" placeholder="Брутто">
-                    <input type="text" name="net" placeholder="Нетто">
+                    <input type="text" name="gross" placeholder="Брутто / кол-во">
+                    <input type="text" name="net" placeholder="Нетто / кол-во">
 
                     <span class="price muted">после сохранения</span>
 
@@ -316,6 +329,7 @@
                 </form>
             </td>
         </tr>
+        {% endif %}
     </table>
 </div>
 

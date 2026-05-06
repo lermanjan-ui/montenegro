@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 # 🌍 СТРАНА
@@ -28,6 +29,16 @@ class Product(models.Model):
 
     def get_price(self):
         return self.prices.order_by("-date_from").first()
+
+    def unit_label(self):
+        labels = {
+            "kg": "кг",
+            "g": "г",
+            "l": "л",
+            "ml": "мл",
+            "pcs": "шт",
+        }
+        return labels.get(self.unit, self.unit)
 
 
 class ProductPrice(models.Model):
@@ -77,6 +88,9 @@ class PreparationItem(models.Model):
             return 0
         return self.net * price.price
 
+    def unit_label(self):
+        return self.product.unit_label()
+
 
 # 🍽 БЛЮДО
 class Dish(models.Model):
@@ -93,7 +107,6 @@ class Dish(models.Model):
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
-    # старая техкарта (оставляем)
     tech_card = models.TextField("Техкарта приготовления", blank=True, default="")
 
     def __str__(self):
@@ -122,7 +135,13 @@ class Dish(models.Model):
         return self.cooking_minutes + sum(p.preparation.cooking_minutes for p in self.preparation_items.all())
 
     def calculate_cost(self):
-        return self.ingredient_cost() + self.packaging_cost() + self.labor_cost() + self.utilities_cost() + self.additional_expenses_cost()
+        return (
+            self.ingredient_cost()
+            + self.packaging_cost()
+            + self.labor_cost()
+            + self.utilities_cost()
+            + self.additional_expenses_cost()
+        )
 
     def foodcost(self):
         if self.selling_price == 0:
@@ -133,7 +152,7 @@ class Dish(models.Model):
         return self.selling_price - self.calculate_cost()
 
 
-# 🔥 НОВАЯ МОДЕЛЬ — ШАГИ ТЕХКАРТЫ
+# 🔥 ШАГИ ТЕХКАРТЫ
 class DishTechStep(models.Model):
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name="steps")
     step_number = models.PositiveIntegerField()
@@ -158,6 +177,9 @@ class DishProductItem(models.Model):
             return 0
         return self.net * price.price
 
+    def unit_label(self):
+        return self.product.unit_label()
+
 
 class DishPreparationItem(models.Model):
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name="preparation_items")
@@ -167,6 +189,9 @@ class DishPreparationItem(models.Model):
 
     def calculate_cost(self):
         return self.net * self.preparation.cost_per_kg()
+
+    def unit_label(self):
+        return "кг"
 
 
 # 👨‍🍳 СОТРУДНИК
@@ -260,3 +285,47 @@ class MonthlyUtilityExpense(models.Model):
         if self.working_hours == 0:
             return 0
         return self.total() / (self.working_hours * 60)
+
+
+class UserProfile(models.Model):
+    ROLE_SUPER_ADMIN = "super_admin"
+    ROLE_ADMIN = "admin"
+    ROLE_VIEWER = "viewer"
+
+    ROLE_CHOICES = [
+        (ROLE_SUPER_ADMIN, "Главный админ"),
+        (ROLE_ADMIN, "Администратор"),
+        (ROLE_VIEWER, "Просмотр"),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_VIEWER
+    )
+
+    countries = models.ManyToManyField(
+        Country,
+        blank=True,
+        related_name="user_profiles"
+    )
+
+    def __str__(self):
+        return f"{self.user.username} — {self.get_role_display()}"
+
+    def can_edit(self):
+        return self.role in [self.ROLE_SUPER_ADMIN, self.ROLE_ADMIN]
+
+    def can_access_country(self, country):
+        if self.role == self.ROLE_SUPER_ADMIN:
+            return True
+        return self.countries.filter(id=country.id).exists()
+
+    def is_super_admin(self):
+        return self.role == self.ROLE_SUPER_ADMIN

@@ -1,12 +1,58 @@
 from django.contrib import admin
-from .models import *
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
+from .models import (
+    Country,
+    Product,
+    ProductPrice,
+    Preparation,
+    PreparationItem,
+    Dish,
+    DishProductItem,
+    DishPreparationItem,
+    Employee,
+    Packaging,
+    MonthlyUtilityExpense,
+    DishPackagingItem,
+    DishLaborItem,
+    DishAdditionalExpense,
+    UserProfile,
+)
+
+
+# =========================
+# USER PROFILE INLINE
+# =========================
+
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = "Права доступа"
+
+
+class UserAdmin(BaseUserAdmin):
+    inlines = (UserProfileInline,)
+
+
+# Перерегистрируем User
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
+
+# =========================
+# COUNTRY
+# =========================
 
 @admin.register(Country)
 class CountryAdmin(admin.ModelAdmin):
     list_display = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
 
+
+# =========================
+# PRODUCT
+# =========================
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -21,6 +67,10 @@ class ProductPriceAdmin(admin.ModelAdmin):
     list_filter = ("product__country", "date_from")
     search_fields = ("product__name",)
 
+
+# =========================
+# PREPARATION
+# =========================
 
 @admin.register(Preparation)
 class PreparationAdmin(admin.ModelAdmin):
@@ -42,6 +92,10 @@ class PreparationItemAdmin(admin.ModelAdmin):
     list_display = ("preparation", "product", "gross", "net")
     list_filter = ("preparation__country",)
 
+
+# =========================
+# DISH
+# =========================
 
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
@@ -71,12 +125,20 @@ class DishPreparationItemAdmin(admin.ModelAdmin):
     list_filter = ("dish__country",)
 
 
+# =========================
+# EMPLOYEE
+# =========================
+
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ("name", "country", "monthly_salary", "monthly_hours", "hourly_rate")
     list_filter = ("country",)
     search_fields = ("name",)
 
+
+# =========================
+# PACKAGING
+# =========================
 
 @admin.register(Packaging)
 class PackagingAdmin(admin.ModelAdmin):
@@ -85,11 +147,19 @@ class PackagingAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+# =========================
+# UTILITIES
+# =========================
+
 @admin.register(MonthlyUtilityExpense)
 class MonthlyUtilityExpenseAdmin(admin.ModelAdmin):
     list_display = ("country", "month", "water", "electricity", "rent", "total")
     list_filter = ("country", "month")
 
+
+# =========================
+# EXTRA
+# =========================
 
 @admin.register(DishPackagingItem)
 class DishPackagingItemAdmin(admin.ModelAdmin):

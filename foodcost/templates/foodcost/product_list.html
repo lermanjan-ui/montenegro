@@ -110,6 +110,15 @@
         font-size: 13px;
     }
 
+    .readonly-note {
+        background: #f3f4f6;
+        color: #374151;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: bold;
+        margin-top: 12px;
+    }
+
     @media (max-width: 800px) {
         .grid {
             grid-template-columns: 1fr;
@@ -123,10 +132,15 @@
         <div>
             <h1>Продукты</h1>
             <p class="muted">Добавление продуктов, закупочных цен и просмотр актуальной стоимости.</p>
+
+            {% if not can_edit %}
+                <div class="readonly-note">Режим просмотра: добавление и редактирование продуктов недоступно.</div>
+            {% endif %}
         </div>
         <a class="button" href="/c/{{ country.slug }}/">Блюда</a>
     </div>
 
+    {% if can_edit %}
     <div class="card">
         <h2>Добавить новый продукт</h2>
 
@@ -159,6 +173,7 @@
             <button type="submit">Сохранить продукт</button>
         </form>
     </div>
+    {% endif %}
 
     <div class="card">
         <h2>Список продуктов</h2>

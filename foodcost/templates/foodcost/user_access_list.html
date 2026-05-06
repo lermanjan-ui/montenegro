@@ -1,0 +1,277 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Пользователи и доступы{% endblock %}
+
+{% block content %}
+
+<style>
+    label {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        font-size: 15px;
+        box-sizing: border-box;
+        background: white;
+    }
+
+    button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 2fr auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .user-row {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 2fr 120px 140px;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .error {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-weight: bold;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #111827;
+        color: white;
+        padding: 14px;
+        text-align: left;
+    }
+
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .muted {
+        color: #6b7280;
+    }
+
+    .view-mode {
+        font-weight: bold;
+        color: #111827;
+    }
+
+    .edit-mode {
+        display: none;
+    }
+
+    .editing .view-mode {
+        display: none;
+    }
+
+    .editing .edit-mode {
+        display: block;
+    }
+
+    .edit-btn {
+        background: #e5e7eb;
+        color: #111827;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .country-list {
+        font-weight: normal;
+        color: #374151;
+    }
+
+    .hint {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 6px;
+    }
+
+    @media (max-width: 1000px) {
+        .form-grid,
+        .user-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<a href="/c/{{ country.slug }}/" style="display:inline-block; margin-bottom:16px; font-weight:bold; text-decoration:none; color:#374151;">
+    ← Назад
+</a>
+
+<div class="card">
+    <h1>Пользователи и доступы</h1>
+    <p class="muted">Создание пользователей, назначение роли и доступных стран.</p>
+</div>
+
+<div class="card">
+    <h2>Создать пользователя</h2>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_user">
+
+        <div class="form-grid">
+            <div>
+                <label>Логин</label>
+                <input name="username" placeholder="Например: manager_uz">
+            </div>
+
+            <div>
+                <label>Пароль</label>
+                <input name="password" type="password" placeholder="Пароль">
+            </div>
+
+            <div>
+                <label>Роль</label>
+                <select name="role">
+                    {% for value, label in roles %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Страны</label>
+                <select name="countries" multiple size="4">
+                    {% for c in countries %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="hint">Cmd/Ctrl + клик, чтобы выбрать несколько стран.</div>
+            </div>
+
+            <button type="submit">Создать</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Существующие пользователи</h2>
+
+    <table>
+        <tr>
+            <th>Пользователь</th>
+            <th>Роль</th>
+            <th>Страны</th>
+            <th>Superuser</th>
+            <th></th>
+        </tr>
+
+        {% for user in users %}
+        <tr>
+            <td colspan="5">
+                <form method="post" class="user-row editable-user-row">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_user">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+
+                    <div>
+                        <div class="view-mode">{{ user.username }}</div>
+                        <input class="edit-mode" name="username" value="{{ user.username }}">
+                        <input class="edit-mode" name="password" type="password" placeholder="Новый пароль, если нужно">
+                    </div>
+
+                    <div>
+                        <div class="view-mode">
+                            {{ user.profile.get_role_display }}
+                        </div>
+
+                        <select class="edit-mode" name="role">
+                            {% for value, label in roles %}
+                                <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="view-mode country-list">
+                            {% for c in user.profile.countries.all %}
+                                {{ c.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                <span class="muted">Страны не выбраны</span>
+                            {% endfor %}
+                        </div>
+
+                        <select class="edit-mode" name="countries" multiple size="4">
+                            {% for c in countries %}
+                                <option value="{{ c.id }}"
+                                    {% if c in user.profile.countries.all %}selected{% endif %}>
+                                    {{ c.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        {% if user.is_superuser %}
+                            Да
+                        {% else %}
+                            Нет
+                        {% endif %}
+                    </div>
+
+                    <button type="button" class="edit-btn">Редактировать</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="muted">Пользователей пока нет.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<script>
+document.addEventListener("click", function(e) {
+    const btn = e.target.closest(".edit-btn");
+    if (!btn) return;
+
+    e.preventDefault();
+
+    const form = btn.closest("form");
+
+    if (!form.classList.contains("editing")) {
+        form.classList.add("editing");
+        btn.textContent = "Сохранить";
+        return;
+    }
+
+    form.submit();
+});
+</script>
+
+{% endblock %}
