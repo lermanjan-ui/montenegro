@@ -68,7 +68,10 @@ class Preparation(models.Model):
         return self.name
 
     def calculate_cost(self):
-        return sum(item.calculate_cost() for item in self.items.all())
+        return (
+            sum(item.calculate_cost() for item in self.items.all())
+            + sum(item.calculate_cost() for item in self.subitems.all())
+        )
 
     def cost_per_kg(self):
         if self.final_weight == 0:
@@ -91,7 +94,28 @@ class PreparationItem(models.Model):
     def unit_label(self):
         return self.product.unit_label()
 
+class PreparationSubItem(models.Model):
+    preparation = models.ForeignKey(
+        Preparation,
+        on_delete=models.CASCADE,
+        related_name="subitems"
+    )
 
+    sub_preparation = models.ForeignKey(
+        Preparation,
+        on_delete=models.CASCADE,
+        related_name="used_in_preparations"
+    )
+
+    gross = models.DecimalField(max_digits=10, decimal_places=3)
+    net = models.DecimalField(max_digits=10, decimal_places=3)
+
+    def calculate_cost(self):
+        return self.net * self.sub_preparation.cost_per_kg()
+
+    def unit_label(self):
+        return "кг"
+        
 # 🍽 БЛЮДО
 class Dish(models.Model):
     country = models.ForeignKey(

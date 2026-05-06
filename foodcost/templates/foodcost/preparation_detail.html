@@ -163,6 +163,11 @@
         <option value="{{ product.name }}" data-id="{{ product.id }}"></option>
     {% endfor %}
 </datalist>
+<datalist id="preparations-options">
+    {% for prep in preparations %}
+        <option value="{{ prep.name }}" data-id="{{ prep.id }}"></option>
+    {% endfor %}
+</datalist>
 
 <a class="back" href="/c/{{ country.slug }}/preparations/">← Назад к заготовкам</a>
 
@@ -327,6 +332,176 @@
 
                     <button type="submit">Добавить</button>
                 </form>
+            </td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<div class="card">
+    <h2>Заготовки в составе</h2>
+
+    <table>
+        <tr>
+            <th>Заготовка</th>
+            <th>Брутто, кг</th>
+            <th>Нетто, кг</th>
+            <th>Стоимость</th>
+
+            {% if can_edit %}
+                <th></th>
+                <th></th>
+            {% endif %}
+        </tr>
+
+        <tbody>
+        {% for item in preparation.subitems.all %}
+        <tr>
+            <td colspan="{% if can_edit %}6{% else %}4{% endif %}">
+
+                <form method="post" class="line-6 editable-row">
+                    {% csrf_token %}
+
+                    <input type="hidden" name="action" value="update_subitem">
+
+                    <input
+                        type="hidden"
+                        name="item_id"
+                        value="{{ item.id }}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="sub_preparation_id"
+                        id="sub-prep-existing-{{ item.id }}"
+                        value="{{ item.sub_preparation_id }}"
+                    >
+
+                    <div>
+                        <div class="view-mode">
+                            {{ item.sub_preparation.name }}
+                        </div>
+
+                        {% if can_edit %}
+                        <input
+                            class="edit-mode search-field"
+                            list="preparations-options"
+                            value="{{ item.sub_preparation.name }}"
+                            data-hidden-input="sub-prep-existing-{{ item.id }}"
+                            placeholder="Начните вводить заготовку..."
+                        >
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <div class="view-mode">
+                            {{ item.gross }}
+                        </div>
+
+                        {% if can_edit %}
+                        <input
+                            class="edit-mode"
+                            type="text"
+                            name="gross"
+                            value="{{ item.gross }}"
+                        >
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <div class="view-mode">
+                            {{ item.net }}
+                        </div>
+
+                        {% if can_edit %}
+                        <input
+                            class="edit-mode"
+                            type="text"
+                            name="net"
+                            value="{{ item.net }}"
+                        >
+                        {% endif %}
+                    </div>
+
+                    <div class="price">
+                        {{ item.calculate_cost|floatformat:2 }}
+                    </div>
+
+                    {% if can_edit %}
+                    <button type="button" class="edit-btn">
+                        Редактировать
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="delete_subitem"
+                        class="danger"
+                        onclick="return confirm('Удалить заготовку из состава?')"
+                    >
+                        Удалить
+                    </button>
+                    {% endif %}
+                </form>
+
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="muted">
+                Заготовок пока нет
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+
+        {% if can_edit %}
+        <tr class="add-row">
+            <td colspan="6">
+
+                <form method="post" class="add-line-6">
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="add_subitem"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="sub_preparation_id"
+                        id="sub-prep-add-hidden"
+                    >
+
+                    <input
+                        class="search-field"
+                        list="preparations-options"
+                        data-hidden-input="sub-prep-add-hidden"
+                        placeholder="Начните вводить заготовку..."
+                    >
+
+                    <input
+                        type="text"
+                        name="gross"
+                        placeholder="Брутто"
+                    >
+
+                    <input
+                        type="text"
+                        name="net"
+                        placeholder="Нетто"
+                    >
+
+                    <span class="price muted">
+                        после сохранения
+                    </span>
+
+                    <button type="submit">
+                        Добавить
+                    </button>
+                </form>
+
             </td>
         </tr>
         {% endif %}

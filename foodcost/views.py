@@ -15,6 +15,7 @@ from .models import (
     DishTechStep,
     Preparation,
     PreparationItem,
+    PreparationSubItem,
     DishProductItem,
     DishPreparationItem,
     Employee,
@@ -589,7 +590,9 @@ def preparation_list(request, country_slug):
 def preparation_detail(request, country_slug, prep_id):
     country = get_country(country_slug, request.user)
     preparation = get_object_or_404(Preparation, id=prep_id, country=country)
+
     products = Product.objects.filter(country=country)
+    preparations = Preparation.objects.filter(country=country).exclude(id=preparation.id)
 
     if request.method == "POST":
         if not user_can_edit(request.user):
@@ -604,11 +607,29 @@ def preparation_detail(request, country_slug, prep_id):
             preparation.save()
 
         if action == "add_item":
-            product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
+            product = get_object_or_404(
+                Product,
+                id=request.POST.get("product_id"),
+                country=country,
+            )
 
             PreparationItem.objects.create(
                 preparation=preparation,
                 product=product,
+                gross=request.POST.get("gross") or 0,
+                net=request.POST.get("net") or request.POST.get("gross") or 0,
+            )
+
+        if action == "add_subitem":
+            sub_preparation = get_object_or_404(
+                Preparation,
+                id=request.POST.get("sub_preparation_id"),
+                country=country,
+            )
+
+            PreparationSubItem.objects.create(
+                preparation=preparation,
+                sub_preparation=sub_preparation,
                 gross=request.POST.get("gross") or 0,
                 net=request.POST.get("net") or request.POST.get("gross") or 0,
             )
@@ -631,6 +652,24 @@ def preparation_detail(request, country_slug, prep_id):
             item.net = request.POST.get("net") or item.gross
             item.save()
 
+        if action == "update_subitem":
+            item = get_object_or_404(
+                PreparationSubItem,
+                id=request.POST.get("item_id"),
+                preparation=preparation,
+            )
+
+            sub_preparation = get_object_or_404(
+                Preparation,
+                id=request.POST.get("sub_preparation_id"),
+                country=country,
+            )
+
+            item.sub_preparation = sub_preparation
+            item.gross = request.POST.get("gross") or 0
+            item.net = request.POST.get("net") or item.gross
+            item.save()
+
         if action == "delete_item":
             item = get_object_or_404(
                 PreparationItem,
@@ -640,15 +679,32 @@ def preparation_detail(request, country_slug, prep_id):
 
             item.delete()
 
+        if action == "delete_subitem":
+            item = get_object_or_404(
+                PreparationSubItem,
+                id=request.POST.get("item_id"),
+                preparation=preparation,
+            )
+
+            item.delete()
+
         return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
-    total_gross = sum(item.gross for item in preparation.items.all())
-    total_net = sum(item.net for item in preparation.items.all())
+    total_gross = (
+        sum(item.gross for item in preparation.items.all())
+        + sum(item.gross for item in preparation.subitems.all())
+    )
+
+    total_net = (
+        sum(item.net for item in preparation.items.all())
+        + sum(item.net for item in preparation.subitems.all())
+    )
 
     return render(request, "foodcost/preparation_detail.html", {
         "country": country,
         "preparation": preparation,
         "products": products,
+        "preparations": preparations,
         "total_gross": total_gross,
         "total_net": total_net,
         "can_edit": user_can_edit(request.user),
