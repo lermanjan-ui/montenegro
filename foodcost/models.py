@@ -146,7 +146,7 @@ class Dish(models.Model):
     def foodcost(self):
         if self.selling_price == 0:
             return 0
-        return (self.calculate_cost() / self.selling_price) * 100
+        return (self.ingredient_cost() / self.selling_price) * 100
 
     def margin(self):
         return self.selling_price - self.calculate_cost()
