@@ -78,6 +78,19 @@ class Preparation(models.Model):
             return 0
         return self.calculate_cost() / self.final_weight
 
+    def total_cooking_minutes(self):
+        total = self.cooking_minutes
+
+        for item in self.subitems.all():
+            if item.sub_preparation.final_weight == 0:
+                continue
+
+            total += item.sub_preparation.total_cooking_minutes() * (
+                item.net / item.sub_preparation.final_weight
+            )
+
+        return total
+
 
 class PreparationItem(models.Model):
     preparation = models.ForeignKey(Preparation, on_delete=models.CASCADE, related_name="items")
@@ -93,6 +106,7 @@ class PreparationItem(models.Model):
 
     def unit_label(self):
         return self.product.unit_label()
+
 
 class PreparationSubItem(models.Model):
     preparation = models.ForeignKey(
@@ -115,7 +129,8 @@ class PreparationSubItem(models.Model):
 
     def unit_label(self):
         return "кг"
-        
+
+
 # 🍽 БЛЮДО
 class Dish(models.Model):
     country = models.ForeignKey(
@@ -156,7 +171,19 @@ class Dish(models.Model):
         return sum(item.cost for item in self.additional_expenses.all())
 
     def total_cooking_minutes(self):
-        return self.cooking_minutes + sum(p.preparation.cooking_minutes for p in self.preparation_items.all())
+        total = self.cooking_minutes
+
+        for item in self.preparation_items.all():
+            preparation = item.preparation
+
+            if preparation.final_weight == 0:
+                continue
+
+            total += preparation.total_cooking_minutes() * (
+                item.net / preparation.final_weight
+            )
+
+        return total
 
     def calculate_cost(self):
         return (

@@ -506,6 +506,10 @@ def product_detail(request, country_slug, product_id):
 
     prices = product.prices.order_by("date_from")
 
+    latest_prices = list(product.prices.order_by("-date_from")[:2])
+    current_price = latest_prices[0].price if len(latest_prices) >= 1 else None
+    previous_price = latest_prices[1].price if len(latest_prices) >= 2 else None
+
     dish_items = DishProductItem.objects.filter(
         product=product,
         dish__country=country,
@@ -519,43 +523,101 @@ def product_detail(request, country_slug, product_id):
     affected_dishes = []
 
     for item in dish_items:
+        current_item_cost = item.calculate_cost()
+
+        previous_item_cost = None
+        difference = None
+        previous_dish_cost = None
+        previous_foodcost = None
+
+        if current_price is not None and previous_price is not None:
+            previous_item_cost = item.net * previous_price
+            difference = current_item_cost - previous_item_cost
+            previous_dish_cost = item.dish.calculate_cost() - difference
+
+            if item.dish.selling_price:
+                previous_foodcost = (item.dish.ingredient_cost() - difference) / item.dish.selling_price * 100
+
         affected_dishes.append({
             "type": "Блюдо напрямую",
             "name": item.dish.name,
             "url": f"/c/{country.slug}/dish/{item.dish.id}/",
-            "quantity": item.gross,
-            "cost": item.calculate_cost(),
+            "quantity": item.net,
+            "unit": item.unit_label(),
+            "cost": current_item_cost,
+            "previous_cost": previous_item_cost,
+            "difference": difference,
             "dish_cost": item.dish.calculate_cost(),
+            "previous_dish_cost": previous_dish_cost,
             "foodcost": item.dish.foodcost(),
+            "previous_foodcost": previous_foodcost,
         })
 
     for prep_item in preparation_items:
         preparation = prep_item.preparation
 
+        current_prep_item_cost = prep_item.calculate_cost()
+
+        previous_prep_item_cost = None
+        prep_difference = None
+
+        if current_price is not None and previous_price is not None:
+            previous_prep_item_cost = prep_item.net * previous_price
+            prep_difference = current_prep_item_cost - previous_prep_item_cost
+
         for dish_prep_item in DishPreparationItem.objects.filter(
             preparation=preparation,
             dish__country=country,
         ).select_related("dish"):
+            current_item_cost = dish_prep_item.calculate_cost()
+
+            previous_item_cost = None
+            difference = None
+            previous_dish_cost = None
+            previous_foodcost = None
+
+            if (
+                current_price is not None
+                and previous_price is not None
+                and prep_difference is not None
+                and preparation.final_weight
+            ):
+                difference_per_kg = prep_difference / preparation.final_weight
+                difference = dish_prep_item.net * difference_per_kg
+                previous_item_cost = current_item_cost - difference
+                previous_dish_cost = dish_prep_item.dish.calculate_cost() - difference
+
+                if dish_prep_item.dish.selling_price:
+                    previous_foodcost = (
+                        dish_prep_item.dish.ingredient_cost() - difference
+                    ) / dish_prep_item.dish.selling_price * 100
+
             affected_dishes.append({
                 "type": f"Через заготовку: {preparation.name}",
                 "name": dish_prep_item.dish.name,
                 "url": f"/c/{country.slug}/dish/{dish_prep_item.dish.id}/",
-                "quantity": dish_prep_item.gross,
-                "cost": dish_prep_item.calculate_cost(),
+                "quantity": dish_prep_item.net,
+                "unit": "кг",
+                "cost": current_item_cost,
+                "previous_cost": previous_item_cost,
+                "difference": difference,
                 "dish_cost": dish_prep_item.dish.calculate_cost(),
+                "previous_dish_cost": previous_dish_cost,
                 "foodcost": dish_prep_item.dish.foodcost(),
+                "previous_foodcost": previous_foodcost,
             })
 
     return render(request, "foodcost/product_detail.html", {
         "country": country,
         "product": product,
         "prices": prices,
+        "current_price": current_price,
+        "previous_price": previous_price,
         "affected_dishes": affected_dishes,
         "preparation_items": preparation_items,
         "dish_items": dish_items,
         "can_edit": user_can_edit(request.user),
     })
-
 @login_required(login_url="/login/")
 def preparation_list(request, country_slug):
     country = get_country(country_slug, request.user)

@@ -15,7 +15,7 @@
 
     .summary {
         display:grid;
-        grid-template-columns:repeat(2,1fr);
+        grid-template-columns:repeat(3,1fr);
         gap:12px;
     }
 
@@ -75,11 +75,13 @@
         color:white;
         padding:14px;
         text-align:left;
+        font-size:14px;
     }
 
     td {
         padding:12px;
         border-bottom:1px solid #e5e7eb;
+        font-size:14px;
     }
 
     .price { color:#047857; font-weight:bold; }
@@ -95,6 +97,25 @@
         font-weight:bold;
         margin-top:12px;
     }
+
+    .delta-plus {
+        color:#dc2626;
+        font-weight:bold;
+    }
+
+    .delta-minus {
+        color:#047857;
+        font-weight:bold;
+    }
+
+    .delta-zero {
+        color:#6b7280;
+        font-weight:bold;
+    }
+
+    .wide-table {
+        overflow-x:auto;
+    }
 </style>
 
 <a class="back" href="/c/{{ country.slug }}/products/">← Назад к продуктам</a>
@@ -109,19 +130,26 @@
     <div class="summary">
         <div class="metric">
             <span>Единица</span>
-            {{ product.unit }}
+            {{ product.unit_label }}
         </div>
 
-        {% with last_price=product.get_price %}
         <div class="metric">
-            <span>Актуальная цена</span>
-            {% if last_price %}
-                {{ last_price.price }}
+            <span>Текущая цена</span>
+            {% if current_price %}
+                {{ current_price|floatformat:2 }}
             {% else %}
                 —
             {% endif %}
         </div>
-        {% endwith %}
+
+        <div class="metric">
+            <span>Предыдущая цена</span>
+            {% if previous_price %}
+                {{ previous_price|floatformat:2 }}
+            {% else %}
+                —
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -150,7 +178,7 @@
                         <option value="pcs" {% if product.unit == "pcs" %}selected{% endif %}>шт</option>
                     </select>
                 {% else %}
-                    <input type="text" value="{{ product.unit }}" readonly>
+                    <input type="text" value="{{ product.unit_label }}" readonly>
                 {% endif %}
             </div>
 
@@ -162,42 +190,117 @@
 </div>
 
 <div class="card">
-    <h2>Влияние на блюда</h2>
+    <h2>Каскадное влияние на блюда</h2>
+
+    {% if previous_price and current_price %}
+        <p class="muted">
+            Сравнение построено между предыдущей ценой
+            <strong>{{ previous_price|floatformat:2 }}</strong>
+            и текущей ценой
+            <strong>{{ current_price|floatformat:2 }}</strong>.
+        </p>
+    {% else %}
+        <p class="muted">
+            Для сравнения нужно минимум две цены в истории продукта.
+        </p>
+    {% endif %}
 
     {% if affected_dishes %}
-    <table>
-        <tr>
-            <th>Тип</th>
-            <th>Блюдо</th>
-            <th>Кол-во</th>
-            <th>Стоимость</th>
-            <th>Себестоимость</th>
-            <th>Фудкост</th>
-            <th></th>
-        </tr>
+    <div class="wide-table">
+        <table>
+            <tr>
+                <th>Тип</th>
+                <th>Блюдо</th>
+                <th>Кол-во</th>
+                <th>Было в блюде</th>
+                <th>Стало в блюде</th>
+                <th>Разница</th>
+                <th>Себестоимость была</th>
+                <th>Себестоимость стала</th>
+                <th>Фудкост был</th>
+                <th>Фудкост стал</th>
+                <th></th>
+            </tr>
 
-        {% for row in affected_dishes %}
-        <tr>
-            <td>{{ row.type }}</td>
-            <td><strong>{{ row.name }}</strong></td>
-            <td>{{ row.quantity }}</td>
-            <td class="price">{{ row.cost|floatformat:0 }}</td>
-            <td>{{ row.dish_cost|floatformat:0 }}</td>
+            {% for row in affected_dishes %}
+            <tr>
+                <td>{{ row.type }}</td>
 
-            {% if row.foodcost > 35 %}
-                <td class="warn">{{ row.foodcost|floatformat:1 }}%</td>
-            {% else %}
-                <td class="price">{{ row.foodcost|floatformat:1 }}%</td>
-            {% endif %}
+                <td>
+                    <strong>{{ row.name }}</strong>
+                </td>
 
-            <td>
-                <a class="open" href="{{ row.url }}">→</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+                <td>
+                    {{ row.quantity }} {{ row.unit }}
+                </td>
+
+                <td>
+                    {% if row.previous_cost != None %}
+                        {{ row.previous_cost|floatformat:2 }}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </td>
+
+                <td class="price">
+                    {{ row.cost|floatformat:2 }}
+                </td>
+
+                <td>
+                    {% if row.difference != None %}
+                        {% if row.difference > 0 %}
+                            <span class="delta-plus">+{{ row.difference|floatformat:2 }}</span>
+                        {% elif row.difference < 0 %}
+                            <span class="delta-minus">{{ row.difference|floatformat:2 }}</span>
+                        {% else %}
+                            <span class="delta-zero">0.00</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if row.previous_dish_cost != None %}
+                        {{ row.previous_dish_cost|floatformat:2 }}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </td>
+
+                <td class="price">
+                    {{ row.dish_cost|floatformat:2 }}
+                </td>
+
+                <td>
+                    {% if row.previous_foodcost != None %}
+                        {% if row.previous_foodcost > 35 %}
+                            <span class="warn">{{ row.previous_foodcost|floatformat:1 }}%</span>
+                        {% else %}
+                            <span class="price">{{ row.previous_foodcost|floatformat:1 }}%</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if row.foodcost > 35 %}
+                        <span class="warn">{{ row.foodcost|floatformat:1 }}%</span>
+                    {% else %}
+                        <span class="price">{{ row.foodcost|floatformat:1 }}%</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <a class="open" href="{{ row.url }}">→</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
     {% else %}
-        <p class="muted">Нет использования</p>
+        <p class="muted">Нет использования в блюдах.</p>
     {% endif %}
 </div>
 
@@ -216,7 +319,7 @@
         {% for price in prices %}
         <tr>
             <td>{{ price.date_from }}</td>
-            <td class="price">{{ price.price }}</td>
+            <td class="price">{{ price.price|floatformat:2 }}</td>
             {% if can_edit %}
                 <td></td>
             {% endif %}
