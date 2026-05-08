@@ -11,6 +11,7 @@ from .models import (
     Country,
     Product,
     ProductPrice,
+    DishCategory,
     Dish,
     DishTechStep,
     Preparation,
@@ -100,24 +101,84 @@ def country_list(request):
 def dish_create(request, country_slug):
     country = get_country(country_slug, request.user)
 
-    dish = Dish.objects.create(
-        country=country,
-        name="Новое блюдо",
-        final_weight=0,
-        selling_price=0,
-        cooking_minutes=0,
-    )
+    if not user_can_edit(request.user):
+        return HttpResponseForbidden("У вас нет прав на создание блюда")
 
-    return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+    categories = DishCategory.objects.filter(country=country)
+
+    if request.method == "POST":
+        name = request.POST.get("name") or "Новое блюдо"
+        final_weight = request.POST.get("final_weight") or 0
+        selling_price = request.POST.get("selling_price") or 0
+        cooking_minutes = request.POST.get("cooking_minutes") or 0
+
+        category_id = request.POST.get("category_id")
+        new_category_name = request.POST.get("new_category_name")
+
+        category = None
+
+        if new_category_name:
+            category = DishCategory.objects.create(
+                country=country,
+                name=new_category_name,
+            )
+
+        elif category_id:
+            category = get_object_or_404(
+                DishCategory,
+                id=category_id,
+                country=country,
+            )
+
+        dish = Dish.objects.create(
+            country=country,
+            category=category,
+            name=name,
+            final_weight=final_weight,
+            selling_price=selling_price,
+            cooking_minutes=cooking_minutes,
+        )
+
+        return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+
+    return render(request, "foodcost/dish_create.html", {
+        "country": country,
+        "categories": categories,
+    })
 
 @login_required(login_url="/login/")
 def dish_list(request, country_slug):
     country = get_country(country_slug, request.user)
 
+    if request.method == "POST":
+        if not user_can_edit(request.user):
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+
+        action = request.POST.get("action")
+
+        if action == "create_category":
+            category_name = request.POST.get("category_name")
+
+            if category_name:
+                DishCategory.objects.create(
+                    country=country,
+                    name=category_name,
+                )
+
+        return redirect(f"/c/{country.slug}/")
+
     dishes = list(Dish.objects.filter(country=country))
+    categories = DishCategory.objects.filter(country=country)
 
     filter_type = request.GET.get("filter", "all")
     sort_type = request.GET.get("sort", "name")
+    category_ids = request.GET.getlist("categories")
+
+    if category_ids:
+        dishes = [
+            dish for dish in dishes
+            if dish.category_id and str(dish.category_id) in category_ids
+        ]
 
     if filter_type == "loss":
         dishes = [dish for dish in dishes if dish.margin() < 0]
@@ -140,8 +201,11 @@ def dish_list(request, country_slug):
     return render(request, "foodcost/dish_list.html", {
         "country": country,
         "dishes": dishes,
+        "categories": categories,
+        "selected_category_ids": category_ids,
         "filter_type": filter_type,
         "sort_type": sort_type,
+        "can_edit": user_can_edit(request.user),
     })
 
 @login_required(login_url="/login/")
@@ -198,6 +262,24 @@ def dish_detail(request, country_slug, dish_id):
             dish.selling_price = request.POST.get("selling_price") or 0
             dish.cooking_minutes = request.POST.get("cooking_minutes") or 0
             dish.tech_card = request.POST.get("tech_card", "")
+
+            category_id = request.POST.get("category_id")
+            new_category_name = request.POST.get("new_category_name")
+
+            if new_category_name:
+                dish.category = DishCategory.objects.create(
+                    country=country,
+                    name=new_category_name,
+                )
+            elif category_id:
+                dish.category = get_object_or_404(
+                    DishCategory,
+                    id=category_id,
+                    country=country,
+                )
+            else:
+                dish.category = None
+
             dish.save()
 
         if action == "add_step":
@@ -423,9 +505,12 @@ def dish_detail(request, country_slug, dish_id):
 
         return redirect(f"/c/{country.slug}/dish/{dish.id}/")
 
+    categories = DishCategory.objects.filter(country=country)
+
     return render(request, "foodcost/dish_detail.html", {
         "country": country,
         "dish": dish,
+        "categories": categories,
         "products": products,
         "preparations": preparations,
         "employees": employees,
@@ -433,7 +518,7 @@ def dish_detail(request, country_slug, dish_id):
         "tech_steps": tech_steps,
         "can_edit": user_can_edit(request.user),
     })
-
+    
 @login_required(login_url="/login/")
 def product_list(request, country_slug):
     country = get_country(country_slug, request.user)
@@ -869,10 +954,7 @@ def utilities_list(request, country_slug):
         "utilities": utilities,
     })
     
-    from django.shortcuts import render, get_object_or_404
-    from django.http import HttpResponseForbidden
-    from django.contrib.auth.models import User
-    from .models import Country, UserProfile
+  
     
 @login_required(login_url="/login/")    
 def user_access_list(request, country_slug):

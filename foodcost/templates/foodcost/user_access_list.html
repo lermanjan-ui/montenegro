@@ -5,21 +5,84 @@
 {% block content %}
 
 <style>
-    label {
-        font-weight: bold;
-        font-size: 14px;
-        margin-bottom: 6px;
-        display: block;
+    .page {
+        max-width: 1280px;
+        margin: 0 auto;
     }
 
-    input, select {
-        width: 100%;
+    .back {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #374151;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 14px;
+    }
+
+    .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 24px 28px;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+    }
+
+    h1 {
+        margin: 0 0 10px;
+        font-size: 36px;
+        color: #111827;
+        letter-spacing: -0.03em;
+    }
+
+    h2 {
+        margin: 0 0 20px;
+        font-size: 24px;
+        color: #111827;
+    }
+
+    .muted {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .error {
+        background: #fffafa;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
         padding: 12px;
-        border: 1px solid #d1d5db;
         border-radius: 12px;
+        margin-bottom: 16px;
+        font-weight: 900;
+    }
+
+    label {
+        font-weight: 900;
+        font-size: 13px;
+        margin-bottom: 6px;
+        display: block;
+        color: #111827;
+    }
+
+    input,
+    select {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
         font-size: 15px;
         box-sizing: border-box;
         background: white;
+        color: #111827;
+        font-weight: 700;
+    }
+
+    input:focus,
+    select:focus {
+        outline: none;
+        border-color: #111827;
+        box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
     }
 
     button {
@@ -27,103 +90,146 @@
         color: white;
         border: 0;
         border-radius: 12px;
-        padding: 12px 16px;
+        padding: 11px 16px;
         cursor: pointer;
-        font-weight: bold;
+        font-weight: 900;
+        font-size: 14px;
         white-space: nowrap;
+    }
+
+    .secondary-btn {
+        background: white;
+        color: #111827;
+        border: 1px solid #d1d5db;
     }
 
     .form-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr 2fr auto;
-        gap: 12px;
+        grid-template-columns: 1fr 1fr 1fr 1.8fr auto;
+        gap: 14px;
         align-items: end;
     }
 
-    .user-row {
-        display: grid;
-        grid-template-columns: 1.2fr 1fr 2fr 120px 140px;
-        gap: 12px;
+    .countries-checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .country-checkbox {
+        display: inline-flex;
         align-items: center;
-    }
-
-    .error {
-        background: #fee2e2;
-        color: #991b1b;
-        padding: 12px;
+        gap: 8px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
-        margin-bottom: 16px;
-        font-weight: bold;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    th {
-        background: #111827;
-        color: white;
-        padding: 14px;
-        text-align: left;
-    }
-
-    td {
-        padding: 12px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .muted {
-        color: #6b7280;
-    }
-
-    .view-mode {
-        font-weight: bold;
-        color: #111827;
-    }
-
-    .edit-mode {
-        display: none;
-    }
-
-    .editing .view-mode {
-        display: none;
-    }
-
-    .editing .edit-mode {
-        display: block;
-    }
-
-    .edit-btn {
-        background: #e5e7eb;
-        color: #111827;
-        padding: 10px 14px;
-        border-radius: 10px;
-        font-size: 14px;
-    }
-
-    .country-list {
-        font-weight: normal;
+        padding: 9px 12px;
+        cursor: pointer;
+        font-weight: 800;
         color: #374151;
     }
 
-    .hint {
-        font-size: 12px;
+    .country-checkbox input {
+        width: auto;
+        margin: 0;
+    }
+
+    .users-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .user-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: white;
+        overflow: hidden;
+    }
+
+    .user-view {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1.6fr 0.8fr 160px;
+        gap: 14px;
+        align-items: center;
+        padding: 16px;
+    }
+
+    .username {
+        font-weight: 950;
+        color: #111827;
+        font-size: 16px;
+    }
+
+    .small-label {
         color: #6b7280;
-        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #ecfdf5;
+        color: #047857;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 13px;
+        font-weight: 950;
+    }
+
+    .country-list {
+        font-weight: 850;
+        color: #374151;
+        line-height: 1.35;
+    }
+
+    .superuser-yes {
+        color: #047857;
+        font-weight: 950;
+    }
+
+    .superuser-no {
+        color: #6b7280;
+        font-weight: 900;
+    }
+
+    .edit-panel {
+        display: none;
+        border-top: 1px solid #e5e7eb;
+        background: #fbfcfd;
+        padding: 16px;
+    }
+
+    .user-card.editing .edit-panel {
+        display: block;
+    }
+
+    .edit-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1.8fr auto auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    .empty {
+        padding: 18px 0;
+        color: #6b7280;
+        font-weight: 800;
     }
 
     @media (max-width: 1000px) {
         .form-grid,
-        .user-row {
+        .user-view,
+        .edit-grid {
             grid-template-columns: 1fr;
         }
     }
 </style>
 
-<a href="/c/{{ country.slug }}/" style="display:inline-block; margin-bottom:16px; font-weight:bold; text-decoration:none; color:#374151;">
-    ← Назад
-</a>
+<div class="page">
+
+<a href="/c/{{ country.slug }}/" class="back">← Назад</a>
 
 <div class="card">
     <h1>Пользователи и доступы</h1>
@@ -163,12 +269,14 @@
 
             <div>
                 <label>Страны</label>
-                <select name="countries" multiple size="4">
+                <div class="countries-checkboxes">
                     {% for c in countries %}
-                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        <label class="country-checkbox">
+                            <input type="checkbox" name="countries" value="{{ c.id }}">
+                            {{ c.name }}
+                        </label>
                     {% endfor %}
-                </select>
-                <div class="hint">Cmd/Ctrl + клик, чтобы выбрать несколько стран.</div>
+                </div>
             </div>
 
             <button type="submit">Создать</button>
@@ -179,35 +287,62 @@
 <div class="card">
     <h2>Существующие пользователи</h2>
 
-    <table>
-        <tr>
-            <th>Пользователь</th>
-            <th>Роль</th>
-            <th>Страны</th>
-            <th>Superuser</th>
-            <th></th>
-        </tr>
-
+    <div class="users-list">
         {% for user in users %}
-        <tr>
-            <td colspan="5">
-                <form method="post" class="user-row editable-user-row">
+        <div class="user-card">
+            <div class="user-view">
+                <div>
+                    <div class="username">{{ user.username }}</div>
+                    <div class="muted">Логин</div>
+                </div>
+
+                <div>
+                    <div class="small-label">Роль</div>
+                    <span class="role-badge">{{ user.profile.get_role_display }}</span>
+                </div>
+
+                <div>
+                    <div class="small-label">Страны</div>
+                    <div class="country-list">
+                        {% for c in user.profile.countries.all %}
+                            {{ c.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            <span class="muted">Страны не выбраны</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <div class="small-label">Superuser</div>
+                    {% if user.is_superuser %}
+                        <span class="superuser-yes">Да</span>
+                    {% else %}
+                        <span class="superuser-no">Нет</span>
+                    {% endif %}
+                </div>
+
+                <button type="button" class="secondary-btn edit-btn">Редактировать</button>
+            </div>
+
+            <div class="edit-panel">
+                <form method="post" class="edit-grid">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="update_user">
                     <input type="hidden" name="user_id" value="{{ user.id }}">
 
                     <div>
-                        <div class="view-mode">{{ user.username }}</div>
-                        <input class="edit-mode" name="username" value="{{ user.username }}">
-                        <input class="edit-mode" name="password" type="password" placeholder="Новый пароль, если нужно">
+                        <label>Логин</label>
+                        <input name="username" value="{{ user.username }}">
                     </div>
 
                     <div>
-                        <div class="view-mode">
-                            {{ user.profile.get_role_display }}
-                        </div>
+                        <label>Новый пароль</label>
+                        <input name="password" type="password" placeholder="Если нужно">
+                    </div>
 
-                        <select class="edit-mode" name="role">
+                    <div>
+                        <label>Роль</label>
+                        <select name="role">
                             {% for value, label in roles %}
                                 <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>
                                     {{ label }}
@@ -217,60 +352,51 @@
                     </div>
 
                     <div>
-                        <div class="view-mode country-list">
-                            {% for c in user.profile.countries.all %}
-                                {{ c.name }}{% if not forloop.last %}, {% endif %}
-                            {% empty %}
-                                <span class="muted">Страны не выбраны</span>
+                        <label>Страны</label>
+                        <div class="countries-checkboxes">
+                            {% for c in countries %}
+                                <label class="country-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        name="countries"
+                                        value="{{ c.id }}"
+                                        {% if c in user.profile.countries.all %}checked{% endif %}
+                                    >
+                                    {{ c.name }}
+                                </label>
                             {% endfor %}
                         </div>
-
-                        <select class="edit-mode" name="countries" multiple size="4">
-                            {% for c in countries %}
-                                <option value="{{ c.id }}"
-                                    {% if c in user.profile.countries.all %}selected{% endif %}>
-                                    {{ c.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
                     </div>
 
-                    <div>
-                        {% if user.is_superuser %}
-                            Да
-                        {% else %}
-                            Нет
-                        {% endif %}
-                    </div>
-
-                    <button type="button" class="edit-btn">Редактировать</button>
+                    <button type="button" class="secondary-btn cancel-edit-btn">Отмена</button>
+                    <button type="submit">Сохранить</button>
                 </form>
-            </td>
-        </tr>
+            </div>
+        </div>
         {% empty %}
-        <tr>
-            <td colspan="5" class="muted">Пользователей пока нет.</td>
-        </tr>
+            <div class="empty">Пользователей пока нет.</div>
         {% endfor %}
-    </table>
+    </div>
+</div>
+
 </div>
 
 <script>
 document.addEventListener("click", function(e) {
-    const btn = e.target.closest(".edit-btn");
-    if (!btn) return;
-
-    e.preventDefault();
-
-    const form = btn.closest("form");
-
-    if (!form.classList.contains("editing")) {
-        form.classList.add("editing");
-        btn.textContent = "Сохранить";
+    const editBtn = e.target.closest(".edit-btn");
+    if (editBtn) {
+        e.preventDefault();
+        const card = editBtn.closest(".user-card");
+        card.classList.add("editing");
         return;
     }
 
-    form.submit();
+    const cancelBtn = e.target.closest(".cancel-edit-btn");
+    if (cancelBtn) {
+        e.preventDefault();
+        const card = cancelBtn.closest(".user-card");
+        card.classList.remove("editing");
+    }
 });
 </script>
 

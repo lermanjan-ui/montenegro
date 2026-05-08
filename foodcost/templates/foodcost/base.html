@@ -11,85 +11,209 @@
             color: #111827;
         }
 
+        .header-wrap {
+            padding: 18px 30px 0;
+        }
+
         .header {
+            max-width: 1280px;
+            margin: 0 auto;
             background: white;
-            padding: 18px 32px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 22px;
         }
 
-        .logo {
-            font-weight: bold;
-            font-size: 20px;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+            font-weight: 950;
+            font-size: 22px;
+            color: #111827;
         }
 
-        .country {
+        .country-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ecfdf5;
             color: #047857;
-            font-weight: bold;
-            margin-left: 8px;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .country-pill::before {
+            content: "•";
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .nav-main {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 18px;
+            border-left: 1px solid #e5e7eb;
         }
 
         .nav a {
-            margin-left: 20px;
+            position: relative;
             text-decoration: none;
             color: #111827;
-            font-weight: 600;
+            font-weight: 850;
+            font-size: 15px;
+            white-space: nowrap;
+            padding: 10px 0;
+            transition: color .18s ease;
         }
 
         .nav a:hover {
             color: #047857;
         }
 
+        .nav a.active {
+            color: #047857;
+        }
+
+        .nav a.active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 2px;
+            height: 2px;
+            background: #047857;
+            border-radius: 999px;
+        }
+
+        .nav-actions a {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .nav-actions a.active::after {
+            display: none;
+        }
+
+        .nav-actions a:hover {
+            border-color: #047857;
+            background: #f9fafb;
+        }
+
         .container {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: auto;
             padding: 30px;
         }
 
         .card {
             background: white;
+            border: 1px solid #e5e7eb;
             border-radius: 18px;
             padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
         }
 
         h1, h2 {
             margin-top: 0;
+        }
+
+        @media (max-width: 1100px) {
+            .header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .nav {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .nav-main {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .nav-actions {
+                border-left: 0;
+                padding-left: 0;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div class="header">
-    <div class="logo">
-        🍽 FoodCost
+<div class="header-wrap">
+    <div class="header">
+        <div class="brand">
+            🍽 FoodCost
+        </div>
+
         {% if country %}
-            <span class="country">/ {{ country.name }}</span>
+            <div class="country-pill">{{ country.name }}</div>
         {% endif %}
-    </div>
 
-    <div class="nav">
-        {% if country %}
-            <a href="/c/{{ country.slug }}/">Блюда</a>
-            <a href="/c/{{ country.slug }}/products/">Продукты</a>
-            <a href="/c/{{ country.slug }}/preparations/">Заготовки</a>
-            <a href="/c/{{ country.slug }}/employees/">Сотрудники</a>
-            <a href="/c/{{ country.slug }}/packaging/">Упаковка</a>
-            <a href="/c/{{ country.slug }}/utilities/">Коммуналка</a>
+        <div class="nav">
+            {% if country %}
+                <div class="nav-main">
+                    <a href="/c/{{ country.slug }}/" class="{% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}">Блюда</a>
+                    <a href="/c/{{ country.slug }}/products/" class="{% if '/products/' in request.path %}active{% endif %}">Продукты</a>
+                    <a href="/c/{{ country.slug }}/preparations/" class="{% if '/preparations/' in request.path %}active{% endif %}">Заготовки</a>
+                    <a href="/c/{{ country.slug }}/employees/" class="{% if '/employees/' in request.path %}active{% endif %}">Сотрудники</a>
+                    <a href="/c/{{ country.slug }}/packaging/" class="{% if '/packaging/' in request.path %}active{% endif %}">Упаковка</a>
+                    <a href="/c/{{ country.slug }}/utilities/" class="{% if '/utilities/' in request.path %}active{% endif %}">Коммуналка</a>
+                </div>
 
-            {% if request.user.is_authenticated and request.user.is_superuser %}
-                <a href="/c/{{ country.slug }}/users/">Пользователи</a>
+			  <div class="nav-actions">
+			      {% if can_manage_users %}
+			          <a href="/c/{{ country.slug }}/users/">Пользователи</a>
+			      {% endif %}
+
+			      {% if can_switch_country %}
+			          <a href="/">Сменить страну</a>
+			      {% endif %}
+			  </div>
+            {% else %}
+                <div class="nav-main">
+                    <a href="/">Страны</a>
+                    <a href="/admin/">Админка</a>
+                </div>
             {% endif %}
-
-            <a href="/">Сменить страну</a>
-        {% else %}
-            <a href="/">Страны</a>
-            <a href="/admin/">Админка</a>
-        {% endif %}
+        </div>
     </div>
 </div>
 

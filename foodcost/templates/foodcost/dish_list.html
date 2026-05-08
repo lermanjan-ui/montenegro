@@ -5,11 +5,46 @@
 {% block content %}
 
 <style>
+    .page {
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 22px 26px;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+    }
+
     .page-head {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 16px;
+        gap: 18px;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        font-size: 36px;
+        line-height: 1.1;
+        color: #111827;
+        letter-spacing: -0.03em;
+    }
+
+    h2 {
+        margin: 0 0 16px;
+        font-size: 22px;
+        color: #111827;
+        letter-spacing: -0.02em;
+    }
+
+    .muted {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
     }
 
     .button {
@@ -17,11 +52,12 @@
         color: white;
         text-decoration: none;
         border-radius: 12px;
-        padding: 12px 18px;
-        font-weight: bold;
+        padding: 13px 18px;
+        font-weight: 900;
         white-space: nowrap;
     }
 
+    .category-bar,
     .filters {
         display: flex;
         flex-wrap: wrap;
@@ -29,46 +65,132 @@
         align-items: center;
     }
 
+    .category-filter-form {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .category-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .category-chip,
     .filter-link {
-        padding: 10px 14px;
+        padding: 10px 15px;
         border-radius: 999px;
         text-decoration: none;
         background: #f3f4f6;
         color: #111827;
-        font-weight: bold;
+        font-weight: 900;
+        border: 0;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
+    .category-chip.active,
     .filter-link.active {
         background: #111827;
         color: white;
     }
 
-    .sort-form {
-        margin-left: auto;
+    .category-actions {
         display: flex;
         gap: 10px;
-    }
-
-    select, button {
-        padding: 10px 14px;
-        border-radius: 12px;
-        border: 1px solid #d1d5db;
-        font-weight: bold;
+        align-items: center;
     }
 
     button {
         background: #111827;
         color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 16px;
         cursor: pointer;
+        font-weight: 900;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .secondary-button {
+        background: white;
+        color: #111827;
+        border: 1px solid #d1d5db;
+        text-decoration: none;
+        border-radius: 12px;
+        padding: 10px 16px;
+        font-weight: 900;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .sort-panel {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+
+    .sort-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    select {
+        padding: 11px 38px 11px 14px;
+        border-radius: 12px;
+        border: 1px solid #d1d5db;
+        font-weight: 900;
+        font-size: 14px;
+        background: white;
+        color: #111827;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        cursor: pointer;
+        background-image: url("data:image/svg+xml;utf8,<svg fill='%23111827' height='18' viewBox='0 0 20 20' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M5.5 7.5L10 12l4.5-4.5' stroke='%23111827' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+    }
+
+    .dish-table {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .dish-table-head,
+    .dish-row {
+        display: grid;
+        grid-template-columns: 1.8fr 1fr 0.9fr 0.9fr 1fr 120px;
+        gap: 14px;
+        align-items: center;
+    }
+
+    .dish-table-head {
+        background: #f3f4f6;
+        padding: 13px 18px;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 900;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .dish-row {
-        display: grid;
-        grid-template-columns: 2fr repeat(4, 1fr) 110px;
-        gap: 12px;
-        align-items: center;
-        padding: 14px 0;
-        border-bottom: 1px solid #e5e7eb;
+        padding: 15px 18px;
+        border-bottom: 1px solid #eef2f7;
     }
 
     .dish-row:last-child {
@@ -76,55 +198,52 @@
     }
 
     .dish-name {
-        font-weight: 800;
+        font-weight: 950;
         font-size: 17px;
+        color: #111827;
+        margin-bottom: 3px;
     }
 
-    .muted {
+    .dish-meta {
         color: #6b7280;
         font-size: 13px;
+        font-weight: 700;
     }
 
-    .cell-label {
-        display: block;
-        font-size: 12px;
-        color: #6b7280;
-        margin-bottom: 3px;
-        font-weight: bold;
+    .dish-category {
+        color: #047857;
+        font-weight: 900;
     }
 
     .value {
-        font-weight: 800;
+        font-weight: 950;
+        font-size: 15px;
+        font-variant-numeric: tabular-nums;
     }
 
-    .good {
-        color: #047857;
-    }
-
-    .warning {
-        color: #92400e;
-    }
-
-    .danger {
-        color: #991b1b;
-    }
+    .good { color: #047857; }
+    .warning { color: #92400e; }
+    .danger-text { color: #991b1b; }
 
     .open {
-        font-weight: bold;
+        font-weight: 900;
         color: #111827;
         text-decoration: none;
         text-align: right;
+        white-space: nowrap;
     }
 
     .empty {
         text-align: center;
         padding: 40px;
         color: #6b7280;
-        font-weight: bold;
+        font-weight: 900;
     }
 
     @media (max-width: 950px) {
-        .page-head {
+        .page-head,
+        .sort-panel,
+        .category-filter-form {
             align-items: flex-start;
             flex-direction: column;
         }
@@ -132,10 +251,16 @@
         .sort-form {
             margin-left: 0;
             width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .dish-table-head {
+            display: none;
         }
 
         .dish-row {
             grid-template-columns: 1fr;
+            gap: 8px;
         }
 
         .open {
@@ -144,87 +269,153 @@
     }
 </style>
 
-<div class="card page-head">
-    <div>
-        <h1>Блюда</h1>
-        <p class="muted">Список блюд, себестоимость, фудкост и маржа.</p>
+<div class="page">
+
+    <div class="card page-head">
+        <div>
+            <h1>Блюда</h1>
+            <p class="muted">Список блюд, себестоимость, фудкост, маржа и категории.</p>
+        </div>
+
+        {% if can_edit %}
+            <a class="button" href="/c/{{ country.slug }}/dish/create/">+ Добавить блюдо</a>
+        {% endif %}
     </div>
 
-    <a class="button" href="/c/{{ country.slug }}/dish/create/">+ Добавить блюдо</a>
-</div>
+    <div class="card">
+        <h2>Фильтр по категориям</h2>
 
-<div class="card">
-    <div class="filters">
-        <a class="filter-link {% if filter_type == 'all' %}active{% endif %}"
-           href="/c/{{ country.slug }}/?filter=all&sort={{ sort_type }}">Все</a>
-
-        <a class="filter-link {% if filter_type == 'loss' %}active{% endif %}"
-           href="/c/{{ country.slug }}/?filter=loss&sort={{ sort_type }}">Убыточные</a>
-
-        <a class="filter-link {% if filter_type == 'high_foodcost' %}active{% endif %}"
-           href="/c/{{ country.slug }}/?filter=high_foodcost&sort={{ sort_type }}">Фудкост &gt; 40%</a>
-
-        <a class="filter-link {% if filter_type == 'normal' %}active{% endif %}"
-           href="/c/{{ country.slug }}/?filter=normal&sort={{ sort_type }}">Нормальные</a>
-
-        <form method="get" class="sort-form">
+        <form method="get" class="category-filter-form">
             <input type="hidden" name="filter" value="{{ filter_type }}">
+            <input type="hidden" name="sort" value="{{ sort_type }}">
 
-            <select name="sort">
-                <option value="name" {% if sort_type == "name" %}selected{% endif %}>По названию</option>
-                <option value="margin" {% if sort_type == "margin" %}selected{% endif %}>По марже</option>
-                <option value="foodcost" {% if sort_type == "foodcost" %}selected{% endif %}>По фудкосту</option>
-                <option value="cost" {% if sort_type == "cost" %}selected{% endif %}>По себестоимости</option>
-            </select>
+            <div class="category-list">
+                {% for category in categories %}
+                    <label class="category-chip {% if category.id|stringformat:'s' in selected_category_ids %}active{% endif %}">
+                        <input
+                            type="checkbox"
+                            name="categories"
+                            value="{{ category.id }}"
+                            {% if category.id|stringformat:'s' in selected_category_ids %}checked{% endif %}
+                            style="display:none;"
+                        >
+                        {{ category.name }}
+                    </label>
+                {% empty %}
+                    <span class="muted">Категорий пока нет.</span>
+                {% endfor %}
+            </div>
 
-            <button type="submit">Сортировать</button>
+            <div class="category-actions">
+                <button type="submit">Применить</button>
+                <a class="secondary-button" href="/c/{{ country.slug }}/?filter={{ filter_type }}&sort={{ sort_type }}">
+                    Сбросить
+                </a>
+            </div>
         </form>
     </div>
-</div>
 
-<div class="card">
-    {% for dish in dishes %}
-        <div class="dish-row">
-            <div>
-                <div class="dish-name">{{ dish.name }}</div>
-                <div class="muted">Выход: {{ dish.final_weight }} кг</div>
+    <div class="card">
+        <div class="sort-panel">
+            <div class="filters">
+                <a class="filter-link {% if filter_type == 'all' %}active{% endif %}"
+                   href="/c/{{ country.slug }}/?filter=all&sort={{ sort_type }}">Все</a>
+
+                <a class="filter-link {% if filter_type == 'loss' %}active{% endif %}"
+                   href="/c/{{ country.slug }}/?filter=loss&sort={{ sort_type }}">Убыточные</a>
+
+                <a class="filter-link {% if filter_type == 'high_foodcost' %}active{% endif %}"
+                   href="/c/{{ country.slug }}/?filter=high_foodcost&sort={{ sort_type }}">Фудкост &gt; 40%</a>
+
+                <a class="filter-link {% if filter_type == 'normal' %}active{% endif %}"
+                   href="/c/{{ country.slug }}/?filter=normal&sort={{ sort_type }}">Нормальные</a>
             </div>
 
-            <div>
-                <span class="cell-label">Себестоимость</span>
-                <span class="value">{{ dish.calculate_cost|floatformat:0 }}</span>
-            </div>
+            <form method="get" class="sort-form">
+                <input type="hidden" name="filter" value="{{ filter_type }}">
 
-            <div>
-                <span class="cell-label">Цена</span>
-                <span class="value good">{{ dish.selling_price|floatformat:0 }}</span>
-            </div>
+                {% for category_id in selected_category_ids %}
+                    <input type="hidden" name="categories" value="{{ category_id }}">
+                {% endfor %}
 
-            <div>
-                <span class="cell-label">Фудкост</span>
-                {% if dish.foodcost > 40 %}
-                    <span class="value danger">{{ dish.foodcost|floatformat:1 }}%</span>
-                {% elif dish.foodcost > 30 %}
-                    <span class="value warning">{{ dish.foodcost|floatformat:1 }}%</span>
-                {% else %}
-                    <span class="value good">{{ dish.foodcost|floatformat:1 }}%</span>
-                {% endif %}
-            </div>
+                <select name="sort">
+                    <option value="name" {% if sort_type == "name" %}selected{% endif %}>По названию</option>
+                    <option value="margin" {% if sort_type == "margin" %}selected{% endif %}>По марже</option>
+                    <option value="foodcost" {% if sort_type == "foodcost" %}selected{% endif %}>По фудкосту</option>
+                    <option value="cost" {% if sort_type == "cost" %}selected{% endif %}>По себестоимости</option>
+                </select>
 
-            <div>
-                <span class="cell-label">Маржа</span>
-                {% if dish.margin < 0 %}
-                    <span class="value danger">{{ dish.margin|floatformat:0 }}</span>
-                {% else %}
-                    <span class="value good">{{ dish.margin|floatformat:0 }}</span>
-                {% endif %}
-            </div>
-
-            <a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">Открыть →</a>
+                <button type="submit">Сортировать</button>
+            </form>
         </div>
-    {% empty %}
-        <div class="empty">Блюд по выбранному фильтру пока нет</div>
-    {% endfor %}
+    </div>
+
+    <div class="card">
+        <div class="dish-table">
+            <div class="dish-table-head">
+                <div>Блюдо</div>
+                <div>Себестоимость</div>
+                <div>Цена</div>
+                <div>Фудкост</div>
+                <div>Маржа</div>
+                <div></div>
+            </div>
+
+            {% for dish in dishes %}
+                <div class="dish-row">
+                    <div>
+                        <div class="dish-name">{{ dish.name }}</div>
+                        <div class="dish-meta">
+                            {% if dish.category %}
+                                <span class="dish-category">{{ dish.category.name }}</span> ·
+                            {% endif %}
+                            Выход: {{ dish.final_weight }} кг
+                        </div>
+                    </div>
+
+                    <div class="value">{{ dish.calculate_cost|floatformat:2 }}</div>
+
+                    <div class="value good">{{ dish.selling_price|floatformat:2 }}</div>
+
+                    <div>
+                        {% if dish.foodcost > 40 %}
+                            <span class="value danger-text">{{ dish.foodcost|floatformat:1 }}%</span>
+                        {% elif dish.foodcost > 30 %}
+                            <span class="value warning">{{ dish.foodcost|floatformat:1 }}%</span>
+                        {% else %}
+                            <span class="value good">{{ dish.foodcost|floatformat:1 }}%</span>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        {% if dish.margin < 0 %}
+                            <span class="value danger-text">{{ dish.margin|floatformat:2 }}</span>
+                        {% else %}
+                            <span class="value good">{{ dish.margin|floatformat:2 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">Открыть →</a>
+                </div>
+            {% empty %}
+                <div class="empty">Блюд по выбранному фильтру пока нет</div>
+            {% endfor %}
+        </div>
+    </div>
+
 </div>
+
+<script>
+document.querySelectorAll(".category-chip").forEach(chip => {
+    chip.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        const checkbox = chip.querySelector("input[type='checkbox']");
+        checkbox.checked = !checkbox.checked;
+
+        chip.classList.toggle("active", checkbox.checked);
+    });
+});
+</script>
 
 {% endblock %}

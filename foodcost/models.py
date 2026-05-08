@@ -130,6 +130,25 @@ class PreparationSubItem(models.Model):
     def unit_label(self):
         return "кг"
 
+# 🏷 КАТЕГОРИЯ БЛЮДА
+class DishCategory(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="dish_categories",
+        null=True,
+        blank=True,
+    )
+
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "Категория блюда"
+        verbose_name_plural = "Категории блюд"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
 
 # 🍽 БЛЮДО
 class Dish(models.Model):
@@ -142,6 +161,15 @@ class Dish(models.Model):
     )
 
     name = models.CharField(max_length=255)
+    
+    category = models.ForeignKey(
+        DishCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dishes"
+    )
+    
     final_weight = models.DecimalField(max_digits=10, decimal_places=3)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)

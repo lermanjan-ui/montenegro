@@ -1,0 +1,161 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Создать блюдо{% endblock %}
+
+{% block content %}
+
+<style>
+    .create-wrap {
+        max-width: 900px;
+        margin: auto;
+    }
+
+    .back {
+        display:inline-block;
+        margin-bottom:16px;
+        color:#374151;
+        text-decoration:none;
+        font-weight:bold;
+    }
+
+    .form-grid {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:18px;
+    }
+
+    label {
+        font-weight:bold;
+        font-size:14px;
+        display:block;
+        margin-bottom:6px;
+    }
+
+    input, select {
+        width:100%;
+        padding:14px;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        font-size:16px;
+        box-sizing:border-box;
+        background:white;
+    }
+
+    .full {
+        grid-column:1 / -1;
+    }
+
+    .hint {
+        color:#6b7280;
+        font-size:13px;
+        margin-top:6px;
+    }
+
+    .or {
+        text-align:center;
+        color:#6b7280;
+        font-weight:bold;
+        padding-top:32px;
+    }
+
+    button {
+        background:#111827;
+        color:white;
+        border:0;
+        border-radius:14px;
+        padding:14px 22px;
+        cursor:pointer;
+        font-weight:bold;
+        font-size:16px;
+    }
+
+    .actions {
+        margin-top:24px;
+        display:flex;
+        justify-content:flex-end;
+        gap:12px;
+    }
+
+    .secondary {
+        background:#e5e7eb;
+        color:#111827;
+        text-decoration:none;
+        border-radius:14px;
+        padding:14px 22px;
+        font-weight:bold;
+    }
+
+    @media (max-width:800px) {
+        .form-grid {
+            grid-template-columns:1fr;
+        }
+
+        .or {
+            padding-top:0;
+        }
+    }
+</style>
+
+<div class="create-wrap">
+
+    <a class="back" href="/c/{{ country.slug }}/">← Назад к блюдам</a>
+
+    <div class="card">
+        <h1>Создать блюдо</h1>
+        <p class="hint">Сразу укажи основные данные и выбери категорию или создай новую.</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <div class="full">
+                    <label>Название блюда</label>
+                    <input name="name" placeholder="Например: Пельмени говядина">
+                </div>
+
+                <div>
+                    <label>Существующая категория</label>
+                    <select name="category_id">
+                        <option value="">Без категории</option>
+
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="hint">Выбери категорию, если она уже есть.</div>
+                </div>
+
+                <div>
+                    <label>Новая категория</label>
+                    <input name="new_category_name" placeholder="Например: Горячие блюда">
+
+                    <div class="hint">Если заполнить это поле, будет создана новая категория.</div>
+                </div>
+
+                <div>
+                    <label>Выход, кг</label>
+                    <input type="text" name="final_weight" placeholder="Например: 0.250">
+                </div>
+
+                <div>
+                    <label>Цена продажи</label>
+                    <input type="text" name="selling_price" placeholder="Например: 18.00">
+                </div>
+
+                <div>
+                    <label>Время блюда, мин</label>
+                    <input type="text" name="cooking_minutes" placeholder="Например: 10">
+                </div>
+            </div>
+
+            <div class="actions">
+                <a class="secondary" href="/c/{{ country.slug }}/">Отмена</a>
+                <button type="submit">Создать блюдо</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

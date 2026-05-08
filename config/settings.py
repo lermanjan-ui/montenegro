@@ -45,7 +45,7 @@ WSGI_APPLICATION = 'config.wsgi.application'  # ⚠️ если у тебя др
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # если есть templates в корне — скажи
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -53,6 +53,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                'foodcost.context_processors.menu_context',
             ],
         },
     },

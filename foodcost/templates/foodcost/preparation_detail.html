@@ -5,164 +5,264 @@
 {% block content %}
 
 <style>
-    .back { display:inline-block; margin-bottom:16px; color:#374151; text-decoration:none; font-weight:bold; }
-    .muted { color:#6b7280; }
-
-    .summary {
-        display:grid;
-        grid-template-columns:repeat(4, 1fr);
-        gap:12px;
-        margin-top:16px;
+    .page {
+        max-width: 1280px;
+        margin: 0 auto;
     }
 
-    .metric {
-        background:#ecfdf5;
-        color:#047857;
-        border-radius:16px;
-        padding:14px;
-        font-weight:bold;
+    .back {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #374151;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 14px;
     }
 
-    .metric span {
-        display:block;
-        color:#065f46;
-        font-size:13px;
-        margin-bottom:4px;
+    .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 24px 28px;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
     }
 
-    .main-grid {
-        display:grid;
-        grid-template-columns:2fr 1fr 1fr auto;
-        gap:14px;
-        align-items:end;
+    h1 {
+        margin: 0 0 10px;
+        font-size: 36px;
+        line-height: 1.1;
+        color: #111827;
+        letter-spacing: -0.03em;
     }
 
-    label {
-        font-weight:bold;
-        font-size:14px;
-        margin-bottom:6px;
-        display:block;
+    h2 {
+        margin: 0 0 20px;
+        font-size: 24px;
+        color: #111827;
+        letter-spacing: -0.02em;
     }
 
-    input {
-        width:100%;
-        padding:12px;
-        border:1px solid #d1d5db;
-        border-radius:12px;
-        font-size:15px;
-        box-sizing:border-box;
-        background:white;
-    }
-
-    button {
-        background:#111827;
-        color:white;
-        border:0;
-        border-radius:12px;
-        padding:12px 16px;
-        cursor:pointer;
-        font-weight:bold;
-        white-space:nowrap;
-    }
-
-    .danger { background:#fee2e2; color:#991b1b; }
-
-    .edit-btn {
-        background:#e5e7eb;
-        color:#111827;
-        padding:8px 14px;
-        border-radius:10px;
-        font-size:14px;
-        width:auto;
-        height:auto;
-    }
-
-    table {
-        width:100%;
-        border-collapse:collapse;
-    }
-
-    th {
-        background:#111827;
-        color:white;
-        padding:14px;
-        text-align:left;
-    }
-
-    td {
-        padding:12px;
-        border-bottom:1px solid #e5e7eb;
-    }
-
-    .price {
-        color:#047857;
-        font-weight:bold;
-        white-space:nowrap;
-    }
-
-    .add-row {
-        background:#f9fafb;
-    }
-
-    .line-6 {
-        display:grid;
-        grid-template-columns:2fr 1fr 1fr 1fr auto auto;
-        gap:10px;
-        align-items:center;
-    }
-
-    .add-line-6 {
-        display:grid;
-        grid-template-columns:2fr 1fr 1fr 1fr auto;
-        gap:10px;
-        align-items:center;
-    }
-
-    .view-mode {
-        font-weight:bold;
-        color:#111827;
-    }
-
-    .edit-mode {
-        display:none;
-    }
-
-    .editing .view-mode {
-        display:none;
-    }
-
-    .editing .edit-mode {
-        display:block;
-    }
-
-    .search-field {
-        background:#f9fafb;
+    .muted {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
     }
 
     .readonly-note {
-        background:#f3f4f6;
-        color:#374151;
-        border-radius:12px;
-        padding:12px;
-        font-weight:bold;
-        margin-top:12px;
+        background: #f9fafb;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 800;
+        margin-top: 14px;
+        font-size: 14px;
     }
 
-    @media (max-width:1000px) {
+    .summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: 20px;
+    }
+
+    .metric {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px 18px;
+    }
+
+    .metric span {
+        display: block;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 900;
+        margin-bottom: 8px;
+    }
+
+    .metric strong {
+        color: #047857;
+        font-size: 22px;
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1.8fr 0.9fr 0.9fr auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    label {
+        font-weight: 900;
+        font-size: 13px;
+        margin-bottom: 6px;
+        display: block;
+        color: #111827;
+    }
+
+    input {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 15px;
+        box-sizing: border-box;
+        background: white;
+        color: #111827;
+        font-weight: 700;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #111827;
+        box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+    }
+
+    button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 16px;
+        cursor: pointer;
+        font-weight: 900;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .danger {
+        background: white;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    .edit-btn {
+        background: white;
+        color: #111827;
+        border: 1px solid #d1d5db;
+    }
+
+    .table-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .table-head,
+    .table-row-form,
+    .table-add-form {
+        display: grid;
+        grid-template-columns: 1.7fr 0.9fr 0.9fr 0.9fr 260px;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .table-head {
+        background: #f3f4f6;
+        color: #6b7280;
+        padding: 13px 14px;
+        font-size: 13px;
+        font-weight: 950;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .table-row {
+        padding: 14px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .table-row:last-child {
+        border-bottom: 0;
+    }
+
+    .table-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .table-actions button {
+        width: 100%;
+    }
+
+    .table-add-row {
+        padding: 14px;
+        background: #fbfcfd;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .table-add-form {
+        grid-template-columns: 1.7fr 0.9fr 0.9fr 0.9fr 160px;
+    }
+
+    .view-mode {
+        font-weight: 900;
+        color: #111827;
+    }
+
+    .edit-mode {
+        display: none;
+    }
+
+    .editing .view-mode {
+        display: none;
+    }
+
+    .editing .edit-mode {
+        display: block;
+    }
+
+    .search-field {
+        background: #f9fafb;
+    }
+
+    .price {
+        color: #047857;
+        font-weight: 950;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .preview-cost {
+        color: #9ca3af;
+        font-weight: 900;
+        text-align: center;
+    }
+
+    .empty {
+        padding: 18px 14px;
+        color: #6b7280;
+        font-weight: 800;
+    }
+
+    @media (max-width: 1000px) {
         .summary,
         .main-grid,
-        .line-6,
-        .add-line-6 {
-            grid-template-columns:1fr;
+        .table-head,
+        .table-row-form,
+        .table-add-form {
+            grid-template-columns: 1fr;
+        }
+
+        .table-head {
+            display: none;
         }
     }
 </style>
+
+<div class="page">
 
 <datalist id="products-options">
     {% for product in products %}
         <option value="{{ product.name }}" data-id="{{ product.id }}"></option>
     {% endfor %}
 </datalist>
+
 <datalist id="preparations-options">
     {% for prep in preparations %}
         <option value="{{ prep.name }}" data-id="{{ prep.id }}"></option>
@@ -182,22 +282,22 @@
     <div class="summary">
         <div class="metric">
             <span>Итого брутто</span>
-            {{ total_gross|floatformat:3 }}
+            <strong>{{ total_gross|floatformat:3 }}</strong>
         </div>
 
         <div class="metric">
             <span>Итого нетто</span>
-            {{ total_net|floatformat:3 }}
+            <strong>{{ total_net|floatformat:3 }}</strong>
         </div>
 
         <div class="metric">
             <span>Себестоимость</span>
-            {{ preparation.calculate_cost|floatformat:0 }}
+            <strong>{{ preparation.calculate_cost|floatformat:0 }}</strong>
         </div>
 
         <div class="metric">
             <span>Цена за кг</span>
-            {{ preparation.cost_per_kg|floatformat:0 }}
+            <strong>{{ preparation.cost_per_kg|floatformat:0 }}</strong>
         </div>
     </div>
 </div>
@@ -235,23 +335,21 @@
 <div class="card">
     <h2>Ингредиенты</h2>
 
-    <table>
-        <tr>
-            <th>Продукт</th>
-            <th>Брутто / кол-во</th>
-            <th>Нетто / кол-во</th>
-            <th>Стоимость</th>
+    <div class="table-box">
+        <div class="table-head">
+            <div>Продукт</div>
+            <div>Брутто / кол-во</div>
+            <div>Нетто / кол-во</div>
+            <div>Стоимость</div>
             {% if can_edit %}
-                <th></th>
-                <th></th>
+                <div>Действия</div>
             {% endif %}
-        </tr>
+        </div>
 
-        <tbody id="ingredients-body">
-        {% for item in preparation.items.all %}
-        <tr id="ingredient-row-{{ item.id }}">
-            <td colspan="{% if can_edit %}6{% else %}4{% endif %}">
-                <form method="post" class="line-6 editable-row">
+        <div id="ingredients-body">
+            {% for item in preparation.items.all %}
+            <div class="table-row" id="ingredient-row-{{ item.id }}">
+                <form method="post" class="table-row-form editable-row">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="update_item">
                     <input type="hidden" name="item_id" value="{{ item.id }}">
@@ -290,222 +388,154 @@
                     <div class="price">{{ item.calculate_cost|floatformat:0 }}</div>
 
                     {% if can_edit %}
+                    <div class="table-actions">
                         <button type="button" class="edit-btn">Редактировать</button>
-
-                        <button type="submit"
-                                name="action"
-                                value="delete_item"
-                                class="danger"
-                                onclick="return confirm('Удалить ингредиент из заготовки?')">
+                        <button
+                            type="submit"
+                            name="action"
+                            value="delete_item"
+                            class="danger"
+                            onclick="return confirm('Удалить ингредиент из заготовки?')"
+                        >
                             Удалить
                         </button>
+                    </div>
                     {% endif %}
                 </form>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="{% if can_edit %}6{% else %}4{% endif %}" class="muted">Ингредиентов пока нет.</td>
-        </tr>
-        {% endfor %}
-        </tbody>
+            </div>
+            {% empty %}
+                <div class="empty">Ингредиентов пока нет.</div>
+            {% endfor %}
+        </div>
 
         {% if can_edit %}
-        <tr class="add-row">
-            <td colspan="6">
-                <form method="post" class="add-line-6">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="add_item">
-                    <input type="hidden" name="product_id" id="product-add-hidden">
+        <div class="table-add-row">
+            <form method="post" class="table-add-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_item">
+                <input type="hidden" name="product_id" id="product-add-hidden">
 
-                    <input
-                        class="search-field"
-                        list="products-options"
-                        data-hidden-input="product-add-hidden"
-                        placeholder="Начните вводить продукт..."
-                    >
+                <input
+                    class="search-field"
+                    list="products-options"
+                    data-hidden-input="product-add-hidden"
+                    placeholder="Начните вводить продукт..."
+                >
 
-                    <input type="text" name="gross" placeholder="Брутто / кол-во">
-                    <input type="text" name="net" placeholder="Нетто / кол-во">
+                <input type="text" name="gross" placeholder="Брутто / кол-во">
+                <input type="text" name="net" placeholder="Нетто / кол-во">
 
-                    <span class="price muted">после сохранения</span>
+                <span class="preview-cost">—</span>
 
-                    <button type="submit">Добавить</button>
-                </form>
-            </td>
-        </tr>
+                <button type="submit">Добавить</button>
+            </form>
+        </div>
         {% endif %}
-    </table>
+    </div>
 </div>
 
 <div class="card">
     <h2>Заготовки в составе</h2>
 
-    <table>
-        <tr>
-            <th>Заготовка</th>
-            <th>Брутто, кг</th>
-            <th>Нетто, кг</th>
-            <th>Стоимость</th>
-
+    <div class="table-box">
+        <div class="table-head">
+            <div>Заготовка</div>
+            <div>Брутто, кг</div>
+            <div>Нетто, кг</div>
+            <div>Стоимость</div>
             {% if can_edit %}
-                <th></th>
-                <th></th>
+                <div>Действия</div>
             {% endif %}
-        </tr>
+        </div>
 
-        <tbody>
-        {% for item in preparation.subitems.all %}
-        <tr>
-            <td colspan="{% if can_edit %}6{% else %}4{% endif %}">
-
-                <form method="post" class="line-6 editable-row">
+        <div>
+            {% for item in preparation.subitems.all %}
+            <div class="table-row">
+                <form method="post" class="table-row-form editable-row">
                     {% csrf_token %}
-
                     <input type="hidden" name="action" value="update_subitem">
-
-                    <input
-                        type="hidden"
-                        name="item_id"
-                        value="{{ item.id }}"
-                    >
-
-                    <input
-                        type="hidden"
-                        name="sub_preparation_id"
-                        id="sub-prep-existing-{{ item.id }}"
-                        value="{{ item.sub_preparation_id }}"
-                    >
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="sub_preparation_id" id="sub-prep-existing-{{ item.id }}" value="{{ item.sub_preparation_id }}">
 
                     <div>
-                        <div class="view-mode">
-                            {{ item.sub_preparation.name }}
-                        </div>
+                        <div class="view-mode">{{ item.sub_preparation.name }}</div>
 
                         {% if can_edit %}
-                        <input
-                            class="edit-mode search-field"
-                            list="preparations-options"
-                            value="{{ item.sub_preparation.name }}"
-                            data-hidden-input="sub-prep-existing-{{ item.id }}"
-                            placeholder="Начните вводить заготовку..."
-                        >
+                            <input
+                                class="edit-mode search-field"
+                                list="preparations-options"
+                                value="{{ item.sub_preparation.name }}"
+                                data-hidden-input="sub-prep-existing-{{ item.id }}"
+                                placeholder="Начните вводить заготовку..."
+                            >
                         {% endif %}
                     </div>
 
                     <div>
-                        <div class="view-mode">
-                            {{ item.gross }}
-                        </div>
+                        <div class="view-mode">{{ item.gross }}</div>
 
                         {% if can_edit %}
-                        <input
-                            class="edit-mode"
-                            type="text"
-                            name="gross"
-                            value="{{ item.gross }}"
-                        >
+                            <input class="edit-mode" type="text" name="gross" value="{{ item.gross }}">
                         {% endif %}
                     </div>
 
                     <div>
-                        <div class="view-mode">
-                            {{ item.net }}
-                        </div>
+                        <div class="view-mode">{{ item.net }}</div>
 
                         {% if can_edit %}
-                        <input
-                            class="edit-mode"
-                            type="text"
-                            name="net"
-                            value="{{ item.net }}"
-                        >
+                            <input class="edit-mode" type="text" name="net" value="{{ item.net }}">
                         {% endif %}
                     </div>
 
-                    <div class="price">
-                        {{ item.calculate_cost|floatformat:2 }}
-                    </div>
+                    <div class="price">{{ item.calculate_cost|floatformat:2 }}</div>
 
                     {% if can_edit %}
-                    <button type="button" class="edit-btn">
-                        Редактировать
-                    </button>
-
-                    <button
-                        type="submit"
-                        name="action"
-                        value="delete_subitem"
-                        class="danger"
-                        onclick="return confirm('Удалить заготовку из состава?')"
-                    >
-                        Удалить
-                    </button>
+                    <div class="table-actions">
+                        <button type="button" class="edit-btn">Редактировать</button>
+                        <button
+                            type="submit"
+                            name="action"
+                            value="delete_subitem"
+                            class="danger"
+                            onclick="return confirm('Удалить заготовку из состава?')"
+                        >
+                            Удалить
+                        </button>
+                    </div>
                     {% endif %}
                 </form>
-
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6" class="muted">
-                Заготовок пока нет
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
+            </div>
+            {% empty %}
+                <div class="empty">Заготовок пока нет.</div>
+            {% endfor %}
+        </div>
 
         {% if can_edit %}
-        <tr class="add-row">
-            <td colspan="6">
+        <div class="table-add-row">
+            <form method="post" class="table-add-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_subitem">
+                <input type="hidden" name="sub_preparation_id" id="sub-prep-add-hidden">
 
-                <form method="post" class="add-line-6">
-                    {% csrf_token %}
+                <input
+                    class="search-field"
+                    list="preparations-options"
+                    data-hidden-input="sub-prep-add-hidden"
+                    placeholder="Начните вводить заготовку..."
+                >
 
-                    <input
-                        type="hidden"
-                        name="action"
-                        value="add_subitem"
-                    >
+                <input type="text" name="gross" placeholder="Брутто">
+                <input type="text" name="net" placeholder="Нетто">
 
-                    <input
-                        type="hidden"
-                        name="sub_preparation_id"
-                        id="sub-prep-add-hidden"
-                    >
+                <span class="preview-cost">—</span>
 
-                    <input
-                        class="search-field"
-                        list="preparations-options"
-                        data-hidden-input="sub-prep-add-hidden"
-                        placeholder="Начните вводить заготовку..."
-                    >
-
-                    <input
-                        type="text"
-                        name="gross"
-                        placeholder="Брутто"
-                    >
-
-                    <input
-                        type="text"
-                        name="net"
-                        placeholder="Нетто"
-                    >
-
-                    <span class="price muted">
-                        после сохранения
-                    </span>
-
-                    <button type="submit">
-                        Добавить
-                    </button>
-                </form>
-
-            </td>
-        </tr>
+                <button type="submit">Добавить</button>
+            </form>
+        </div>
         {% endif %}
-    </table>
+    </div>
+</div>
+
 </div>
 
 <script>

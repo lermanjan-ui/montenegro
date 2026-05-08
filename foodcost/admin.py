@@ -8,6 +8,7 @@ from .models import (
     ProductPrice,
     Preparation,
     PreparationItem,
+    DishCategory,
     Dish,
     DishProductItem,
     DishPreparationItem,
@@ -96,6 +97,12 @@ class PreparationItemAdmin(admin.ModelAdmin):
 # =========================
 # DISH
 # =========================
+
+@admin.register(DishCategory)
+class DishCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "country")
+    list_filter = ("country",)
+    search_fields = ("name",)
 
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
