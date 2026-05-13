@@ -1,0 +1,285 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Передачи смен — админ{% endblock %}
+
+{% block content %}
+
+<style>
+    .page {
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 34px;
+        color: #111827;
+    }
+
+    .muted {
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    select {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: white;
+        min-width: 220px;
+    }
+
+    button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-weight: 900;
+    }
+
+    .history-list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .history-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 18px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 20px;
+    }
+
+    .history-date {
+        font-size: 18px;
+        font-weight: 950;
+        color: #111827;
+        margin-bottom: 8px;
+    }
+
+    .history-user {
+        font-size: 14px;
+        font-weight: 800;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .location-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .block {
+        margin-bottom: 14px;
+    }
+
+    .block-title {
+        font-size: 13px;
+        font-weight: 950;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .tag {
+        display: inline-flex;
+        align-items: center;
+        background: #f3f4f6;
+        color: #111827;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .danger-tag {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .comment-box {
+        background: #f9fafb;
+        border: 1px solid #eef2f7;
+        border-radius: 10px;
+        padding: 12px;
+        color: #374151;
+        font-size: 13px;
+        line-height: 1.45;
+        margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+        .history-card {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page">
+
+    <div class="topbar">
+        <div>
+            <h1>Передачи смен</h1>
+            <div class="muted">
+                Все филиалы и все передачи смен
+            </div>
+        </div>
+
+        <form method="get" class="filter-form">
+            <select name="location">
+                <option value="">Все филиалы</option>
+
+                {% for location in locations %}
+                    <option
+                        value="{{ location.id }}"
+                        {% if selected_location == location.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ location.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Фильтр</button>
+        </form>
+    </div>
+
+    <div class="history-list">
+        {% for handover in handovers %}
+            <div class="history-card">
+
+                <div>
+                    <div class="history-date">
+                        {{ handover.shift_date|date:"d E Y" }}
+                    </div>
+
+                    <div class="history-user">
+                        {{ handover.responsible.username }}
+                    </div>
+
+                    {% if handover.location %}
+                        <div class="location-badge">
+                            {{ handover.location.name }}
+                        </div>
+                    {% endif %}
+
+                    <div class="muted" style="margin-top:8px;">
+                        {{ handover.created_at|date:"H:i" }}
+                    </div>
+                </div>
+
+                <div>
+
+                    <div class="block">
+                        <div class="block-title">
+                            Нужно докупить
+                        </div>
+
+                        <div class="tag-list">
+                            {% for item in handover.purchase_needs.all %}
+                                <div class="tag">
+                                    {{ item.product.name }}
+                                    {% if item.quantity %}
+                                        ({{ item.quantity }})
+                                    {% endif %}
+                                    {% if item.comment %}
+                                        — {{ item.comment }}
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <span class="muted">—</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="block">
+                        <div class="block-title">
+                            Заготовки
+                        </div>
+
+                        <div class="tag-list">
+                            {% for item in handover.preparation_needs.all %}
+                                <div class="tag">
+                                    {{ item.preparation.name }}
+                                    {% if item.quantity %}
+                                        ({{ item.quantity }})
+                                    {% endif %}
+                                    {% if item.comment %}
+                                        — {{ item.comment }}
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <span class="muted">—</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="block">
+                        <div class="block-title">
+                            Стоп
+                        </div>
+
+                        <div class="tag-list">
+                            {% for item in handover.stop_items.all %}
+                                <div class="tag danger-tag">
+                                    {{ item.dish.name }}
+                                    {% if item.comment %}
+                                        — {{ item.comment }}
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <span class="muted">—</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if handover.comment %}
+                        <div class="comment-box">
+                            {{ handover.comment|linebreaksbr }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+        {% empty %}
+            <div class="muted">
+                Передач смен пока нет
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

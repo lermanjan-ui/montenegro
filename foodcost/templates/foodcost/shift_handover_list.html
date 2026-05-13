@@ -1,0 +1,766 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Передача смены{% endblock %}
+
+{% block content %}
+
+<style>
+    .page {
+        max-width: 1120px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        margin-bottom: 18px;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        font-size: 34px;
+        color: #111827;
+        letter-spacing: -0.03em;
+    }
+
+    .muted {
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .panel {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 14px;
+        box-shadow: 0 8px 22px rgba(15,23,42,0.04);
+    }
+
+    .edit-notice {
+        display: none;
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #bbf7d0;
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+        font-weight: 900;
+    }
+
+    .edit-notice.active {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .handover-head {
+        display: grid;
+        grid-template-columns: 180px 220px 1fr;
+        gap: 16px;
+        align-items: start;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 900;
+        color: #111827;
+    }
+
+    input,
+    textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: white;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    input:focus,
+    textarea:focus {
+        outline: none;
+        border-color: #111827;
+        box-shadow: 0 0 0 3px rgba(17,24,39,0.06);
+    }
+
+    textarea {
+        min-height: 72px;
+        resize: vertical;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 950;
+        color: #111827;
+        margin-bottom: 14px;
+    }
+
+    .add-grid {
+        display: grid;
+        grid-template-columns: 1.45fr 140px 1fr 110px;
+        gap: 10px;
+        align-items: end;
+    }
+
+    .added-list {
+        margin-top: 14px;
+        border-top: 1px solid #eef2f7;
+    }
+
+    .added-row {
+        display: grid;
+        grid-template-columns: 1.45fr 120px 1fr 34px;
+        gap: 12px;
+        align-items: center;
+        min-height: 42px;
+        border-bottom: 1px solid #eef2f7;
+        padding: 2px 0;
+    }
+
+    .added-name {
+        font-weight: 850;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    .small-muted {
+        color: #374151;
+        font-size: 13px;
+    }
+
+    button {
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 900;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .add-btn {
+        background: white;
+        color: #111827;
+        border: 1px solid #d1d5db;
+        height: 40px;
+    }
+
+    .add-btn:hover {
+        background: #f9fafb;
+    }
+
+    .submit-btn {
+        background: #047857;
+        color: white;
+        border: 0;
+        padding: 12px 20px;
+    }
+
+    .submit-btn:hover {
+        background: #036c4d;
+    }
+
+    .cancel-edit-btn {
+        background: white;
+        color: #047857;
+        border: 1px solid #bbf7d0;
+        padding: 8px 12px;
+    }
+
+    .remove-btn {
+        background: transparent;
+        color: #dc2626;
+        border: 0;
+        padding: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-btn:hover {
+        background: #fef2f2;
+    }
+
+    .remove-btn svg {
+        width: 17px;
+        height: 17px;
+        stroke: #dc2626;
+    }
+
+    .submit-row {
+        margin-top: 16px;
+    }
+
+    .history-title {
+        margin: 24px 0 12px;
+        font-size: 20px;
+        font-weight: 950;
+    }
+
+    .history-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .history-card {
+        display: grid;
+        grid-template-columns: 150px 118px minmax(0, 1fr) 220px;
+        gap: 14px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 14px 16px;
+        align-items: start;
+    }
+
+    .history-date {
+        font-size: 18px;
+        font-weight: 950;
+        color: #111827;
+        margin-bottom: 8px;
+    }
+
+    .history-user {
+        color: #374151;
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .history-labels,
+    .history-values {
+        display: grid;
+        grid-template-rows: auto auto auto auto;
+        row-gap: 8px;
+    }
+
+    .history-label {
+        min-height: 28px;
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 950;
+        color: #374151;
+        line-height: 1.2;
+    }
+
+    .tag-list {
+        min-height: 28px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .tag {
+        display: inline-flex;
+        align-items: center;
+        background: #f3f4f6;
+        color: #111827;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .danger-tag {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .comment-box {
+        background: #f9fafb;
+        border: 1px solid #eef2f7;
+        border-radius: 10px;
+        padding: 12px;
+        color: #374151;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .edit-handover-row {
+        min-height: 28px;
+        display: flex;
+        align-items: center;
+    }
+
+    @media (max-width: 1100px) {
+        .handover-head,
+        .add-grid,
+        .added-row,
+        .history-card {
+            grid-template-columns: 1fr;
+        }
+
+        .history-labels {
+            display: none;
+        }
+
+        .add-btn,
+        .submit-btn,
+        .cancel-edit-btn {
+            width: 100%;
+        }
+
+        .remove-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .tag {
+            white-space: normal;
+        }
+
+        .edit-notice.active {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
+<datalist id="products-options">
+    {% for product in products %}
+        <option value="{{ product.name }}" data-id="{{ product.id }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="preparations-options">
+    {% for preparation in preparations %}
+        <option value="{{ preparation.name }}" data-id="{{ preparation.id }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="dishes-options">
+    {% for dish in dishes %}
+        <option value="{{ dish.name }}" data-id="{{ dish.id }}"></option>
+    {% endfor %}
+</datalist>
+
+<div class="page">
+
+    <div class="page-title">
+        <h1>Передача смены</h1>
+        <div class="muted">Что нужно закупить, приготовить и что находится на стопе</div>
+    </div>
+
+    <div class="edit-notice" id="edit-notice">
+        <span id="edit-notice-text">Редактируется передача смены</span>
+        <button type="button" class="cancel-edit-btn" onclick="cancelEdit()">Отменить редактирование</button>
+    </div>
+
+    <form method="post" id="handover-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+
+        <div class="panel">
+            <div class="handover-head">
+                <div>
+                    <label>Дата смены</label>
+                    <input type="date" name="shift_date" value="{{ today|date:'Y-m-d' }}">
+                </div>
+
+                <div>
+                    <label>Ответственный</label>
+                    <input type="text" value="{{ request.user.username }}" disabled>
+                </div>
+
+                <div>
+                    <label>Комментарий</label>
+                    <textarea name="comment" placeholder="Что важно передать следующей смене"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="section-title">Что нужно докупить</div>
+
+            <div class="add-grid">
+                <div>
+                    <label>Продукт</label>
+                    <input id="product-search" list="products-options" placeholder="Начните вводить продукт...">
+                </div>
+
+                <div>
+                    <label>Кол-во</label>
+                    <input id="product-quantity" type="number" step="0.001" placeholder="Напр. 5">
+                </div>
+
+                <div>
+                    <label>Комментарий</label>
+                    <input id="product-comment" type="text" placeholder="Например: срочно">
+                </div>
+
+                <button type="button" class="add-btn" onclick="addProductNeed()">Добавить</button>
+            </div>
+
+            <div class="added-list" id="product-list"></div>
+        </div>
+
+        <div class="panel">
+            <div class="section-title">Какие заготовки приготовить</div>
+
+            <div class="add-grid">
+                <div>
+                    <label>Заготовка</label>
+                    <input id="preparation-search" list="preparations-options" placeholder="Начните вводить заготовку...">
+                </div>
+
+                <div>
+                    <label>Кол-во</label>
+                    <input id="preparation-quantity" type="number" step="0.001" placeholder="Напр. 2">
+                </div>
+
+                <div>
+                    <label>Комментарий</label>
+                    <input id="preparation-comment" type="text" placeholder="Например: к обеду">
+                </div>
+
+                <button type="button" class="add-btn" onclick="addPreparationNeed()">Добавить</button>
+            </div>
+
+            <div class="added-list" id="preparation-list"></div>
+        </div>
+
+        <div class="panel">
+            <div class="section-title">Что на стопе</div>
+
+            <div class="add-grid">
+                <div>
+                    <label>Блюдо</label>
+                    <input id="dish-search" list="dishes-options" placeholder="Начните вводить блюдо...">
+                </div>
+
+                <div></div>
+
+                <div>
+                    <label>Причина / комментарий</label>
+                    <input id="dish-comment" type="text" placeholder="Например: нет ингредиента">
+                </div>
+
+                <button type="button" class="add-btn" onclick="addStopItem()">Добавить</button>
+            </div>
+
+            <div class="added-list" id="dish-list"></div>
+
+            <div class="submit-row">
+                <button type="submit" class="submit-btn" id="submit-btn">Передать смену</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="history-title">История передач смены</div>
+
+    <div class="history-list">
+        {% for handover in handovers %}
+            <div
+                class="history-card"
+                id="handover-{{ handover.id }}"
+                data-id="{{ handover.id }}"
+                data-date="{{ handover.shift_date|date:'Y-m-d' }}"
+                data-display-date="{{ handover.shift_date|date:'d E Y' }}"
+                data-comment="{{ handover.comment|default:''|escapejs }}"
+            >
+                <div>
+                    <div class="history-date">{{ handover.shift_date|date:"d E Y" }}</div>
+					<div class="history-user">{{ handover.responsible.username }}</div>
+
+					<div class="muted">
+					    {% if handover.location %}
+					        {{ handover.location.name }} ·
+					    {% endif %}
+					    {{ handover.created_at|date:"H:i" }}
+					</div>
+                </div>
+
+                <div class="history-labels">
+                    <div class="history-label">Нужно докупить</div>
+                    <div class="history-label">Заготовки</div>
+                    <div class="history-label">Стоп</div>
+                    <div class="history-label"></div>
+                </div>
+
+                <div class="history-values">
+                    <div class="tag-list">
+                        {% for item in handover.purchase_needs.all %}
+                            <div
+                                class="js-product-item"
+                                data-id="{{ item.product.id }}"
+                                data-name="{{ item.product.name }}"
+                                data-quantity="{{ item.quantity }}"
+                                data-comment="{{ item.comment|default:''|escapejs }}"
+                            ></div>
+
+                            <div class="tag">
+                                {{ item.product.name }}
+                                {% if item.quantity %}({{ item.quantity }}){% endif %}
+                                {% if item.comment %} — {{ item.comment }}{% endif %}
+                            </div>
+                        {% empty %}
+                            <span class="muted">—</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="tag-list">
+                        {% for item in handover.preparation_needs.all %}
+                            <div
+                                class="js-preparation-item"
+                                data-id="{{ item.preparation.id }}"
+                                data-name="{{ item.preparation.name }}"
+                                data-quantity="{{ item.quantity }}"
+                                data-comment="{{ item.comment|default:''|escapejs }}"
+                            ></div>
+
+                            <div class="tag">
+                                {{ item.preparation.name }}
+                                {% if item.quantity %}({{ item.quantity }}){% endif %}
+                                {% if item.comment %} — {{ item.comment }}{% endif %}
+                            </div>
+                        {% empty %}
+                            <span class="muted">—</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="tag-list">
+                        {% for item in handover.stop_items.all %}
+                            <div
+                                class="js-dish-item"
+                                data-id="{{ item.dish.id }}"
+                                data-name="{{ item.dish.name }}"
+                                data-comment="{{ item.comment|default:''|escapejs }}"
+                            ></div>
+
+                            <div class="tag danger-tag">
+                                {{ item.dish.name }}{% if item.comment %} — {{ item.comment }}{% endif %}
+                            </div>
+                        {% empty %}
+                            <span class="muted">—</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="edit-handover-row">
+                        {% if handover.can_edit %}
+                            <button
+                                type="button"
+                                class="add-btn"
+                                onclick="openEdit({{ handover.id }})"
+                            >
+                                Редактировать
+                            </button>
+                        {% endif %}
+						<form
+						    method="post"
+						    onsubmit="return confirm('Удалить передачу смены?')"
+						    style="display:inline-flex;"
+						>
+						    {% csrf_token %}
+
+						    <input type="hidden" name="action" value="delete">
+						    <input type="hidden" name="handover_id" value="{{ handover.id }}">
+
+						    <button
+						        type="submit"
+						        class="add-btn"
+						        style="color:#b91c1c;border-color:#fecaca;"
+						    >
+						        Удалить
+						    </button>
+						</form>
+                    </div>
+                </div>
+
+                <div>
+                    {% if handover.comment %}
+                        <div class="comment-box">{{ handover.comment|linebreaksbr }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="panel">
+                <div class="muted">Передач смены пока нет</div>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+function trashIcon() {
+    return `
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+            <path d="M3 6h18"></path>
+            <path d="M8 6V4h8v2"></path>
+            <path d="M19 6l-1 15H6L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+        </svg>
+    `;
+}
+
+function getIdFromDatalist(inputId, datalistId) {
+    const input = document.getElementById(inputId);
+    const datalist = document.getElementById(datalistId);
+
+    if (!input || !datalist) return null;
+
+    const value = input.value.trim();
+
+    const option = Array.from(datalist.options).find(option => {
+        return option.value.trim() === value;
+    });
+
+    return option ? option.dataset.id : null;
+}
+
+function addRow(listId, hiddenName, id, name, quantity, comment, extraHiddenNames = {}) {
+    if (!id || !name) {
+        alert("Выберите позицию из списка");
+        return;
+    }
+
+    const list = document.getElementById(listId);
+
+    const row = document.createElement("div");
+    row.className = "added-row";
+
+    row.innerHTML = `
+        <input type="hidden" name="${hiddenName}" value="${id}">
+        ${extraHiddenNames.quantity ? `<input type="hidden" name="${extraHiddenNames.quantity}" value="${quantity || ""}">` : ""}
+        ${extraHiddenNames.comment ? `<input type="hidden" name="${extraHiddenNames.comment}" value="${comment || ""}">` : ""}
+
+        <div class="added-name">${name}</div>
+        <div class="small-muted">${quantity || "—"}</div>
+        <div class="small-muted">${comment || "—"}</div>
+
+        <button type="button" class="remove-btn" onclick="this.closest('.added-row').remove()" aria-label="Удалить">${trashIcon()}</button>
+    `;
+
+    list.appendChild(row);
+}
+
+function addProductNeed() {
+    const id = getIdFromDatalist("product-search", "products-options");
+    const name = document.getElementById("product-search").value.trim();
+    const quantity = document.getElementById("product-quantity").value.trim();
+    const comment = document.getElementById("product-comment").value.trim();
+
+    addRow("product-list", "product_ids", id, name, quantity, comment, {
+        quantity: "product_quantities",
+        comment: "product_comments"
+    });
+
+    document.getElementById("product-search").value = "";
+    document.getElementById("product-quantity").value = "";
+    document.getElementById("product-comment").value = "";
+}
+
+function addPreparationNeed() {
+    const id = getIdFromDatalist("preparation-search", "preparations-options");
+    const name = document.getElementById("preparation-search").value.trim();
+    const quantity = document.getElementById("preparation-quantity").value.trim();
+    const comment = document.getElementById("preparation-comment").value.trim();
+
+    addRow("preparation-list", "preparation_ids", id, name, quantity, comment, {
+        quantity: "preparation_quantities",
+        comment: "preparation_comments"
+    });
+
+    document.getElementById("preparation-search").value = "";
+    document.getElementById("preparation-quantity").value = "";
+    document.getElementById("preparation-comment").value = "";
+}
+
+function addStopItem() {
+    const id = getIdFromDatalist("dish-search", "dishes-options");
+    const name = document.getElementById("dish-search").value.trim();
+    const comment = document.getElementById("dish-comment").value.trim();
+
+    addRow("dish-list", "dish_ids", id, name, "", comment, {
+        comment: "dish_comments"
+    });
+
+    document.getElementById("dish-search").value = "";
+    document.getElementById("dish-comment").value = "";
+}
+
+function clearFormLists() {
+    document.getElementById("product-list").innerHTML = "";
+    document.getElementById("preparation-list").innerHTML = "";
+    document.getElementById("dish-list").innerHTML = "";
+}
+
+function openEdit(id) {
+    const card = document.getElementById(`handover-${id}`);
+    const form = document.getElementById("handover-form");
+
+    if (!card || !form) return;
+
+    form.querySelector('input[name="action"]').value = "update";
+
+    let handoverIdInput = form.querySelector('input[name="handover_id"]');
+
+    if (!handoverIdInput) {
+        handoverIdInput = document.createElement("input");
+        handoverIdInput.type = "hidden";
+        handoverIdInput.name = "handover_id";
+        form.appendChild(handoverIdInput);
+    }
+
+    handoverIdInput.value = id;
+
+    form.querySelector('input[name="shift_date"]').value = card.dataset.date;
+    form.querySelector('textarea[name="comment"]').value = card.dataset.comment || "";
+
+    clearFormLists();
+
+    card.querySelectorAll(".js-product-item").forEach(item => {
+        addRow("product-list", "product_ids", item.dataset.id, item.dataset.name, item.dataset.quantity, item.dataset.comment, {
+            quantity: "product_quantities",
+            comment: "product_comments"
+        });
+    });
+
+    card.querySelectorAll(".js-preparation-item").forEach(item => {
+        addRow("preparation-list", "preparation_ids", item.dataset.id, item.dataset.name, item.dataset.quantity, item.dataset.comment, {
+            quantity: "preparation_quantities",
+            comment: "preparation_comments"
+        });
+    });
+
+    card.querySelectorAll(".js-dish-item").forEach(item => {
+        addRow("dish-list", "dish_ids", item.dataset.id, item.dataset.name, "", item.dataset.comment, {
+            comment: "dish_comments"
+        });
+    });
+
+    document.getElementById("edit-notice").classList.add("active");
+    document.getElementById("edit-notice-text").textContent = `Редактируется передача смены от ${card.dataset.displayDate}`;
+    document.getElementById("submit-btn").textContent = "Сохранить изменения";
+
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function cancelEdit() {
+    const form = document.getElementById("handover-form");
+
+    form.querySelector('input[name="action"]').value = "create";
+
+    const handoverIdInput = form.querySelector('input[name="handover_id"]');
+
+    if (handoverIdInput) {
+        handoverIdInput.remove();
+    }
+
+    form.querySelector('textarea[name="comment"]').value = "";
+    clearFormLists();
+
+    document.getElementById("edit-notice").classList.remove("active");
+    document.getElementById("submit-btn").textContent = "Передать смену";
+}
+</script>
+
+{% endblock %}

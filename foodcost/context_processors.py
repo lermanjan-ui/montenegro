@@ -1,26 +1,41 @@
-from .models import Country
+from .models import Country, UserProfile
+
+
+def user_has_section(user, section):
+    if not user.is_authenticated:
+        return False
+
+    if user.is_superuser:
+        return True
+
+    if not hasattr(user, "profile"):
+        return False
+
+    return user.profile.can_access_section(section)
 
 
 def menu_context(request):
     if not request.user.is_authenticated:
-        return {
-            "can_switch_country": False,
-            "can_manage_users": False,
-        }
+        return {}
 
     if request.user.is_superuser:
         countries_count = Country.objects.count()
-        can_manage_users = True
-
     elif hasattr(request.user, "profile"):
         countries_count = request.user.profile.countries.count()
-        can_manage_users = request.user.profile.is_super_admin()
-
     else:
         countries_count = 0
-        can_manage_users = False
 
     return {
         "can_switch_country": countries_count > 1,
-        "can_manage_users": can_manage_users,
+
+        "can_menu_dishes": user_has_section(request.user, UserProfile.SECTION_DISHES),
+        "can_menu_products": user_has_section(request.user, UserProfile.SECTION_PRODUCTS),
+        "can_menu_preparations": user_has_section(request.user, UserProfile.SECTION_PREPARATIONS),
+        "can_menu_employees": user_has_section(request.user, UserProfile.SECTION_EMPLOYEES),
+        "can_menu_packaging": user_has_section(request.user, UserProfile.SECTION_PACKAGING),
+        "can_menu_utilities": user_has_section(request.user, UserProfile.SECTION_UTILITIES),
+        "can_menu_users": user_has_section(request.user, UserProfile.SECTION_USERS),
+        "can_menu_writeoffs": user_has_section(request.user, UserProfile.SECTION_WRITE_OFFS),
+        "can_menu_writeoff_analytics": user_has_section(request.user, UserProfile.SECTION_WRITE_OFF_ANALYTICS),
+        "can_menu_shift_handover": user_has_section(request.user, UserProfile.SECTION_SHIFT_HANDOVER),
     }

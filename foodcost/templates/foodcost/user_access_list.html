@@ -103,24 +103,49 @@
         border: 1px solid #d1d5db;
     }
 
-    .form-grid {
+    .create-form {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1.8fr auto;
+        gap: 18px;
+    }
+
+    .form-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr 1fr;
         gap: 14px;
         align-items: end;
     }
 
-    .countries-checkboxes {
+    .access-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    .checkbox-panel {
+        background: #fbfcfd;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .checkbox-title {
+        font-weight: 950;
+        color: #111827;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .checkboxes {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
     }
 
-    .country-checkbox {
+    .checkbox-pill {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: #f9fafb;
+        background: white;
         border: 1px solid #e5e7eb;
         border-radius: 12px;
         padding: 9px 12px;
@@ -129,7 +154,7 @@
         color: #374151;
     }
 
-    .country-checkbox input {
+    .checkbox-pill input {
         width: auto;
         margin: 0;
     }
@@ -147,8 +172,8 @@
     }
 
     .user-view {
-        display: grid;
-        grid-template-columns: 1.3fr 1fr 1.6fr 0.8fr 160px;
+		display: grid;
+		grid-template-columns: 1.1fr 1fr 1.1fr 1.1fr 1.2fr 0.8fr 160px;
         gap: 14px;
         align-items: center;
         padding: 16px;
@@ -178,6 +203,7 @@
         font-weight: 950;
     }
 
+    .section-list,
     .country-list {
         font-weight: 850;
         color: #374151;
@@ -207,9 +233,19 @@
 
     .edit-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1.8fr auto auto;
+        gap: 18px;
+    }
+
+	.edit-main-grid {
+	    display: grid;
+	    grid-template-columns: 1fr 1fr 1fr 1fr;
         gap: 14px;
-        align-items: end;
+    }
+
+    .edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
     }
 
     .empty {
@@ -220,8 +256,9 @@
 
     @media (max-width: 1000px) {
         .form-grid,
+        .access-grid,
         .user-view,
-        .edit-grid {
+        .edit-main-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -233,7 +270,30 @@
 
 <div class="card">
     <h1>Пользователи и доступы</h1>
-    <p class="muted">Создание пользователей, назначение роли и доступных стран.</p>
+    <p class="muted">Создание пользователей, назначение роли, стран и доступных разделов.</p>
+</div>
+
+<div class="card">
+    <h2>Создать филиал</h2>
+
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_location">
+
+        <div>
+            <label>Название филиала</label>
+            <input name="location_name" placeholder="Например: Яшнобод">
+        </div>
+
+        <div>
+            <label>Telegram thread ID</label>
+            <input name="telegram_thread_id" placeholder="Например: 2">
+        </div>
+
+        <div>
+            <button type="submit">Создать филиал</button>
+        </div>
+    </form>
 </div>
 
 <div class="card">
@@ -243,7 +303,7 @@
         <div class="error">{{ error }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" class="create-form">
         {% csrf_token %}
         <input type="hidden" name="action" value="create_user">
 
@@ -266,12 +326,24 @@
                     {% endfor %}
                 </select>
             </div>
+			<div>
+			    <label>Филлиал</label>
+			    <select name="location_id">
+			        <option value="">Без филиалла</option>
+			        {% for location in locations %}
+			            <option value="{{ location.id }}">{{ location.name }}</option>
+			        {% endfor %}
+			    </select>
+			</div>
+        </div>
 
-            <div>
-                <label>Страны</label>
-                <div class="countries-checkboxes">
+        <div class="access-grid">
+            <div class="checkbox-panel">
+                <div class="checkbox-title">Страны</div>
+
+                <div class="checkboxes">
                     {% for c in countries %}
-                        <label class="country-checkbox">
+                        <label class="checkbox-pill">
                             <input type="checkbox" name="countries" value="{{ c.id }}">
                             {{ c.name }}
                         </label>
@@ -279,6 +351,21 @@
                 </div>
             </div>
 
+            <div class="checkbox-panel">
+                <div class="checkbox-title">Доступные разделы</div>
+
+                <div class="checkboxes">
+                    {% for value, label in sections %}
+                        <label class="checkbox-pill">
+                            <input type="checkbox" name="allowed_sections" value="{{ value }}">
+                            {{ label }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div>
             <button type="submit">Создать</button>
         </div>
     </form>
@@ -313,6 +400,30 @@
                 </div>
 
                 <div>
+                    <div class="small-label">Разделы</div>
+                    <div class="section-list">
+                        {% for section_value, section_label in sections %}
+                            {% if section_value in user.profile.allowed_sections %}
+                                {{ section_label }}{% if not forloop.last %}, {% endif %}
+                            {% endif %}
+                        {% empty %}
+                            <span class="muted">Разделы не выбраны</span>
+                        {% endfor %}
+                    </div>
+                </div>
+				
+				<div>
+				    <div class="small-label">Филлиал</div>
+				    <div class="country-list">
+				        {% if user.profile.location %}
+				            {{ user.profile.location.name }}
+				        {% else %}
+				            <span class="muted">Не выбрана</span>
+				        {% endif %}
+				    </div>
+				</div>
+
+                <div>
                     <div class="small-label">Superuser</div>
                     {% if user.is_superuser %}
                         <span class="superuser-yes">Да</span>
@@ -330,46 +441,88 @@
                     <input type="hidden" name="action" value="update_user">
                     <input type="hidden" name="user_id" value="{{ user.id }}">
 
-                    <div>
-                        <label>Логин</label>
-                        <input name="username" value="{{ user.username }}">
-                    </div>
+					<div class="edit-main-grid">
+					    <div>
+					        <label>Логин</label>
+					        <input name="username" value="{{ user.username }}">
+					    </div>
 
-                    <div>
-                        <label>Новый пароль</label>
-                        <input name="password" type="password" placeholder="Если нужно">
-                    </div>
+					    <div>
+					        <label>Новый пароль</label>
+					        <input name="password" type="password" placeholder="Если нужно">
+					    </div>
 
-                    <div>
-                        <label>Роль</label>
-                        <select name="role">
-                            {% for value, label in roles %}
-                                <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+					    <div>
+					        <label>Роль</label>
+					        <select name="role">
+					            {% for value, label in roles %}
+					                <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>
+					                    {{ label }}
+					                </option>
+					            {% endfor %}
+					        </select>
+					    </div>
 
-                    <div>
-                        <label>Страны</label>
-                        <div class="countries-checkboxes">
-                            {% for c in countries %}
-                                <label class="country-checkbox">
-                                    <input
-                                        type="checkbox"
-                                        name="countries"
-                                        value="{{ c.id }}"
-                                        {% if c in user.profile.countries.all %}checked{% endif %}
-                                    >
-                                    {{ c.name }}
-                                </label>
-                            {% endfor %}
+					    <div>
+					        <label>Филлиал</label>
+
+					        <select name="location_id">
+					            <option value="">Без филиалла</option>
+
+					            {% for location in locations %}
+					                <option
+					                    value="{{ location.id }}"
+					                    {% if user.profile.location_id == location.id %}selected{% endif %}
+					                >
+					                    {{ location.name }}
+					                </option>
+					            {% endfor %}
+					        </select>
+					    </div>
+					</div>
+
+                    <div class="access-grid">
+                        <div class="checkbox-panel">
+                            <div class="checkbox-title">Страны</div>
+
+                            <div class="checkboxes">
+                                {% for c in countries %}
+                                    <label class="checkbox-pill">
+                                        <input
+                                            type="checkbox"
+                                            name="countries"
+                                            value="{{ c.id }}"
+                                            {% if c in user.profile.countries.all %}checked{% endif %}
+                                        >
+                                        {{ c.name }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="checkbox-panel">
+                            <div class="checkbox-title">Доступные разделы</div>
+
+                            <div class="checkboxes">
+                                {% for value, label in sections %}
+                                    <label class="checkbox-pill">
+                                        <input
+                                            type="checkbox"
+                                            name="allowed_sections"
+                                            value="{{ value }}"
+                                            {% if value in user.profile.allowed_sections %}checked{% endif %}
+                                        >
+                                        {{ label }}
+                                    </label>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
 
-                    <button type="button" class="secondary-btn cancel-edit-btn">Отмена</button>
-                    <button type="submit">Сохранить</button>
+                    <div class="edit-actions">
+                        <button type="button" class="secondary-btn cancel-edit-btn">Отмена</button>
+                        <button type="submit">Сохранить</button>
+                    </div>
                 </form>
             </div>
         </div>

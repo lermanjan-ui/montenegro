@@ -26,6 +26,7 @@ from .models import (
     DishAdditionalExpense,
     MonthlyUtilityExpense,
     UserProfile,
+    Location,
 )
 
 
@@ -66,24 +67,21 @@ def user_can_edit(user):
     return user.profile.can_edit()
 
 
-def user_can_access_country(user, country):
+def user_can_access_section(user, section):
     if user.is_superuser:
         return True
 
     if not hasattr(user, "profile"):
         return False
 
-    return user.profile.can_access_country(country)
+    return user.profile.can_access_section(section)
 
 
-def user_can_edit(user):
-    if user.is_superuser:
-        return True
+def require_section_access(user, section):
+    if not user_can_access_section(user, section):
+        return HttpResponseForbidden("У вас нет доступа к этому разделу")
 
-    if not hasattr(user, "profile"):
-        return False
-
-    return user.profile.can_edit()
+    return None
 
 
 @login_required(login_url="/login/")
@@ -100,6 +98,14 @@ def country_list(request):
 @login_required(login_url="/login/")
 def dish_create(request, country_slug):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_DISHES
+    )
+
+    if access_error:
+        return access_error
 
     if not user_can_edit(request.user):
         return HttpResponseForbidden("У вас нет прав на создание блюда")
@@ -149,6 +155,14 @@ def dish_create(request, country_slug):
 @login_required(login_url="/login/")
 def dish_list(request, country_slug):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_DISHES
+    )
+
+    if access_error:
+        return access_error
 
     if request.method == "POST":
         if not user_can_edit(request.user):
@@ -239,9 +253,17 @@ def live_calculate(request, country_slug):
     return JsonResponse({"cost": round(cost, 2)})
 
 @login_required(login_url="/login/")
-@login_required(login_url="/login/")
 def dish_detail(request, country_slug, dish_id):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_DISHES
+    )
+
+    if access_error:
+        return access_error
+
     dish = get_object_or_404(Dish, id=dish_id, country=country)
 
     products = Product.objects.filter(country=country)
@@ -522,6 +544,15 @@ def dish_detail(request, country_slug, dish_id):
 @login_required(login_url="/login/")
 def product_list(request, country_slug):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_PRODUCTS
+    )
+
+    if access_error:
+        return access_error
+
     create_form = ProductWithPriceForm()
 
     if request.method == "POST":
@@ -560,6 +591,15 @@ def product_list(request, country_slug):
 @login_required(login_url="/login/")
 def product_detail(request, country_slug, product_id):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_PRODUCTS
+    )
+
+    if access_error:
+        return access_error
+
     product = get_object_or_404(Product, id=product_id, country=country)
 
     if request.method == "POST":
@@ -707,6 +747,14 @@ def product_detail(request, country_slug, product_id):
 def preparation_list(request, country_slug):
     country = get_country(country_slug, request.user)
 
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_PREPARATIONS
+    )
+
+    if access_error:
+        return access_error
+
     if request.method == "POST":
         if not user_can_edit(request.user):
             return HttpResponseForbidden("У вас нет прав на редактирование")
@@ -736,6 +784,15 @@ def preparation_list(request, country_slug):
 @login_required(login_url="/login/")
 def preparation_detail(request, country_slug, prep_id):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_PREPARATIONS
+    )
+
+    if access_error:
+        return access_error
+
     preparation = get_object_or_404(Preparation, id=prep_id, country=country)
 
     products = Product.objects.filter(country=country)
@@ -861,6 +918,14 @@ def preparation_detail(request, country_slug, prep_id):
 def employee_list(request, country_slug):
     country = get_country(country_slug, request.user)
 
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_EMPLOYEES
+    )
+
+    if access_error:
+        return access_error
+
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -898,8 +963,17 @@ def employee_list(request, country_slug):
     })
 
 
+@login_required(login_url="/login/")
 def packaging_list(request, country_slug):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_PACKAGING
+    )
+
+    if access_error:
+        return access_error
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -935,6 +1009,14 @@ def packaging_list(request, country_slug):
 def utilities_list(request, country_slug):
     country = get_country(country_slug, request.user)
 
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_UTILITIES
+    )
+
+    if access_error:
+        return access_error
+
     if request.method == "POST":
         MonthlyUtilityExpense.objects.create(
             country=country,
@@ -956,9 +1038,17 @@ def utilities_list(request, country_slug):
     
   
     
-@login_required(login_url="/login/")    
+@login_required(login_url="/login/")
 def user_access_list(request, country_slug):
     country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_USERS
+    )
+
+    if access_error:
+        return access_error
 
     if not request.user.is_authenticated:
         return HttpResponseForbidden("Нет доступа")
@@ -974,11 +1064,31 @@ def user_access_list(request, country_slug):
     if request.method == "POST":
         action = request.POST.get("action")
 
+        if action == "create_location":
+            location_name = request.POST.get("location_name")
+            telegram_thread_id = request.POST.get("telegram_thread_id")
+
+            if not location_name:
+                error = "Укажи название филиала"
+            else:
+                Location.objects.create(
+                    country=country,
+                    name=location_name,
+                    telegram_thread_id=telegram_thread_id or None,
+                )
+
+                return redirect(f"/c/{country.slug}/users/")
+
         if action == "create_user":
             username = request.POST.get("username")
             password = request.POST.get("password")
             role = request.POST.get("role")
             country_ids = request.POST.getlist("countries")
+
+            allowed_sections = request.POST.getlist("allowed_sections")
+
+            location_id = request.POST.get("location_id")
+            
 
             if not username or not password or not role:
                 error = "Заполни логин, пароль и роль"
@@ -992,6 +1102,8 @@ def user_access_list(request, country_slug):
 
                 profile, created = UserProfile.objects.get_or_create(user=user)
                 profile.role = role
+                profile.allowed_sections = allowed_sections
+                profile.location_id = location_id or None
                 profile.save()
                 profile.countries.set(country_ids)
 
@@ -1005,6 +1117,8 @@ def user_access_list(request, country_slug):
             password = request.POST.get("password")
             role = request.POST.get("role")
             country_ids = request.POST.getlist("countries")
+            allowed_sections = request.POST.getlist("allowed_sections")
+            location_id = request.POST.get("location_id")
 
             if username:
                 user.username = username
@@ -1015,21 +1129,32 @@ def user_access_list(request, country_slug):
             user.save()
 
             if role:
-                profile.role = role
-                profile.save()
 
+                profile.role = role
+
+            profile.allowed_sections = allowed_sections
+
+            profile.location_id = location_id or None
+
+            profile.save()
             profile.countries.set(country_ids)
+            
 
             return redirect(f"/c/{country.slug}/users/")
 
     users = User.objects.all().order_by("username")
+
     countries = Country.objects.all().order_by("name")
+
+    locations = Location.objects.all().order_by("name")
 
     return render(request, "foodcost/user_access_list.html", {
         "country": country,
         "users": users,
         "countries": countries,
+        "locations": locations,
         "roles": UserProfile.ROLE_CHOICES,
+        "sections": UserProfile.SECTION_CHOICES,
         "error": error,
     })
     

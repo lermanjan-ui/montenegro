@@ -130,6 +130,7 @@ class PreparationSubItem(models.Model):
     def unit_label(self):
         return "кг"
 
+
 # 🏷 КАТЕГОРИЯ БЛЮДА
 class DishCategory(models.Model):
     country = models.ForeignKey(
@@ -150,6 +151,7 @@ class DishCategory(models.Model):
     def __str__(self):
         return self.name
 
+
 # 🍽 БЛЮДО
 class Dish(models.Model):
     country = models.ForeignKey(
@@ -161,7 +163,7 @@ class Dish(models.Model):
     )
 
     name = models.CharField(max_length=255)
-    
+
     category = models.ForeignKey(
         DishCategory,
         on_delete=models.SET_NULL,
@@ -169,7 +171,7 @@ class Dish(models.Model):
         blank=True,
         related_name="dishes"
     )
-    
+
     final_weight = models.DecimalField(max_digits=10, decimal_places=3)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)
@@ -180,8 +182,10 @@ class Dish(models.Model):
         return self.name
 
     def ingredient_cost(self):
-        return sum(item.calculate_cost() for item in self.product_items.all()) + \
-               sum(item.calculate_cost() for item in self.preparation_items.all())
+        return (
+            sum(item.calculate_cost() for item in self.product_items.all())
+            + sum(item.calculate_cost() for item in self.preparation_items.all())
+        )
 
     def packaging_cost(self):
         return sum(item.calculate_cost() for item in self.packaging_items.all())
@@ -365,16 +369,60 @@ class MonthlyUtilityExpense(models.Model):
             return 0
         return self.total() / (self.working_hours * 60)
 
+# 📍 ТОЧКА / ФИЛИАЛ
+class Location(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="locations"
+    )
+
+    name = models.CharField(max_length=255)
+
+    is_active = models.BooleanField(default=True)
+    telegram_thread_id = models.BigIntegerField(
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return self.name
 
 class UserProfile(models.Model):
     ROLE_SUPER_ADMIN = "super_admin"
     ROLE_ADMIN = "admin"
     ROLE_VIEWER = "viewer"
+    ROLE_KITCHEN_STAFF = "kitchen_staff"
 
     ROLE_CHOICES = [
         (ROLE_SUPER_ADMIN, "Главный админ"),
         (ROLE_ADMIN, "Администратор"),
         (ROLE_VIEWER, "Просмотр"),
+        (ROLE_KITCHEN_STAFF, "Сотрудник кухни"),
+    ]
+
+    SECTION_DISHES = "dishes"
+    SECTION_PRODUCTS = "products"
+    SECTION_PREPARATIONS = "preparations"
+    SECTION_EMPLOYEES = "employees"
+    SECTION_PACKAGING = "packaging"
+    SECTION_UTILITIES = "utilities"
+    SECTION_USERS = "users"
+    SECTION_WRITE_OFFS = "writeoffs"
+    SECTION_WRITE_OFF_ANALYTICS = "writeoff_analytics"
+    SECTION_SHIFT_HANDOVER = "shift_handover"
+
+    SECTION_CHOICES = [
+        (SECTION_DISHES, "Блюда"),
+        (SECTION_PRODUCTS, "Продукты"),
+        (SECTION_PREPARATIONS, "Заготовки"),
+        (SECTION_EMPLOYEES, "Сотрудники"),
+        (SECTION_PACKAGING, "Упаковка"),
+        (SECTION_UTILITIES, "Коммуналка"),
+        (SECTION_USERS, "Пользователи"),
+        (SECTION_WRITE_OFFS, "Списания"),
+        (SECTION_WRITE_OFF_ANALYTICS, "Аналитика списаний"),
+        (SECTION_SHIFT_HANDOVER, "Передача смены"),
     ]
 
     user = models.OneToOneField(
@@ -395,16 +443,265 @@ class UserProfile(models.Model):
         related_name="user_profiles"
     )
 
+    allowed_sections = models.JSONField(
+        default=list,
+        blank=True
+    )
+    
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="user_profiles"
+    )
+
     def __str__(self):
         return f"{self.user.username} — {self.get_role_display()}"
 
     def can_edit(self):
-        return self.role in [self.ROLE_SUPER_ADMIN, self.ROLE_ADMIN]
+        return self.role in [
+            self.ROLE_SUPER_ADMIN,
+            self.ROLE_ADMIN,
+        ]
 
     def can_access_country(self, country):
         if self.role == self.ROLE_SUPER_ADMIN:
             return True
+
         return self.countries.filter(id=country.id).exists()
 
     def is_super_admin(self):
         return self.role == self.ROLE_SUPER_ADMIN
+
+    def is_kitchen_staff(self):
+        return self.role == self.ROLE_KITCHEN_STAFF
+
+    def can_access_section(self, section):
+        if self.role == self.ROLE_SUPER_ADMIN:
+            return True
+
+        return section in self.allowed_sections
+
+
+# 🧾 СПИСАНИЯ
+class WriteOff(models.Model):
+    ITEM_TYPE_PRODUCT = "product"
+    ITEM_TYPE_PREPARATION = "preparation"
+
+    ITEM_TYPE_CHOICES = [
+        (ITEM_TYPE_PRODUCT, "Продукт"),
+        (ITEM_TYPE_PREPARATION, "Заготовка"),
+    ]
+
+    REASON_EXPIRED = "expired"
+    REASON_SPOILED = "spoiled"
+    REASON_COOKING_ERROR = "cooking_error"
+    REASON_RETURN = "return"
+    REASON_TEST = "test"
+    REASON_REGRADING = "regrading"
+    REASON_STAFF_MEAL = "staff_meal"
+    REASON_OTHER = "other"
+
+    REASON_CHOICES = [
+        (REASON_EXPIRED, "Просрочка"),
+        (REASON_SPOILED, "Порча"),
+        (REASON_COOKING_ERROR, "Ошибка приготовления"),
+        (REASON_RETURN, "Возврат"),
+        (REASON_TEST, "Тест"),
+        (REASON_REGRADING, "Пересорт"),
+        (REASON_STAFF_MEAL, "Еда для персонала"),
+        (REASON_OTHER, "Другое"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="writeoffs"
+    )
+
+    writeoff_date = models.DateField()
+
+    item_type = models.CharField(
+        max_length=20,
+        choices=ITEM_TYPE_CHOICES
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="writeoffs"
+    )
+
+    preparation = models.ForeignKey(
+        Preparation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="writeoffs"
+    )
+
+    quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=3
+    )
+
+    reason = models.CharField(
+        max_length=30,
+        choices=REASON_CHOICES
+    )
+
+    comment = models.TextField(
+        blank=True
+    )
+
+    cost = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="writeoffs"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+        if self.item_type == self.ITEM_TYPE_PRODUCT and self.product:
+            item_name = self.product.name
+        elif self.item_type == self.ITEM_TYPE_PREPARATION and self.preparation:
+            item_name = self.preparation.name
+        else:
+            item_name = "Списание"
+
+        return f"{item_name} — {self.quantity} — {self.get_reason_display()}"
+
+    def calculate_cost(self):
+        if self.item_type == self.ITEM_TYPE_PRODUCT and self.product:
+            price = self.product.get_price()
+
+            if price:
+                return self.quantity * price.price
+
+        if self.item_type == self.ITEM_TYPE_PREPARATION and self.preparation:
+            return self.quantity * self.preparation.cost_per_kg()
+
+        return 0
+
+    def save(self, *args, **kwargs):
+        self.cost = self.calculate_cost()
+        super().save(*args, **kwargs)
+        
+        
+# 🔁 ПЕРЕДАЧА СМЕНЫ
+class ShiftHandover(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="shift_handovers"
+    )
+    
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shift_handovers"
+    )
+
+    shift_date = models.DateField()
+
+    responsible = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shift_handovers"
+    )
+
+    comment = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        responsible_name = self.responsible.username if self.responsible else "—"
+        return f"Передача смены {self.shift_date} — {responsible_name}"
+
+
+class ShiftPurchaseNeed(models.Model):
+    handover = models.ForeignKey(
+        ShiftHandover,
+        on_delete=models.CASCADE,
+        related_name="purchase_needs"
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE
+    )
+
+    quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0
+    )
+
+    comment = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+
+class ShiftPreparationNeed(models.Model):
+    handover = models.ForeignKey(
+        ShiftHandover,
+        on_delete=models.CASCADE,
+        related_name="preparation_needs"
+    )
+
+    preparation = models.ForeignKey(
+        Preparation,
+        on_delete=models.CASCADE
+    )
+
+    quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0
+    )
+
+    comment = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+
+class ShiftStopItem(models.Model):
+    handover = models.ForeignKey(
+        ShiftHandover,
+        on_delete=models.CASCADE,
+        related_name="stop_items"
+    )
+
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE
+    )
+
+    comment = models.CharField(
+        max_length=255,
+        blank=True
+    )    

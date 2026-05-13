@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from . import writeoff_views
+from . import shift_views
 
 
 urlpatterns = [
@@ -31,6 +33,37 @@ urlpatterns = [
 
     # коммуналка
     path("c/<slug:country_slug>/utilities/", views.utilities_list, name="utilities_list"),
+
+    # списания
+
+    path(
+
+        "c/<slug:country_slug>/writeoffs/",
+
+        writeoff_views.writeoff_list,
+
+        name="writeoff_list"
+
+    ),
+    
+    path(
+        "c/<slug:country_slug>/writeoffs/analytics/",
+        writeoff_views.writeoff_analytics,
+        name="writeoff_analytics",
+    ),
+    
+    # передача смены
+    path(
+        "c/<slug:country_slug>/shift-handover/",
+        shift_views.shift_handover_list,
+        name="shift_handover_list"
+    ),
+    
+    path(
+        "c/<slug:country_slug>/shift-handover/admin/",
+        shift_views.shift_handover_admin,
+        name="shift_handover_admin"
+    ),
 
     # 👇 НОВОЕ — пользователи и доступы (ТОЛЬКО ДЛЯ ГЛАВНОГО АДМИНА)
     path("c/<slug:country_slug>/users/", views.user_access_list, name="user_access_list"),

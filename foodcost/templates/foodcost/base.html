@@ -4,172 +4,252 @@
     <title>{% block title %}FoodCost{% endblock %}</title>
 
     <style>
+        :root {
+            --bg:#f6f7fb;
+            --card:#ffffff;
+            --text:#111827;
+            --muted:#6b7280;
+            --border:#e5e7eb;
+            --green:#047857;
+            --green-soft:#ecfdf5;
+            --danger:#b91c1c;
+            --danger-soft:#fee2e2;
+            --nav-active:#eaf7f0;
+        }
+
+        * { box-sizing:border-box; }
+
         body {
             font-family: Arial, sans-serif;
-            background: #f6f7fb;
+            background: var(--bg);
             margin: 0;
-            color: #111827;
+            color: var(--text);
         }
 
-        .header-wrap {
-            padding: 18px 30px 0;
+        .app-shell {
+            min-height:100vh;
+            display:grid;
+            grid-template-columns:260px 1fr;
         }
 
-        .header {
-            max-width: 1280px;
-            margin: 0 auto;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 18px;
-            padding: 16px 20px;
-            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 22px;
+        .sidebar {
+            position:sticky;
+            top:0;
+            height:100vh;
+            background:white;
+            border-right:1px solid var(--border);
+            padding:24px 16px;
+            display:flex;
+            flex-direction:column;
+            gap:22px;
         }
 
         .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            white-space: nowrap;
-            font-weight: 950;
-            font-size: 22px;
-            color: #111827;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-size:24px;
+            font-weight:950;
+            letter-spacing:-0.03em;
+            padding:0 8px;
         }
 
-        .country-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #ecfdf5;
-            color: #047857;
-            border-radius: 12px;
-            padding: 10px 14px;
-            font-size: 14px;
-            font-weight: 900;
-            white-space: nowrap;
+        .country-select {
+            margin:0 8px;
+            padding:10px 12px;
+            border:1px solid var(--border);
+            border-radius:12px;
+            font-weight:900;
+            color:var(--green);
+            background:#fff;
         }
 
-        .country-pill::before {
-            content: "•";
-            font-size: 18px;
-            line-height: 1;
+        .side-nav {
+            display:flex;
+            flex-direction:column;
+            gap:6px;
         }
 
-        .nav {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            flex: 1;
-            min-width: 0;
+        .side-link {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:12px 12px;
+            border-radius:12px;
+            text-decoration:none;
+            color:#1f2937;
+            font-weight:850;
+            font-size:15px;
         }
 
-        .nav-main {
-            display: flex;
-            align-items: center;
-            gap: 22px;
-            flex: 1;
-            justify-content: center;
-            min-width: 0;
+        .side-link svg {
+            width:20px;
+            height:20px;
+            stroke:#374151;
+            flex:0 0 auto;
         }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-left: 18px;
-            border-left: 1px solid #e5e7eb;
+        .side-link:hover {
+            background:#f9fafb;
         }
 
-        .nav a {
-            position: relative;
-            text-decoration: none;
-            color: #111827;
-            font-weight: 850;
-            font-size: 15px;
-            white-space: nowrap;
-            padding: 10px 0;
-            transition: color .18s ease;
+        .side-link.active {
+            background:var(--nav-active);
+            color:var(--green);
         }
 
-        .nav a:hover {
-            color: #047857;
+        .side-link.active svg {
+            stroke:var(--green);
         }
 
-        .nav a.active {
-            color: #047857;
+        .sidebar-footer {
+            margin-top:auto;
+            display:flex;
+            flex-direction:column;
+            gap:6px;
         }
 
-        .nav a.active::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 2px;
-            height: 2px;
-            background: #047857;
-            border-radius: 999px;
+        .main {
+            min-width:0;
         }
 
-        .nav-actions a {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 10px 14px;
-            font-size: 14px;
-            background: white;
+        .topbar {
+            height:72px;
+            background:white;
+            border-bottom:1px solid var(--border);
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:0 32px;
         }
 
-        .nav-actions a.active::after {
-            display: none;
+        .topbar-left {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            color:var(--muted);
+            font-weight:850;
         }
 
-        .nav-actions a:hover {
-            border-color: #047857;
-            background: #f9fafb;
+        .topbar-actions {
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+
+        .user-box {
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .avatar {
+            width:36px;
+            height:36px;
+            border-radius:999px;
+            background:var(--green-soft);
+            color:var(--green);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:950;
+        }
+
+        .user-name {
+            font-weight:950;
+            font-size:14px;
+        }
+
+        .user-role {
+            color:var(--muted);
+            font-size:12px;
+            margin-top:2px;
         }
 
         .container {
-            max-width: 1280px;
+            max-width: 1400px;
             margin: auto;
-            padding: 30px;
+            padding: 28px 32px;
         }
 
         .card {
             background: white;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--border);
             border-radius: 18px;
             padding: 24px;
             margin-bottom: 20px;
             box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
         }
 
-        h1, h2 {
-            margin-top: 0;
+        h1, h2 { margin-top:0; }
+
+        button,
+        .button {
+            background:var(--green);
+            color:white;
+            border:0;
+            border-radius:12px;
+            padding:12px 16px;
+            font-weight:900;
+            cursor:pointer;
+            text-decoration:none;
+        }
+
+        button:hover,
+        .button:hover {
+            background:#036c4d;
+        }
+
+        .secondary-btn {
+            background:white;
+            color:var(--text);
+            border:1px solid #d1d5db;
+        }
+
+        .secondary-btn:hover {
+            background:#f9fafb;
+        }
+
+        .danger {
+            background:var(--danger-soft);
+            color:var(--danger);
+        }
+
+        .danger:hover {
+            background:#fecaca;
         }
 
         @media (max-width: 1100px) {
-            .header {
-                align-items: flex-start;
-                flex-direction: column;
+            .app-shell {
+                grid-template-columns:1fr;
             }
 
-            .nav {
-                width: 100%;
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
+            .sidebar {
+                position:relative;
+                height:auto;
+                border-right:0;
+                border-bottom:1px solid var(--border);
+                padding:16px;
             }
 
-            .nav-main {
-                justify-content: flex-start;
-                overflow-x: auto;
-                padding-bottom: 4px;
+            .side-nav,
+            .sidebar-footer {
+                flex-direction:row;
+                overflow-x:auto;
+                padding-bottom:4px;
             }
 
-            .nav-actions {
-                border-left: 0;
-                padding-left: 0;
+            .side-link {
+                white-space:nowrap;
+            }
+
+            .topbar {
+                height:auto;
+                padding:14px 18px;
+            }
+
+            .container {
+                padding:20px 16px;
             }
         }
     </style>
@@ -177,48 +257,154 @@
 
 <body>
 
-<div class="header-wrap">
-    <div class="header">
-        <div class="brand">
-            🍽 FoodCost
-        </div>
+<div class="app-shell">
 
-        {% if country %}
-            <div class="country-pill">{{ country.name }}</div>
+    <aside class="sidebar">
+        <div class="brand">🍽 Фудкост</div>
+
+		{% if country %}
+
+		    <nav class="side-nav">
+                {% if can_menu_dishes %}
+                    <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}" href="/c/{{ country.slug }}/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg>
+                        Блюда
+                    </a>
+                {% endif %}
+
+                {% if can_menu_products %}
+                    <a class="side-link {% if '/products/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/products/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M6 7h12l-1 14H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+                        Продукты
+                    </a>
+                {% endif %}
+
+                {% if can_menu_preparations %}
+                    <a class="side-link {% if '/preparations/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/preparations/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M6 4h12v5a6 6 0 0 1-12 0V4Z"/><path d="M8 20h8"/><path d="M12 15v5"/></svg>
+                        Заготовки
+                    </a>
+                {% endif %}
+
+                {% if can_menu_employees %}
+                    <a class="side-link {% if '/employees/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/employees/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Сотрудники
+                    </a>
+                {% endif %}
+
+                {% if can_menu_packaging %}
+                    <a class="side-link {% if '/packaging/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/packaging/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 7h16v13H4V7Z"/><path d="M8 7a4 4 0 0 1 8 0"/></svg>
+                        Упаковка
+                    </a>
+                {% endif %}
+
+                {% if can_menu_utilities %}
+                    <a class="side-link {% if '/utilities/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/utilities/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M13 2 5 13h6l-1 9 8-12h-6l1-8Z"/></svg>
+                        Коммуналка
+                    </a>
+                {% endif %}
+
+                {% if can_menu_writeoffs %}
+                    <a class="side-link {% if '/writeoffs/' in request.path and '/writeoffs/analytics/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/writeoffs/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M7 3h10l3 5v13H4V8l3-5Z"/><path d="M7 8h13"/><path d="M9 13h6"/></svg>
+                        Списания
+                    </a>
+                {% endif %}
+
+                {% if can_menu_writeoff_analytics %}
+                    <a class="side-link {% if '/writeoffs/analytics/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/writeoffs/analytics/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/></svg>
+                        Аналитика списаний
+                    </a>
+                {% endif %}
+
+				{% if can_menu_shift_handover %}
+
+				    <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/shift-handover/' %}active{% endif %}" href="/c/{{ country.slug }}/shift-handover/">
+
+				        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M8 7h12"/><path d="m17 4 3 3-3 3"/><path d="M16 17H4"/><path d="m7 14-3 3 3 3"/></svg>
+
+				        Передача смены
+
+				    </a>
+
+				{% endif %}
+
+				{% if request.user.profile.role == "admin" or request.user.profile.role == "super_admin" %}
+
+				    <a class="side-link {% if '/shift-handover/admin/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/shift-handover/admin/">
+
+				        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/></svg>
+
+				        Передачи смен
+
+				    </a>
+
+				{% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                {% if can_menu_users %}
+                    <a class="side-link {% if '/users/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/users/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+                        Пользователи
+                    </a>
+                {% endif %}
+
+                {% if can_switch_country %}
+                    <a class="side-link" href="/">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M3 12h18"/><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/></svg>
+                        Сменить страну
+                    </a>
+                {% endif %}
+            </div>
+        {% else %}
+            <nav class="side-nav">
+                <a class="side-link" href="/">Страны</a>
+                <a class="side-link" href="/admin/">Админка</a>
+            </nav>
         {% endif %}
+    </aside>
 
-        <div class="nav">
-            {% if country %}
-                <div class="nav-main">
-                    <a href="/c/{{ country.slug }}/" class="{% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}">Блюда</a>
-                    <a href="/c/{{ country.slug }}/products/" class="{% if '/products/' in request.path %}active{% endif %}">Продукты</a>
-                    <a href="/c/{{ country.slug }}/preparations/" class="{% if '/preparations/' in request.path %}active{% endif %}">Заготовки</a>
-                    <a href="/c/{{ country.slug }}/employees/" class="{% if '/employees/' in request.path %}active{% endif %}">Сотрудники</a>
-                    <a href="/c/{{ country.slug }}/packaging/" class="{% if '/packaging/' in request.path %}active{% endif %}">Упаковка</a>
-                    <a href="/c/{{ country.slug }}/utilities/" class="{% if '/utilities/' in request.path %}active{% endif %}">Коммуналка</a>
-                </div>
+    <main class="main">
+        <div class="topbar">
+            <div class="topbar-left">
+                {% if country %}
+                    <span>{{ country.name }}</span>
+                {% else %}
+                    <span>FoodCost</span>
+                {% endif %}
+            </div>
 
-			  <div class="nav-actions">
-			      {% if can_manage_users %}
-			          <a href="/c/{{ country.slug }}/users/">Пользователи</a>
-			      {% endif %}
-
-			      {% if can_switch_country %}
-			          <a href="/">Сменить страну</a>
-			      {% endif %}
-			  </div>
-            {% else %}
-                <div class="nav-main">
-                    <a href="/">Страны</a>
-                    <a href="/admin/">Админка</a>
-                </div>
-            {% endif %}
+            <div class="topbar-actions">
+                {% if request.user.is_authenticated %}
+                    <div class="user-box">
+                        <div class="avatar">{{ request.user.username|slice:":1"|upper }}</div>
+                        <div>
+                            <div class="user-name">{{ request.user.username }}</div>
+                            <div class="user-role">
+                                {% if request.user.is_superuser %}
+                                    Главный админ
+                                {% elif request.user.profile %}
+                                    {{ request.user.profile.get_role_display }}
+                                {% else %}
+                                    Пользователь
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
-</div>
 
-<div class="container">
-    {% block content %}{% endblock %}
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
 </div>
 
 </body>
