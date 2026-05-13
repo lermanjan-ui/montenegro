@@ -224,7 +224,98 @@
 	    width:auto;
 	}
 
+	.mobile-writeoffs {
+	    display: none;
+	}
+
+	.mobile-writeoff-card {
+	    background: white;
+	    border: 1px solid #e5e7eb;
+	    border-radius: 18px;
+	    padding: 16px;
+	    margin-bottom: 12px;
+	}
+
+	.mobile-head {
+	    display: flex;
+	    justify-content: space-between;
+	    gap: 14px;
+	    margin-bottom: 14px;
+	}
+
+	.mobile-item-name {
+	    font-size: 22px;
+	    font-weight: 950;
+	    line-height: 1.15;
+	    color: #111827;
+	    margin-bottom: 8px;
+	}
+
+	.mobile-type {
+	    display: inline-flex;
+	    align-items: center;
+	    background: #f3f4f6;
+	    color: #374151;
+	    border-radius: 999px;
+	    padding: 6px 10px;
+	    font-size: 12px;
+	    font-weight: 900;
+	}
+
+	.mobile-cost {
+	    color: #b91c1c;
+	    font-size: 28px;
+	    font-weight: 950;
+	    white-space: nowrap;
+	}
+
+	.mobile-grid {
+	    display: grid;
+	    grid-template-columns: 1fr 1fr;
+	    gap: 14px 18px;
+	    margin-bottom: 14px;
+	}
+
+	.mobile-edit-btn {
+	    width: 100%;
+	    min-height: 44px;
+	}
+
+	.mobile-edit-panel {
+	    display: none;
+	    margin-top: 14px;
+	    padding-top: 14px;
+	    border-top: 1px solid #e5e7eb;
+	}
+
+	.mobile-writeoff-card.editing .mobile-edit-panel {
+	    display: block;
+	}
+
+	.mobile-edit-grid {
+	    display: grid;
+	    gap: 12px;
+	}
+
+	.mobile-actions {
+	    display: grid;
+	    gap: 10px;
+	    margin-top: 14px;
+	}
+
+	.mobile-actions button {
+	    width: 100%;
+	}
+
 	@media (max-width:1100px) {
+
+		.desktop-writeoffs {
+		    display: none;
+		}
+
+		.mobile-writeoffs {
+		    display: block;
+		}
 
 	    .edit-actions {
 	        flex-direction:column;
@@ -312,7 +403,7 @@
 </div>
 
 <div class="card">
-    <div class="writeoff-list">
+    <div class="writeoff-list desktop-writeoffs">
         {% for item in writeoffs %}
         <div class="writeoff-card">
             <div class="writeoff-view">
@@ -422,6 +513,150 @@
             <div class="muted">Списаний пока нет</div>
         {% endfor %}
     </div>
+</div>
+
+<div class="mobile-writeoffs">
+
+    {% for item in writeoffs %}
+    <div class="mobile-writeoff-card">
+
+        <div class="mobile-head">
+            <div>
+                <div class="mobile-item-name">
+                    {% if item.product %}
+                        {{ item.product.name }}
+                    {% elif item.preparation %}
+                        {{ item.preparation.name }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </div>
+
+                <div class="mobile-type">
+                    {{ item.get_item_type_display }}
+                </div>
+            </div>
+
+            <div class="mobile-cost">
+                {{ item.cost|floatformat:0 }}
+            </div>
+        </div>
+
+        <div class="mobile-grid">
+
+            <div>
+                <div class="muted">Дата</div>
+                <strong>{{ item.writeoff_date }}</strong>
+            </div>
+
+            <div>
+                <div class="muted">Кол-во</div>
+                <strong>{{ item.quantity }}</strong>
+            </div>
+
+            <div>
+                <div class="muted">Причина</div>
+                <span class="reason">{{ item.get_reason_display }}</span>
+            </div>
+
+            <div>
+                <div class="muted">Комментарий</div>
+                {{ item.comment|default:"—" }}
+            </div>
+
+        </div>
+
+        <button
+            type="button"
+            class="secondary-btn mobile-edit-btn"
+            onclick="this.closest('.mobile-writeoff-card').classList.toggle('editing')"
+        >
+            Редактировать
+        </button>
+
+        <div class="mobile-edit-panel">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="writeoff_id" value="{{ item.id }}">
+
+                <div class="mobile-edit-grid">
+
+                    <div>
+                        <label>Дата</label>
+
+                        <input
+                            type="date"
+                            name="writeoff_date"
+                            value="{{ item.writeoff_date|date:'Y-m-d' }}"
+                        >
+                    </div>
+
+                    <div>
+                        <label>Причина</label>
+
+                        <select name="reason">
+                            {% for value, label in reasons %}
+                                <option
+                                    value="{{ value }}"
+                                    {% if item.reason == value %}selected{% endif %}
+                                >
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Комментарий</label>
+
+                        <input
+                            type="text"
+                            name="comment"
+                            value="{{ item.comment }}"
+                        >
+                    </div>
+
+                    <div>
+                        <label>Кол-во</label>
+
+                        <input
+                            type="number"
+                            step="0.001"
+                            name="quantity"
+                            value="{{ item.quantity }}"
+                        >
+                    </div>
+
+                </div>
+
+                <div class="mobile-actions">
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="delete"
+                        class="danger"
+                        onclick="return confirm('Удалить списание?')"
+                    >
+                        Удалить
+                    </button>
+
+                    <button type="submit">
+                        Сохранить
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+    {% endfor %}
+
 </div>
 
 </div>
