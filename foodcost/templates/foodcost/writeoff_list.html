@@ -119,16 +119,21 @@
 	    display: grid;
 	    grid-template-columns:
 	        120px
-	        110px
-	        minmax(180px, 1.35fr)
-	        110px
-	        160px
-	        minmax(120px, 1fr)
+	        105px
+	        minmax(180px, 1fr)
+	        105px
+	        140px
+	        minmax(120px, 0.8fr)
 	        120px
 	        150px;
-	    gap: 12px;
+	    gap: 10px;
 	    align-items: center;
 	    padding: 16px;
+	}
+	
+	.writeoff-view .edit-btn {
+	    width: 100%;
+	    min-width: 0;
 	}
 
     .item-name {
@@ -324,6 +329,24 @@
 
 	    .edit-actions button {
 	        width:100%;
+	    }
+	}
+	
+	@media (max-width: 700px) {
+	    .desktop-writeoffs {
+	        display: none !important;
+	    }
+
+	    .mobile-writeoffs {
+	        display: block !important;
+	    }
+
+	    .form-grid {
+	        grid-template-columns: 1fr !important;
+	    }
+
+	    .form-grid button {
+	        width: 100% !important;
 	    }
 	}
 </style>
