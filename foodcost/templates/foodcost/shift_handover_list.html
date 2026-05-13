@@ -294,7 +294,7 @@
 	}
 
 	.mobile-history {
-	    display: block;
+	    display: none;
 	}
 
 	.mobile-history-card {
@@ -371,11 +371,11 @@
 	@media (max-width: 1100px) {
 	    
 		.desktop-history {
-		    display: none;
+		    display: none !important;
 		}
 
 		.mobile-history {
-		    display: block;
+		    display: block !important;
 		}
 		
 		.page {
@@ -503,6 +503,37 @@
 	    button {
 	        font-size: 16px;
 	    }
+		
+		.added-row {
+		    display: grid;
+		    grid-template-columns: 1fr auto;
+		    gap: 8px 12px;
+		    padding: 12px 0;
+		    align-items: start;
+		}
+
+		.added-row .added-name {
+		    grid-column: 1 / -1;
+		    font-size: 15px;
+		}
+
+		.added-row .small-muted {
+		    font-size: 13px;
+		}
+
+		.added-row .remove-btn {
+		    grid-column: 2;
+		    grid-row: 2 / 4;
+		    width: 42px;
+		    min-height: 42px;
+		    background: #fffafa;
+		    border: 1px solid #fecaca;
+		}
+
+		.added-row .remove-btn svg {
+		    width: 18px;
+		    height: 18px;
+		}
 	}
 
 	@media (max-width: 560px) {

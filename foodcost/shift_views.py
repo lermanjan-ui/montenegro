@@ -177,31 +177,28 @@ def shift_handover_list(request, country_slug):
     if access_error:
         return access_error
 
-    action = None
-
     if request.method == "POST":
         action = request.POST.get("action", "create")
 
-    if action == "delete":
-        handover = get_object_or_404(
-            ShiftHandover,
-            id=request.POST.get("handover_id"),
-            country=country,
-        )
+        if action == "delete":
+            handover = get_object_or_404(
+                ShiftHandover,
+                id=request.POST.get("handover_id"),
+                country=country,
+            )
 
-        can_delete = (
-            handover.responsible == request.user
-            and timezone.now() <= handover.created_at + timedelta(hours=2)
-        )
+            can_delete = (
+                handover.responsible_id == request.user.id
+                and timezone.now() <= handover.created_at + timedelta(hours=2)
+            )
 
-        if not can_delete:
-            return HttpResponseForbidden("Время удаления истекло")
+            if not can_delete:
+                return HttpResponseForbidden("Время удаления истекло")
 
-        send_shift_handover_deleted_to_telegram(handover)
+            send_shift_handover_deleted_to_telegram(handover)
+            handover.delete()
 
-        handover.delete()
-
-        return redirect(f"/c/{country.slug}/shift-handover/")
+            return redirect(f"/c/{country.slug}/shift-handover/")
 
         if action == "update":
             handover = get_object_or_404(
@@ -211,7 +208,7 @@ def shift_handover_list(request, country_slug):
             )
 
             can_edit = (
-                handover.responsible == request.user
+                handover.responsible_id == request.user.id
                 and timezone.now() <= handover.created_at + timedelta(hours=2)
             )
 
@@ -294,14 +291,11 @@ def shift_handover_list(request, country_slug):
                 dish=dish,
                 comment=comment,
             )
-            
-            send_shift_handover_to_telegram(
 
-                handover,
-
-                is_update=(action == "update")
-
-            )
+        send_shift_handover_to_telegram(
+            handover,
+            is_update=(action == "update")
+        )
 
         return redirect(f"/c/{country.slug}/shift-handover/")
 
