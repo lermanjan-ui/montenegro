@@ -17,6 +17,7 @@ from .models import (
     Product,
     Preparation,
     Dish,
+    Location,
     ShiftHandover,
     ShiftPurchaseNeed,
     ShiftPreparationNeed,
