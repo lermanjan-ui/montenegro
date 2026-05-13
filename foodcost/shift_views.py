@@ -55,7 +55,7 @@ def send_shift_handover_to_telegram(handover, is_update=False):
         f"<b>{title}</b>",
         "",
         f"<b>Филиал:</b> {escape(handover.location.name)}",
-        f"<b>Дата:</b> {handover.shift_date.strftime('%d.%m.%Y')}",
+        f"<b>Дата:</b> {handover.shift_date}",
         f"<b>Ответственный:</b> {escape(handover.responsible.username if handover.responsible else '—')}",
     ]
 
@@ -141,7 +141,7 @@ def send_shift_handover_deleted_to_telegram(handover):
         "❌ <b>Передача смены удалена</b>",
         "",
         f"<b>Филиал:</b> {escape(handover.location.name)}",
-        f"<b>Дата:</b> {handover.shift_date.strftime('%d.%m.%Y')}",
+        f"<b>Дата:</b> {handover.shift_date}",
         f"<b>Удалил:</b> {escape(handover.responsible.username if handover.responsible else '—')}",
     ])
 
@@ -226,7 +226,7 @@ def shift_handover_list(request, country_slug):
         else:
             handover = ShiftHandover.objects.create(
                 country=country,
-                location=request.user.profile.location,
+                location=getattr(request.user.profile, "location", None),
                 shift_date=request.POST.get("shift_date"),
                 responsible=request.user,
                 comment=request.POST.get("comment", ""),
