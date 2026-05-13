@@ -162,6 +162,33 @@ def dish_list(request, country_slug):
     )
 
     if access_error:
+        if hasattr(request.user, "profile"):
+            profile = request.user.profile
+
+            if profile.is_super_admin():
+                return access_error
+
+            if UserProfile.SECTION_WRITE_OFFS in profile.allowed_sections:
+                return redirect(f"/c/{country.slug}/writeoffs/")
+
+            if UserProfile.SECTION_SHIFT_HANDOVER in profile.allowed_sections:
+                return redirect(f"/c/{country.slug}/shift-handover/")
+
+            if UserProfile.SECTION_PRODUCTS in profile.allowed_sections:
+                return redirect(f"/c/{country.slug}/products/")
+
+            if UserProfile.SECTION_PREPARATIONS in profile.allowed_sections:
+                return redirect(f"/c/{country.slug}/preparations/")
+
+            if UserProfile.SECTION_EMPLOYEES in profile.allowed_sections:
+                return redirect(f"/c/{country.slug}/employees/")
+
+            if UserProfile.SECTION_PACKAGING in profile.allowed_sections:
+                return redirect(f"/c/{country.slug}/packaging/")
+
+            if UserProfile.SECTION_UTILITIES in profile.allowed_sections:
+                return redirect(f"/c/{country.slug}/utilities/")
+
         return access_error
 
     if request.method == "POST":
