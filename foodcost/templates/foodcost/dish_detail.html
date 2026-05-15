@@ -203,6 +203,24 @@
         white-space: nowrap;
         font-size: 14px;
     }
+	
+    .main-save-bottom {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 18px;
+        padding-top: 18px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .main-save-bottom button {
+        min-width: 180px;
+    }
+
+    @media (max-width: 1000px) {
+        .main-save-bottom button {
+            width: 100%;
+        }
+    }
 
     .danger {
         background: white;
@@ -694,12 +712,18 @@
         </div>
         {% endif %}
 
-        <div style="margin-top:16px;">
-            <label>Общая техкарта / заметки</label>
-            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача..." {% if not can_edit %}readonly{% endif %}>{{ dish.tech_card }}</textarea>
-        </div>
-    </form>
-</div>
+		        <div style="margin-top:16px;">
+		            <label>Общая техкарта / заметки</label>
+		            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача..." {% if not can_edit %}readonly{% endif %}>{{ dish.tech_card }}</textarea>
+		        </div>
+
+		        {% if can_edit %}
+		            <div class="main-save-bottom">
+		                <button type="submit">Сохранить изменения</button>
+		            </div>
+		        {% endif %}
+		    </form>
+		</div>
 
 <div class="card">
     <h2>Разбор себестоимости</h2>
