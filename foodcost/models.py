@@ -413,6 +413,7 @@ class UserProfile(models.Model):
     SECTION_SHIFT_HANDOVER = "shift_handover"
     SECTION_ORDERS = "orders"
     SECTION_SETTINGS = "settings"
+    SECTION_CUSTOMERS = "customers"
 
     SECTION_CHOICES = [
         (SECTION_DISHES, "Блюда"),
@@ -427,6 +428,7 @@ class UserProfile(models.Model):
         (SECTION_SHIFT_HANDOVER, "Передача смены"),
         (SECTION_ORDERS, "Заказы"),
         (SECTION_SETTINGS, "Настройки"),
+        (SECTION_CUSTOMERS, "Клиенты"),
     ]
 
     user = models.OneToOneField(
