@@ -147,6 +147,14 @@
         .item-row {
             grid-template-columns: 1fr;
         }
+		.settings-card > .add-form {
+		    margin-bottom: 18px;
+		}
+
+		.settings-card .item-row > .add-form {
+		    grid-template-columns: 1fr auto;
+		    width: 100%;
+		}
     }
 </style>
 
@@ -287,7 +295,70 @@
         </div>
 
     </div>
+<div class="settings-card" style="margin-top:18px;">
+
+    <div class="settings-title">Категории блюд</div>
+
+    <form method="post" class="add-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_category">
+
+        <input
+            name="name"
+            placeholder="Название категории"
+            required
+        >
+
+        <button type="submit">Добавить</button>
+    </form>
+
+    <div class="items-list">
+
+        {% for item in categories %}
+
+            <div class="item-row">
+
+                <form method="post" class="add-form" style="margin:0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_category">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <input
+                        name="name"
+                        value="{{ item.name }}"
+                        required
+                    >
+
+                    <button type="submit">Сохранить</button>
+                </form>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_category">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <button
+                        type="submit"
+                        class="delete-btn"
+                        onclick="return confirm('Удалить категорию?')"
+                    >
+                        Удалить
+                    </button>
+                </form>
+
+            </div>
+
+        {% empty %}
+
+            <div class="empty">Пока нет категорий</div>
+
+        {% endfor %}
+
+    </div>
 
 </div>
+</div>
+
+
 
 {% endblock %}

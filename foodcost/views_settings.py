@@ -7,6 +7,7 @@ from .models import (
     OrderSource,
     DeliveryProvider,
     PromoCode,
+    DishCategory,
 )
 
 from .views import (
@@ -88,12 +89,40 @@ def settings_page(request, country_slug):
             )
             item.delete()
 
+        if action == "create_category":
+            name = request.POST.get("name", "").strip()
+
+            if name:
+                DishCategory.objects.create(
+                    country=country,
+                    name=name,
+                )
+
+        if action == "update_category":
+            item = get_object_or_404(
+                DishCategory,
+                id=request.POST.get("item_id"),
+                country=country,
+            )
+
+            item.name = request.POST.get("name", "").strip()
+            item.save()
+
+        if action == "delete_category":
+            item = get_object_or_404(
+                DishCategory,
+                id=request.POST.get("item_id"),
+                country=country,
+            )
+            item.delete()
+
         return redirect(f"/c/{country.slug}/settings/")
 
     payment_methods = PaymentMethod.objects.filter(country=country).order_by("name")
     order_sources = OrderSource.objects.filter(country=country).order_by("name")
     delivery_providers = DeliveryProvider.objects.filter(country=country).order_by("name")
     promo_codes = PromoCode.objects.filter(country=country).order_by("code")
+    categories = DishCategory.objects.filter(country=country).order_by("name")
 
     return render(request, "foodcost/settings.html", {
         "country": country,
@@ -101,4 +130,5 @@ def settings_page(request, country_slug):
         "order_sources": order_sources,
         "delivery_providers": delivery_providers,
         "promo_codes": promo_codes,
+        "categories": categories,
     })
