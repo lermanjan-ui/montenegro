@@ -19,6 +19,14 @@ from .models import (
     DishLaborItem,
     DishAdditionalExpense,
     UserProfile,
+    Customer,
+    CustomerAddress,
+    OrderSource,
+    DeliveryProvider,
+    PromoCode,
+    Order,
+    OrderItem,
+    PaymentMethod,
 )
 
 
@@ -184,3 +192,31 @@ class DishLaborItemAdmin(admin.ModelAdmin):
 class DishAdditionalExpenseAdmin(admin.ModelAdmin):
     list_display = ("dish", "comment", "cost")
     list_filter = ("dish__country",)
+
+@admin.register(PaymentMethod)
+class PaymentMethodAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "name",
+        "country",
+        "is_cash",
+        "is_active",
+    )
+
+    list_filter = (
+        "country",
+        "is_cash",
+        "is_active",
+    )
+
+    search_fields = (
+        "name",
+    )    
+    
+admin.site.register(Customer)
+admin.site.register(CustomerAddress)
+admin.site.register(OrderSource)
+admin.site.register(DeliveryProvider)
+admin.site.register(PromoCode)
+admin.site.register(Order)
+admin.site.register(OrderItem)

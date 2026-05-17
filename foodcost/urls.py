@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from . import order_views
+from . import views_settings
 from . import writeoff_views
 from . import shift_views
 
@@ -64,6 +66,44 @@ urlpatterns = [
         shift_views.shift_handover_admin,
         name="shift_handover_admin"
     ),
+    
+    path(
+        "c/<slug:country_slug>/orders/",
+        order_views.order_list,
+        name="order_list"
+    ),
+    
+    path(
+        "c/<slug:country_slug>/orders/create/",
+        order_views.order_create,
+        name="order_create"
+    ),
+    
+    path(
+        "c/<slug:country_slug>/orders/<int:order_id>/",
+        order_views.order_detail,
+        name="order_detail"
+    ),
+    
+    path(
+        "c/<slug:country_slug>/orders/customer-lookup/",
+        order_views.customer_lookup,
+        name="customer_lookup"
+    ),
+    
+    path(
+        "c/<slug:country_slug>/customers/<int:customer_id>/",
+        order_views.customer_detail,
+        name="customer_detail"
+    ),
+    
+    path(
+        "c/<slug:country_slug>/settings/",
+        views_settings.settings_page,
+        name="settings_page"
+    ),
+    
+    
 
     # 👇 НОВОЕ — пользователи и доступы (ТОЛЬКО ДЛЯ ГЛАВНОГО АДМИНА)
     path("c/<slug:country_slug>/users/", views.user_access_list, name="user_access_list"),

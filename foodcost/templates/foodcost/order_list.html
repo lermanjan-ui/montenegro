@@ -1,0 +1,662 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Заказы{% endblock %}
+
+{% block content %}
+
+<style>
+.page{
+    max-width:1450px;
+    margin:0 auto;
+}
+
+/* HEADER */
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+}
+
+h1{
+    margin:0;
+    font-size:34px;
+    line-height:1;
+    color:#111827;
+}
+
+.create-btn{
+    background:#111827;
+    color:white;
+    text-decoration:none;
+    border-radius:12px;
+    padding:12px 16px;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* STATS */
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.stat-card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+    padding:16px;
+    min-height:118px;
+
+    display:grid;
+    grid-template-columns:48px 1fr auto;
+    grid-template-rows:24px 40px 18px;
+    column-gap:14px;
+    align-items:center;
+}
+
+.stat-icon{
+    grid-row:1 / 4;
+    width:46px;
+    height:46px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.stat-icon svg{
+    width:23px;
+    height:23px;
+    stroke-width:2.4;
+}
+
+.stat-main{
+    display:contents;
+}
+
+.stat-label{
+    grid-column:2;
+    grid-row:1;
+    color:#6b7280;
+    font-size:14px;
+    font-weight:900;
+    line-height:1;
+    white-space:nowrap;
+}
+
+.stat-value{
+    grid-column:2;
+    grid-row:2;
+    font-size:34px;
+    font-weight:950;
+    color:#111827;
+    line-height:1;
+    letter-spacing:-0.03em;
+}
+
+.stat-sub{
+    grid-column:2;
+    grid-row:3;
+    color:#6b7280;
+    font-size:13px;
+    font-weight:800;
+    line-height:1;
+    white-space:nowrap;
+}
+
+.stat-trend{
+    grid-column:3;
+    grid-row:1;
+    align-self:start;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:950;
+    white-space:nowrap;
+}
+
+.stat-blue .stat-icon{background:#eff6ff;color:#2563eb;}
+.stat-green .stat-icon{background:#ecfdf5;color:#16a34a;}
+.stat-purple .stat-icon{background:#f5f3ff;color:#7c3aed;}
+.stat-orange .stat-icon{background:#fff7ed;color:#ea580c;}
+
+.stat-blue .stat-trend{background:#eff6ff;color:#2563eb;}
+.stat-green .stat-trend{background:#ecfdf5;color:#16a34a;}
+.stat-purple .stat-trend{background:#f5f3ff;color:#7c3aed;}
+.stat-orange .stat-trend{background:#fff7ed;color:#ea580c;}
+
+/* LAYOUT */
+.orders-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 300px;
+    gap:16px;
+    align-items:start;
+}
+
+.main-column{
+    min-width:0;
+}
+
+.sidebar-column{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.card,
+.summary-card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+}
+
+.orders-card{
+    padding:0;
+    overflow:hidden;
+}
+
+.orders-header{
+    padding:18px;
+    border-bottom:1px solid #eef2f7;
+}
+
+.orders-title{
+    font-size:24px;
+    font-weight:950;
+    color:#111827;
+}
+
+.orders-table{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    padding:14px;
+}
+
+.order-row{
+    display:grid;
+    grid-template-columns:64px minmax(160px,1fr) 115px 115px 68px 96px;
+    gap:10px;
+    align-items:center;
+    border:1px solid #eef2f7;
+    border-radius:16px;
+    padding:12px;
+    background:white;
+}
+
+.order-id{
+    font-size:22px;
+    font-weight:950;
+    color:#111827;
+}
+
+.client-name{
+    font-size:17px;
+    font-weight:950;
+    color:#111827;
+    margin-bottom:4px;
+}
+
+.client-phone{
+    color:#6b7280;
+    font-size:13px;
+    font-weight:700;
+}
+
+.payment-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#ecfdf5;
+    color:#047857;
+    border-radius:999px;
+    padding:6px 10px;
+    font-size:12px;
+    font-weight:900;
+    width:max-content;
+}
+
+.order-sum{
+    font-size:19px;
+    font-weight:950;
+    color:#111827;
+}
+
+.order-time{
+    color:#6b7280;
+    font-size:14px;
+    font-weight:800;
+}
+
+/* SIDEBAR */
+.summary-card{
+    padding:18px;
+}
+
+.summary-title{
+    font-size:20px;
+    font-weight:950;
+    color:#111827;
+    margin-bottom:16px;
+}
+
+.summary-block{
+    padding-bottom:14px;
+    margin-bottom:14px;
+    border-bottom:1px solid #f3f4f6;
+}
+
+.summary-block:last-child{
+    border-bottom:0;
+    margin-bottom:0;
+    padding-bottom:0;
+}
+
+.summary-label{
+    color:#6b7280;
+    font-size:13px;
+    margin-bottom:6px;
+}
+
+.summary-value{
+    font-size:26px;
+    font-weight:950;
+    color:#111827;
+}
+
+.cash-box{
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+}
+
+.cash-box .summary-value{
+    color:#c2410c;
+}
+
+.empty{
+    padding:60px 20px;
+    text-align:center;
+    color:#6b7280;
+    font-size:14px;
+}
+
+/* TABLET */
+@media (max-width:1200px){
+    .orders-layout{
+        grid-template-columns:1fr;
+    }
+
+    .sidebar-column{
+        order:-1;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+    }
+
+    .order-row{
+        grid-template-columns:64px minmax(180px,1fr) 120px 120px;
+        grid-template-areas:
+            "id client pay sum"
+            "id client time open";
+    }
+
+    .order-row > div:nth-child(1){ grid-area:id; }
+    .order-row > div:nth-child(2){ grid-area:client; }
+    .order-row > div:nth-child(3){ grid-area:pay; }
+    .order-row > div:nth-child(4){ grid-area:sum; }
+    .order-row > div:nth-child(5){ grid-area:time; }
+    .order-row > div:nth-child(6){ grid-area:open; }
+}
+
+/* MOBILE */
+@media (max-width:900px){
+    .page{
+        padding:0 10px;
+    }
+
+    .topbar{
+        flex-direction:column;
+        align-items:stretch;
+        gap:12px;
+    }
+
+    h1{
+        font-size:30px;
+    }
+
+    .create-btn{
+        width:100%;
+        box-sizing:border-box;
+    }
+
+    .stats-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .stat-card{
+        min-height:96px;
+        padding:12px;
+        grid-template-columns:38px 1fr;
+        grid-template-rows:20px 32px 16px;
+        column-gap:10px;
+    }
+
+    .stat-icon{
+        width:36px;
+        height:36px;
+        border-radius:12px;
+    }
+
+    .stat-icon svg{
+        width:19px;
+        height:19px;
+    }
+
+    .stat-label{
+        font-size:12px;
+    }
+
+    .stat-value{
+        font-size:24px;
+    }
+
+    .stat-sub{
+        font-size:11px;
+    }
+
+    .stat-trend{
+        display:none;
+    }
+
+    .sidebar-column{
+        order:0;
+        display:flex;
+        flex-direction:column;
+    }
+
+    .order-row{
+        grid-template-columns:1fr auto;
+        grid-template-areas:
+            "id time"
+            "client client"
+            "pay sum"
+            "open open";
+        gap:10px 12px;
+    }
+
+    .order-row > div:nth-child(1){ grid-area:id; }
+    .order-row > div:nth-child(2){ grid-area:client; }
+    .order-row > div:nth-child(3){ grid-area:pay; }
+    .order-row > div:nth-child(4){ grid-area:sum; }
+    .order-row > div:nth-child(5){ grid-area:time; }
+    .order-row > div:nth-child(6){ grid-area:open; }
+
+    .order-row .create-btn{
+        width:100%;
+        padding:10px 12px;
+        font-size:14px;
+        border-radius:10px;
+    }
+}
+</style>
+
+<div class="page">
+
+    <div class="topbar">
+
+        <div>
+            <h1>Заказы</h1>
+        </div>
+
+        <a
+            href="/c/{{ country.slug }}/orders/create/"
+            class="create-btn"
+        >
+            Новый заказ
+        </a>
+
+    </div>
+
+  <div class="stats-grid">
+
+      <div class="stat-card stat-blue">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M6 8h12l-1 12H7L6 8Z"/>
+                  <path d="M9 8a3 3 0 0 1 6 0"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Заказов</div>
+              <div class="stat-value">{{ total_orders }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↑ 0%</div>
+      </div>
+
+      <div class="stat-card stat-green">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M4 19V5"/>
+                  <path d="M4 19h16"/>
+                  <path d="M7 15l4-4 3 3 5-7"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Выручка</div>
+              <div class="stat-value">{{ total_revenue|floatformat:0 }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↑ +12%</div>
+      </div>
+
+      <div class="stat-card stat-purple">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M3 7h11v10H3V7Z"/>
+                  <path d="M14 11h4l3 3v3h-7v-6Z"/>
+                  <circle cx="7" cy="18" r="1.5"/>
+                  <circle cx="18" cy="18" r="1.5"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Доставка</div>
+              <div class="stat-value">{{ total_delivery|floatformat:0 }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↑ +5%</div>
+      </div>
+
+      <div class="stat-card stat-orange">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M4 7h16v12H4V7Z"/>
+                  <path d="M16 12h4v4h-4a2 2 0 0 1 0-4Z"/>
+                  <path d="M6 7V5h12v2"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Наличные</div>
+              <div class="stat-value">{{ total_cash|floatformat:0 }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↓ -3%</div>
+      </div>
+
+  </div>
+
+    <div class="orders-layout">
+
+        <div class="main-column">
+
+            <div class="card orders-card">
+
+                <div class="orders-header">
+
+                    <div class="orders-title">
+                        Список заказов
+                    </div>
+
+                </div>
+
+                {% if orders %}
+
+                    <div class="orders-table">
+
+                        {% for order in orders %}
+
+                        <div class="order-row">
+
+                            <div>
+                                <div class="order-id">
+                                    #{{ order.id }}
+                                </div>
+                            </div>
+
+                            <div>
+
+                                <div class="client-name">
+                                    {{ order.customer_name }}
+                                </div>
+
+                                <div class="client-phone">
+                                    {{ order.customer_phone }}
+                                </div>
+
+                            </div>
+
+                            <div>
+
+								<div class="payment-badge">
+								    {% if order.payment_method %}
+								        {{ order.payment_method.name }}
+								    {% else %}
+								        —
+								    {% endif %}
+								</div>
+
+                            </div>
+
+                            <div>
+
+                                <div class="order-sum">
+                                    {{ order.total_amount|floatformat:0 }}
+                                </div>
+
+                            </div>
+
+                            <div>
+
+								<div class="order-time">
+								    {% if order.location %}
+								        {{ order.location.name }}
+								    {% else %}
+								        —
+								    {% endif %}
+								</div>
+
+                            </div>
+
+                            <div>
+
+                                <a
+                                    href="/c/{{ country.slug }}/orders/{{ order.id }}/"
+                                    class="create-btn"
+                                    style="
+                                        padding:10px 14px;
+                                        font-size:14px;
+                                    "
+                                >
+                                    Открыть
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty">
+                        Заказов пока нет
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="sidebar-column">
+
+            <div class="summary-card">
+
+				<div class="summary-title">
+				    По филиалам
+				</div>
+
+				{% for item in locations_summary %}
+
+				    <div class="summary-block">
+
+				        <div class="summary-label">
+				            {{ item.name }}
+				        </div>
+
+				        <div class="summary-value">
+				            {{ item.revenue|floatformat:0 }}
+				        </div>
+
+				        <div class="summary-label">
+				            Заказов: {{ item.orders_count }}
+				        </div>
+
+				    </div>
+
+				{% empty %}
+
+				    <div class="summary-label">
+				        Филиалов пока нет
+				    </div>
+
+				{% endfor %}
+
+            </div>
+
+            <div class="summary-card cash-box">
+
+                <div class="summary-title">
+                    Наличные в кассе
+                </div>
+
+				<div class="summary-value">
+				    {{ total_cash|floatformat:0 }}
+				</div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

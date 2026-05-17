@@ -1,0 +1,562 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Новый заказ{% endblock %}
+
+{% block content %}
+
+<style>
+
+.page{
+    max-width:1600px;
+    margin:0 auto;
+}
+
+.topbar{
+    margin-bottom:24px;
+}
+
+h1{
+    margin:0;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-0.03em;
+    color:#111827;
+}
+
+.muted{
+    color:#6b7280;
+    margin-top:8px;
+    font-size:15px;
+}
+
+.layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 360px;
+    gap:20px;
+    align-items:start;
+}
+
+.card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+    margin-bottom:18px;
+}
+
+.section-title{
+    font-size:26px;
+    font-weight:950;
+    color:#111827;
+    margin-bottom:20px;
+    letter-spacing:-0.02em;
+}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+
+.grid-3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:16px;
+}
+
+label{
+    display:block;
+    margin-bottom:8px;
+    font-size:13px;
+    font-weight:900;
+    color:#111827;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:14px 16px;
+    border:1px solid #d1d5db;
+    border-radius:14px;
+    box-sizing:border-box;
+    font-size:15px;
+    background:white;
+    transition:0.15s;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+    outline:none;
+    border-color:#111827;
+    box-shadow:0 0 0 4px rgba(17,24,39,0.06);
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical;
+}
+
+.summary-card-sticky{
+    position:sticky;
+    top:20px;
+}
+
+.summary-box{
+    display:grid;
+    gap:18px;
+}
+
+.summary-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-bottom:16px;
+    border-bottom:1px solid #eef2f7;
+}
+
+.summary-row:last-child{
+    border-bottom:0;
+}
+
+.summary-label{
+    color:#6b7280;
+    font-weight:700;
+    font-size:15px;
+}
+
+.summary-value{
+    font-size:28px;
+    font-weight:950;
+    color:#111827;
+}
+
+.summary-total{
+    color:#047857;
+}
+
+.save-btn{
+    width:100%;
+    background:#111827;
+    color:white;
+    border:0;
+    border-radius:16px;
+    padding:18px;
+    font-size:17px;
+    font-weight:950;
+    cursor:pointer;
+    margin-top:20px;
+    transition:0.15s;
+}
+
+.save-btn:hover{
+    transform:translateY(-1px);
+}
+
+.add-dish-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 140px 160px;
+    gap:14px;
+    align-items:end;
+    margin-bottom:20px;
+}
+
+#add-item-btn{
+    height:52px;
+    border:0;
+    border-radius:14px;
+    background:#111827;
+    color:white;
+    font-weight:950;
+    cursor:pointer;
+    font-size:15px;
+}
+
+.order-items-table{
+    border:1px solid #eef2f7;
+    border-radius:18px;
+    overflow:hidden;
+}
+
+.order-items-head{
+    display:grid;
+    grid-template-columns:1.5fr 140px 120px 140px 70px;
+    gap:14px;
+    padding:16px 18px;
+    background:#f9fafb;
+    font-size:13px;
+    font-weight:950;
+    color:#111827;
+}
+
+.order-items-row{
+    display:grid;
+    grid-template-columns:1.5fr 140px 120px 140px 70px;
+    gap:14px;
+    align-items:center;
+    padding:16px 18px;
+    border-top:1px solid #f3f4f6;
+}
+
+.item-name{
+    font-weight:900;
+    color:#111827;
+}
+
+.item-price{
+    font-weight:800;
+    color:#111827;
+}
+
+.quantity-input{
+    text-align:center;
+}
+
+.item-total{
+    font-weight:950;
+    color:#047857;
+    text-align:center;
+}
+
+.remove-item-btn{
+    width:44px;
+    height:44px;
+    border:1px solid #fecaca;
+    background:#fee2e2;
+    color:#991b1b;
+    border-radius:12px;
+    font-weight:950;
+    cursor:pointer;
+    font-size:20px;
+}
+
+#customer-info{
+    line-height:1.6;
+}
+
+.dish-search-wrap {
+    position: relative;
+}
+
+.dish-search-results {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 16px 35px rgba(15,23,42,0.12);
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 50;
+}
+
+.dish-search-result {
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: 800;
+    color: #111827;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.dish-search-result:hover {
+    background: #f9fafb;
+}
+
+.dish-search-price {
+    display: block;
+    margin-top: 3px;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+@media (max-width:1200px){
+
+    .layout{
+        grid-template-columns:1fr;
+    }
+
+    .summary-card-sticky{
+        position:relative;
+        top:0;
+    }
+
+}
+
+@media (max-width:900px){
+
+    .grid-2,
+    .grid-3,
+    .add-dish-row{
+        grid-template-columns:1fr;
+    }
+
+    .order-items-head{
+        display:none;
+    }
+
+    .order-items-row{
+        grid-template-columns:1fr;
+        gap:12px;
+    }
+
+    h1{
+        font-size:34px;
+    }
+
+}
+
+</style>
+<div class="page">
+
+    <div class="topbar">
+
+        <h1>Новый заказ</h1>
+
+        <div class="muted">
+            Создание заказа кассиром
+        </div>
+
+    </div>
+
+   <form method="post">
+
+       {% csrf_token %}
+
+       {% include "foodcost/includes/order_form.html" %}
+
+   </form>
+</div>
+
+<script>
+function updateOrderTotals() {
+    let subtotal = 0;
+
+    document.querySelectorAll(".order-item").forEach(row => {
+        const price = parseFloat(row.querySelector(".dish-price").value) || 0;
+        const quantity = parseFloat(row.querySelector(".quantity-input").value) || 0;
+        const total = price * quantity;
+
+        row.querySelector(".item-total").value = total.toFixed(0);
+        subtotal += total;
+    });
+
+    const deliveryInput = document.querySelector('input[name="delivery_amount"]');
+    const delivery = parseFloat(deliveryInput ? deliveryInput.value : 0) || 0;
+
+    const promoSelect = document.getElementById("promo-code-select");
+    let discountPercent = 0;
+
+    if (promoSelect && promoSelect.selectedOptions.length) {
+        discountPercent = parseFloat(promoSelect.selectedOptions[0].dataset.percent) || 0;
+    }
+
+    const discount = subtotal * discountPercent / 100;
+    const total = subtotal - discount;
+
+    document.getElementById("summary-subtotal").innerText = subtotal.toFixed(0);
+    document.getElementById("summary-discount").innerText = discount.toFixed(0);
+    document.getElementById("summary-total").innerText = total.toFixed(0);
+    document.getElementById("summary-delivery").innerText = delivery.toFixed(0);
+}
+
+function setupDishSearch() {
+    const input = document.getElementById("add-dish-search");
+    const results = document.getElementById("dish-search-results");
+    const hiddenId = document.getElementById("add-dish-id");
+    const hiddenPrice = document.getElementById("add-dish-price");
+
+    if (!input || !results) return;
+
+    function selectDish(item) {
+        input.value = item.dataset.name;
+        hiddenId.value = item.dataset.id;
+        hiddenPrice.value = item.dataset.price;
+
+        results.querySelectorAll(".dish-search-result").forEach(row => {
+            row.classList.remove("selected");
+        });
+
+        item.classList.add("selected");
+		results.style.display = "none";
+    }
+
+    function filterDishes() {
+		const query = input.value.trim().toLowerCase();
+
+		if (!query) {
+		    results.style.display = "none";
+		    return;
+		}
+
+		results.style.display = "block";
+
+		results.querySelectorAll(".dish-search-result").forEach(item => {
+            const name = item.dataset.name.toLowerCase();
+
+            item.style.display = name.includes(query) ? "block" : "none";
+        });
+
+        hiddenId.value = "";
+        hiddenPrice.value = "";
+    }
+
+
+    input.addEventListener("input", filterDishes);
+
+    results.querySelectorAll(".dish-search-result").forEach(item => {
+        item.addEventListener("click", function () {
+            selectDish(item);
+        });
+    });
+}
+document.getElementById("add-item-btn").addEventListener("click", function () {
+    const searchInput = document.getElementById("add-dish-search");
+    const dishIdInput = document.getElementById("add-dish-id");
+    const dishPriceInput = document.getElementById("add-dish-price");
+    const quantityInput = document.getElementById("add-dish-quantity");
+
+    const dishId = dishIdInput.value;
+    const dishName = searchInput.value;
+    const price = parseFloat(dishPriceInput.value) || 0;
+    const quantity = parseFloat(quantityInput.value) || 1;
+
+    if (!dishId || !dishName || !price) {
+        alert("Выберите блюдо из списка");
+        return;
+    }
+
+    const total = price * quantity;
+
+    const row = document.createElement("div");
+    row.className = "order-item order-items-row";
+
+    row.innerHTML = `
+        <input type="hidden" name="dish_id" value="${dishId}" class="dish-hidden">
+        <input type="hidden" class="dish-price" value="${price}">
+
+        <div class="item-name">${dishName}</div>
+        <div class="item-price">${price.toFixed(0)}</div>
+
+        <input type="number" name="quantity" class="quantity-input" value="${quantity}" min="1" step="1">
+
+        <input type="text" class="item-total" value="${total.toFixed(0)}" readonly>
+
+        <button type="button" class="remove-item-btn">×</button>
+    `;
+
+    document.getElementById("order-items").appendChild(row);
+
+    searchInput.value = "";
+    dishIdInput.value = "";
+    dishPriceInput.value = "";
+    quantityInput.value = 1;
+
+    updateOrderTotals();
+});
+
+document.addEventListener("input", function (e) {
+    if (e.target.classList.contains("quantity-input")) {
+        updateOrderTotals();
+    }
+
+    if (e.target.name === "delivery_amount") {
+        updateOrderTotals();
+    }
+});
+
+document.addEventListener("change", function (e) {
+    if (e.target.id === "promo-code-select") {
+        updateOrderTotals();
+    }
+});
+
+document.addEventListener("click", function (e) {
+    if (!e.target.classList.contains("remove-item-btn")) return;
+
+    e.target.closest(".order-item").remove();
+    updateOrderTotals();
+});
+
+function setupCustomerLookup() {
+    const phoneInput = document.getElementById("customer-phone");
+    const infoBox = document.getElementById("customer-info");
+
+    if (!phoneInput || !infoBox) return;
+
+    phoneInput.addEventListener("blur", async function () {
+        const phone = phoneInput.value.trim();
+
+        if (!phone) return;
+
+        const response = await fetch(
+            `/c/{{ country.slug }}/orders/customer-lookup/?phone=${encodeURIComponent(phone)}`
+        );
+
+        const data = await response.json();
+
+        infoBox.style.display = "block";
+
+        if (!data.found) {
+            infoBox.innerHTML = "Новый клиент";
+            return;
+        }
+
+        document.querySelector('input[name="customer_name"]').value = data.name || "";
+        document.querySelector('input[name="customer_telegram"]').value = data.telegram || "";
+
+        if (data.addresses && data.addresses.length > 0) {
+            document.querySelector('textarea[name="delivery_address"]').value =
+                data.addresses[0].address || "";
+        }
+
+		infoBox.innerHTML = `
+		    Клиент найден
+		`;
+
+		const historyCard = document.getElementById(
+		    "customer-history-card"
+		);
+
+		if (historyCard) {
+
+		    historyCard.style.display = "block";
+
+		    document.getElementById(
+		        "customer-orders-count"
+		    ).value = data.orders_count || 0;
+
+		    document.getElementById(
+		        "customer-last-order"
+		    ).value = data.last_order_date || "—";
+
+		    document.getElementById(
+		        "customer-comment"
+		    ).value = data.comment || "";
+		}
+		
+		const openLink = document.getElementById(
+		    "open-customer-link"
+		);
+
+		if (openLink && data.customer_id) {
+
+		    openLink.href =
+		        `/c/{{ country.slug }}/customers/${data.customer_id}/`;
+
+		}
+    });
+	
+}
+
+setupCustomerLookup();
+setupDishSearch();
+updateOrderTotals();
+</script>
+
+{% endblock %}

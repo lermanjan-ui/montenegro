@@ -38,4 +38,6 @@ def menu_context(request):
         "can_menu_writeoffs": user_has_section(request.user, UserProfile.SECTION_WRITE_OFFS),
         "can_menu_writeoff_analytics": user_has_section(request.user, UserProfile.SECTION_WRITE_OFF_ANALYTICS),
         "can_menu_shift_handover": user_has_section(request.user, UserProfile.SECTION_SHIFT_HANDOVER),
+        "can_menu_orders": user_has_section(request.user, UserProfile.SECTION_ORDERS),
+        "can_menu_settings": user_has_section(request.user, UserProfile.SECTION_SETTINGS),
     }

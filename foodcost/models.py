@@ -411,6 +411,8 @@ class UserProfile(models.Model):
     SECTION_WRITE_OFFS = "writeoffs"
     SECTION_WRITE_OFF_ANALYTICS = "writeoff_analytics"
     SECTION_SHIFT_HANDOVER = "shift_handover"
+    SECTION_ORDERS = "orders"
+    SECTION_SETTINGS = "settings"
 
     SECTION_CHOICES = [
         (SECTION_DISHES, "Блюда"),
@@ -423,6 +425,8 @@ class UserProfile(models.Model):
         (SECTION_WRITE_OFFS, "Списания"),
         (SECTION_WRITE_OFF_ANALYTICS, "Аналитика списаний"),
         (SECTION_SHIFT_HANDOVER, "Передача смены"),
+        (SECTION_ORDERS, "Заказы"),
+        (SECTION_SETTINGS, "Настройки"),
     ]
 
     user = models.OneToOneField(
@@ -705,3 +709,383 @@ class ShiftStopItem(models.Model):
         max_length=255,
         blank=True
     )    
+    
+    
+class Customer(models.Model):
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="customers"
+    )
+
+    phone = models.CharField(
+        max_length=30,
+        db_index=True
+    )
+
+    telegram = models.CharField(
+        max_length=120,
+        blank=True
+    )
+
+    name = models.CharField(
+        max_length=255
+    )
+
+    comment = models.TextField(
+        blank=True
+    )
+
+    is_problematic = models.BooleanField(
+        default=False
+    )
+
+    is_regular = models.BooleanField(
+        default=False
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
+
+class CustomerAddress(models.Model):
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="addresses"
+    )
+
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    address = models.TextField()
+
+    comment = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    is_default = models.BooleanField(
+        default=False
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.address
+
+
+class OrderSource(models.Model):
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="order_sources"
+    )
+
+    name = models.CharField(
+        max_length=120
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class DeliveryProvider(models.Model):
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="delivery_providers"
+    )
+
+    name = models.CharField(
+        max_length=120
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class PromoCode(models.Model):
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="promo_codes"
+    )
+
+    code = models.CharField(
+        max_length=50,
+        unique=True
+    )
+
+    percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.code
+
+
+class PaymentMethod(models.Model):
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="payment_methods"
+    )
+
+    name = models.CharField(
+        max_length=120
+    )
+
+    is_cash = models.BooleanField(
+        default=False
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Order(models.Model):
+
+    STATUS_NEW = "new"
+    STATUS_COOKING = "cooking"
+    STATUS_DELIVERY = "delivery"
+    STATUS_DONE = "done"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_NEW, "Новый"),
+        (STATUS_COOKING, "Готовится"),
+        (STATUS_DELIVERY, "Доставка"),
+        (STATUS_DONE, "Завершен"),
+        (STATUS_CANCELLED, "Отменен"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="orders"
+    )
+
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders"
+    )
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders"
+    )
+
+    customer_address = models.ForeignKey(
+        CustomerAddress,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    source = models.ForeignKey(
+        OrderSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    delivery_provider = models.ForeignKey(
+        DeliveryProvider,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    
+    payment_method = models.ForeignKey(
+        PaymentMethod,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    
+
+    promo_code = models.ForeignKey(
+        PromoCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_orders"
+    )
+
+    order_date = models.DateTimeField()
+
+    customer_name = models.CharField(
+        max_length=255
+    )
+
+    customer_phone = models.CharField(
+        max_length=30
+    )
+
+    customer_telegram = models.CharField(
+        max_length=120,
+        blank=True
+    )
+
+    delivery_address = models.TextField()
+
+    address_comment = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    customer_comment = models.TextField(
+        blank=True
+    )
+
+    cashier_comment = models.TextField(
+        blank=True
+    )
+
+    subtotal_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    discount_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    delivery_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    total_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default=STATUS_NEW
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+        return f"Заказ #{self.id}"
+
+
+class OrderItem(models.Model):
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="items"
+    )
+
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=1
+    )
+
+    price_snapshot = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    cost_snapshot = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    total_price = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        if self.dish:
+            return self.dish.name
+
+        return f"Позиция #{self.id}"
+        
+   
