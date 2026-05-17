@@ -259,15 +259,17 @@ class Dish(models.Model):
         return self.selling_price - self.calculate_cost()
         
     def recalculate_cache(self):
-        ingredient_cost = self.ingredient_cost()
-        total_cost = self.calculate_cost()
+        ingredient_cost = Decimal(self.ingredient_cost())
+        total_cost = Decimal(self.calculate_cost())
 
-        foodcost = 0
+        selling_price = Decimal(self.selling_price or 0)
 
-        if self.selling_price:
-            foodcost = (ingredient_cost / self.selling_price) * 100
+        foodcost = Decimal("0")
 
-        margin = self.selling_price - total_cost
+        if selling_price > 0:
+            foodcost = (ingredient_cost / selling_price) * 100
+
+        margin = selling_price - total_cost
 
         self.cached_ingredient_cost = ingredient_cost
         self.cached_total_cost = total_cost
@@ -282,7 +284,6 @@ class Dish(models.Model):
                 "cached_margin",
             ]
         )
-
 
 # 🔥 ШАГИ ТЕХКАРТЫ
 class DishTechStep(models.Model):
