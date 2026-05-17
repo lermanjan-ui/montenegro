@@ -373,17 +373,17 @@
                         </div>
                     </div>
 
-                    <div class="value">{{ dish.calculate_cost|floatformat:2 }}</div>
+                    <div class="value">{{ dish.cached_total_cost|floatformat:2 }}</div>
 
                     <div class="value good">{{ dish.selling_price|floatformat:2 }}</div>
 
                     <div>
-                        {% if dish.foodcost > 40 %}
-                            <span class="value danger-text">{{ dish.foodcost|floatformat:1 }}%</span>
-                        {% elif dish.foodcost > 30 %}
-                            <span class="value warning">{{ dish.foodcost|floatformat:1 }}%</span>
+                        {% if dish.cached_foodcost > 40 %}
+                            <span class="value danger-text">{{ dish.cached_foodcost|floatformat:1 }}%</span>
+                        {% elif dish.cached_foodcost > 30 %}
+                            <span class="value warning">{{ dish.cached_foodcost|floatformat:1 }}%</span>
                         {% else %}
-                            <span class="value good">{{ dish.foodcost|floatformat:1 }}%</span>
+                            <span class="value good">{{ dish.cached_foodcost|floatformat:1 }}%</span>
                         {% endif %}
                     </div>
 

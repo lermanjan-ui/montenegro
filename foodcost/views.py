@@ -222,20 +222,23 @@ def dish_list(request, country_slug):
         ]
 
     if filter_type == "loss":
-        dishes = [dish for dish in dishes if dish.margin() < 0]
+        dishes = [dish for dish in dishes if dish.cached_margin < 0]
 
     if filter_type == "high_foodcost":
-        dishes = [dish for dish in dishes if dish.foodcost() > 40]
+        dishes = [dish for dish in dishes if dish.cached_foodcost > 40]
 
     if filter_type == "normal":
-        dishes = [dish for dish in dishes if dish.foodcost() <= 40 and dish.margin() >= 0]
+        dishes = [
+            dish for dish in dishes
+            if dish.cached_foodcost <= 40 and dish.cached_margin >= 0
+        ]
 
     if sort_type == "margin":
-        dishes.sort(key=lambda dish: dish.margin(), reverse=True)
+        dishes.sort(key=lambda dish: dish.cached_margin, reverse=True)
     elif sort_type == "foodcost":
-        dishes.sort(key=lambda dish: dish.foodcost(), reverse=True)
+        dishes.sort(key=lambda dish: dish.cached_foodcost, reverse=True)
     elif sort_type == "cost":
-        dishes.sort(key=lambda dish: dish.calculate_cost(), reverse=True)
+        dishes.sort(key=lambda dish: dish.cached_total_cost, reverse=True)
     else:
         dishes.sort(key=lambda dish: dish.name.lower())
 
@@ -544,12 +547,14 @@ def dish_detail(request, country_slug, dish_id):
             item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
+        dish.recalculate_cache()
+
         if is_ajax(request):
             return JsonResponse({
                 "ok": True,
-                "dish_cost": round(dish.calculate_cost(), 2),
-                "foodcost": round(dish.foodcost(), 2),
-                "margin": round(dish.margin(), 2),
+                "dish_cost": round(dish.cached_total_cost, 2),
+                "foodcost": round(dish.cached_foodcost, 2),
+                "margin": round(dish.cached_margin, 2),
             })
 
         return redirect(f"/c/{country.slug}/dish/{dish.id}/")

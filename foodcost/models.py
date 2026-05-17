@@ -177,6 +177,30 @@ class Dish(models.Model):
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     tech_card = models.TextField("Техкарта приготовления", blank=True, default="")
+    
+    cached_ingredient_cost = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    cached_total_cost = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    cached_foodcost = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0
+    )
+
+    cached_margin = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
 
     def __str__(self):
         return self.name
@@ -233,6 +257,31 @@ class Dish(models.Model):
 
     def margin(self):
         return self.selling_price - self.calculate_cost()
+        
+    def recalculate_cache(self):
+        ingredient_cost = self.ingredient_cost()
+        total_cost = self.calculate_cost()
+
+        foodcost = 0
+
+        if self.selling_price:
+            foodcost = (ingredient_cost / self.selling_price) * 100
+
+        margin = self.selling_price - total_cost
+
+        self.cached_ingredient_cost = ingredient_cost
+        self.cached_total_cost = total_cost
+        self.cached_foodcost = foodcost
+        self.cached_margin = margin
+
+        self.save(
+            update_fields=[
+                "cached_ingredient_cost",
+                "cached_total_cost",
+                "cached_foodcost",
+                "cached_margin",
+            ]
+        )
 
 
 # 🔥 ШАГИ ТЕХКАРТЫ
