@@ -49,10 +49,14 @@ def order_list(request, country_slug):
     if access_error:
         return access_error
 
+    today = timezone.localdate()
+
     orders = (
         Order.objects
-        .filter(country=country)
-        .select_related(
+        .filter(
+            country=country,
+            order_date__date=today
+        )
             "location",
             "payment_method",
             "source",
