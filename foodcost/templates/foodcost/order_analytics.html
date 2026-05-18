@@ -167,6 +167,127 @@ h1{
     font-size:20px;
 }
 
+.period-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 14px;
+    border-radius:999px;
+    background:#f3f4f6;
+    color:#111827;
+    text-decoration:none;
+    font-weight:900;
+    font-size:14px;
+}
+
+.period-btn.active{
+    background:#111827;
+    color:white;
+}
+
+.chart-card{
+    min-height:360px;
+}
+
+.revenue-chart{
+    position:relative;
+    height:320px;
+    margin-top:24px;
+    padding-bottom:30px;
+}
+
+.revenue-svg{
+    width:100%;
+    height:240px;
+    display:block;
+    overflow:visible;
+}
+
+.chart-tooltip{
+    display:none;
+    position:absolute;
+    transform:translate(-50%,-120%);
+    background:#111827;
+    color:white;
+    border-radius:14px;
+    padding:10px 12px;
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
+    z-index:10;
+    pointer-events:none;
+}
+
+.chart-points{
+    position:absolute;
+    inset:0;
+}
+
+.chart-point-wrap:hover .chart-tooltip{
+    display:block;
+}
+
+.chart-labels{
+    display:flex;
+    justify-content:space-between;
+    color:#6b7280;
+    font-size:12px;
+    font-weight:800;
+    margin-top:10px;
+}
+
+.hour-heatmap{
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    gap:10px;
+    margin-top:18px;
+}
+
+.hour-cell{
+    min-height:64px;
+    border-radius:16px;
+    background:#f3f4f6;
+    padding:10px;
+    font-weight:900;
+    color:#6b7280;
+}
+
+.hour-cell.active{
+    background:#dcfce7;
+    color:#047857;
+}
+
+.hour-cell.strong{
+    background:#047857;
+    color:white;
+}
+
+.hour-time{
+    font-size:12px;
+    margin-bottom:8px;
+}
+
+.hour-money{
+    font-size:15px;
+    color:inherit;
+}
+
+.peak-list{
+    margin-top:18px;
+    display:grid;
+    gap:10px;
+}
+
+.peak-row{
+    display:grid;
+    grid-template-columns:80px 1fr 140px;
+    gap:12px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:#f9fafb;
+    font-weight:900;
+}
+
 @media (max-width:1200px){
 
     .stats-grid{
@@ -193,291 +314,225 @@ h1{
 
     <div class="topbar">
         <h1>Аналитика</h1>
-
         <div class="muted">
-            Полная аналитика заказов за {{ today }}
+            Период: {{ date_from|date:"d.m.Y" }} — {{ date_to|date:"d.m.Y" }}
         </div>
     </div>
 
-    <div class="stats-grid">
+    <div class="card" style="margin-bottom:20px;">
+        <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
+            <a class="period-btn {% if period == 'today' %}active{% endif %}" href="?period=today">Сегодня</a>
+            <a class="period-btn {% if period == 'yesterday' %}active{% endif %}" href="?period=yesterday">Вчера</a>
+            <a class="period-btn {% if period == '7days' %}active{% endif %}" href="?period=7days">7 дней</a>
+            <a class="period-btn {% if period == '30days' %}active{% endif %}" href="?period=30days">30 дней</a>
+            <a class="period-btn {% if period == 'month' %}active{% endif %}" href="?period=month">Этот месяц</a>
 
+            <div>
+                <label>С даты</label>
+                <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
+            </div>
+
+            <div>
+                <label>По дату</label>
+                <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
+            </div>
+
+            <button type="submit">Применить</button>
+        </form>
+    </div>
+
+    <div class="stats-grid">
         <div class="card">
             <div class="stat-label">Выручка</div>
-            <div class="stat-value">
-                {{ total_revenue|floatformat:0|intcomma }}
-            </div>
-            <div class="stat-sub">
-                с доставкой
-            </div>
+            <div class="stat-value">{{ total_revenue|floatformat:0|intcomma }}</div>
+            <div class="stat-sub">без отмен</div>
         </div>
 
         <div class="card">
             <div class="stat-label">Прибыль</div>
-            <div class="stat-value green">
-                {{ profit|floatformat:0|intcomma }}
-            </div>
-            <div class="stat-sub">
-                чистая прибыль
-            </div>
+            <div class="stat-value green">{{ profit|floatformat:0|intcomma }}</div>
+            <div class="stat-sub">чистая прибыль</div>
         </div>
 
         <div class="card">
             <div class="stat-label">Средний чек</div>
-            <div class="stat-value">
-                {{ average_check|floatformat:0|intcomma }}
-            </div>
-            <div class="stat-sub">
-                по активным заказам
-            </div>
+            <div class="stat-value">{{ average_check|floatformat:0|intcomma }}</div>
+            <div class="stat-sub">по активным заказам</div>
         </div>
 
         <div class="card">
             <div class="stat-label">Отказы</div>
-            <div class="stat-value red">
-                {{ cancelled_orders_count }}
-            </div>
-            <div class="stat-sub">
-                {{ cancel_percent|floatformat:1 }}%
-            </div>
+            <div class="stat-value red">{{ cancelled_orders_count }}</div>
+            <div class="stat-sub">{{ cancel_percent|floatformat:1 }}%</div>
         </div>
-
     </div>
 
     <div class="analytics-grid">
 
         <div>
+            <div class="card chart-card">
+                <div class="section-title">Динамика выручки</div>
 
-            <div class="card">
+				<div class="revenue-chart">
 
-                <div class="section-title">
-                    Продажи по часам
-                </div>
+					<svg
+					    class="revenue-svg"
+					    viewBox="0 0 100 100"
+					    preserveAspectRatio="none"
+					    style="
+					        position:absolute;
+					        inset:0;
+					        overflow:visible;
+					    "
+					> viewBox="0 0 100 100" preserveAspectRatio="none">
 
-                {% for item in hourly_stats %}
+				        <polyline
+				            fill="none"
+				            stroke="#047857"
+							stroke-width="3"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+				            points="
+				                {% for item in daily_stats %}
+				                    {{ item.svg_x }},{{ item.svg_y }}
+				                {% endfor %}
+				            "
+				        />
 
-                    <div class="hour-row">
+				    </svg>
 
-                        <div class="hour-head">
-                            <div>{{ item.hour }}</div>
+				    <div class="chart-points">
+						
 
-                            <div>
-                                {{ item.revenue|floatformat:0|intcomma }}
-                            </div>
-                        </div>
+				        {% for item in daily_stats %}
 
-                        <div class="bar">
-                            <div
-                                class="bar-fill"
-                                style="width:{{ item.percent }}%;"
-                            ></div>
-                        </div>
+				            <div
+				                class="chart-point"
+				                style="
+				                    left:{{ item.svg_x }}%;
+				                    top:calc({{ item.svg_y }}% * 0.75);
+				                "
+				            >
+				                <div class="chart-tooltip">
+				                    {{ item.date|date:"d.m.Y" }}<br>
+				                    Выручка: {{ item.revenue|floatformat:0|intcomma }}<br>
+				                    Заказов: {{ item.orders }} · Отказов: {{ item.cancelled }}
+				                </div>
+				            </div>
 
-                    </div>
+				        {% endfor %}
 
-                {% endfor %}
+				    </div>
 
+				    <div class="chart-labels">
+				        {% for item in daily_stats %}
+				            <span>{{ item.date|date:"d.m" }}</span>
+				        {% endfor %}
+				    </div>
+
+				</div>
             </div>
 
             <div class="card">
+                <div class="section-title">Активность по часам</div>
 
-                <div class="section-title">
-                    Топ блюд
+                <div class="hour-heatmap">
+                    {% for item in hourly_stats %}
+                        <div class="hour-cell {% if item.revenue > 0 %}active{% endif %} {% if item.percent > 60 %}strong{% endif %}">
+                            <div class="hour-time">{{ item.hour }}</div>
+                            <div class="hour-money">{{ item.revenue|floatformat:0|intcomma }}</div>
+                        </div>
+                    {% endfor %}
                 </div>
+
+                <div class="peak-list">
+                    {% for item in hourly_stats %}
+                        {% if item.orders > 0 %}
+                            <div class="peak-row">
+                                <div>{{ item.hour }}</div>
+                                <div>{{ item.orders }} заказов</div>
+                                <div class="green">{{ item.revenue|floatformat:0|intcomma }}</div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Топ блюд</div>
 
                 <div class="table">
-
                     {% for item in top_dishes %}
-
                         <div class="row">
-
-                            <div class="name">
-                                {{ item.dish__name }}
-                            </div>
-
-                            <div class="value">
-                                {{ item.total_qty }}
-                            </div>
-
-                            <div class="value green">
-                                {{ item.total_sum|floatformat:0|intcomma }}
-                            </div>
-
+                            <div class="name">{{ item.dish__name }}</div>
+                            <div class="value">{{ item.total_qty }}</div>
+                            <div class="value green">{{ item.total_sum|floatformat:0|intcomma }}</div>
                         </div>
-
+                    {% empty %}
+                        <div class="muted">Нет данных</div>
                     {% endfor %}
-
                 </div>
-
             </div>
-
-            <div class="card">
-
-                <div class="section-title">
-                    Последние заказы
-                </div>
-
-                {% for order in latest_orders %}
-
-                    <div class="order-item">
-
-                        <div>
-
-                            <div class="order-client">
-                                {{ order.customer_name }}
-                            </div>
-
-                            <div class="order-phone">
-                                {{ order.customer_phone }}
-                            </div>
-
-                        </div>
-
-                        <div class="order-sum">
-                            {{ order.total_amount|floatformat:0|intcomma }}
-                        </div>
-
-                    </div>
-
-                {% endfor %}
-
-            </div>
-
         </div>
 
         <div>
-
             <div class="card">
-
-                <div class="section-title">
-                    По филиалам
-                </div>
+                <div class="section-title">По филиалам</div>
 
                 <div class="table">
-
                     {% for item in locations_summary %}
-
                         <div class="row">
-
-                            <div class="name">
-                                {{ item.name }}
-                            </div>
-
-                            <div class="value">
-                                {{ item.orders_count }}
-                            </div>
-
-                            <div class="value green">
-                                {{ item.revenue|floatformat:0|intcomma }}
-                            </div>
-
+                            <div class="name">{{ item.name }}</div>
+                            <div class="value">{{ item.orders_count }}</div>
+                            <div class="value green">{{ item.revenue|floatformat:0|intcomma }}</div>
                         </div>
-
                     {% endfor %}
-
                 </div>
-
             </div>
 
             <div class="card">
-
-                <div class="section-title">
-                    Оплаты
-                </div>
+                <div class="section-title">Оплаты</div>
 
                 <div class="table">
-
                     {% for item in payment_summary %}
-
                         <div class="row">
-
-                            <div class="name">
-                                {{ item.name }}
-                            </div>
-
-                            <div class="value">
-                                {{ item.orders_count }}
-                            </div>
-
-                            <div class="value green">
-                                {{ item.revenue|floatformat:0|intcomma }}
-                            </div>
-
+                            <div class="name">{{ item.name }}</div>
+                            <div class="value">{{ item.orders_count }}</div>
+                            <div class="value green">{{ item.revenue|floatformat:0|intcomma }}</div>
                         </div>
-
                     {% endfor %}
-
                 </div>
-
             </div>
 
             <div class="card">
-
-                <div class="section-title">
-                    Доставка
-                </div>
+                <div class="section-title">Доставка</div>
 
                 <div class="table">
-
                     {% for item in delivery_summary %}
-
                         <div class="row">
-
-                            <div class="name">
-                                {{ item.name }}
-                            </div>
-
-                            <div class="value">
-                                {{ item.orders_count }}
-                            </div>
-
-                            <div class="value green">
-                                {{ item.delivery_sum|floatformat:0|intcomma }}
-                            </div>
-
+                            <div class="name">{{ item.name }}</div>
+                            <div class="value">{{ item.orders_count }}</div>
+                            <div class="value green">{{ item.delivery_sum|floatformat:0|intcomma }}</div>
                         </div>
-
                     {% endfor %}
-
                 </div>
-
             </div>
 
             <div class="card">
-
-                <div class="section-title">
-                    Причины отказов
-                </div>
+                <div class="section-title">Причины отказов</div>
 
                 <div class="table">
-
                     {% for item in cancel_reasons_stats %}
-
                         <div class="row">
-
-                            <div class="name">
-                                {{ item.cancel_reason__name|default:"Без причины" }}
-                            </div>
-
-                            <div class="value">
-                                {{ item.total }}
-                            </div>
-
+                            <div class="name">{{ item.cancel_reason__name|default:"Без причины" }}</div>
+                            <div class="value">{{ item.total }}</div>
                             <div></div>
-
                         </div>
-
                     {% empty %}
-
-                        <div class="muted">
-                            Отказов сегодня нет
-                        </div>
-
+                        <div class="muted">Отказов за выбранный период нет</div>
                     {% endfor %}
-
                 </div>
-
             </div>
-
         </div>
 
     </div>

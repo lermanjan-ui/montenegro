@@ -953,13 +953,70 @@ def order_analytics(request, country_slug):
             percent = item["revenue"] / max_hour_revenue * 100
 
         item["percent"] = percent
+    
+    daily_stats = []
 
+    current_day = date_from
+    max_daily_revenue = Decimal("0")
+
+    while current_day <= date_to:
+
+        day_orders = active_orders.filter(
+            order_date__date=current_day
+        )
+
+        day_cancelled_orders = cancelled_orders.filter(
+            order_date__date=current_day
+        )
+
+        day_revenue = sum(
+            order.total_amount
+            for order in day_orders
+        )
+
+        if day_revenue > max_daily_revenue:
+            max_daily_revenue = day_revenue
+
+        daily_stats.append({
+            "date": current_day,
+            "orders": day_orders.count(),
+            "cancelled": day_cancelled_orders.count(),
+            "revenue": day_revenue,
+        })
+
+        current_day = current_day + timezone.timedelta(days=1)
+
+    daily_count = len(daily_stats)
+
+    for index, item in enumerate(daily_stats):
+        percent = Decimal("0")
+
+        if max_daily_revenue > 0:
+            percent = item["revenue"] / max_daily_revenue * 100
+
+        item["percent"] = percent
+
+        if daily_count == 1:
+            item["svg_x"] = 50
+        else:
+            item["svg_x"] = index / (daily_count - 1) * 100
+
+        item["svg_y"] = max(
+            8,
+            100 - float(percent)
+        )
+    
     return render(
         request,
         "foodcost/order_analytics.html",
         {
             "country": country,
             "today": today,
+            "period": period,
+
+            "date_from": date_from,
+
+            "date_to": date_to,
             "orders": orders,
             "latest_orders": latest_orders,
 
@@ -983,5 +1040,7 @@ def order_analytics(request, country_slug):
             "delivery_summary": delivery_summary,
             "cancel_reasons_stats": cancel_reasons_stats,
             "hourly_stats": hourly_stats,
+            "daily_stats": daily_stats,
+            
         }
     )
