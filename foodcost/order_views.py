@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, F
 from django.shortcuts import get_object_or_404
 
 from .models import (
@@ -750,83 +750,188 @@ def order_analytics(request, country_slug):
             "location",
             "payment_method",
             "source",
+            "cancel_reason",
         )
+        .order_by("-created_at")
     )
 
-    active_orders = orders.filter(
-        is_cancelled=False
-    )
+    active_orders = orders.filter(is_cancelled=False)
+    cancelled_orders = orders.filter(is_cancelled=True)
 
-    cancelled_orders = orders.filter(
-        is_cancelled=True
-    )
-
-    total_orders = active_orders.count()
-
+    total_orders = orders.count()
+    active_orders_count = active_orders.count()
     cancelled_orders_count = cancelled_orders.count()
 
-    total_revenue = sum(
-        order.total_amount
-        for order in active_orders
-    )
+    total_revenue = sum(order.total_amount for order in active_orders)
+    total_delivery = sum(order.delivery_amount for order in active_orders)
+    subtotal_revenue = sum(order.subtotal_amount for order in active_orders)
 
-    total_delivery = sum(
-        order.delivery_amount
-        for order in active_orders
-    )
+    total_cost = Decimal("0")
 
-    average_check = 0
+    order_items = OrderItem.objects.filter(
+        order__in=active_orders
+    ).select_related("dish")
+
+    for item in order_items:
+        total_cost += item.cost_snapshot * item.quantity
+
+    profit = total_revenue - total_cost - total_delivery
+
+    average_check = Decimal("0")
+    average_check_without_delivery = Decimal("0")
+
+    if active_orders_count > 0:
+        average_check = total_revenue / active_orders_count
+        average_check_without_delivery = subtotal_revenue / active_orders_count
+
+    cancel_percent = 0
 
     if total_orders > 0:
-        average_check = (
-            total_revenue / total_orders
+        cancel_percent = cancelled_orders_count / total_orders * 100
+
+    latest_orders = orders[:10]
+
+    locations_summary = []
+
+    locations = Location.objects.filter(
+        country=country,
+        is_active=True
+    ).order_by("name")
+
+    for location in locations:
+        location_orders = orders.filter(location=location)
+        location_active_orders = location_orders.filter(is_cancelled=False)
+        location_cancelled_orders = location_orders.filter(is_cancelled=True)
+
+        location_revenue = sum(
+            order.total_amount
+            for order in location_active_orders
         )
+
+        location_average_check = Decimal("0")
+
+        if location_active_orders.count() > 0:
+            location_average_check = (
+                location_revenue / location_active_orders.count()
+            )
+
+        locations_summary.append({
+            "name": location.name,
+            "orders_count": location_orders.count(),
+            "active_orders_count": location_active_orders.count(),
+            "cancelled_orders_count": location_cancelled_orders.count(),
+            "revenue": location_revenue,
+            "average_check": location_average_check,
+        })
 
     top_dishes = (
         OrderItem.objects
-        .filter(
-            order__in=active_orders
-        )
-        .values(
-            "dish__name"
-        )
+        .filter(order__in=active_orders)
+        .values("dish__name")
         .annotate(
             total_qty=Sum("quantity"),
-            total_orders=Count("id"),
+            total_sum=Sum("total_price"),
         )
         .order_by("-total_qty")[:10]
     )
 
+    payment_summary = []
+
+    payment_methods = PaymentMethod.objects.filter(
+        country=country,
+        is_active=True
+    ).order_by("name")
+
+    for method in payment_methods:
+        method_orders = active_orders.filter(payment_method=method)
+
+        payment_summary.append({
+            "name": method.name,
+            "orders_count": method_orders.count(),
+            "revenue": sum(order.total_amount for order in method_orders),
+        })
+
+    delivery_summary = []
+
+    delivery_providers = DeliveryProvider.objects.filter(
+        country=country,
+        is_active=True
+    ).order_by("name")
+
+    for provider in delivery_providers:
+        provider_orders = active_orders.filter(delivery_provider=provider)
+
+        delivery_summary.append({
+            "name": provider.name,
+            "orders_count": provider_orders.count(),
+            "delivery_sum": sum(order.delivery_amount for order in provider_orders),
+            "revenue": sum(order.total_amount for order in provider_orders),
+        })
+
+    cancel_reasons_stats = (
+        cancelled_orders
+        .values("cancel_reason__name")
+        .annotate(total=Count("id"))
+        .order_by("-total")
+    )
+
     hourly_stats = []
 
+    max_hour_revenue = Decimal("0")
+
     for hour in range(24):
+        hour_orders = active_orders.filter(created_at__hour=hour)
 
-        hour_orders = active_orders.filter(
-            created_at__hour=hour
-        )
-
-        revenue = sum(
+        hour_revenue = sum(
             order.total_amount
             for order in hour_orders
         )
 
+        if hour_revenue > max_hour_revenue:
+            max_hour_revenue = hour_revenue
+
         hourly_stats.append({
             "hour": f"{hour:02d}:00",
             "orders": hour_orders.count(),
-            "revenue": revenue,
+            "revenue": hour_revenue,
         })
+
+    for item in hourly_stats:
+        percent = 0
+
+        if max_hour_revenue > 0:
+            percent = item["revenue"] / max_hour_revenue * 100
+
+        item["percent"] = percent
 
     return render(
         request,
         "foodcost/order_analytics.html",
         {
             "country": country,
+            "today": today,
+            "orders": orders,
+            "latest_orders": latest_orders,
+
             "total_orders": total_orders,
+            "active_orders_count": active_orders_count,
             "cancelled_orders_count": cancelled_orders_count,
+            "cancel_percent": cancel_percent,
+
             "total_revenue": total_revenue,
+            "subtotal_revenue": subtotal_revenue,
             "total_delivery": total_delivery,
+            "total_cost": total_cost,
+            "profit": profit,
+
             "average_check": average_check,
+            "average_check_without_delivery": average_check_without_delivery,
+
+            "locations_summary": locations_summary,
             "top_dishes": top_dishes,
+            "payment_summary": payment_summary,
+            "delivery_summary": delivery_summary,
+            "cancel_reasons_stats": cancel_reasons_stats,
             "hourly_stats": hourly_stats,
         }
     )
