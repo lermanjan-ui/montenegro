@@ -334,36 +334,77 @@ textarea{
 </div>
 
 <script>
-function updateOrderTotals() {
-    let subtotal = 0;
+	function updateOrderTotals() {
+	    let subtotal = 0;
 
-    document.querySelectorAll(".order-item").forEach(row => {
-        const price = parseFloat(row.querySelector(".dish-price").value) || 0;
-        const quantity = parseFloat(row.querySelector(".quantity-input").value) || 0;
-        const total = price * quantity;
+	    document.querySelectorAll(".order-item").forEach(row => {
 
-        row.querySelector(".item-total").value = total.toFixed(0);
-        subtotal += total;
-    });
+	        const customPriceInput = row.querySelector(".item-price-input");
 
-    const deliveryInput = document.querySelector('input[name="delivery_amount"]');
-    const delivery = parseFloat(deliveryInput ? deliveryInput.value : 0) || 0;
+	        const price = customPriceInput
+	            ? parseFloat(customPriceInput.value) || 0
+	            : parseFloat(row.querySelector(".dish-price").value) || 0;
 
-    const promoSelect = document.getElementById("promo-code-select");
-    let discountPercent = 0;
+	        const quantity = parseFloat(
+	            row.querySelector(".quantity-input").value
+	        ) || 0;
 
-    if (promoSelect && promoSelect.selectedOptions.length) {
-        discountPercent = parseFloat(promoSelect.selectedOptions[0].dataset.percent) || 0;
-    }
+	        const total = price * quantity;
 
-    const discount = subtotal * discountPercent / 100;
-    const total = subtotal - discount;
+	        row.querySelector(".item-total").value =
+	            total.toLocaleString("ru-RU", {
+	                maximumFractionDigits: 0
+	            });
 
-    document.getElementById("summary-subtotal").innerText = subtotal.toFixed(0);
-    document.getElementById("summary-discount").innerText = discount.toFixed(0);
-    document.getElementById("summary-total").innerText = total.toFixed(0);
-    document.getElementById("summary-delivery").innerText = delivery.toFixed(0);
-}
+	        subtotal += total;
+	    });
+
+	    const deliveryInput = document.querySelector(
+	        'input[name="delivery_amount"]'
+	    );
+
+	    const delivery = parseFloat(
+	        deliveryInput ? deliveryInput.value : 0
+	    ) || 0;
+
+	    const promoSelect = document.getElementById(
+	        "promo-code-select"
+	    );
+
+	    let discountPercent = 0;
+
+	    if (
+	        promoSelect &&
+	        promoSelect.selectedOptions.length
+	    ) {
+	        discountPercent = parseFloat(
+	            promoSelect.selectedOptions[0].dataset.percent
+	        ) || 0;
+	    }
+
+	    const discount = subtotal * discountPercent / 100;
+	    const total = subtotal - discount;
+
+	    document.getElementById("summary-subtotal").innerText =
+	        subtotal.toLocaleString("ru-RU", {
+	            maximumFractionDigits: 0
+	        });
+
+	    document.getElementById("summary-discount").innerText =
+	        discount.toLocaleString("ru-RU", {
+	            maximumFractionDigits: 0
+	        });
+
+	    document.getElementById("summary-total").innerText =
+	        total.toLocaleString("ru-RU", {
+	            maximumFractionDigits: 0
+	        });
+
+	    document.getElementById("summary-delivery").innerText =
+	        delivery.toLocaleString("ru-RU", {
+	            maximumFractionDigits: 0
+	        });
+	}
 
 function setupDishSearch() {
     const input = document.getElementById("add-dish-search");
@@ -441,7 +482,13 @@ document.getElementById("add-item-btn").addEventListener("click", function () {
         <input type="hidden" class="dish-price" value="${price}">
 
         <div class="item-name">${dishName}</div>
-        <div class="item-price">${price.toFixed(0)}</div>
+<input
+    type="number"
+    name="price"
+    class="item-price-input"
+    value="${price.toFixed(0)}"
+    step="1"
+>
 
         <input type="number" name="quantity" class="quantity-input" value="${quantity}" min="1" step="1">
 
@@ -461,7 +508,11 @@ document.getElementById("add-item-btn").addEventListener("click", function () {
 });
 
 document.addEventListener("input", function (e) {
-    if (e.target.classList.contains("quantity-input")) {
+
+    if (
+        e.target.classList.contains("quantity-input") ||
+        e.target.classList.contains("item-price-input")
+    ) {
         updateOrderTotals();
     }
 
@@ -471,7 +522,10 @@ document.addEventListener("input", function (e) {
 });
 
 document.addEventListener("change", function (e) {
-    if (e.target.id === "promo-code-select") {
+    if (
+        e.target.id === "promo-code-select" ||
+        e.target.name === "promo_code_id"
+    ) {
         updateOrderTotals();
     }
 });

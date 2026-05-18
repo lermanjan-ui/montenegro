@@ -218,7 +218,13 @@
 								>
 
                                 <div class="item-name">{{ order_item.dish.name }}</div>
-                                <div class="item-price">{{ order_item.price_snapshot|floatformat:0 }}</div>
+								<input
+								    type="number"
+								    name="price"
+								    class="item-price-input"
+								    value="{{ order_item.price_snapshot|floatformat:0 }}"
+								    step="1"
+								>
 
                                 <input type="number" name="quantity" class="quantity-input" value="{{ order_item.quantity|floatformat:0 }}" min="1" step="1">
 

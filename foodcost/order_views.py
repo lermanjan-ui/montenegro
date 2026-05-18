@@ -240,6 +240,7 @@ def order_create(request, country_slug):
 
         dish_ids = request.POST.getlist("dish_id")
         quantities = request.POST.getlist("quantity")
+        prices = request.POST.getlist("price")
 
         for index, dish_id in enumerate(dish_ids):
 
@@ -256,7 +257,12 @@ def order_create(request, country_slug):
                 quantities[index]
             )
 
-            total_price = dish.selling_price * quantity
+            custom_price = clean_decimal(prices[index])
+
+            if custom_price <= 0:
+                custom_price = dish.selling_price
+
+            total_price = custom_price * quantity
 
             subtotal_amount += total_price
 
@@ -265,7 +271,7 @@ def order_create(request, country_slug):
                 dish=dish,
                 quantity=quantity,
 
-                price_snapshot=dish.selling_price,
+                price_snapshot=custom_price,
                 cost_snapshot=dish.calculate_cost(),
 
                 total_price=total_price
@@ -283,7 +289,6 @@ def order_create(request, country_slug):
         total_amount = (
             subtotal_amount
             - discount_amount
-            + delivery_amount
         )
 
         order.subtotal_amount = subtotal_amount
@@ -505,6 +510,7 @@ def order_detail(request, country_slug, order_id):
 
         dish_ids = request.POST.getlist("dish_id")
         quantities = request.POST.getlist("quantity")
+        prices = request.POST.getlist("price")
 
         for index, dish_id in enumerate(dish_ids):
 
@@ -521,7 +527,12 @@ def order_detail(request, country_slug, order_id):
                 quantities[index]
             )
 
-            total_price = dish.selling_price * quantity
+            custom_price = clean_decimal(prices[index])
+
+            if custom_price <= 0:
+                custom_price = dish.selling_price
+
+            total_price = custom_price * quantity
 
             subtotal_amount += total_price
 
@@ -529,7 +540,7 @@ def order_detail(request, country_slug, order_id):
                 order=order,
                 dish=dish,
                 quantity=quantity,
-                price_snapshot=dish.selling_price,
+                price_snapshot=custom_price,
                 cost_snapshot=dish.calculate_cost(),
                 total_price=total_price
             )
@@ -546,7 +557,6 @@ def order_detail(request, country_slug, order_id):
         total_amount = (
             subtotal_amount
             - discount_amount
-            + delivery_amount
         )
 
         order.subtotal_amount = subtotal_amount
@@ -740,11 +750,51 @@ def order_analytics(request, country_slug):
 
     today = timezone.localdate()
 
+    period = request.GET.get("period", "today")
+
+    date_from = today
+    date_to = today
+
+    if period == "yesterday":
+        date_from = today - timezone.timedelta(days=1)
+        date_to = date_from
+
+    elif period == "7days":
+        date_from = today - timezone.timedelta(days=6)
+
+    elif period == "30days":
+        date_from = today - timezone.timedelta(days=29)
+
+    elif period == "month":
+        date_from = today.replace(day=1)
+
+    custom_from = request.GET.get("date_from")
+    custom_to = request.GET.get("date_to")
+
+    if custom_from:
+        try:
+            date_from = timezone.datetime.strptime(
+                custom_from,
+                "%Y-%m-%d"
+            ).date()
+        except:
+            pass
+
+    if custom_to:
+        try:
+            date_to = timezone.datetime.strptime(
+                custom_to,
+                "%Y-%m-%d"
+            ).date()
+        except:
+            pass
+
     orders = (
         Order.objects
         .filter(
             country=country,
-            order_date__date=today
+            order_date__date__gte=date_from,
+            order_date__date__lte=date_to,
         )
         .select_related(
             "location",
