@@ -63,6 +63,18 @@ class Preparation(models.Model):
     name = models.CharField(max_length=255)
     final_weight = models.DecimalField(max_digits=10, decimal_places=3)
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    
+    cached_total_cost = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    cached_cost_per_kg = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
 
     def __str__(self):
         return self.name
@@ -77,6 +89,24 @@ class Preparation(models.Model):
         if self.final_weight == 0:
             return 0
         return self.calculate_cost() / self.final_weight
+        
+    def recalculate_cache(self):
+        total_cost = self.calculate_cost()
+
+        cost_per_kg = 0
+
+        if self.final_weight:
+            cost_per_kg = total_cost / self.final_weight
+
+        self.cached_total_cost = total_cost
+        self.cached_cost_per_kg = cost_per_kg
+
+        self.save(
+            update_fields=[
+                "cached_total_cost",
+                "cached_cost_per_kg",
+            ]
+        )
 
     def total_cooking_minutes(self):
         total = self.cooking_minutes

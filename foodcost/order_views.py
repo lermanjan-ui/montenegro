@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.shortcuts import get_object_or_404
 
 from .models import (
@@ -57,6 +57,7 @@ def order_list(request, country_slug):
             country=country,
             order_date__date=today
         )
+        .select_related(
             "location",
             "payment_method",
             "source",
@@ -720,4 +721,112 @@ def customer_detail(request, country_slug, customer_id):
         request,
         "foodcost/customer_detail.html",
         context
+    )
+    
+    
+    
+@login_required(login_url="/login/")
+def order_analytics(request, country_slug):
+
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_ORDERS
+    )
+
+    if access_error:
+        return access_error
+
+    today = timezone.localdate()
+
+    orders = (
+        Order.objects
+        .filter(
+            country=country,
+            order_date__date=today
+        )
+        .select_related(
+            "location",
+            "payment_method",
+            "source",
+        )
+    )
+
+    active_orders = orders.filter(
+        is_cancelled=False
+    )
+
+    cancelled_orders = orders.filter(
+        is_cancelled=True
+    )
+
+    total_orders = active_orders.count()
+
+    cancelled_orders_count = cancelled_orders.count()
+
+    total_revenue = sum(
+        order.total_amount
+        for order in active_orders
+    )
+
+    total_delivery = sum(
+        order.delivery_amount
+        for order in active_orders
+    )
+
+    average_check = 0
+
+    if total_orders > 0:
+        average_check = (
+            total_revenue / total_orders
+        )
+
+    top_dishes = (
+        OrderItem.objects
+        .filter(
+            order__in=active_orders
+        )
+        .values(
+            "dish__name"
+        )
+        .annotate(
+            total_qty=Sum("quantity"),
+            total_orders=Count("id"),
+        )
+        .order_by("-total_qty")[:10]
+    )
+
+    hourly_stats = []
+
+    for hour in range(24):
+
+        hour_orders = active_orders.filter(
+            created_at__hour=hour
+        )
+
+        revenue = sum(
+            order.total_amount
+            for order in hour_orders
+        )
+
+        hourly_stats.append({
+            "hour": f"{hour:02d}:00",
+            "orders": hour_orders.count(),
+            "revenue": revenue,
+        })
+
+    return render(
+        request,
+        "foodcost/order_analytics.html",
+        {
+            "country": country,
+            "total_orders": total_orders,
+            "cancelled_orders_count": cancelled_orders_count,
+            "total_revenue": total_revenue,
+            "total_delivery": total_delivery,
+            "average_check": average_check,
+            "top_dishes": top_dishes,
+            "hourly_stats": hourly_stats,
+        }
     )

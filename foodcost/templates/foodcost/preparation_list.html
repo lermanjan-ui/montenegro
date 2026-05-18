@@ -226,8 +226,13 @@
             <div class="prep-row">
                 <div class="prep-name">{{ prep.name }}</div>
                 <div class="value">{{ prep.final_weight }}</div>
-                <div class="value">{{ prep.calculate_cost|floatformat:0 }}</div>
-                <div class="price">{{ prep.cost_per_kg|floatformat:0 }}</div>
+				<div class="value">
+				    {{ prep.cached_total_cost|floatformat:0 }}
+				</div>
+
+				<div class="price">
+				    {{ prep.cached_cost_per_kg|floatformat:0 }}
+				</div>
                 <div>
                     <a class="open" href="/c/{{ country.slug }}/preparations/{{ prep.id }}/">Открыть →</a>
                 </div>

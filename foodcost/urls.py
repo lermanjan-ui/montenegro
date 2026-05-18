@@ -74,6 +74,12 @@ urlpatterns = [
     ),
     
     path(
+        "c/<slug:country_slug>/orders/analytics/",
+        order_views.order_analytics,
+        name="order_analytics"
+    ),
+    
+    path(
         "c/<slug:country_slug>/orders/create/",
         order_views.order_create,
         name="order_create"

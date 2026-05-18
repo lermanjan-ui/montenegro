@@ -1,0 +1,296 @@
+{% extends "foodcost/base.html" %}
+
+{% load humanize %}
+
+{% block title %}Аналитика{% endblock %}
+
+{% block content %}
+
+<style>
+
+.page{
+    max-width:1600px;
+    margin:0 auto;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+}
+
+h1{
+    margin:0;
+    font-size:42px;
+    color:#111827;
+    letter-spacing:-0.03em;
+}
+
+.muted{
+    color:#6b7280;
+    margin-top:6px;
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+    margin-bottom:24px;
+}
+
+.stat-card{
+    background:white;
+    border-radius:24px;
+    padding:24px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+}
+
+.stat-label{
+    color:#6b7280;
+    font-size:14px;
+    font-weight:800;
+    margin-bottom:10px;
+}
+
+.stat-value{
+    font-size:40px;
+    font-weight:950;
+    color:#111827;
+    line-height:1;
+}
+
+.card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    padding:24px;
+    margin-bottom:20px;
+    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+}
+
+.section-title{
+    font-size:26px;
+    font-weight:950;
+    margin-bottom:22px;
+    color:#111827;
+}
+
+.table{
+    display:grid;
+    gap:12px;
+}
+
+.row{
+    display:grid;
+    grid-template-columns:1fr 160px 160px;
+    gap:16px;
+    padding:16px;
+    border-radius:16px;
+    background:#f9fafb;
+    align-items:center;
+}
+
+.hour-row{
+    display:grid;
+    grid-template-columns:140px 160px 160px;
+    gap:16px;
+    padding:14px 16px;
+    border-bottom:1px solid #eef2f7;
+}
+
+.name{
+    font-weight:900;
+    color:#111827;
+}
+
+.value{
+    font-weight:950;
+    color:#111827;
+}
+
+.green{
+    color:#047857;
+}
+
+.red{
+    color:#991b1b;
+}
+
+.button{
+    background:#111827;
+    color:white;
+    text-decoration:none;
+    padding:14px 18px;
+    border-radius:14px;
+    font-weight:900;
+}
+
+@media (max-width:1100px){
+
+    .stats-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+}
+
+@media (max-width:700px){
+
+    .stats-grid{
+        grid-template-columns:1fr;
+    }
+
+    .row,
+    .hour-row{
+        grid-template-columns:1fr;
+    }
+
+    .topbar{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:16px;
+    }
+
+}
+
+</style>
+
+<div class="page">
+
+    <div class="topbar">
+
+        <div>
+            <h1>Аналитика</h1>
+
+            <div class="muted">
+                Сегодняшняя статистика заказов
+            </div>
+        </div>
+
+        <a
+            href="/c/{{ country.slug }}/orders/"
+            class="button"
+        >
+            ← К заказам
+        </a>
+
+    </div>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <div class="stat-label">
+                Выручка
+            </div>
+
+            <div class="stat-value green">
+                {{ total_revenue|floatformat:0|intcomma }}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">
+                Заказы
+            </div>
+
+            <div class="stat-value">
+                {{ total_orders }}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">
+                Средний чек
+            </div>
+
+            <div class="stat-value">
+                {{ average_check|floatformat:0|intcomma }}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">
+                Отказы
+            </div>
+
+            <div class="stat-value red">
+                {{ cancelled_orders_count }}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="section-title">
+            Топ блюд
+        </div>
+
+        <div class="table">
+
+            {% for item in top_dishes %}
+
+                <div class="row">
+
+                    <div class="name">
+                        {{ item.dish__name }}
+                    </div>
+
+                    <div class="value">
+                        {{ item.total_qty|floatformat:0 }} шт
+                    </div>
+
+                    <div class="value green">
+                        {{ item.total_orders }} заказов
+                    </div>
+
+                </div>
+
+            {% empty %}
+
+                <div class="muted">
+                    Нет данных
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="section-title">
+            Продажи по часам
+        </div>
+
+        <div class="table">
+
+            {% for item in hourly_stats %}
+
+                <div class="hour-row">
+
+                    <div class="name">
+                        {{ item.hour }}
+                    </div>
+
+                    <div class="value">
+                        {{ item.orders }} заказов
+                    </div>
+
+                    <div class="value green">
+                        {{ item.revenue|floatformat:0|intcomma }}
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

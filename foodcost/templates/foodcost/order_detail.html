@@ -374,10 +374,18 @@ function updateOrderTotals() {
     const discount = subtotal * discountPercent / 100;
     const total = subtotal - discount;
 
-    document.getElementById("summary-subtotal").innerText = subtotal.toFixed(0);
-    document.getElementById("summary-discount").innerText = discount.toFixed(0);
-    document.getElementById("summary-total").innerText = total.toFixed(0);
-    document.getElementById("summary-delivery").innerText = delivery.toFixed(0);
+document.getElementById("summary-subtotal").innerText =
+    subtotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 });
+
+document.getElementById("summary-discount").innerText =
+    discount.toLocaleString("ru-RU", { maximumFractionDigits: 0 });
+
+document.getElementById("summary-total").innerText =
+    total.toLocaleString("ru-RU", { maximumFractionDigits: 0 });
+document.getElementById("summary-delivery").innerText =
+    delivery.toLocaleString("ru-RU", {
+        maximumFractionDigits: 0
+    });
 }
 
 function setupDishSearch() {
