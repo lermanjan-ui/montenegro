@@ -8,6 +8,7 @@ from .models import (
     DeliveryProvider,
     PromoCode,
     DishCategory,
+    OrderCancelReason,
 )
 
 from .views import (
@@ -80,10 +81,24 @@ def settings_page(request, country_slug):
                 code=request.POST.get("code", "").strip(),
                 percent=request.POST.get("percent") or 0,
             )
+            
+        if action == "create_cancel_reason":
+            OrderCancelReason.objects.create(
+                country=country,
+                name=request.POST.get("name", "").strip(),
+            )
 
         if action == "delete_promo_code":
             item = get_object_or_404(
                 PromoCode,
+                id=request.POST.get("item_id"),
+                country=country,
+            )
+            item.delete()
+            
+        if action == "delete_cancel_reason":
+            item = get_object_or_404(
+                OrderCancelReason,
                 id=request.POST.get("item_id"),
                 country=country,
             )
@@ -122,6 +137,9 @@ def settings_page(request, country_slug):
     order_sources = OrderSource.objects.filter(country=country).order_by("name")
     delivery_providers = DeliveryProvider.objects.filter(country=country).order_by("name")
     promo_codes = PromoCode.objects.filter(country=country).order_by("code")
+    cancel_reasons = OrderCancelReason.objects.filter(
+        country=country
+    ).order_by("name")
     categories = DishCategory.objects.filter(country=country).order_by("name")
 
     return render(request, "foodcost/settings.html", {
@@ -130,5 +148,6 @@ def settings_page(request, country_slug):
         "order_sources": order_sources,
         "delivery_providers": delivery_providers,
         "promo_codes": promo_codes,
+        "cancel_reasons": cancel_reasons,
         "categories": categories,
     })

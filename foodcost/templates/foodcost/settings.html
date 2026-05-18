@@ -294,6 +294,42 @@
             </div>
         </div>
 
+<div class="settings-card">
+    <div class="settings-title">Причины отказа</div>
+
+    <form method="post" class="add-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_cancel_reason">
+
+        <input name="name" placeholder="Например: Клиент передумал" required>
+
+        <button type="submit">Добавить</button>
+    </form>
+
+    <div class="items-list">
+        {% for item in cancel_reasons %}
+            <div class="item-row">
+                <div class="item-name">{{ item.name }}</div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_cancel_reason">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <button
+                        type="submit"
+                        class="delete-btn"
+                        onclick="return confirm('Удалить причину отказа?')"
+                    >
+                        Удалить
+                    </button>
+                </form>
+            </div>
+        {% empty %}
+            <div class="empty">Пока нет причин отказа</div>
+        {% endfor %}
+    </div>
+</div>
     </div>
 <div class="settings-card" style="margin-top:18px;">
 

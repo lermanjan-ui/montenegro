@@ -1,5 +1,7 @@
 {% extends "foodcost/base.html" %}
 
+{% load humanize %}
+
 {% block title %}Заказы{% endblock %}
 
 {% block content %}
@@ -41,7 +43,7 @@ h1{
 /* STATS */
 .stats-grid{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
     gap:12px;
     margin-bottom:16px;
 }
@@ -288,6 +290,10 @@ h1{
     font-size:14px;
 }
 
+.stat-red .stat-icon{background:#fee2e2;color:#dc2626;}
+
+.stat-red .stat-trend{background:#fee2e2;color:#dc2626;}
+
 /* TABLET */
 @media (max-width:1200px){
     .orders-layout{
@@ -454,7 +460,7 @@ h1{
 
           <div class="stat-main">
               <div class="stat-label">Выручка</div>
-              <div class="stat-value">{{ total_revenue|floatformat:0 }}</div>
+              <div class="stat-value">{{ total_revenue|floatformat:0|intcomma }}</div>
               <div class="stat-sub">за сегодня</div>
           </div>
 
@@ -473,7 +479,7 @@ h1{
 
           <div class="stat-main">
               <div class="stat-label">Доставка</div>
-              <div class="stat-value">{{ total_delivery|floatformat:0 }}</div>
+              <div class="stat-value">{{ total_delivery|floatformat:0|intcomma }}</div>
               <div class="stat-sub">за сегодня</div>
           </div>
 
@@ -491,15 +497,31 @@ h1{
 
           <div class="stat-main">
               <div class="stat-label">Наличные</div>
-              <div class="stat-value">{{ total_cash|floatformat:0 }}</div>
+              <div class="stat-value">{{ total_cash|floatformat:0|intcomma }}</div>
               <div class="stat-sub">за сегодня</div>
           </div>
 
           <div class="stat-trend">↓ -3%</div>
       </div>
 
-  </div>
+      <div class="stat-card stat-red">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M18 6L6 18"/>
+                  <path d="M6 6l12 12"/>
+              </svg>
+          </div>
 
+          <div class="stat-main">
+              <div class="stat-label">Отказы</div>
+              <div class="stat-value">{{ cancelled_orders_count }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">—</div>
+      </div>
+
+  </div>
     <div class="orders-layout">
 
         <div class="main-column">
@@ -622,7 +644,7 @@ h1{
 				        </div>
 
 				        <div class="summary-value">
-				            {{ item.revenue|floatformat:0 }}
+				            {{ item.revenue|floatformat:0|intcomma }}
 				        </div>
 
 				        <div class="summary-label">
@@ -648,7 +670,7 @@ h1{
                 </div>
 
 				<div class="summary-value">
-				    {{ total_cash|floatformat:0 }}
+				    {{ total_cash|floatformat:0|intcomma }}
 				</div>
 
             </div>

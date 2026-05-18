@@ -19,6 +19,7 @@ from .models import (
     OrderSource,
     DeliveryProvider,
     PromoCode,
+    OrderCancelReason,
 )
 
 from .views import (
@@ -60,15 +61,21 @@ def order_list(request, country_slug):
     )
 
     total_orders = orders.count()
+    
+    active_orders = orders.filter(is_cancelled=False)
+    cancelled_orders = orders.filter(is_cancelled=True)
 
     total_revenue = sum(
+
         order.total_amount
-        for order in orders
+
+        for order in active_orders
+
     )
 
     total_cash = sum(
         order.total_amount
-        for order in orders
+        for order in active_orders
         if order.payment_method
         and order.payment_method.is_cash
     )
@@ -91,7 +98,7 @@ def order_list(request, country_slug):
     
     total_delivery = sum(
         order.delivery_amount
-        for order in orders
+        for order in active_orders
     )
 
     return render(request, "foodcost/order_list.html", {
@@ -102,6 +109,7 @@ def order_list(request, country_slug):
         "total_cash": total_cash,
         "total_delivery": total_delivery,
         "locations_summary": locations_summary,
+        "cancelled_orders_count": cancelled_orders.count(),
     })
     
     
@@ -180,6 +188,22 @@ def order_create(request, country_slug):
         )
 
         subtotal_amount = Decimal("0")
+        
+        is_cancelled = bool(request.POST.get("is_cancelled"))
+
+        cancel_reason = None
+
+        cancel_reason_id = request.POST.get("cancel_reason_id")
+
+        if cancel_reason_id:
+            cancel_reason = get_object_or_404(
+                OrderCancelReason,
+                id=cancel_reason_id,
+                country=country,
+            )
+
+
+
 
         order = Order.objects.create(
             country=country,
@@ -204,6 +228,9 @@ def order_create(request, country_slug):
             discount_amount=0,
             delivery_amount=delivery_amount,
             total_amount=0,
+            
+            is_cancelled=is_cancelled,
+            cancel_reason=cancel_reason,
         )
 
         dish_ids = request.POST.getlist("dish_id")
@@ -312,6 +339,11 @@ def order_create(request, country_slug):
         country=country,
         is_active=True
     ).order_by("code")
+    
+    cancel_reasons = OrderCancelReason.objects.filter(
+        country=country,
+        is_active=True
+    ).order_by("name")
 
     return render(request, "foodcost/order_create.html", {
         "country": country,
@@ -321,6 +353,7 @@ def order_create(request, country_slug):
         "order_sources": order_sources,
         "delivery_providers": delivery_providers,
         "promo_codes": promo_codes,
+        "cancel_reasons": cancel_reasons,
     })
     
     
@@ -445,6 +478,21 @@ def order_detail(request, country_slug, order_id):
         )
 
         order.delivery_amount = delivery_amount
+        
+        order.is_cancelled = bool(
+            request.POST.get("is_cancelled")
+        )
+
+        cancel_reason_id = request.POST.get("cancel_reason_id")
+
+        if cancel_reason_id:
+            order.cancel_reason = get_object_or_404(
+                OrderCancelReason,
+                id=cancel_reason_id,
+                country=country
+            )
+        else:
+            order.cancel_reason = None
 
         order.items.all().delete()
 
@@ -555,6 +603,11 @@ def order_detail(request, country_slug, order_id):
         country=country,
         is_active=True
     ).order_by("code")
+    
+    cancel_reasons = OrderCancelReason.objects.filter(
+        country=country,
+        is_active=True
+    ).order_by("name")
 
     return render(request, "foodcost/order_detail.html", {
         "country": country,
@@ -566,6 +619,7 @@ def order_detail(request, country_slug, order_id):
         "order_sources": order_sources,
         "delivery_providers": delivery_providers,
         "promo_codes": promo_codes,
+        "cancel_reasons": cancel_reasons,
     })
     
     
