@@ -405,7 +405,16 @@ def dish_detail(request, country_slug, dish_id):
             item.delete()
 
         if action == "add_preparation":
-            preparation = get_object_or_404(Preparation, id=request.POST.get("preparation_id"), country=country)
+            preparation_id = request.POST.get("preparation_id")
+
+            if not preparation_id:
+                return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+
+            preparation = get_object_or_404(
+                Preparation,
+                id=preparation_id,
+                country=country,
+            )
 
             item = DishPreparationItem.objects.create(
                 dish=dish,
