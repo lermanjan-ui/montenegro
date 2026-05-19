@@ -1,0 +1,509 @@
+{% extends "foodcost/base.html" %}
+{% load humanize %}
+
+{% block title %}Все заказы{% endblock %}
+
+{% block content %}
+
+<style>
+
+.page{
+    max-width:1700px;
+    margin:0 auto;
+}
+
+.topbar{
+    margin-bottom:24px;
+}
+
+h1{
+    margin:0;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-0.03em;
+    color:#111827;
+}
+
+.muted{
+    color:#6b7280;
+    margin-top:8px;
+    font-size:15px;
+}
+
+.card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+    margin-bottom:20px;
+}
+
+.filters-grid{
+    display:grid;
+    grid-template-columns:1fr 180px 180px 220px 220px 180px;
+    gap:14px;
+    align-items:end;
+}
+
+label{
+    display:block;
+    margin-bottom:8px;
+    font-size:13px;
+    font-weight:900;
+    color:#111827;
+}
+
+input,
+select{
+    width:100%;
+    padding:14px 16px;
+    border:1px solid #d1d5db;
+    border-radius:14px;
+    box-sizing:border-box;
+    font-size:15px;
+    background:white;
+}
+
+input:focus,
+select:focus{
+    outline:none;
+    border-color:#111827;
+}
+
+.filter-btn{
+    width:100%;
+    border:0;
+    border-radius:14px;
+    background:#111827;
+    color:white;
+    font-weight:900;
+    font-size:15px;
+    height:52px;
+    cursor:pointer;
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    padding:24px;
+}
+
+.stat-label{
+    font-size:14px;
+    color:#6b7280;
+    font-weight:800;
+    margin-bottom:10px;
+}
+
+.stat-value{
+    font-size:38px;
+    font-weight:950;
+    color:#111827;
+    line-height:1;
+}
+
+.table-wrap{
+    overflow:auto;
+}
+
+.orders-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.orders-table th{
+    text-align:left;
+    padding:16px;
+    font-size:13px;
+    color:#6b7280;
+    font-weight:900;
+    border-bottom:1px solid #eef2f7;
+    white-space:nowrap;
+}
+
+.orders-table td{
+    padding:18px 16px;
+    border-bottom:1px solid #f3f4f6;
+    vertical-align:middle;
+}
+
+.orders-table tr:hover{
+    background:#fafafa;
+}
+
+.order-link{
+    text-decoration:none;
+    color:#111827;
+    font-weight:900;
+}
+
+.customer-name{
+    font-weight:900;
+    color:#111827;
+}
+
+.customer-phone{
+    color:#6b7280;
+    font-size:13px;
+    margin-top:4px;
+}
+
+.sum{
+    font-weight:950;
+    color:#047857;
+}
+
+.cancelled{
+    color:#b91c1c;
+    font-weight:900;
+}
+
+.active{
+    color:#047857;
+    font-weight:900;
+}
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+}
+
+.badge-active{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-cancelled{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.empty{
+    text-align:center;
+    padding:60px 20px;
+    color:#6b7280;
+    font-weight:800;
+}
+
+@media (max-width:1400px){
+
+    .filters-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+}
+
+@media (max-width:900px){
+
+    .stats-grid{
+        grid-template-columns:1fr;
+    }
+
+    .filters-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+<div class="page">
+
+    <div class="topbar">
+
+        <h1>Все заказы</h1>
+
+        <div class="muted">
+            История заказов и фильтрация
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <form method="get">
+
+            <div class="filters-grid">
+
+                <div>
+                    <label>Поиск</label>
+
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Имя, телефон, ID заказа"
+                        value="{{ search|default:'' }}"
+                    >
+                </div>
+
+                <div>
+                    <label>С даты</label>
+
+                    <input
+                        type="date"
+                        name="date_from"
+                        value="{{ date_from|default:'' }}"
+                    >
+                </div>
+
+                <div>
+                    <label>По дату</label>
+
+                    <input
+                        type="date"
+                        name="date_to"
+                        value="{{ date_to|default:'' }}"
+                    >
+                </div>
+
+                <div>
+                    <label>Филиал</label>
+
+                    <select name="location_id">
+
+                        <option value="">
+                            Все филиалы
+                        </option>
+
+                        {% for item in locations %}
+
+                            <option
+                                value="{{ item.id }}"
+                                {% if location_id == item.id|stringformat:"s" %}selected{% endif %}
+                            >
+                                {{ item.name }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div>
+                    <label>Статус</label>
+
+                    <select name="status">
+
+                        <option value="">
+                            Все заказы
+                        </option>
+
+                        <option
+                            value="active"
+                            {% if status == "active" %}selected{% endif %}
+                        >
+                            Активные
+                        </option>
+
+                        <option
+                            value="cancelled"
+                            {% if status == "cancelled" %}selected{% endif %}
+                        >
+                            Отмененные
+                        </option>
+
+                    </select>
+                </div>
+
+                <div>
+                    <button type="submit" class="filter-btn">
+                        Применить
+                    </button>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+
+            <div class="stat-label">
+                Всего заказов
+            </div>
+
+            <div class="stat-value">
+                {{ total_orders }}
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-label">
+                Выручка
+            </div>
+
+            <div class="stat-value">
+                {{ total_revenue|floatformat:0|intcomma }}
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-label">
+                Доставка
+            </div>
+
+            <div class="stat-value">
+                {{ total_delivery|floatformat:0|intcomma }}
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="table-wrap">
+
+            <table class="orders-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Клиент</th>
+                        <th>Дата</th>
+                        <th>Филиал</th>
+                        <th>Источник</th>
+                        <th>Оплата</th>
+                        <th>Сумма</th>
+                        <th>Доставка</th>
+                        <th>Статус</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for order in orders %}
+
+                        <tr>
+
+                            <td>
+
+                                <a
+                                    href="/c/{{ country.slug }}/orders/{{ order.id }}/"
+                                    class="order-link"
+                                >
+                                    #{{ order.id }}
+                                </a>
+
+                            </td>
+
+                            <td>
+
+                                <div class="customer-name">
+                                    {{ order.customer_name }}
+                                </div>
+
+                                <div class="customer-phone">
+                                    {{ order.customer_phone }}
+                                </div>
+
+                            </td>
+
+                            <td>
+
+                                {{ order.order_date|date:"d.m.Y H:i" }}
+
+                            </td>
+
+                            <td>
+
+                                {{ order.location.name|default:"—" }}
+
+                            </td>
+
+                            <td>
+
+                                {{ order.source.name|default:"—" }}
+
+                            </td>
+
+                            <td>
+
+                                {{ order.payment_method.name|default:"—" }}
+
+                            </td>
+
+                            <td class="sum">
+
+                                {{ order.total_amount|floatformat:0|intcomma }}
+
+                            </td>
+
+                            <td>
+
+                                {{ order.delivery_amount|floatformat:0|intcomma }}
+
+                            </td>
+
+                            <td>
+
+                                {% if order.is_cancelled %}
+
+                                    <span class="badge badge-cancelled">
+                                        Отменен
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge badge-active">
+                                        Активный
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="9">
+
+                                <div class="empty">
+                                    Заказы не найдены
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -118,6 +118,120 @@ def order_list(request, country_slug):
     })
     
     
+    
+@login_required(login_url="/login/")
+def order_all_list(request, country_slug):
+
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_ORDERS
+    )
+
+    if access_error:
+        return access_error
+        
+    if not request.user.is_superuser:
+        return HttpResponseForbidden(
+            "Только главный админ может смотреть все заказы"
+        )
+
+    orders = (
+        Order.objects
+        .filter(country=country)
+        .select_related(
+            "location",
+            "payment_method",
+            "source",
+        )
+        .order_by("-order_date")
+    )
+
+    date_from = request.GET.get("date_from")
+    date_to = request.GET.get("date_to")
+    location_id = request.GET.get("location_id")
+    status = request.GET.get("status")
+    search = request.GET.get("search")
+
+    if date_from:
+        orders = orders.filter(
+            order_date__date__gte=date_from
+        )
+
+    if date_to:
+        orders = orders.filter(
+            order_date__date__lte=date_to
+        )
+
+    if location_id:
+        orders = orders.filter(
+            location_id=location_id
+        )
+
+    if status == "active":
+        orders = orders.filter(
+            is_cancelled=False
+        )
+
+    elif status == "cancelled":
+        orders = orders.filter(
+            is_cancelled=True
+        )
+
+    if search:
+
+        orders = orders.filter(
+            customer_phone__icontains=search
+        ) | orders.filter(
+            customer_name__icontains=search
+        ) | orders.filter(
+            id__icontains=search
+        )
+
+    total_orders = orders.count()
+
+    active_orders = orders.filter(
+        is_cancelled=False
+    )
+
+    total_revenue = sum(
+        order.total_amount
+        for order in active_orders
+    )
+
+    total_delivery = sum(
+        order.delivery_amount
+        for order in active_orders
+    )
+
+    locations = Location.objects.filter(
+        country=country,
+        is_active=True
+    ).order_by("name")
+
+    return render(
+        request,
+        "foodcost/order_all_list.html",
+        {
+            "country": country,
+            "orders": orders[:300],
+
+            "total_orders": total_orders,
+            "total_revenue": total_revenue,
+            "total_delivery": total_delivery,
+
+            "locations": locations,
+
+            "date_from": date_from,
+            "date_to": date_to,
+            "location_id": location_id,
+            "status": status,
+            "search": search,
+        }
+    )
+    
+    
 @login_required(login_url="/login/")
 def order_create(request, country_slug):
     country = get_country(country_slug, request.user)
