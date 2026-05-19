@@ -71,6 +71,17 @@
 	                   {% endfor %}
 	               </select>
 	           </div>
+			   {% if request.user.is_superuser %}
+			   <div>
+			       <label>Дата заказа</label>
+
+			       <input
+			           type="datetime-local"
+			           name="order_date"
+			           value="{% if order %}{{ order.order_date|date:'Y-m-d\\TH:i' }}{% endif %}"
+			       >
+			   </div>
+			   {% endif %}
 	       </div>
 
 	       <div class="grid-3" style="margin-top:14px;">

@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.utils import timezone
 from django.db.models import Sum, Count, F
 from django.shortcuts import get_object_or_404
@@ -386,6 +386,16 @@ def order_detail(request, country_slug, order_id):
     )
 
     if request.method == "POST":
+        
+        action = request.POST.get("action")
+
+        if action == "delete_order":
+            if not request.user.is_superuser:
+                return HttpResponseForbidden("Удалять заказы может только главный админ")
+
+            order.delete()
+
+            return redirect(f"/c/{country.slug}/orders/")
 
         customer_phone = request.POST.get(
             "customer_phone",
@@ -562,6 +572,29 @@ def order_detail(request, country_slug, order_id):
         order.subtotal_amount = subtotal_amount
         order.discount_amount = discount_amount
         order.total_amount = total_amount
+
+        if request.user.is_superuser:
+
+            order_date = request.POST.get("order_date")
+
+            if order_date:
+
+                try:
+                    parsed_date = timezone.datetime.fromisoformat(
+                        order_date
+                    )
+
+                    current_time = order.order_date.time()
+
+                    order.order_date = timezone.make_aware(
+                        timezone.datetime.combine(
+                            parsed_date.date(),
+                            current_time
+                        )
+                    )
+
+                except:
+                    pass
 
         order.save()
         
