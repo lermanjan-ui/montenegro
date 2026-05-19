@@ -78,7 +78,7 @@ DATABASES = {
 
 # 🌍 локализация
 LANGUAGE_CODE = 'ru-ru'
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Asia/Tashkent"
 USE_I18N = True
 USE_TZ = True
 

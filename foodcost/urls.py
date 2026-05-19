@@ -8,8 +8,16 @@ from . import shift_views
 
 urlpatterns = [
     
+    path(
+        "tilda/webhook/",
+        views.tilda_webhook,
+        name="tilda_webhook",
+    ),
+    
     path("login/", views.login_page, name="login_page"),
     path("logout/", views.logout_page, name="logout_page"),
+    
+    
     
     # выбор страны
     path("", views.country_list, name="country_list"),

@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 
 from .forms import ProductWithPriceForm
 from .models import (
@@ -1226,3 +1227,35 @@ def login_page(request):
 def logout_page(request):
     logout(request)
     return redirect("/login/")
+    
+    
+    
+@csrf_exempt
+def tilda_webhook(request):
+
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "POST only"
+        })
+
+    print("===== TILDA WEBHOOK =====")
+
+    print("POST:")
+    print(request.POST)
+
+    print("BODY:")
+    print(request.body)
+
+    try:
+        body = request.body.decode("utf-8")
+
+        print("BODY DECODED:")
+        print(body)
+
+    except Exception as e:
+        print(e)
+
+    return JsonResponse({
+        "success": True
+    })
