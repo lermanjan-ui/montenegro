@@ -6,6 +6,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+import json
+from decimal import Decimal
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from .forms import ProductWithPriceForm
 from .models import (
@@ -28,6 +32,14 @@ from .models import (
     MonthlyUtilityExpense,
     UserProfile,
     Location,
+    Customer,
+    CustomerAddress,
+    Order,
+    OrderItem,
+    Dish,
+    OrderSource,
+    PromoCode,
+    Country,
 )
 
 
@@ -1239,23 +1251,112 @@ def tilda_webhook(request):
             "error": "POST only"
         })
 
-    print("===== TILDA WEBHOOK =====")
+    country = Country.objects.get(slug="uzbekistan")
 
-    print("POST:")
-    print(request.POST)
+    name = request.POST.get("Name", "").strip()
+    phone = request.POST.get("Phone", "").strip()
+    address = request.POST.get("Адрес_доставки", "").strip()
 
-    print("BODY:")
-    print(request.body)
+    payment_raw = request.POST.get("payment", "{}")
 
     try:
-        body = request.body.decode("utf-8")
+        payment_data = json.loads(payment_raw)
+    except Exception:
+        payment_data = {}
 
-        print("BODY DECODED:")
-        print(body)
+    subtotal_amount = Decimal(payment_data.get("subtotal") or "0")
+    total_amount = Decimal(payment_data.get("amount") or "0")
+    discount_amount = Decimal(payment_data.get("discount") or "0")
+    promocode_value = payment_data.get("promocode") or ""
 
-    except Exception as e:
-        print(e)
+    customer, created = Customer.objects.get_or_create(
+        country=country,
+        phone=phone,
+        defaults={
+            "name": name or phone,
+        }
+    )
+
+    customer.name = name or customer.name
+    customer.save()
+
+    if address:
+        CustomerAddress.objects.get_or_create(
+            customer=customer,
+            address=address,
+            defaults={
+                "is_default": not customer.addresses.exists(),
+            }
+        )
+
+    source, created = OrderSource.objects.get_or_create(
+        country=country,
+        name="Сайт",
+        defaults={
+            "is_active": True,
+        }
+    )
+
+    promo_code = None
+
+    if promocode_value:
+        promo_code = PromoCode.objects.filter(
+            country=country,
+            code=promocode_value
+        ).first()
+
+    order = Order.objects.create(
+        country=country,
+        customer=customer,
+        source=source,
+        promo_code=promo_code,
+        order_date=timezone.now(),
+
+        customer_name=name,
+        customer_phone=phone,
+        customer_telegram="",
+
+        delivery_address=address,
+        cashier_comment="Заказ с сайта Tilda",
+
+        subtotal_amount=subtotal_amount,
+        discount_amount=discount_amount,
+        delivery_amount=0,
+        total_amount=total_amount,
+    )
+
+    products = payment_data.get("products") or []
+
+    for product_line in products:
+
+        if "=" not in product_line:
+            continue
+
+        dish_name, price_raw = product_line.rsplit("=", 1)
+
+        dish_name = dish_name.strip()
+        price = Decimal(price_raw or "0")
+
+        dish = Dish.objects.filter(
+            country=country,
+            name__iexact=dish_name
+        ).first()
+
+        if not dish:
+            order.cashier_comment += f"\nНе найдено блюдо: {dish_name}"
+            order.save()
+            continue
+
+        OrderItem.objects.create(
+            order=order,
+            dish=dish,
+            quantity=1,
+            price_snapshot=price,
+            cost_snapshot=dish.calculate_cost(),
+            total_price=price,
+        )
 
     return JsonResponse({
-        "success": True
+        "success": True,
+        "order_id": order.id
     })
