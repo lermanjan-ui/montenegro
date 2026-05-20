@@ -232,6 +232,19 @@ h1{
     color:#111827;
 }
 
+.cancel-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 10px;
+    border-radius:999px;
+    background:#fee2e2;
+    color:#b91c1c;
+    font-size:12px;
+    font-weight:900;
+    margin-top:6px;
+}
+
 .order-time{
     color:#6b7280;
     font-size:14px;
@@ -288,6 +301,14 @@ h1{
     text-align:center;
     color:#6b7280;
     font-size:14px;
+}
+
+.cancelled-row{
+    background:#fef2f2 !important;
+}
+
+.cancelled-row td{
+    color:#b91c1c;
 }
 
 .stat-red .stat-icon{background:#fee2e2;color:#dc2626;}
@@ -545,7 +566,7 @@ h1{
 
                         {% for order in orders %}
 
-                        <div class="order-row">
+                        <div class="{% if order.is_cancelled %}cancelled-row{% endif %}">
 
                             <div>
                                 <div class="order-id">
@@ -579,9 +600,17 @@ h1{
 
                             <div>
 
-                                <div class="order-sum">
-                                    {{ order.total_amount|floatformat:0 }}
-                                </div>
+								<div class="order-sum">
+
+								    {{ order.total_amount|floatformat:0|intcomma }}
+
+								    {% if order.is_cancelled %}
+								        <div class="cancel-badge">
+								            Отменен
+								        </div>
+								    {% endif %}
+
+								</div>
 
                             </div>
 

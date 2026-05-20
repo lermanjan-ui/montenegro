@@ -66,7 +66,7 @@ def order_list(request, country_slug):
         .order_by("-created_at")
     )
 
-    total_orders = orders.count()
+    total_orders = active_orders.count()
     
     active_orders = orders.filter(is_cancelled=False)
     cancelled_orders = orders.filter(is_cancelled=True)
@@ -310,6 +310,10 @@ def order_create(request, country_slug):
         subtotal_amount = Decimal("0")
         
         is_cancelled = bool(request.POST.get("is_cancelled"))
+        
+        if is_cancelled:
+            payment_method = None
+            delivery_provider = None
 
         cancel_reason = None
 
@@ -617,6 +621,10 @@ def order_detail(request, country_slug, order_id):
         order.is_cancelled = bool(
             request.POST.get("is_cancelled")
         )
+        
+        if order.is_cancelled:
+            order.payment_method = None
+            order.delivery_provider = None
 
         cancel_reason_id = request.POST.get("cancel_reason_id")
 
