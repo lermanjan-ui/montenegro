@@ -1,0 +1,332 @@
+{% extends "foodcost/base.html" %}
+{% load humanize %}
+
+{% block title %}Клиенты{% endblock %}
+
+{% block content %}
+
+<style>
+
+.page{
+    max-width:1700px;
+    margin:0 auto;
+}
+
+.topbar{
+    margin-bottom:24px;
+}
+
+h1{
+    margin:0;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-0.03em;
+    color:#111827;
+}
+
+.muted{
+    color:#6b7280;
+    margin-top:8px;
+    font-size:15px;
+}
+
+.card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+    margin-bottom:20px;
+}
+
+.filters{
+    display:grid;
+    grid-template-columns:1fr 180px;
+    gap:14px;
+    align-items:end;
+}
+
+label{
+    display:block;
+    margin-bottom:8px;
+    font-size:13px;
+    font-weight:900;
+    color:#111827;
+}
+
+input{
+    width:100%;
+    padding:14px 16px;
+    border:1px solid #d1d5db;
+    border-radius:14px;
+    box-sizing:border-box;
+    font-size:15px;
+}
+
+input:focus{
+    outline:none;
+    border-color:#111827;
+}
+
+.filter-btn{
+    width:100%;
+    border:0;
+    border-radius:14px;
+    background:#111827;
+    color:white;
+    font-weight:900;
+    font-size:15px;
+    height:52px;
+    cursor:pointer;
+}
+
+.table-wrap{
+    overflow:auto;
+}
+
+.customers-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.customers-table th{
+    text-align:left;
+    padding:16px;
+    font-size:13px;
+    color:#6b7280;
+    font-weight:900;
+    border-bottom:1px solid #eef2f7;
+    white-space:nowrap;
+}
+
+.customers-table td{
+    padding:18px 16px;
+    border-bottom:1px solid #f3f4f6;
+    vertical-align:middle;
+}
+
+.customers-table tr:hover{
+    background:#fafafa;
+}
+
+.customer-name{
+    font-weight:900;
+    color:#111827;
+}
+
+.customer-phone{
+    color:#6b7280;
+    font-size:13px;
+    margin-top:4px;
+}
+
+.sum{
+    font-weight:950;
+    color:#047857;
+}
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+}
+
+.badge-regular{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-problem{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.empty{
+    text-align:center;
+    padding:60px 20px;
+    color:#6b7280;
+    font-weight:800;
+}
+
+@media (max-width:900px){
+
+    .filters{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+<div class="page">
+
+    <div class="topbar">
+
+        <h1>Клиенты</h1>
+
+        <div class="muted">
+            База клиентов
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <form method="get">
+
+            <div class="filters">
+
+                <div>
+
+                    <label>Поиск клиента</label>
+
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Имя или телефон"
+                        value="{{ search }}"
+                    >
+
+                </div>
+
+                <div>
+
+                    <button type="submit" class="filter-btn">
+                        Найти
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="card">
+
+        <div class="table-wrap">
+
+            <table class="customers-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Клиент</th>
+                        <th>Телефон</th>
+                        <th>Заказов</th>
+                        <th>Сумма заказов</th>
+                        <th>Средний чек</th>
+                        <th>Статус</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for customer in customers %}
+
+                        <tr
+                            onclick="window.location.href='/c/{{ country.slug }}/customers/{{ customer.id }}/'"
+                            style="cursor:pointer;"
+                        >
+
+                            <td>
+
+                                <div class="customer-name">
+                                    {{ customer.name|default:"Без имени" }}
+                                </div>
+
+                            </td>
+
+                            <td>
+
+                                <div class="customer-phone">
+                                    {{ customer.phone }}
+                                </div>
+
+                            </td>
+
+                            <td>
+
+                                {{ customer.orders.count }}
+
+                            </td>
+
+                            <td class="sum">
+
+                                {{ customer.total_spent|default:0|floatformat:0|intcomma }}
+
+                            </td>
+
+                            <td>
+
+                                {% if customer.orders.count > 0 %}
+
+                                    {% widthratio customer.total_spent customer.orders.count 1 %}
+
+                                {% else %}
+
+                                    0
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if customer.is_problematic %}
+
+                                    <span class="badge badge-problem">
+                                        Проблемный
+                                    </span>
+
+                                {% elif customer.is_regular %}
+
+                                    <span class="badge badge-regular">
+                                        Постоянный
+                                    </span>
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="6">
+
+                                <div class="empty">
+                                    Клиенты не найдены
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

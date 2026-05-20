@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.db.models import Sum, Count, F
 from django.shortcuts import get_object_or_404
 
+
 from .models import (
     UserProfile,
     Order,
@@ -1191,3 +1192,43 @@ def order_analytics(request, country_slug):
             
         }
     )
+    
+
+
+
+@login_required(login_url="/login/")
+def customer_list(request, country_slug):
+
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_CUSTOMERS
+    )
+
+    if access_error:
+        return access_error
+
+    customers = (
+        Customer.objects
+        .filter(country=country)
+        .annotate(
+            total_spent=Sum("orders__total_amount")
+        )
+        .order_by("name")
+    )
+
+    search = request.GET.get("search", "").strip()
+
+    if search:
+        customers = customers.filter(
+            phone__icontains=search
+        ) | customers.filter(
+            name__icontains=search
+        )
+
+    return render(request, "foodcost/customer_list.html", {
+        "country": country,
+        "customers": customers,
+        "search": search,
+    })

@@ -397,7 +397,10 @@ select:focus{
 
                 <tbody>
 
-                    {% for order in orders %}
+					<tr
+					    onclick="window.location.href='/c/{{ country.slug }}/orders/{{ order.id }}/'"
+					    style="cursor:pointer;"
+					>
 
                         <tr>
 
