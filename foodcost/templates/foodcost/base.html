@@ -107,6 +107,68 @@
             color:var(--green);
             background:#fff;
         }
+		
+		.menu-section{
+		    display:flex;
+		    flex-direction:column;
+		    gap:4px;
+		}
+
+		.menu-title{
+		    display:flex;
+		    align-items:center;
+		    justify-content:space-between;
+		    gap:12px;
+		    padding:12px;
+		    border-radius:14px;
+		    cursor:pointer;
+		    font-weight:950;
+		    color:#111827;
+		    list-style:none;
+		}
+
+		.menu-title::-webkit-details-marker{
+		    display:none;
+		}
+
+		.menu-title:hover{
+		    background:#f9fafb;
+		}
+
+		.menu-title-left{
+		    display:flex;
+		    align-items:center;
+		    gap:12px;
+		}
+
+		.menu-title svg{
+		    width:20px;
+		    height:20px;
+		    stroke:#374151;
+		}
+
+		.menu-arrow{
+		    font-size:14px;
+		    color:#6b7280;
+		}
+
+		.menu-section[open] .menu-arrow{
+		    transform:rotate(180deg);
+		}
+
+		.menu-items{
+		    display:flex;
+		    flex-direction:column;
+		    gap:4px;
+		    padding-left:32px;
+		    margin-bottom:6px;
+		}
+
+		.menu-items .side-link{
+		    padding:9px 12px;
+		    font-size:14px;
+		    font-weight:800;
+		}
 
         .side-nav {
             display:flex;
@@ -401,136 +463,271 @@
 
 		{% if country %}
 
-		    <nav class="side-nav">
-                {% if can_menu_dishes %}
-                    <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}" href="/c/{{ country.slug }}/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg>
-                        Блюда
-                    </a>
-                {% endif %}
+			<nav class="side-nav">
 
-                {% if can_menu_products %}
-                    <a class="side-link {% if '/products/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/products/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M6 7h12l-1 14H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
-                        Продукты
-                    </a>
-                {% endif %}
+			    <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}" href="/c/{{ country.slug }}/">
+			        <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			            <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-9.5Z"/>
+			        </svg>
+			        Главная
+			    </a>
 
-                {% if can_menu_preparations %}
-                    <a class="side-link {% if '/preparations/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/preparations/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M6 4h12v5a6 6 0 0 1-12 0V4Z"/><path d="M8 20h8"/><path d="M12 15v5"/></svg>
-                        Заготовки
-                    </a>
-                {% endif %}
+			    {% if can_menu_orders %}
+			    <details class="menu-section" {% if '/orders/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M6 7h12l-1 13H7L6 7Z"/>
+			                    <path d="M9 7a3 3 0 0 1 6 0"/>
+			                </svg>
+			                Касса
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
 
-                {% if can_menu_employees %}
-                    <a class="side-link {% if '/employees/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/employees/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        Сотрудники
-                    </a>
-                {% endif %}
+			        <div class="menu-items">
+			            <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/orders/' %}active{% endif %}" href="/c/{{ country.slug }}/orders/">
+			                Управление заказами
+			            </a>
+			        </div>
+			    </details>
+			    {% endif %}
 
-                {% if can_menu_packaging %}
-                    <a class="side-link {% if '/packaging/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/packaging/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 7h16v13H4V7Z"/><path d="M8 7a4 4 0 0 1 8 0"/></svg>
-                        Упаковка
-                    </a>
-                {% endif %}
+			    <details class="menu-section" {% if '/writeoffs/' in request.path or '/shift-handover/' in request.path or '/production/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M6 3h12v6a6 6 0 0 1-12 0V3Z"/>
+			                    <path d="M8 21h8"/>
+			                    <path d="M12 15v6"/>
+			                </svg>
+			                Кухня
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
 
-                {% if can_menu_utilities %}
-                    <a class="side-link {% if '/utilities/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/utilities/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M13 2 5 13h6l-1 9 8-12h-6l1-8Z"/></svg>
-                        Коммуналка
-                    </a>
-                {% endif %}
+			        <div class="menu-items">
+			            {% if can_menu_writeoffs %}
+			            <a class="side-link {% if '/writeoffs/' in request.path and '/analytics/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/writeoffs/">
+			                Списания
+			            </a>
+			            {% endif %}
 
-                {% if can_menu_writeoffs %}
-                    <a class="side-link {% if '/writeoffs/' in request.path and '/writeoffs/analytics/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/writeoffs/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M7 3h10l3 5v13H4V8l3-5Z"/><path d="M7 8h13"/><path d="M9 13h6"/></svg>
-                        Списания
-                    </a>
-                {% endif %}
+			            <a class="side-link {% if '/production/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/production/">
+			                Производство
+			            </a>
 
-                {% if can_menu_writeoff_analytics %}
-                    <a class="side-link {% if '/writeoffs/analytics/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/writeoffs/analytics/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/></svg>
-                        Аналитика списаний
-                    </a>
-                {% endif %}
-
-				{% if can_menu_shift_handover %}
-
-				    <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/shift-handover/' %}active{% endif %}" href="/c/{{ country.slug }}/shift-handover/">
-
-				        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M8 7h12"/><path d="m17 4 3 3-3 3"/><path d="M16 17H4"/><path d="m7 14-3 3 3 3"/></svg>
-
-				        Передача смены
-
-				    </a>
-
-				{% endif %}
+			            {% if can_menu_shift_handover %}
+			            <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/shift-handover/' %}active{% endif %}" href="/c/{{ country.slug }}/shift-handover/">
+			                Передача смены
+			            </a>
+			            {% endif %}
+			        </div>
+			    </details>
 				
-				{% if can_menu_settings %}
+				<details class="menu-section" {% if '/customers/' in request.path or '/orders/analytics/' in request.path or '/writeoffs/analytics/' in request.path or '/shift-handover/admin/' in request.path %}open{% endif %}>
+				    <summary class="menu-title">
+				        <span class="menu-title-left">
+				            <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+				                <path d="M16 21v-2a4 4 0 0 0-8 0v2"/>
+				                <circle cx="12" cy="7" r="4"/>
+				                <path d="M20 8v6"/>
+				                <path d="M23 11h-6"/>
+				            </svg>
+				            CRM
+				        </span>
+				        <span class="menu-arrow">⌄</span>
+				    </summary>
 
-				                    <a class="side-link {% if '/settings/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/">
+				    <div class="menu-items">
 
-				                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+				        {% if can_menu_orders %}
+				            <a class="side-link {% if '/customers/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/customers/">
+				                Клиенты
+				            </a>
 
-				                            <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/>
+				            <a class="side-link {% if '/orders/analytics/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/orders/analytics/">
+				                Аналитика заказов
+				            </a>
+				        {% endif %}
 
-				                            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>
+				        {% if can_menu_writeoff_analytics %}
+				            <a class="side-link {% if '/writeoffs/analytics/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/writeoffs/analytics/">
+				                Аналитика списаний
+				            </a>
+				        {% endif %}
 
-				                        </svg>
+				        {% if request.user.profile.role == "admin" or request.user.profile.role == "super_admin" %}
+				            <a class="side-link {% if '/shift-handover/admin/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/shift-handover/admin/">
+				                Передачи смен
+				            </a>
+				        {% endif %}
 
-				                        Настройки
+				    </div>
+				</details>
 
-				                    </a>
+			   
+			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M4 13h16"/>
+			                    <path d="M5 13a7 7 0 0 1 14 0"/>
+			                    <path d="M6 17h12"/>
+			                </svg>
+			                Меню
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
 
-				                {% endif %}
-				
-				{% if can_menu_orders %}
+			        <div class="menu-items">
+			            {% if can_menu_dishes %}
+			            <a class="side-link {% if '/dishes/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dishes/">
+			                Блюда
+			            </a>
 
-				    <a class="side-link {% if '/orders/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/orders/">
+			            <a class="side-link {% if '/dish-categories/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dish-categories/">
+			                Категории блюд
+			            </a>
+			            {% endif %}
 
-				        <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
-				            <path d="M6 7h12l-1 13H7L6 7Z"/>
-				            <path d="M9 7a3 3 0 0 1 6 0"/>
-				        </svg>
+			            {% if can_menu_products %}
+			            <a class="side-link {% if '/products/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/products/">
+			                Продукты
+			            </a>
+			            {% endif %}
 
-				        Заказы
+			            {% if can_menu_preparations %}
+			            <a class="side-link {% if '/preparations/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/preparations/">
+			                Заготовки
+			            </a>
+			            {% endif %}
 
-				    </a>
+			            {% if can_menu_packaging %}
+			            <a class="side-link {% if '/packaging/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/packaging/">
+			                Упаковка
+			            </a>
+			            {% endif %}
+			        </div>
+			    </details>
 
-				{% endif %}
+			    <details class="menu-section" {% if '/purchases/' in request.path or '/suppliers/' in request.path or '/inventory/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M6 6h15l-2 9H8L6 6Z"/>
+			                    <path d="M6 6 5 3H2"/>
+			                    <circle cx="9" cy="20" r="1"/>
+			                    <circle cx="18" cy="20" r="1"/>
+			                </svg>
+			                Закупки
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
 
-				{% if request.user.profile.role == "admin" or request.user.profile.role == "super_admin" %}
+			        <div class="menu-items">
+			            <a class="side-link {% if '/purchases/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/purchases/">
+			                Закупки
+			            </a>
 
-				    <a class="side-link {% if '/shift-handover/admin/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/shift-handover/admin/">
+			            <a class="side-link {% if '/suppliers/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/suppliers/">
+			                Поставщики
+			            </a>
 
-				        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/></svg>
+			            <a class="side-link {% if '/inventory/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/inventory/">
+			                Остатки
+			            </a>
+			        </div>
+			    </details>
 
-				        Передачи смен
+			    <details class="menu-section" {% if '/utilities/' in request.path or '/finance/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M13 2 5 13h6l-1 9 8-12h-6l1-8Z"/>
+			                </svg>
+			                Финансы
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
 
-				    </a>
+			        <div class="menu-items">
+			            {% if can_menu_utilities %}
+			            <a class="side-link {% if '/utilities/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/utilities/">
+			                Коммуналка
+			            </a>
+			            {% endif %}
+			        </div>
+			    </details>
 
-				{% endif %}
-            </nav>
+			    {% if can_menu_employees %}
+			    <details class="menu-section" {% if '/employees/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M16 21v-2a4 4 0 0 0-8 0v2"/>
+			                    <circle cx="12" cy="7" r="4"/>
+			                    <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
+			                    <path d="M4 21v-2a4 4 0 0 1 3-3.87"/>
+			                </svg>
+			                Команда
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
 
-            <div class="sidebar-footer">
-                {% if can_menu_users %}
-                    <a class="side-link {% if '/users/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/users/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
-                        Пользователи
-                    </a>
-                {% endif %}
+			        <div class="menu-items">
+			            <a class="side-link {% if '/employees/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/employees/">
+			                Сотрудники
+			            </a>
+			        </div>
+			    </details>
+			    {% endif %}
 
-                {% if can_switch_country %}
-                    <a class="side-link" href="/">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M3 12h18"/><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/></svg>
-                        Сменить страну
-                    </a>
-                {% endif %}
-            </div>
+			    <details class="menu-section" {% if '/settings/' in request.path or '/users/' in request.path or '/orders/all/' in request.path or '/orders/analytics/' in request.path or '/shift-handover/admin/' in request.path or '/writeoffs/analytics/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/>
+			                    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>
+			                </svg>
+			                Админка
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
+
+			        <div class="menu-items">
+			            {% if can_menu_users %}
+			            <a class="side-link {% if '/users/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/users/">
+			                Пользователи
+			            </a>
+			            {% endif %}
+
+			            {% if can_menu_settings %}
+			            <a class="side-link {% if '/settings/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/">
+			                Настройки
+			            </a>
+			            {% endif %}
+
+			          
+
+						{% if request.user.profile.role == "admin" or request.user.profile.role == "super_admin" %}
+						{% endif %}
+
+						{% if request.user.is_superuser %}
+			            <a class="side-link {% if '/orders/all/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/orders/all/">
+			                Все заказы
+			            </a>
+
+			            <a class="side-link" href="/admin/">
+			                Django admin
+			            </a>
+			            {% endif %}
+			        </div>
+			    </details>
+
+			</nav>
+
+            
         {% else %}
             <nav class="side-nav">
                 <a class="side-link" href="/">Страны</a>
