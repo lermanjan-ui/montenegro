@@ -51,6 +51,10 @@ def settings_page(request, country_slug):
             OrderSource.objects.create(
                 country=country,
                 name=request.POST.get("name", "").strip(),
+
+                commission_percent=clean_decimal(
+                    request.POST.get("commission_percent")
+                ),
             )
 
         if action == "delete_order_source":
@@ -119,6 +123,25 @@ def settings_page(request, country_slug):
                 id=request.POST.get("item_id"),
                 country=country,
             )
+            
+            if action == "update_order_source":
+
+                item = get_object_or_404(
+                    OrderSource,
+                    id=request.POST.get("item_id"),
+                    country=country
+                )
+
+                item.name = request.POST.get(
+                    "name",
+                    ""
+                ).strip()
+
+                item.commission_percent = clean_decimal(
+                    request.POST.get("commission_percent")
+                )
+
+                item.save()
 
             item.name = request.POST.get("name", "").strip()
             item.save()

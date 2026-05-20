@@ -890,6 +890,12 @@ class OrderSource(models.Model):
     is_active = models.BooleanField(
         default=True
     )
+    
+    commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
 
     def __str__(self):
         return self.name
@@ -1082,6 +1088,18 @@ class Order(models.Model):
         null=True,
         blank=True,
         related_name="created_orders"
+    )
+    
+    commission_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    net_revenue = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
     )
 
     order_date = models.DateTimeField()

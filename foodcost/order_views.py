@@ -409,10 +409,23 @@ def order_create(request, country_slug):
             subtotal_amount
             - discount_amount
         )
+        
+        commission_amount = Decimal("0")
+
+        if source:
+            commission_amount = (
+                total_amount
+                * source.commission_percent
+                / Decimal("100")
+            )
+
+        net_revenue = total_amount - commission_amount
 
         order.subtotal_amount = subtotal_amount
         order.discount_amount = discount_amount
         order.total_amount = total_amount
+        order.commission_amount = commission_amount
+        order.net_revenue = net_revenue
         order.save()
 
         delivery_address = request.POST.get(
@@ -691,10 +704,23 @@ def order_detail(request, country_slug, order_id):
             subtotal_amount
             - discount_amount
         )
+        
+        commission_amount = Decimal("0")
+
+        if source:
+            commission_amount = (
+                total_amount
+                * source.commission_percent
+                / Decimal("100")
+            )
+
+        net_revenue = total_amount - commission_amount
 
         order.subtotal_amount = subtotal_amount
         order.discount_amount = discount_amount
         order.total_amount = total_amount
+        order.commission_amount = commission_amount
+        order.net_revenue = net_revenue
 
         if request.user.is_superuser:
 
