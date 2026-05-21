@@ -513,9 +513,7 @@
 			            </a>
 			            {% endif %}
 
-			            <a class="side-link {% if '/production/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/production/">
-			                Производство
-			            </a>
+			           
 
 			            {% if can_menu_shift_handover %}
 			            <a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/shift-handover/' %}active{% endif %}" href="/c/{{ country.slug }}/shift-handover/">
@@ -524,6 +522,8 @@
 			            {% endif %}
 			        </div>
 			    </details>
+				
+				{% if can_menu_orders or can_menu_writeoff_analytics %}
 				
 				<details class="menu-section" {% if '/customers/' in request.path or '/orders/analytics/' in request.path or '/writeoffs/analytics/' in request.path or '/shift-handover/admin/' in request.path %}open{% endif %}>
 				    <summary class="menu-title">
@@ -566,6 +566,7 @@
 				    </div>
 				</details>
 
+			   {% endif %}
 			   
 			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
@@ -610,6 +611,8 @@
 			            {% endif %}
 			        </div>
 			    </details>
+				
+				{% if can_menu_purchases or can_menu_suppliers or can_menu_inventory %}
 
 			    <details class="menu-section" {% if '/purchases/' in request.path or '/suppliers/' in request.path or '/inventory/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
@@ -639,6 +642,10 @@
 			            </a>
 			        </div>
 			    </details>
+				
+				{% endif %}
+				
+				{% if can_menu_utilities %}
 
 			    <details class="menu-section" {% if '/utilities/' in request.path or '/finance/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
@@ -659,6 +666,8 @@
 			            {% endif %}
 			        </div>
 			    </details>
+				
+				{% endif %}
 
 			    {% if can_menu_employees %}
 			    <details class="menu-section" {% if '/employees/' in request.path %}open{% endif %}>
