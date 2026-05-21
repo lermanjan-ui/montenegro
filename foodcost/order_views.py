@@ -66,10 +66,11 @@ def order_list(request, country_slug):
         .order_by("-created_at")
     )
 
-    total_orders = active_orders.count()
-    
     active_orders = orders.filter(is_cancelled=False)
+
     cancelled_orders = orders.filter(is_cancelled=True)
+
+    total_orders = active_orders.count()
 
     total_revenue = sum(
 
