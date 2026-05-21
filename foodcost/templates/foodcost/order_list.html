@@ -566,7 +566,7 @@ h1{
 
                         {% for order in orders %}
 
-                        <div class="{% if order.is_cancelled %}cancelled-row{% endif %}">
+                        <div class="order-row {% if order.is_cancelled %}cancelled-row{% endif %}">
 
                             <div>
                                 <div class="order-id">
