@@ -496,6 +496,13 @@ class UserProfile(models.Model):
     SECTION_ORDERS = "orders"
     SECTION_SETTINGS = "settings"
     SECTION_CUSTOMERS = "customers"
+    SECTION_ORDER_ANALYTICS = "order_analytics"
+    SECTION_ALL_ORDERS = "all_orders"
+    SECTION_SHIFT_HANDOVER_ADMIN = "shift_handover_admin"
+    SECTION_PURCHASES = "purchases"
+    SECTION_SUPPLIERS = "suppliers"
+    SECTION_INVENTORY = "inventory"
+    SECTION_FINANCE = "finance"
 
     SECTION_CHOICES = [
         (SECTION_DISHES, "Блюда"),
@@ -511,6 +518,13 @@ class UserProfile(models.Model):
         (SECTION_ORDERS, "Заказы"),
         (SECTION_SETTINGS, "Настройки"),
         (SECTION_CUSTOMERS, "Клиенты"),
+        (SECTION_ORDER_ANALYTICS, "Аналитика заказов"),
+        (SECTION_ALL_ORDERS, "Все заказы"),
+        (SECTION_SHIFT_HANDOVER_ADMIN, "Передачи смен"),
+        (SECTION_PURCHASES, "Закупки"),
+        (SECTION_SUPPLIERS, "Поставщики"),
+        (SECTION_INVENTORY, "Остатки"),
+        (SECTION_FINANCE, "Финансы"),
     ]
 
     user = models.OneToOneField(
@@ -1145,6 +1159,12 @@ class Order(models.Model):
     )
 
     delivery_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+    
+    customer_delivery_amount = models.DecimalField(
         max_digits=14,
         decimal_places=2,
         default=0

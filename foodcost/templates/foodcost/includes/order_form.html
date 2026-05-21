@@ -271,23 +271,53 @@
                     <div class="summary-value" id="summary-discount">0</div>
                 </div>
 
-			  <div class="summary-row">
-			      <div>
-			          <div class="summary-label">Итого по заказу</div>
-			          <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-			              Без учета доставки
-			          </div>
-			      </div>
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Итого по еде</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             После скидки
+			         </div>
+			     </div>
 
-			      <div class="summary-value summary-total" id="summary-total">0</div>
-			  </div>
+			     <div class="summary-value" id="summary-food-total">0</div>
+			 </div>
 
-				<div class="summary-row">
-				    <div class="summary-label">Доставка</div>
-				    <div class="summary-value" id="summary-delivery">
-				        {{ order.delivery_amount|default:0|floatformat:0 }}
-				    </div>
-				</div>
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Доставка клиента</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             15 000 до 150 000 на сайте
+			         </div>
+			     </div>
+
+			     <div class="summary-value" id="summary-customer-delivery">
+			         {{ order.customer_delivery_amount|default:0|floatformat:0 }}
+			     </div>
+			 </div>
+
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Расход на доставку</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             Вводит кассир
+			         </div>
+			     </div>
+
+			     <div class="summary-value" id="summary-delivery">
+			         {{ order.delivery_amount|default:0|floatformat:0 }}
+			     </div>
+			 </div>
+
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Итого к оплате</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             Еда + доставка клиента
+			         </div>
+			     </div>
+
+			     <div class="summary-value summary-total" id="summary-total">0</div>
+			 </div>
             </div>
 
             <button type="submit" class="save-btn">

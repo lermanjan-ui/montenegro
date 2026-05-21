@@ -40,4 +40,13 @@ def menu_context(request):
         "can_menu_shift_handover": user_has_section(request.user, UserProfile.SECTION_SHIFT_HANDOVER),
         "can_menu_orders": user_has_section(request.user, UserProfile.SECTION_ORDERS),
         "can_menu_settings": user_has_section(request.user, UserProfile.SECTION_SETTINGS),
+        
+        "can_menu_customers": user_has_section(request.user, UserProfile.SECTION_CUSTOMERS),
+        "can_menu_order_analytics": user_has_section(request.user, UserProfile.SECTION_ORDER_ANALYTICS),
+        "can_menu_all_orders": user_has_section(request.user, UserProfile.SECTION_ALL_ORDERS),
+        "can_menu_shift_handover_admin": user_has_section(request.user, UserProfile.SECTION_SHIFT_HANDOVER_ADMIN),
+        "can_menu_purchases": user_has_section(request.user, UserProfile.SECTION_PURCHASES),
+        "can_menu_suppliers": user_has_section(request.user, UserProfile.SECTION_SUPPLIERS),
+        "can_menu_inventory": user_has_section(request.user, UserProfile.SECTION_INVENTORY),
+        "can_menu_finance": user_has_section(request.user, UserProfile.SECTION_FINANCE),
     }

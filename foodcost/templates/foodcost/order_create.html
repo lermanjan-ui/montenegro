@@ -335,6 +335,7 @@ textarea{
 
 <script>
 	function updateOrderTotals() {
+
 	    let subtotal = 0;
 
 	    document.querySelectorAll(".order-item").forEach(row => {
@@ -383,7 +384,19 @@ textarea{
 	    }
 
 	    const discount = subtotal * discountPercent / 100;
-	    const total = subtotal - discount;
+
+	    // ЕДА ПОСЛЕ СКИДКИ
+	    const foodTotal = subtotal - discount;
+
+	    // ОПЛАТА ДОСТАВКИ КЛИЕНТОМ
+	    let customerDelivery = 0;
+
+	    if (foodTotal < 150000) {
+	        customerDelivery = 15000;
+	    }
+
+	    // ИТОГ ДЛЯ КЛИЕНТА
+	    const total = foodTotal + customerDelivery;
 
 	    document.getElementById("summary-subtotal").innerText =
 	        subtotal.toLocaleString("ru-RU", {
@@ -395,13 +408,27 @@ textarea{
 	            maximumFractionDigits: 0
 	        });
 
-	    document.getElementById("summary-total").innerText =
-	        total.toLocaleString("ru-RU", {
+	    // ИТОГО ПО ЕДЕ
+	    document.getElementById("summary-food-total").innerText =
+	        foodTotal.toLocaleString("ru-RU", {
 	            maximumFractionDigits: 0
 	        });
 
+	    // ДОСТАВКА КЛИЕНТА
+	    document.getElementById("summary-customer-delivery").innerText =
+	        customerDelivery.toLocaleString("ru-RU", {
+	            maximumFractionDigits: 0
+	        });
+
+	    // РАСХОД НА ДОСТАВКУ
 	    document.getElementById("summary-delivery").innerText =
 	        delivery.toLocaleString("ru-RU", {
+	            maximumFractionDigits: 0
+	        });
+
+	    // ИТОГО К ОПЛАТЕ
+	    document.getElementById("summary-total").innerText =
+	        total.toLocaleString("ru-RU", {
 	            maximumFractionDigits: 0
 	        });
 	}

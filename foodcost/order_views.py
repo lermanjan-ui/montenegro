@@ -406,10 +406,15 @@ def order_create(request, country_slug):
                 / Decimal("100")
             )
 
-        total_amount = (
-            subtotal_amount
-            - discount_amount
-        )
+        food_total = subtotal_amount - discount_amount
+
+        customer_delivery_amount = Decimal("0")
+
+        if source and source.name.lower() == "сайт":
+            if food_total > 0 and food_total < Decimal("150000"):
+                customer_delivery_amount = Decimal("15000")
+
+        total_amount = food_total + customer_delivery_amount
         
         commission_amount = Decimal("0")
 
@@ -427,6 +432,7 @@ def order_create(request, country_slug):
         order.total_amount = total_amount
         order.commission_amount = commission_amount
         order.net_revenue = net_revenue
+        order.customer_delivery_amount = customer_delivery_amount
         order.save()
 
         delivery_address = request.POST.get(
@@ -701,10 +707,15 @@ def order_detail(request, country_slug, order_id):
                 / Decimal("100")
             )
 
-        total_amount = (
-            subtotal_amount
-            - discount_amount
-        )
+        food_total = subtotal_amount - discount_amount
+
+        customer_delivery_amount = Decimal("0")
+
+        if source and source.name.lower() == "сайт":
+            if food_total > 0 and food_total < Decimal("150000"):
+                customer_delivery_amount = Decimal("15000")
+
+        total_amount = food_total + customer_delivery_amount
         
         commission_amount = Decimal("0")
 
@@ -745,7 +756,8 @@ def order_detail(request, country_slug, order_id):
 
                 except:
                     pass
-
+                    
+        order.customer_delivery_amount = customer_delivery_amount
         order.save()
         
         delivery_address = request.POST.get(
