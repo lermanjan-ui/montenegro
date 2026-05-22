@@ -327,7 +327,7 @@ button:hover{
                             <div>
                                 <div class="item-name">{{ item.name }}</div>
                                 <div class="item-meta">
-                                    Комиссия: {{ item.commission_percent|floatformat:2 }}%
+                                    Комиссия: {{ item.commission_percent|floatformat:-2 }}%
                                 </div>
                             </div>
 
@@ -368,7 +368,7 @@ button:hover{
                                 name="commission_percent"
                                 type="number"
                                 step="0.01"
-                                value="{{ item.commission_percent|floatformat:2 }}"
+                                value="{{ item.commission_percent|floatformat:-2 }}"
                             >
 
                             <button type="submit">Сохранить</button>

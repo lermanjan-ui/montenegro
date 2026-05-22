@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from decimal import Decimal
 
 from .models import (
     UserProfile,
@@ -16,6 +17,15 @@ from .views import (
     require_section_access,
 )
 
+
+def clean_decimal(value):
+    if value is None or value == "":
+        return Decimal("0")
+
+    try:
+        return Decimal(str(value).replace(",", "."))
+    except Exception:
+        return Decimal("0")
 
 @login_required(login_url="/login/")
 def settings_page(request, country_slug):
@@ -118,33 +128,41 @@ def settings_page(request, country_slug):
                 )
 
         if action == "update_category":
+
             item = get_object_or_404(
                 DishCategory,
                 id=request.POST.get("item_id"),
                 country=country,
             )
-            
-            if action == "update_order_source":
 
-                item = get_object_or_404(
-                    OrderSource,
-                    id=request.POST.get("item_id"),
-                    country=country
-                )
+            item.name = request.POST.get(
+                "name",
+                ""
+            ).strip()
 
-                item.name = request.POST.get(
-                    "name",
-                    ""
-                ).strip()
-
-                item.commission_percent = clean_decimal(
-                    request.POST.get("commission_percent")
-                )
-
-                item.save()
-
-            item.name = request.POST.get("name", "").strip()
             item.save()
+
+
+        if action == "update_order_source":
+
+            item = get_object_or_404(
+                OrderSource,
+                id=request.POST.get("item_id"),
+                country=country
+            )
+
+            item.name = request.POST.get(
+                "name",
+                ""
+            ).strip()
+
+            item.commission_percent = clean_decimal(
+                request.POST.get("commission_percent")
+            )
+
+            item.save()
+
+      
 
         if action == "delete_category":
             item = get_object_or_404(
