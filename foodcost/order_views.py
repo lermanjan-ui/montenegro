@@ -433,8 +433,10 @@ def order_create(request, country_slug):
         commission_amount = Decimal("0")
 
         if source:
+            commission_base = food_total
+
             commission_amount = (
-                total_amount
+                commission_base
                 * source.commission_percent
                 / Decimal("100")
             )
@@ -747,8 +749,10 @@ def order_detail(request, country_slug, order_id):
         commission_amount = Decimal("0")
 
         if source:
+            commission_base = food_total
+
             commission_amount = (
-                total_amount
+                commission_base
                 * source.commission_percent
                 / Decimal("100")
             )
@@ -1156,13 +1160,32 @@ def order_analytics(request, country_slug):
     if total_orders > 0:
         cancel_percent = cancelled_orders_count / total_orders * 100
 
-    cash_total = sum(
-        order.total_amount
-        for order in active_orders
-        if order.payment_method and order.payment_method.is_cash
-    )
+    cash_total = Decimal("0")
+    bank_total = Decimal("0")
 
-    bank_total = gross_revenue - cash_total
+    for order in active_orders:
+
+        order_food_total = (
+            order.subtotal_amount
+            - order.discount_amount
+        )
+
+        order_commission = Decimal("0")
+
+        if order.source:
+            order_commission = (
+                order_food_total
+                * order.source.commission_percent
+                / Decimal("100")
+            )
+
+        if order.payment_method and order.payment_method.is_cash:
+            cash_total += order.total_amount
+        else:
+            if order.source and order.source.commission_percent > 0:
+                bank_total += order.total_amount - order_commission
+            else:
+                bank_total += order.total_amount
 
     customer_ids = set(
         active_orders
@@ -1268,13 +1291,32 @@ def order_analytics(request, country_slug):
                 location_revenue / location_active_orders.count()
             )
 
-        location_cash = sum(
-            order.total_amount
-            for order in location_active_orders
-            if order.payment_method and order.payment_method.is_cash
-        )
+        location_cash = Decimal("0")
+        location_bank = Decimal("0")
 
-        location_bank = location_revenue - location_cash
+        for order in location_active_orders:
+
+            order_food_total = (
+                order.subtotal_amount
+                - order.discount_amount
+            )
+
+            order_commission = Decimal("0")
+
+            if order.source:
+                order_commission = (
+                    order_food_total
+                    * order.source.commission_percent
+                    / Decimal("100")
+                )
+
+            if order.payment_method and order.payment_method.is_cash:
+                location_cash += order.total_amount
+            else:
+                if order.source and order.source.commission_percent > 0:
+                    location_bank += order.total_amount - order_commission
+                else:
+                    location_bank += order.total_amount
 
         location_customer_ids = set(
             location_active_orders
