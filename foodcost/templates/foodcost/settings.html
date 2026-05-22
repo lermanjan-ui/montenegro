@@ -316,6 +316,25 @@ button:hover{
                     placeholder="Комиссия %"
                     value="0"
                 >
+				
+				<select name="default_payment_method_id">
+
+				    <option value="">
+				        Авто не выбирать
+				    </option>
+
+				    {% for method in payment_methods %}
+
+				        <option
+				            value="{{ method.id }}"
+				            {% if item.default_payment_method_id == method.id %}selected{% endif %}
+				        >
+				            {{ method.name }}
+				        </option>
+
+				    {% endfor %}
+
+				</select>
 
                 <button type="submit">Добавить</button>
             </form>

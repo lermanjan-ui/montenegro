@@ -65,6 +65,11 @@ def settings_page(request, country_slug):
                 commission_percent=clean_decimal(
                     request.POST.get("commission_percent")
                 ),
+                
+                default_payment_method=PaymentMethod.objects.filter(
+                    id=request.POST.get("default_payment_method_id"),
+                    country=country
+                ).first(),
             )
 
         if action == "delete_order_source":
@@ -159,6 +164,18 @@ def settings_page(request, country_slug):
             item.commission_percent = clean_decimal(
                 request.POST.get("commission_percent")
             )
+            
+            payment_method_id = request.POST.get(
+                "default_payment_method_id"
+            )
+
+            if payment_method_id:
+                item.default_payment_method = PaymentMethod.objects.filter(
+                    id=payment_method_id,
+                    country=country
+                ).first()
+            else:
+                item.default_payment_method = None
 
             item.save()
 

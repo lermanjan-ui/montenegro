@@ -687,8 +687,47 @@ function setupCustomerLookup() {
 	
 }
 
+function setupSourceAutomation() {
+    const sourceSelect = document.getElementById("source-select");
+    const paymentSelect = document.getElementById("payment-method-select");
+    const deliverySelect = document.getElementById("delivery-provider-select");
+
+    if (!sourceSelect || !paymentSelect || !deliverySelect) return;
+
+    function updateSourceRules() {
+        const option = sourceSelect.selectedOptions[0];
+
+        const commission = parseFloat(
+            option.dataset.commission || 0
+        );
+
+        const paymentId = option.dataset.payment || "";
+
+        if (commission > 0) {
+            deliverySelect.disabled = true;
+            deliverySelect.value = "";
+
+            if (paymentId) {
+                paymentSelect.value = paymentId;
+            }
+
+            paymentSelect.disabled = true;
+        } else {
+            deliverySelect.disabled = false;
+            paymentSelect.disabled = false;
+        }
+
+        updateOrderTotals();
+    }
+
+    sourceSelect.addEventListener("change", updateSourceRules);
+
+    updateSourceRules();
+}
+
 setupCustomerLookup();
 setupDishSearch();
+setupSourceAutomation();
 updateOrderTotals();
 </script>
 

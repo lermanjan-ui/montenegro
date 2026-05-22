@@ -910,6 +910,14 @@ class OrderSource(models.Model):
         decimal_places=2,
         default=0
     )
+    
+    default_payment_method = models.ForeignKey(
+        "PaymentMethod",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="source_payment_methods",
+    )
 
     def __str__(self):
         return self.name
