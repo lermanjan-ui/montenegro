@@ -425,18 +425,30 @@ textarea{
 	    }
 
 	    const discount = subtotal * discountPercent / 100;
-
-	    // ЕДА ПОСЛЕ СКИДКИ
 	    const foodTotal = subtotal - discount;
 
-	    // ОПЛАТА ДОСТАВКИ КЛИЕНТОМ
 	    let customerDelivery = 0;
 
-	    if (foodTotal < 150000) {
+	    const freeCustomerDeliveryCheckbox =
+	        document.getElementById("free-customer-delivery");
+
+	    const sourceSelect = document.querySelector(
+	        'select[name="source_id"]'
+	    );
+
+	    const sourceName = sourceSelect
+	        ? sourceSelect.options[sourceSelect.selectedIndex].text.toLowerCase()
+	        : "";
+
+	    if (
+	        !freeCustomerDeliveryCheckbox?.checked &&
+	        sourceName.includes("сайт") &&
+	        foodTotal > 0 &&
+	        foodTotal < 150000
+	    ) {
 	        customerDelivery = 15000;
 	    }
 
-	    // ИТОГ ДЛЯ КЛИЕНТА
 	    const total = foodTotal + customerDelivery;
 
 	    document.getElementById("summary-subtotal").innerText =
@@ -449,25 +461,21 @@ textarea{
 	            maximumFractionDigits: 0
 	        });
 
-	    // ИТОГО ПО ЕДЕ
 	    document.getElementById("summary-food-total").innerText =
 	        foodTotal.toLocaleString("ru-RU", {
 	            maximumFractionDigits: 0
 	        });
 
-	    // ДОСТАВКА КЛИЕНТА
 	    document.getElementById("summary-customer-delivery").innerText =
 	        customerDelivery.toLocaleString("ru-RU", {
 	            maximumFractionDigits: 0
 	        });
 
-	    // РАСХОД НА ДОСТАВКУ
 	    document.getElementById("summary-delivery").innerText =
 	        delivery.toLocaleString("ru-RU", {
 	            maximumFractionDigits: 0
 	        });
 
-	    // ИТОГО К ОПЛАТЕ
 	    document.getElementById("summary-total").innerText =
 	        total.toLocaleString("ru-RU", {
 	            maximumFractionDigits: 0
@@ -593,7 +601,9 @@ document.addEventListener("input", function (e) {
 document.addEventListener("change", function (e) {
     if (
         e.target.id === "promo-code-select" ||
-        e.target.name === "promo_code_id"
+        e.target.id === "free-customer-delivery" ||
+        e.target.name === "promo_code_id" ||
+        e.target.name === "source_id"
     ) {
         updateOrderTotals();
     }

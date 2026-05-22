@@ -103,6 +103,30 @@
 	                   value="{% if order %}{{ order.delivery_amount|floatformat:0 }}{% else %}0{% endif %}"
 	               >
 	           </div>
+			   <label
+			       style="
+			           display:flex;
+			           align-items:center;
+			           gap:12px;
+			           margin-top:28px;
+			           padding:12px 14px;
+			           border:1px solid #e5e7eb;
+			           border-radius:14px;
+			           cursor:pointer;
+			       "
+			   >
+			       <input
+			           type="checkbox"
+			           id="free-customer-delivery"
+					   name="free_customer_delivery"
+			           style="width:18px;height:18px;"
+					   {% if order.free_customer_delivery %}checked{% endif %}
+			       >
+
+			       <span style="font-weight:900;font-size:14px;">
+			           Клиент не оплачивает доставку
+			       </span>
+			   </label>
 
 	           <div>
 	               <label>Промокод</label>

@@ -1169,6 +1169,12 @@ class Order(models.Model):
         decimal_places=2,
         default=0
     )
+    
+    free_customer_delivery = models.BooleanField(
+
+        default=False
+
+    )
 
     total_amount = models.DecimalField(
         max_digits=14,
