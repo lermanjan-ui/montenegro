@@ -22,6 +22,7 @@ from .models import (
     PromoCode,
     OrderCancelReason,
     WriteOff,
+    FinancialExpense,
 )
 
 from .views import (
@@ -1068,11 +1069,55 @@ def order_analytics(request, country_slug):
     )
 
     labor_cost = Decimal("0")
-    rent_cost = Decimal("0")
-    utilities_cost = Decimal("0")
-    marketing_cost = Decimal("0")
     tax_cost = Decimal("0")
-    other_expenses = Decimal("0")
+
+    rent_cost = (
+        FinancialExpense.objects
+        .filter(
+            country=country,
+            expense_type=FinancialExpense.EXPENSE_RENT,
+            expense_date__gte=date_from,
+            expense_date__lte=date_to,
+        )
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    utilities_cost = (
+        FinancialExpense.objects
+        .filter(
+            country=country,
+            expense_type=FinancialExpense.EXPENSE_UTILITIES,
+            expense_date__gte=date_from,
+            expense_date__lte=date_to,
+        )
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    marketing_cost = (
+        FinancialExpense.objects
+        .filter(
+            country=country,
+            expense_type=FinancialExpense.EXPENSE_MARKETING,
+            expense_date__gte=date_from,
+            expense_date__lte=date_to,
+        )
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    other_expenses = (
+        FinancialExpense.objects
+        .filter(
+            country=country,
+            expense_type=FinancialExpense.EXPENSE_OTHER,
+            expense_date__gte=date_from,
+            expense_date__lte=date_to,
+        )
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
 
     operating_expenses = (
         labor_cost

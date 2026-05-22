@@ -601,9 +601,9 @@
 
 			        <div class="menu-items">
 			            {% if can_menu_dishes %}
-			            <a class="side-link {% if '/dishes/' in request.path %}active{% endif %}" href="href="/c/{{ country.slug }}/"">
-			                Блюда
-			            </a>
+						<a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}" href="/c/{{ country.slug }}/">
+						    Блюда
+						</a>
 
 			            <a class="side-link {% if '/dish-categories/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dish-categories/">
 			                Категории блюд

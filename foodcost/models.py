@@ -1259,4 +1259,61 @@ class OrderItem(models.Model):
 
         return f"Позиция #{self.id}"
         
+        
+        
+class FinancialExpense(models.Model):
+
+    EXPENSE_RENT = "rent"
+    EXPENSE_UTILITIES = "utilities"
+    EXPENSE_MARKETING = "marketing"
+    EXPENSE_OTHER = "other"
+
+    EXPENSE_TYPES = [
+        (EXPENSE_RENT, "Аренда"),
+        (EXPENSE_UTILITIES, "Коммуналка"),
+        (EXPENSE_MARKETING, "Реклама"),
+        (EXPENSE_OTHER, "Прочее"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="financial_expenses"
+    )
+
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.CASCADE,
+        related_name="financial_expenses",
+        null=True,
+        blank=True
+    )
+
+    expense_type = models.CharField(
+        max_length=30,
+        choices=EXPENSE_TYPES
+    )
+
+    name = models.CharField(
+        max_length=255
+    )
+
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0
+    )
+
+    expense_date = models.DateField()
+
+    comment = models.TextField(
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.name} - {self.amount}"
    

@@ -27,6 +27,7 @@ from .models import (
     Order,
     OrderItem,
     PaymentMethod,
+    FinancialExpense,
 )
 
 
@@ -220,3 +221,4 @@ admin.site.register(DeliveryProvider)
 admin.site.register(PromoCode)
 admin.site.register(Order)
 admin.site.register(OrderItem)
+admin.site.register(FinancialExpense)
