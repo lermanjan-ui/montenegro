@@ -1033,7 +1033,16 @@ def order_analytics(request, country_slug):
     subtotal_revenue = sum(order.subtotal_amount for order in active_orders)
     discount_loss = sum(order.discount_amount for order in active_orders)
 
-    commission_total = sum(order.commission_amount for order in active_orders)
+    commission_total = Decimal("0")
+
+    for order in active_orders:
+        if order.source:
+            commission_total += (
+                order.total_amount
+                * order.source.commission_percent
+                / Decimal("100")
+            )
+
     net_revenue = gross_revenue - commission_total
 
     customer_delivery_total = sum(
@@ -1193,7 +1202,16 @@ def order_analytics(request, country_slug):
         location_cancelled_orders = location_orders.filter(is_cancelled=True)
 
         location_revenue = sum(order.total_amount for order in location_active_orders)
-        location_commission = sum(order.commission_amount for order in location_active_orders)
+        location_commission = Decimal("0")
+
+        for order in location_active_orders:
+            if order.source:
+                location_commission += (
+                    order.total_amount
+                    * order.source.commission_percent
+                    / Decimal("100")
+                )
+
         location_net_revenue = location_revenue - location_commission
 
         location_customer_delivery = sum(
@@ -1349,7 +1367,14 @@ def order_analytics(request, country_slug):
         source_orders = active_orders.filter(source=source)
 
         source_revenue = sum(order.total_amount for order in source_orders)
-        source_commission = sum(order.commission_amount for order in source_orders)
+        source_commission = Decimal("0")
+
+        for order in source_orders:
+            source_commission += (
+                order.total_amount
+                * source.commission_percent
+                / Decimal("100")
+            )
 
         source_summary.append({
             "name": source.name,
