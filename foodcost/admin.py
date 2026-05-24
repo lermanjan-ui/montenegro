@@ -28,6 +28,18 @@ from .models import (
     OrderItem,
     PaymentMethod,
     FinancialExpense,
+    EmployeeShift,
+    EmployeePenaltyType,
+    EmployeePenalty,
+    EmployeePayment,
+    # 🌐 Public website models (Part 1)
+    DishAvailability,
+    AddonGroup,
+    AddonItem,
+    DishAddonGroup,
+    CategoryAddonGroup,
+    DeliveryZone,
+    CustomerFavorite,
 )
 
 
@@ -222,3 +234,91 @@ admin.site.register(PromoCode)
 admin.site.register(Order)
 admin.site.register(OrderItem)
 admin.site.register(FinancialExpense)
+admin.site.register(EmployeeShift)
+admin.site.register(EmployeePenaltyType)
+admin.site.register(EmployeePenalty)
+admin.site.register(EmployeePayment)
+
+
+# =========================
+# 🌐 PUBLIC WEBSITE MODELS (Part 1)
+# =========================
+
+@admin.register(DishAvailability)
+class DishAvailabilityAdmin(admin.ModelAdmin):
+    list_display = (
+        "dish",
+        "location",
+        "is_available",
+        "is_stop_list",
+        "updated_at",
+    )
+    list_filter = (
+        "country",
+        "location",
+        "is_available",
+        "is_stop_list",
+    )
+    search_fields = ("dish__name", "location__name")
+    autocomplete_fields = ("dish",)
+
+
+@admin.register(AddonGroup)
+class AddonGroupAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "country",
+        "is_active",
+        "sort_order",
+    )
+    list_filter = ("country", "is_active")
+    search_fields = ("name", "code")
+
+
+@admin.register(AddonItem)
+class AddonItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "group",
+        "price",
+        "is_available",
+        "sort_order",
+    )
+    list_filter = ("country", "group", "is_available")
+    search_fields = ("name",)
+
+
+@admin.register(DishAddonGroup)
+class DishAddonGroupAdmin(admin.ModelAdmin):
+    list_display = ("dish", "group")
+    list_filter = ("group",)
+    search_fields = ("dish__name", "group__name")
+    autocomplete_fields = ("dish",)
+
+
+@admin.register(CategoryAddonGroup)
+class CategoryAddonGroupAdmin(admin.ModelAdmin):
+    list_display = ("category", "group")
+    list_filter = ("group",)
+    search_fields = ("category__name", "group__name")
+
+
+@admin.register(DeliveryZone)
+class DeliveryZoneAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "location",
+        "delivery_price",
+        "free_delivery_threshold",
+        "is_active",
+    )
+    list_filter = ("country", "location", "is_active")
+    search_fields = ("name", "location__name")
+
+
+@admin.register(CustomerFavorite)
+class CustomerFavoriteAdmin(admin.ModelAdmin):
+    list_display = ("customer", "dish", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("customer__name", "customer__phone", "dish__name")
+    autocomplete_fields = ("dish",)

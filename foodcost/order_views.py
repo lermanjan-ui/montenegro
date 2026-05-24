@@ -298,6 +298,13 @@ def order_create(request, country_slug):
                 id=request.POST.get("payment_method_id"),
                 country=country
             )
+            
+        if source and source.commission_percent > 0:
+
+            delivery_provider = None
+
+            if source.default_payment_method:
+                payment_method = source.default_payment_method
 
         if request.POST.get("promo_code_id"):
             promo_code = get_object_or_404(
@@ -612,6 +619,13 @@ def order_detail(request, country_slug, order_id):
                 id=request.POST.get("payment_method_id"),
                 country=country
             )
+            
+        if source and source.commission_percent > 0:
+
+            delivery_provider = None
+
+            if source.default_payment_method:
+                payment_method = source.default_payment_method
 
         if request.POST.get("promo_code_id"):
             promo_code = get_object_or_404(

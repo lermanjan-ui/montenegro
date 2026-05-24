@@ -1,9 +1,11 @@
 from django.urls import path
 from . import views
+from . import views_employees
 from . import order_views
 from . import views_settings
 from . import writeoff_views
 from . import shift_views
+from . import public_api
 
 
 urlpatterns = [
@@ -36,7 +38,7 @@ urlpatterns = [
     path("c/<slug:country_slug>/preparations/<int:prep_id>/", views.preparation_detail, name="preparation_detail"),
 
     # сотрудники
-    path("c/<slug:country_slug>/employees/", views.employee_list, name="employee_list"),
+    path("c/<slug:country_slug>/employees/", views_employees.employee_list, name="employee_list"),
 
     # упаковка
     path("c/<slug:country_slug>/packaging/", views.packaging_list, name="packaging_list"),
@@ -136,4 +138,33 @@ urlpatterns = [
 
     # live расчёт
     path("c/<slug:country_slug>/live-calculate/", views.live_calculate, name="live_calculate"),
+
+    # =========================================================================
+    # 🌐 PUBLIC API (Part 2) — read-only menu / catalog for the website
+    # =========================================================================
+    path(
+        "api/public/locations",
+        public_api.locations,
+        name="public_locations",
+    ),
+    path(
+        "api/public/categories",
+        public_api.categories,
+        name="public_categories",
+    ),
+    path(
+        "api/public/products",
+        public_api.products,
+        name="public_products",
+    ),
+    path(
+        "api/public/products/<slug:slug>",
+        public_api.product_detail,
+        name="public_product_detail",
+    ),
+    path(
+        "api/public/search",
+        public_api.search,
+        name="public_search",
+    ),
 ]

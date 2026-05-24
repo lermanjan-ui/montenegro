@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.text import slugify
 
 
 # 🌍 СТРАНА
@@ -175,6 +176,33 @@ class DishCategory(models.Model):
 
     name = models.CharField(max_length=255)
 
+    # ===== Public website fields =====
+    public_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    slug = models.SlugField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    photo = models.ImageField(
+        upload_to="categories/",
+        null=True,
+        blank=True
+    )
+
+    is_visible_on_site = models.BooleanField(
+        default=False
+    )
+
+    site_sort_order = models.PositiveIntegerField(
+        default=0
+    )
+
     class Meta:
         verbose_name = "Категория блюда"
         verbose_name_plural = "Категории блюд"
@@ -182,6 +210,14 @@ class DishCategory(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Safe slug auto-generation: only fill if blank, never overwrite.
+        if not self.slug:
+            base = slugify(self.public_name or self.name or "")
+            if base:
+                self.slug = base[:255]
+        super().save(*args, **kwargs)
 
 
 # 🍽 БЛЮДО
@@ -234,8 +270,108 @@ class Dish(models.Model):
         default=0
     )
 
+    # ===== Public website fields =====
+    public_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    slug = models.SlugField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    public_description = models.TextField(
+        blank=True,
+        default=""
+    )
+
+    short_description = models.CharField(
+        max_length=500,
+        blank=True,
+        default=""
+    )
+
+    composition = models.TextField(
+        blank=True,
+        default=""
+    )
+
+    photo = models.ImageField(
+        upload_to="dishes/",
+        null=True,
+        blank=True
+    )
+
+    gallery = models.JSONField(
+        default=list,
+        blank=True
+    )
+
+    public_weight = models.CharField(
+        max_length=100,
+        blank=True,
+        default=""
+    )
+
+    cooking_time = models.CharField(
+        max_length=100,
+        blank=True,
+        default=""
+    )
+
+    badge = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    spice_level = models.CharField(
+        max_length=100,
+        blank=True,
+        default=""
+    )
+
+    is_visible_on_site = models.BooleanField(
+        default=False
+    )
+
+    is_stop_list = models.BooleanField(
+        default=False
+    )
+
+    is_featured = models.BooleanField(
+        default=False
+    )
+
+    is_new = models.BooleanField(
+        default=False
+    )
+
+    is_spicy = models.BooleanField(
+        default=False
+    )
+
+    is_vegetarian = models.BooleanField(
+        default=False
+    )
+
+    site_sort_order = models.PositiveIntegerField(
+        default=0
+    )
+
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Safe slug auto-generation: only fill if blank, never overwrite.
+        if not self.slug:
+            base = slugify(self.public_name or self.name or "")
+            if base:
+                self.slug = base[:255]
+        super().save(*args, **kwargs)
 
     def ingredient_cost(self):
         return (
@@ -369,9 +505,83 @@ class Employee(models.Model):
         blank=True,
     )
 
-    name = models.CharField(max_length=255)
-    monthly_salary = models.DecimalField(max_digits=10, decimal_places=2)
-    monthly_hours = models.DecimalField(max_digits=8, decimal_places=2)
+    name = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+    user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employee_profile"
+    )
+
+    position = models.CharField(
+        max_length=120,
+        blank=True,
+        default=""
+    )
+
+    location = models.ForeignKey(
+        "Location",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employees"
+    )
+
+    hourly_rate_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    shift_fixed_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    
+    shift_rate_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    shift_kpi_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    default_shift_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=12
+    )
+
+    tax_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    monthly_salary = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    monthly_hours = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0
+    )
 
     def __str__(self):
         return self.name
@@ -465,6 +675,61 @@ class Location(models.Model):
     telegram_thread_id = models.BigIntegerField(
         null=True,
         blank=True
+    )
+
+    # ===== Public website fields =====
+    public_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    address = models.CharField(
+        max_length=500,
+        blank=True,
+        default=""
+    )
+
+    phone = models.CharField(
+        max_length=100,
+        blank=True,
+        default=""
+    )
+
+    latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
+    longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
+    working_hours = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    supports_delivery = models.BooleanField(
+        default=True
+    )
+
+    supports_pickup = models.BooleanField(
+        default=True
+    )
+
+    is_visible_on_site = models.BooleanField(
+        default=False
+    )
+
+    site_sort_order = models.PositiveIntegerField(
+        default=0
     )
 
     def __str__(self):
@@ -885,6 +1150,57 @@ class CustomerAddress(models.Model):
         auto_now_add=True
     )
 
+    # ===== Public website fields =====
+    apartment = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    entrance = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    floor = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    intercom = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    landmark = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    courier_comment = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
+    longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
     def __str__(self):
         return self.address
 
@@ -1045,6 +1361,15 @@ class Order(models.Model):
         (STATUS_DONE, "Завершен"),
         (STATUS_CANCELLED, "Отменен"),
     ]
+
+    # ===== Public website constants =====
+    FULFILLMENT_DELIVERY = "delivery"
+    FULFILLMENT_PICKUP = "pickup"
+
+    PAYMENT_STATUS_PENDING = "pending"
+    PAYMENT_STATUS_PAID = "paid"
+    PAYMENT_STATUS_CASH = "cash"
+    PAYMENT_STATUS_FAILED = "failed"
 
     country = models.ForeignKey(
         Country,
@@ -1207,6 +1532,78 @@ class Order(models.Model):
         default=STATUS_NEW
     )
 
+    # ===== Public website fields =====
+    fulfillment_method = models.CharField(
+        max_length=30,
+        default=FULFILLMENT_DELIVERY
+    )
+
+    payment_status = models.CharField(
+        max_length=30,
+        default=PAYMENT_STATUS_PENDING
+    )
+
+    public_order_number = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        db_index=True
+    )
+
+    leave_at_door = models.BooleanField(
+        default=False
+    )
+
+    delivery_apartment = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    delivery_entrance = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    delivery_floor = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    delivery_intercom = models.CharField(
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
+    delivery_landmark = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    courier_comment = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    delivery_latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
+    delivery_longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )
@@ -1325,3 +1722,465 @@ class FinancialExpense(models.Model):
     def __str__(self):
         return f"{self.name} - {self.amount}"
    
+   
+   
+class EmployeeShift(models.Model):
+
+    STATUS_PLANNED = "planned"
+    STATUS_DONE = "done"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_PLANNED, "Запланирована"),
+        (STATUS_DONE, "Отработана"),
+        (STATUS_CANCELLED, "Отменена"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="employee_shifts",
+    )
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="shifts",
+    )
+
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employee_shifts",
+    )
+
+    shift_date = models.DateField()
+
+    hours = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0
+    )
+    
+    planned_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=12
+    )
+
+    actual_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=0
+    )
+
+    kpi_percent = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=100
+    )
+
+    fixed_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    kpi_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    hourly_rate_snapshot = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    tax_percent_snapshot = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PLANNED
+    )
+
+    comment = models.TextField(
+        blank=True,
+        default=""
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def salary_before_penalties(self):
+        base_salary = Decimal("0")
+
+        if self.planned_hours > 0:
+            base_salary = (
+                self.fixed_amount
+                / self.planned_hours
+                * self.actual_hours
+            )
+
+        kpi_salary = (
+            self.kpi_amount
+            * self.kpi_percent
+            / Decimal("100")
+        )
+
+        return base_salary + kpi_salary
+
+    def tax_amount(self):
+        return (
+            self.salary_before_penalties()
+            * self.tax_percent_snapshot
+            / Decimal("100")
+        )
+
+    def total_company_cost(self):
+        return (
+            self.salary_before_penalties()
+            + self.tax_amount()
+        )
+
+    def __str__(self):
+        return f"{self.employee} — {self.shift_date}"
+
+
+class EmployeePenaltyType(models.Model):
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="employee_penalty_types",
+    )
+
+    name = models.CharField(max_length=255)
+
+    default_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class EmployeePenalty(models.Model):
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="penalties",
+    )
+
+    penalty_type = models.ForeignKey(
+        EmployeePenaltyType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="penalties",
+    )
+
+    penalty_date = models.DateField()
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    reason = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    comment = models.TextField(
+        blank=True,
+        default=""
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.employee} — {self.amount}"
+
+
+class EmployeePayment(models.Model):
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="payments",
+    )
+
+    payment_date = models.DateField()
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    comment = models.TextField(
+        blank=True,
+        default=""
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.employee} — {self.amount}"
+
+
+# =============================================================================
+# 🌐 PUBLIC WEBSITE MODELS
+# Added in Part 1 of website API integration.
+# No public API endpoints yet — pure data model layer.
+# =============================================================================
+
+
+# 🚦 ДОСТУПНОСТЬ БЛЮДА ПО ФИЛИАЛАМ (СТОП-ЛИСТ)
+class DishAvailability(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="dish_availabilities"
+    )
+
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="availabilities"
+    )
+
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.CASCADE,
+        related_name="dish_availabilities"
+    )
+
+    is_available = models.BooleanField(default=True)
+    is_stop_list = models.BooleanField(default=False)
+
+    comment = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["location__name", "dish__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["country", "dish", "location"],
+                name="uniq_dish_availability_country_dish_location",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.dish} — {self.location}"
+
+
+# ➕ ГРУППА ДОПОЛНЕНИЙ (АДДОНЫ)
+class AddonGroup(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="addon_groups"
+    )
+
+    name = models.CharField(max_length=255)
+
+    code = models.SlugField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
+# ➕ ПОЗИЦИЯ ДОПОЛНЕНИЯ
+class AddonItem(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="addon_items"
+    )
+
+    group = models.ForeignKey(
+        AddonGroup,
+        on_delete=models.CASCADE,
+        related_name="items"
+    )
+
+    name = models.CharField(max_length=255)
+
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    is_available = models.BooleanField(default=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return f"{self.group.name} — {self.name}"
+
+
+# 🔗 СВЯЗЬ БЛЮДА И ГРУППЫ ДОПОЛНЕНИЙ
+class DishAddonGroup(models.Model):
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="addon_group_links"
+    )
+
+    group = models.ForeignKey(
+        AddonGroup,
+        on_delete=models.CASCADE,
+        related_name="dish_links"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["dish", "group"],
+                name="uniq_dish_addon_group",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.dish} — {self.group}"
+
+
+# 🔗 СВЯЗЬ КАТЕГОРИИ И ГРУППЫ ДОПОЛНЕНИЙ
+class CategoryAddonGroup(models.Model):
+    category = models.ForeignKey(
+        DishCategory,
+        on_delete=models.CASCADE,
+        related_name="addon_group_links"
+    )
+
+    group = models.ForeignKey(
+        AddonGroup,
+        on_delete=models.CASCADE,
+        related_name="category_links"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["category", "group"],
+                name="uniq_category_addon_group",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.category} — {self.group}"
+
+
+# 🚚 ЗОНА ДОСТАВКИ
+class DeliveryZone(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="delivery_zones"
+    )
+
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.CASCADE,
+        related_name="delivery_zones"
+    )
+
+    name = models.CharField(max_length=255)
+
+    delivery_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=15000
+    )
+
+    free_delivery_threshold = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=150000
+    )
+
+    estimated_time = models.CharField(
+        max_length=100,
+        blank=True,
+        default="35–45 мин"
+    )
+
+    radius_km = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["location__name", "name"]
+
+    def __str__(self):
+        return f"{self.location.name} — {self.name}"
+
+
+# ❤️ ИЗБРАННОЕ КЛИЕНТА
+class CustomerFavorite(models.Model):
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="favorites"
+    )
+
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="favorited_by"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["customer", "dish"],
+                name="uniq_customer_favorite_customer_dish",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.customer} — {self.dish}"
