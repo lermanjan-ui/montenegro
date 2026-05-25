@@ -40,6 +40,15 @@ from .models import (
     OrderSource,
     PromoCode,
     Country,
+    # 🌐 Public website models (Part 1)
+    DishAvailability,
+    AddonGroup,
+    AddonItem,
+    DishAddonGroup,
+    CategoryAddonGroup,
+    # 🌐 Website content models (Part 4)
+    DishGalleryImage,
+    DishAddon,
 )
 
 
@@ -295,19 +304,143 @@ def live_calculate(request, country_slug):
 
     return JsonResponse({"cost": round(cost, 2)})
 
-@login_required(login_url="/login/")
-def dish_detail(request, country_slug, dish_id):
-    country = get_country(country_slug, request.user)
 
-    access_error = require_section_access(
-        request.user,
-        UserProfile.SECTION_DISHES
+def compute_dish_permissions(user):
+    """
+    Return a dict of role-based dish-detail permission flags.
+
+    Used by dish_detail to decide which blocks to render and which POST
+    actions are allowed for the current user.
+
+    Flags:
+        can_view_dish_finance       — see cost / margin / foodcost / breakdown
+        can_edit_dish_finance       — edit products / preparations / packaging
+                                      / labor / extras / recalculation
+        can_edit_dish_base          — edit name / category / weight / price /
+                                      cooking minutes (i.e. the 'save' action)
+        can_edit_dish_site          — edit "Information for website" block
+        can_edit_dish_gallery       — upload / sort / delete gallery images
+                                      + change main photo
+        can_edit_dish_addons        — attach / detach addon dishes
+        can_edit_dish_availability  — toggle per-branch availability (cashier-friendly)
+        can_edit_dish_stoplist      — alias of availability, kept for backward
+                                      compatibility with templates / earlier code
+        can_view_tech_card          — see / edit tech card and tech steps
+    """
+    flags = {
+        "can_view_dish_finance": False,
+        "can_edit_dish_finance": False,
+        "can_edit_dish_base": False,
+        "can_edit_dish_site": False,
+        "can_edit_dish_gallery": False,
+        "can_edit_dish_addons": False,
+        "can_edit_dish_availability": False,
+        "can_edit_dish_stoplist": False,
+        "can_view_tech_card": False,
+    }
+
+    # Anonymous (login_required wraps the view but guard anyway)
+    if not user.is_authenticated:
+        return flags
+
+    # Superuser: full access
+    if user.is_superuser:
+        return {k: True for k in flags}
+
+    profile = getattr(user, "profile", None)
+    if profile is None:
+        return flags
+
+    has_dishes = profile.can_access_section(UserProfile.SECTION_DISHES)
+    has_orders = profile.can_access_section(UserProfile.SECTION_ORDERS)
+    has_handover = profile.can_access_section(UserProfile.SECTION_SHIFT_HANDOVER)
+    has_all_orders = profile.can_access_section(UserProfile.SECTION_ALL_ORDERS)
+
+    can_edit_role = profile.can_edit()  # super_admin or admin role
+    is_kitchen = profile.is_kitchen_staff()
+
+    # --- Finance / cost ---
+    if has_dishes:
+        flags["can_view_dish_finance"] = True
+        if can_edit_role:
+            flags["can_edit_dish_finance"] = True
+
+    # --- Base data (name/category/weight/price/cooking_minutes) ---
+    if has_dishes and can_edit_role:
+        flags["can_edit_dish_base"] = True
+
+    # --- Website fields ---
+    if has_dishes and can_edit_role:
+        flags["can_edit_dish_site"] = True
+
+    # --- Gallery & main photo ---
+    if has_dishes and can_edit_role:
+        flags["can_edit_dish_gallery"] = True
+
+    # --- Availability / stop-list per branch ---
+    # Cashiers (SECTION_ORDERS / ALL_ORDERS) and shift staff can toggle stops.
+    # Admins with SECTION_DISHES can too. Kitchen staff also can.
+    availability_allowed = (
+        is_kitchen
+        or has_orders
+        or has_handover
+        or has_all_orders
+        or (has_dishes and can_edit_role)
+    )
+    flags["can_edit_dish_availability"] = availability_allowed
+    flags["can_edit_dish_stoplist"] = availability_allowed  # back-compat alias
+
+    # --- Addons (now: attach/detach Dish-as-addon) ---
+    if has_dishes and can_edit_role:
+        flags["can_edit_dish_addons"] = True
+
+    # --- Tech card ---
+    # Visible to anyone working with the dish (dishes section) and to kitchen.
+    if has_dishes or is_kitchen:
+        flags["can_view_tech_card"] = True
+
+    return flags
+
+
+def user_can_view_dish_page(user):
+    """True iff the user can open the dish detail page at all."""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    profile = getattr(user, "profile", None)
+    if profile is None:
+        return False
+    return (
+        profile.can_access_section(UserProfile.SECTION_DISHES)
+        or profile.can_access_section(UserProfile.SECTION_ORDERS)
+        or profile.can_access_section(UserProfile.SECTION_ALL_ORDERS)
+        or profile.can_access_section(UserProfile.SECTION_SHIFT_HANDOVER)
+        or profile.is_kitchen_staff()
     )
 
-    if access_error:
-        return access_error
+
+@login_required(login_url="/login/")
+def dish_detail(request, country_slug, dish_id):
+    """
+    Unified dish detail page (ERP + website + gallery + addons).
+
+    Access:
+      - Section DISHES: full ERP access (subject to admin role for edits).
+      - Section ORDERS / ALL_ORDERS / SHIFT_HANDOVER / kitchen role:
+        page opens with limited blocks (availability only by default).
+
+    Permissions are computed once by compute_dish_permissions() and passed to
+    the template. Every POST action is gated by the matching flag.
+    """
+    country = get_country(country_slug, request.user)
+
+    if not user_can_view_dish_page(request.user):
+        return HttpResponseForbidden("У вас нет доступа к этому разделу")
 
     dish = get_object_or_404(Dish, id=dish_id, country=country)
+
+    perms = compute_dish_permissions(request.user)
 
     products = Product.objects.filter(country=country)
     preparations = Preparation.objects.filter(country=country)
@@ -316,12 +449,242 @@ def dish_detail(request, country_slug, dish_id):
     tech_steps = DishTechStep.objects.filter(dish=dish)
 
     if request.method == "POST":
+        action = request.POST.get("action")
+
+        # =====================================================================
+        # 🌐 Website fields update (does NOT include the photo — separate action)
+        # =====================================================================
+        if action == "update_site":
+            if not perms["can_edit_dish_site"]:
+                return HttpResponseForbidden("Нет прав на редактирование сайта")
+
+            dish.is_visible_on_site = bool(request.POST.get("is_visible_on_site"))
+            dish.is_stop_list = bool(request.POST.get("is_stop_list"))
+            dish.is_featured = bool(request.POST.get("is_featured"))
+            dish.is_new = bool(request.POST.get("is_new"))
+            dish.is_spicy = bool(request.POST.get("is_spicy"))
+            dish.is_vegetarian = bool(request.POST.get("is_vegetarian"))
+
+            dish.public_name = (request.POST.get("public_name") or "").strip()
+            dish.slug = (request.POST.get("slug") or "").strip()
+            dish.short_description = (request.POST.get("short_description") or "").strip()
+            dish.public_description = request.POST.get("public_description") or ""
+            dish.composition = request.POST.get("composition") or ""
+            dish.spice_level = (request.POST.get("spice_level") or "").strip()
+            dish.badge = (request.POST.get("badge") or "").strip()
+
+            try:
+                dish.site_sort_order = int(request.POST.get("site_sort_order") or 0)
+            except (TypeError, ValueError):
+                dish.site_sort_order = 0
+
+            dish.save()
+
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-website")
+
+        # =====================================================================
+        # 🏷 Public categories — add / remove (Part 5)
+        # Multi-select was UX-rejected; users now manage relations one at a time.
+        # =====================================================================
+        if action == "add_public_category":
+            if not perms["can_edit_dish_site"]:
+                return HttpResponseForbidden("Нет прав на категории сайта")
+
+            try:
+                cat_id = int(request.POST.get("category_id") or 0)
+            except (TypeError, ValueError):
+                cat_id = 0
+            if cat_id:
+                cat = DishCategory.objects.filter(
+                    id=cat_id, country=country
+                ).first()
+                if cat is not None:
+                    dish.public_categories.add(cat)
+
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-website")
+
+        if action == "remove_public_category":
+            if not perms["can_edit_dish_site"]:
+                return HttpResponseForbidden("Нет прав на категории сайта")
+
+            try:
+                cat_id = int(request.POST.get("category_id") or 0)
+            except (TypeError, ValueError):
+                cat_id = 0
+            if cat_id:
+                cat = DishCategory.objects.filter(
+                    id=cat_id, country=country
+                ).first()
+                if cat is not None:
+                    # Only remove the relation; never delete the DishCategory itself.
+                    dish.public_categories.remove(cat)
+
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-website")
+
+        # =====================================================================
+        # 🖼 Main photo (Dish.photo) — separate small form
+        # =====================================================================
+        if action == "update_main_photo":
+            if not perms["can_edit_dish_gallery"]:
+                return HttpResponseForbidden("Нет прав на галерею")
+
+            uploaded = request.FILES.get("photo")
+            if uploaded:
+                dish.photo = uploaded
+                dish.save()
+            elif request.POST.get("photo_clear"):
+                if dish.photo:
+                    dish.photo.delete(save=False)
+                dish.photo = None
+                dish.save()
+
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+
+        # =====================================================================
+        # 🖼 Gallery — add / update / delete
+        # =====================================================================
+        if action == "add_gallery_image":
+            if not perms["can_edit_dish_gallery"]:
+                return HttpResponseForbidden("Нет прав на галерею")
+
+            uploaded = request.FILES.get("image")
+            if uploaded:
+                try:
+                    sort_order = int(request.POST.get("sort_order") or 0)
+                except (TypeError, ValueError):
+                    sort_order = 0
+
+                DishGalleryImage.objects.create(
+                    dish=dish,
+                    image=uploaded,
+                    sort_order=sort_order,
+                    alt_text=(request.POST.get("alt_text") or "").strip(),
+                    is_active=True,
+                )
+
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+
+        if action == "update_gallery_image":
+            if not perms["can_edit_dish_gallery"]:
+                return HttpResponseForbidden("Нет прав на галерею")
+
+            image_obj = get_object_or_404(
+                DishGalleryImage,
+                id=request.POST.get("image_id"),
+                dish=dish,
+            )
+
+            try:
+                image_obj.sort_order = int(request.POST.get("sort_order") or 0)
+            except (TypeError, ValueError):
+                image_obj.sort_order = 0
+
+            image_obj.alt_text = (request.POST.get("alt_text") or "").strip()
+            image_obj.is_active = bool(request.POST.get("is_active"))
+
+            # crop_data — accept JSON text; ignore if invalid or empty so the
+            # form still saves and existing crop_data is preserved when the
+            # textarea is left blank.
+            crop_raw = (request.POST.get("crop_data") or "").strip()
+            if crop_raw:
+                try:
+                    image_obj.crop_data = json.loads(crop_raw)
+                except (ValueError, TypeError):
+                    pass
+
+            image_obj.save()
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+
+        if action == "delete_gallery_image":
+            if not perms["can_edit_dish_gallery"]:
+                return HttpResponseForbidden("Нет прав на галерею")
+
+            image_obj = get_object_or_404(
+                DishGalleryImage,
+                id=request.POST.get("image_id"),
+                dish=dish,
+            )
+            if image_obj.image:
+                image_obj.image.delete(save=False)
+            image_obj.delete()
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+
+        # =====================================================================
+        # ➕ Dish-as-addon — attach / detach
+        # =====================================================================
+        if action == "add_dish_addon":
+            if not perms["can_edit_dish_addons"]:
+                return HttpResponseForbidden("Нет прав на дополнения")
+
+            addon_dish_id = request.POST.get("addon_dish_id")
+            if addon_dish_id:
+                addon_dish = Dish.objects.filter(
+                    id=addon_dish_id, country=country
+                ).first()
+                if addon_dish and addon_dish.id != dish.id:
+                    DishAddon.objects.get_or_create(
+                        dish=dish,
+                        addon_dish=addon_dish,
+                        defaults={
+                            "group_name": (request.POST.get("group_name") or "").strip(),
+                            "sort_order": 0,
+                            "is_active": True,
+                        },
+                    )
+
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-addons")
+
+        if action == "delete_dish_addon":
+            if not perms["can_edit_dish_addons"]:
+                return HttpResponseForbidden("Нет прав на дополнения")
+
+            DishAddon.objects.filter(
+                id=request.POST.get("addon_id"),
+                dish=dish,
+            ).delete()
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-addons")
+
+        # =====================================================================
+        # 🚦 Per-branch availability — cashier-friendly, single toggle + comment
+        #
+        # Backward-compatible: also accepts the older "update_stoplist" action
+        # name so any cached forms / external scripts keep working.
+        # =====================================================================
+        if action in ("update_availability", "update_stoplist"):
+            if not perms["can_edit_dish_availability"]:
+                return HttpResponseForbidden("Нет прав на доступность")
+
+            location_id = request.POST.get("location_id")
+            location = get_object_or_404(
+                Location, id=location_id, country=country,
+            )
+
+            availability, _ = DishAvailability.objects.get_or_create(
+                country=country,
+                dish=dish,
+                location=location,
+            )
+
+            is_available = bool(request.POST.get("is_available"))
+            availability.is_available = is_available
+            # Keep the legacy boolean in sync so existing code / migrations
+            # that read `is_stop_list` remain consistent.
+            availability.is_stop_list = not is_available
+            availability.comment = (request.POST.get("comment") or "").strip()
+            availability.save()
+
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-availability")
+
+        # =====================================================================
+        # ⚙ Legacy ERP actions — preserved exactly as before
+        # =====================================================================
         if not user_can_edit(request.user):
             return HttpResponseForbidden("У вас нет прав на редактирование")
 
-        action = request.POST.get("action")
-
         if action == "save":
+            if not perms["can_edit_dish_base"]:
+                return HttpResponseForbidden("Нет прав на основные данные")
+
             dish.name = request.POST.get("name") or dish.name
             dish.final_weight = request.POST.get("final_weight") or 0
             dish.selling_price = request.POST.get("selling_price") or 0
@@ -382,6 +745,8 @@ def dish_detail(request, country_slug, dish_id):
             step.delete()
 
         if action == "add_product":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
 
             item = DishProductItem.objects.create(
@@ -406,6 +771,8 @@ def dish_detail(request, country_slug, dish_id):
                 })
 
         if action == "update_product":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"), dish=dish)
             product = get_object_or_404(Product, id=request.POST.get("product_id"), country=country)
             item.product = product
@@ -414,10 +781,14 @@ def dish_detail(request, country_slug, dish_id):
             item.save()
 
         if action == "delete_product":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishProductItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_preparation":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             preparation_id = request.POST.get("preparation_id")
 
             if not preparation_id:
@@ -451,6 +822,8 @@ def dish_detail(request, country_slug, dish_id):
                 })
 
         if action == "update_preparation":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"), dish=dish)
             preparation = get_object_or_404(Preparation, id=request.POST.get("preparation_id"), country=country)
             item.preparation = preparation
@@ -459,10 +832,14 @@ def dish_detail(request, country_slug, dish_id):
             item.save()
 
         if action == "delete_preparation":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishPreparationItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_packaging":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             packaging_id = request.POST.get("packaging_id")
             quantity = clean_decimal(request.POST.get("quantity"), "1")
 
@@ -489,6 +866,8 @@ def dish_detail(request, country_slug, dish_id):
                     })
 
         if action == "update_packaging":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"), dish=dish)
             packaging = get_object_or_404(Packaging, id=request.POST.get("packaging_id"), country=country)
             item.packaging = packaging
@@ -496,10 +875,14 @@ def dish_detail(request, country_slug, dish_id):
             item.save()
 
         if action == "delete_packaging":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishPackagingItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_labor":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             employee_id = request.POST.get("employee_id")
             minutes = clean_decimal(request.POST.get("minutes"))
 
@@ -526,6 +909,8 @@ def dish_detail(request, country_slug, dish_id):
                     })
 
         if action == "update_labor":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"), dish=dish)
             employee = get_object_or_404(Employee, id=request.POST.get("employee_id"), country=country)
             item.employee = employee
@@ -533,10 +918,14 @@ def dish_detail(request, country_slug, dish_id):
             item.save()
 
         if action == "delete_labor":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishLaborItem, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
         if action == "add_extra":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             comment = request.POST.get("comment")
             cost = clean_decimal(request.POST.get("cost"))
 
@@ -560,12 +949,16 @@ def dish_detail(request, country_slug, dish_id):
                     })
 
         if action == "update_extra":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"), dish=dish)
             item.comment = request.POST.get("comment")
             item.cost = clean_decimal(request.POST.get("cost"))
             item.save()
 
         if action == "delete_extra":
+            if not perms["can_edit_dish_finance"]:
+                return HttpResponseForbidden("Нет прав на финансы блюда")
             item = get_object_or_404(DishAdditionalExpense, id=request.POST.get("item_id"), dish=dish)
             item.delete()
 
@@ -581,20 +974,123 @@ def dish_detail(request, country_slug, dish_id):
 
         return redirect(f"/c/{country.slug}/dish/{dish.id}/")
 
+    # =========================================================================
+    # GET — build display context
+    # =========================================================================
     categories = DishCategory.objects.filter(country=country)
+    all_categories = categories  # alias for the new website multi-select widget
 
-    return render(request, "foodcost/dish_detail.html", {
+    # 🚦 Per-branch availability rows
+    locations_qs = Location.objects.filter(
+        country=country,
+        is_active=True,
+    ).order_by("site_sort_order", "name")
+
+    availability_map = {
+        a.location_id: a
+        for a in DishAvailability.objects.filter(country=country, dish=dish)
+    }
+
+    availability_rows = []
+    for loc in locations_qs:
+        rec = availability_map.get(loc.id)
+        if rec is None:
+            availability_rows.append({
+                "location": loc,
+                "availability": None,
+                "is_available": True,
+                "is_stop_list": False,
+                "comment": "",
+                "updated_at": None,
+            })
+        else:
+            availability_rows.append({
+                "location": loc,
+                "availability": rec,
+                "is_available": bool(rec.is_available),
+                "is_stop_list": bool(rec.is_stop_list),
+                "comment": rec.comment or "",
+                "updated_at": rec.updated_at,
+            })
+
+    # 🖼 Gallery
+    gallery_images = DishGalleryImage.objects.filter(
+        dish=dish
+    ).order_by("sort_order", "id")
+
+    # ➕ Addons (Dish-as-addon)
+    dish_addons = list(
+        DishAddon.objects.filter(dish=dish)
+        .select_related("addon_dish")
+        .order_by("group_name", "sort_order", "id")
+    )
+
+    # Group addons by display group_name for the template.
+    grouped = {}
+    for link in dish_addons:
+        key = (link.group_name or "Дополнительно").strip() or "Дополнительно"
+        grouped.setdefault(key, []).append(link)
+    dish_addons_by_group = sorted(grouped.items(), key=lambda kv: kv[0].lower())
+
+    # Available addon dishes = all other dishes in the same country.
+    available_addon_dishes = Dish.objects.filter(
+        country=country
+    ).exclude(id=dish.id).order_by("name")
+
+    # 🏷 Public categories (Part 5 UX: attached list + remaining for dropdown).
+    attached_public_categories = list(
+        dish.public_categories.all().order_by("site_sort_order", "name")
+    )
+    attached_public_category_ids = {c.id for c in attached_public_categories}
+    available_public_categories = [
+        c for c in categories
+        if c.id not in attached_public_category_ids
+    ]
+
+    # Gallery legacy text (back-compat: dish.gallery JSON of URLs).
+    gallery_text = "\n".join(dish.gallery or []) if isinstance(dish.gallery, list) else ""
+
+    context = {
         "country": country,
         "dish": dish,
         "categories": categories,
+        "all_categories": all_categories,
         "products": products,
         "preparations": preparations,
         "employees": employees,
         "packagings": packagings,
         "tech_steps": tech_steps,
         "can_edit": user_can_edit(request.user),
-    })
-    
+
+        # 🌐 Part 3 context
+        "locations": locations_qs,
+        "availability_rows": availability_rows,
+        "gallery_text": gallery_text,
+
+        # 🌐 Part 4 context
+        "gallery_images": gallery_images,
+        "dish_addons": dish_addons,
+        "dish_addons_by_group": dish_addons_by_group,
+        "available_addon_dishes": available_addon_dishes,
+
+        # 🏷 Part 5 context — category management
+        "attached_public_categories": attached_public_categories,
+        "available_public_categories": available_public_categories,
+
+        # Permission flags
+        "can_view_dish_finance": perms["can_view_dish_finance"],
+        "can_edit_dish_finance": perms["can_edit_dish_finance"],
+        "can_edit_dish_base": perms["can_edit_dish_base"],
+        "can_edit_dish_site": perms["can_edit_dish_site"],
+        "can_edit_dish_gallery": perms["can_edit_dish_gallery"],
+        "can_edit_dish_addons": perms["can_edit_dish_addons"],
+        "can_edit_dish_availability": perms["can_edit_dish_availability"],
+        "can_edit_dish_stoplist": perms["can_edit_dish_stoplist"],  # back-compat
+        "can_view_tech_card": perms["can_view_tech_card"],
+    }
+
+    return render(request, "foodcost/dish_detail.html", context)
+
 @login_required(login_url="/login/")
 def product_list(request, country_slug):
     country = get_country(country_slug, request.user)
@@ -1360,7 +1856,3 @@ def tilda_webhook(request):
         "success": True,
         "order_id": order.id
     })
-    
-    
-    
-    

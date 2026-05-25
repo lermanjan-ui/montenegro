@@ -40,6 +40,9 @@ from .models import (
     CategoryAddonGroup,
     DeliveryZone,
     CustomerFavorite,
+    # 🌐 Website content models (Part 4)
+    DishGalleryImage,
+    DishAddon,
 )
 
 
@@ -322,3 +325,31 @@ class CustomerFavoriteAdmin(admin.ModelAdmin):
     list_filter = ("created_at",)
     search_fields = ("customer__name", "customer__phone", "dish__name")
     autocomplete_fields = ("dish",)
+
+
+# =========================
+# 🌐 WEBSITE CONTENT MODELS (Part 4)
+# =========================
+
+@admin.register(DishGalleryImage)
+class DishGalleryImageAdmin(admin.ModelAdmin):
+    list_display = ("dish", "sort_order", "is_active", "created_at")
+    list_filter = ("is_active", "created_at")
+    search_fields = ("dish__name", "alt_text")
+    autocomplete_fields = ("dish",)
+    list_editable = ("sort_order", "is_active")
+
+
+@admin.register(DishAddon)
+class DishAddonAdmin(admin.ModelAdmin):
+    list_display = (
+        "dish",
+        "addon_dish",
+        "group_name",
+        "is_active",
+        "sort_order",
+    )
+    list_filter = ("is_active", "group_name")
+    search_fields = ("dish__name", "addon_dish__name", "group_name")
+    autocomplete_fields = ("dish", "addon_dish")
+    list_editable = ("group_name", "is_active", "sort_order")

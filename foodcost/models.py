@@ -240,6 +240,14 @@ class Dish(models.Model):
         related_name="dishes"
     )
 
+    # 🌐 Multiple public website categories (one dish can appear in many).
+    # If empty, the public API falls back to the legacy `category` FK above.
+    public_categories = models.ManyToManyField(
+        DishCategory,
+        blank=True,
+        related_name="public_dishes"
+    )
+
     final_weight = models.DecimalField(max_digits=10, decimal_places=3)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)
@@ -2184,3 +2192,84 @@ class CustomerFavorite(models.Model):
 
     def __str__(self):
         return f"{self.customer} — {self.dish}"
+
+
+# =============================================================================
+# 🖼 ГАЛЕРЕЯ БЛЮДА — multiple uploaded images per dish (Part 4)
+# =============================================================================
+class DishGalleryImage(models.Model):
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="gallery_images",
+    )
+
+    image = models.ImageField(upload_to="dishes/gallery/")
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    # Reserved for future crop UI. Free-form JSON so we can store
+    # {"x": 0, "y": 0, "width": 0, "height": 0} or anything similar later.
+    crop_data = models.JSONField(default=dict, blank=True)
+
+    alt_text = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"{self.dish} #{self.id}"
+
+
+# =============================================================================
+# ➕ ДОПОЛНЕНИЕ К БЛЮДУ — addon is itself a Dish (Part 4)
+#
+# Replaces the previous AddonGroup/AddonItem flow for the dish-detail UI.
+# The old AddonGroup / AddonItem / DishAddonGroup / CategoryAddonGroup models
+# are kept in the schema for backward compatibility but are no longer wired
+# into the dish-detail editor or the public_api product detail.
+# =============================================================================
+class DishAddon(models.Model):
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="addon_links",
+    )
+
+    addon_dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="used_as_addon",
+    )
+
+    # Free-form grouping label shown on the public site
+    # (e.g. "Соусы", "Добавить к пицце"). Falls back to "Дополнительно".
+    group_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["group_name", "sort_order", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["dish", "addon_dish"],
+                name="uniq_dish_addon_dish_addon_dish",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.dish} ← {self.addon_dish}"

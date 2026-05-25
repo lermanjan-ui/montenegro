@@ -1,8 +1,6 @@
 """
 🌐 Public Read-Only API for Raccoon.uz website.
 
-Part 2: menu / catalog read endpoints. No auth, GET only.
-
 Endpoints (all under /api/public/):
     GET /api/public/locations
     GET /api/public/categories
@@ -17,6 +15,16 @@ Country awareness:
 
 This module intentionally exposes ONLY website-safe data:
     NO tech_card, NO cost/margin/foodcost, NO supplier/employee data.
+
+Part 4 changes:
+    - Categories use Dish.public_categories (M2M) with fallback to dish.category.
+    - One dish can appear in multiple categories.
+    - Product card weight = final_weight in grams (e.g. "520 г").
+    - Product card cooking_time = cooking_minutes (e.g. "25 мин").
+    - Gallery comes from DishGalleryImage active uploaded images.
+    - Addons come from DishAddon (Dish-as-addon), grouped by group_name.
+      The legacy AddonGroup / AddonItem / DishAddonGroup / CategoryAddonGroup
+      models remain in the schema but are no longer surfaced here.
 """
 
 from decimal import Decimal
@@ -32,9 +40,8 @@ from .models import (
     DishCategory,
     Dish,
     DishAvailability,
-    AddonGroup,
-    DishAddonGroup,
-    CategoryAddonGroup,
+    DishGalleryImage,
+    DishAddon,
 )
 
 
@@ -234,6 +241,32 @@ def _availability_subquery_excluded_dish_ids(country, location):
 
 
 # =============================================================================
+# 🏷 CATEGORY RESOLUTION FOR A DISH
+# =============================================================================
+
+def _dish_public_categories(dish):
+    """
+    Return the categories a dish should appear under on the public site.
+
+    Rule:
+      - If dish.public_categories has entries → use those.
+      - Otherwise fall back to the legacy dish.category FK (single category).
+    Returns a list of DishCategory instances (possibly empty).
+    """
+    public = list(dish.public_categories.all())
+    if public:
+        return public
+    if dish.category_id:
+        return [dish.category]
+    return []
+
+
+def _dish_public_category_ids(dish):
+    """Same as above but only IDs — used for filtering and aggregation."""
+    return [c.id for c in _dish_public_categories(dish)]
+
+
+# =============================================================================
 # 🍽 SERIALIZERS
 # =============================================================================
 
@@ -273,28 +306,74 @@ def serialize_category(request, category, min_price=None):
     }
 
 
-def _dish_weight(dish):
-    """Public weight string; falls back to final_weight formatted."""
-    raw = (dish.public_weight or "").strip()
+def _format_weight(dish):
+    """
+    Public weight string. Priority:
+      1. Explicit dish.public_weight if set.
+      2. Convert final_weight (kg) to grams: 0.520 → "520 г".
+    Returns "" if both are missing.
+    """
+    raw = (getattr(dish, "public_weight", "") or "").strip()
     if raw:
         return raw
-    if dish.final_weight is None:
+    weight_kg = getattr(dish, "final_weight", None)
+    if weight_kg is None:
         return ""
-    # Render Decimal weight without trailing zeros, e.g. 0.520 -> "0.52"
-    value = Decimal(dish.final_weight).normalize()
-    return f"{value} кг"
+    try:
+        grams = int(round(float(weight_kg) * 1000))
+    except (TypeError, ValueError):
+        return ""
+    if grams <= 0:
+        return ""
+    return f"{grams} г"
+
+
+def _format_cooking_time(dish):
+    """
+    Public cooking_time string. Priority:
+      1. Explicit dish.cooking_time if set.
+      2. Format cooking_minutes as "X мин".
+    Returns "" if both are missing.
+    """
+    raw = (getattr(dish, "cooking_time", "") or "").strip()
+    if raw:
+        return raw
+    minutes = getattr(dish, "cooking_minutes", None)
+    if minutes is None:
+        return ""
+    try:
+        minutes_int = int(round(float(minutes)))
+    except (TypeError, ValueError):
+        return ""
+    if minutes_int <= 0:
+        return ""
+    return f"{minutes_int} мин"
+
+
+def _primary_category_for_card(dish):
+    """
+    Pick a single category for the product card's category_id/category_slug
+    fields. Prefer the first public_categories entry; fall back to dish.category.
+    """
+    cats = _dish_public_categories(dish)
+    if cats:
+        return cats[0]
+    return None
 
 
 def serialize_product_card(request, dish, location=None):
-    category = dish.category
+    primary_cat = _primary_category_for_card(dish)
     return {
         "id": dish.id,
-        "category_id": category.id if category else None,
-        "category_slug": (category.slug if (category and category.slug) else ""),
+        "category_id": primary_cat.id if primary_cat else None,
+        "category_slug": (
+            primary_cat.slug if (primary_cat and primary_cat.slug) else ""
+        ),
         "name": _display_name(dish),
         "slug": dish.slug or "",
         "image": _abs_url(request, dish.photo),
-        "weight": _dish_weight(dish),
+        "weight": _format_weight(dish),
+        "cooking_time": _format_cooking_time(dish),
         "price": _to_float(dish.selling_price),
         "old_price": None,
         "badge": dish.badge or "",
@@ -302,80 +381,89 @@ def serialize_product_card(request, dish, location=None):
     }
 
 
-def _serialize_addon_item(item):
+def _serialize_dish_gallery(request, dish):
+    """Return absolute URLs for active gallery images, ordered by sort_order."""
+    images = DishGalleryImage.objects.filter(
+        dish=dish, is_active=True
+    ).order_by("sort_order", "id")
+    out = []
+    for img in images:
+        url = _abs_url(request, img.image)
+        if url:
+            out.append(url)
+    return out
+
+
+def _serialize_addon_entry(request, link, location=None):
+    """Serialize a single DishAddon link as a website-ready addon item."""
+    addon = link.addon_dish
     return {
-        "id": item.id,
-        "name": item.name,
-        "price": _to_float(item.price),
-        "is_available": bool(item.is_available),
+        "id": addon.id,
+        "name": _display_name(addon),
+        "slug": addon.slug or "",
+        "price": _to_float(addon.selling_price),
+        "is_available": is_dish_available(addon, location=location),
     }
 
 
-def _serialize_addon_group(group):
-    items_qs = group.items.all().order_by("sort_order", "name")
-    return {
-        "id": group.id,
-        "name": group.name,
-        "code": group.code or "",
-        "sort_order": int(group.sort_order or 0),
-        "items": [_serialize_addon_item(it) for it in items_qs],
-    }
-
-
-def _collect_dish_addon_groups(dish):
+def _collect_dish_addons(request, dish, location=None):
     """
-    Aggregate addon groups for a dish.
-    Sources:
-      - DishAddonGroup direct links to this dish
-      - CategoryAddonGroup links to dish.category
-    Only active groups are returned, with duplicates removed,
-    ordered by (sort_order, name).
+    Build the addons payload for a product detail.
+
+    Returns a list of groups:
+        [
+          {"name": "Соусы", "items": [ {...}, {...} ]},
+          {"name": "Добавить к пицце", "items": [ ... ]},
+        ]
+    Group label defaults to "Дополнительно" when DishAddon.group_name is empty.
+    Only active links and addon dishes that are themselves visible on site
+    are included (availability per-location is reflected in `is_available`).
     """
-    direct_ids = DishAddonGroup.objects.filter(
-        dish=dish
-    ).values_list("group_id", flat=True)
+    links = (
+        DishAddon.objects.filter(dish=dish, is_active=True)
+        .select_related("addon_dish")
+        .order_by("group_name", "sort_order", "id")
+    )
 
-    category_ids = []
-    if dish.category_id:
-        category_ids = list(
-            CategoryAddonGroup.objects.filter(
-                category_id=dish.category_id,
-            ).values_list("group_id", flat=True)
-        )
+    grouped = {}
+    order = []
+    for link in links:
+        addon = link.addon_dish
+        # Only show addons that are at least visible on site. Per-branch
+        # availability is reflected via is_available on the serialized item.
+        if not getattr(addon, "is_visible_on_site", False):
+            continue
+        if getattr(addon, "is_stop_list", False):
+            continue
 
-    group_ids = set(direct_ids) | set(category_ids)
-    if not group_ids:
-        return []
+        key = (link.group_name or "").strip() or "Дополнительно"
+        if key not in grouped:
+            grouped[key] = []
+            order.append(key)
+        grouped[key].append(_serialize_addon_entry(request, link, location=location))
 
-    groups = AddonGroup.objects.filter(
-        id__in=group_ids,
-        is_active=True,
-        country=dish.country,
-    ).order_by("sort_order", "name")
-
-    return [_serialize_addon_group(g) for g in groups]
+    return [{"name": k, "items": grouped[k]} for k in order]
 
 
 def serialize_product_detail(request, dish, location=None):
-    category = dish.category
-    gallery_raw = dish.gallery or []
-    # gallery is a JSONField default=list; keep it a list of strings.
-    if not isinstance(gallery_raw, list):
-        gallery_raw = []
+    primary_cat = _primary_category_for_card(dish)
 
     return {
         "id": dish.id,
-        "category_id": category.id if category else None,
-        "category_slug": (category.slug if (category and category.slug) else ""),
+        "category_id": primary_cat.id if primary_cat else None,
+        "category_slug": (
+            primary_cat.slug if (primary_cat and primary_cat.slug) else ""
+        ),
+        "category_ids": _dish_public_category_ids(dish),
         "name": _display_name(dish),
         "slug": dish.slug or "",
         "composition": dish.composition or "",
         "short_description": dish.short_description or "",
         "public_description": dish.public_description or "",
         "image": _abs_url(request, dish.photo),
-        "gallery": [str(item) for item in gallery_raw if item],
-        "weight": _dish_weight(dish),
-        "cooking_time": dish.cooking_time or "",
+        "gallery": _serialize_dish_gallery(request, dish),
+        "weight": _format_weight(dish),
+        "cooking_time": _format_cooking_time(dish),
         "spice_level": dish.spice_level or "",
         "price": _to_float(dish.selling_price),
         "old_price": None,
@@ -385,7 +473,7 @@ def serialize_product_detail(request, dish, location=None):
         "is_spicy": bool(dish.is_spicy),
         "is_vegetarian": bool(dish.is_vegetarian),
         "is_available": is_dish_available(dish, location=location),
-        "addons": _collect_dish_addon_groups(dish),
+        "addons": _collect_dish_addons(request, dish, location=location),
         # Reserved for later. Empty for now so the website can render safely.
         "upsell_products": [],
     }
@@ -411,6 +499,37 @@ def _visible_dishes_qs(country, location=None):
         qs = qs.exclude(id__in=excluded)
 
     return qs
+
+
+def _filter_dishes_by_category_slug(qs, category_slug):
+    """
+    Filter a Dish queryset by category slug, matching either:
+      - a category in dish.public_categories, OR
+      - the legacy dish.category FK (only used when public_categories is empty).
+    """
+    if not category_slug:
+        return qs
+
+    # Dishes that have public_categories set AND one of them matches.
+    via_m2m = Q(public_categories__slug=category_slug)
+
+    # Dishes whose legacy category matches AND who have NO public_categories.
+    via_legacy = Q(
+        category__slug=category_slug,
+        public_categories__isnull=True,
+    )
+
+    return qs.filter(via_m2m | via_legacy).distinct()
+
+
+def _dish_ids_in_category(qs, category):
+    """
+    Return the IDs from `qs` that should appear under `category` according to
+    public_categories OR (legacy category fallback when public_categories empty).
+    """
+    via_m2m = Q(public_categories=category)
+    via_legacy = Q(category=category, public_categories__isnull=True)
+    return qs.filter(via_m2m | via_legacy).values_list("id", flat=True).distinct()
 
 
 # =============================================================================
@@ -447,34 +566,35 @@ def categories(request):
         return err
 
     location = _resolve_location(country, request.GET.get("location_id"))
-    # fulfillment_method is accepted as a future-proofing param;
-    # current logic does not branch on it yet.
-    _ = request.GET.get("fulfillment_method")
+    _ = request.GET.get("fulfillment_method")  # reserved
 
     visible_dishes_qs = _visible_dishes_qs(country, location=location)
 
-    # min_price per category among visible+available dishes
-    aggregates = (
-        visible_dishes_qs
-        .values("category_id")
-        .annotate(min_price=Min("selling_price"))
-    )
-    min_price_by_cat = {
-        row["category_id"]: row["min_price"]
-        for row in aggregates
-        if row["category_id"] is not None
-    }
-
+    # Collect public-category presence per category, with min_price.
+    # A category is shown if at least one visible+available dish links to it
+    # via public_categories OR via the legacy category fallback.
     cats_qs = DishCategory.objects.filter(
         country=country,
         is_visible_on_site=True,
-        id__in=min_price_by_cat.keys(),
     ).order_by("site_sort_order", "name")
 
-    result = [
-        serialize_category(request, cat, min_price=min_price_by_cat.get(cat.id))
-        for cat in cats_qs
-    ]
+    result = []
+    for cat in cats_qs:
+        # Compute as a queryset of dishes belonging to this category to
+        # compute min_price safely.
+        dishes_in_cat = visible_dishes_qs.filter(
+            Q(public_categories=cat)
+            | Q(category=cat, public_categories__isnull=True)
+        ).distinct()
+
+        agg = dishes_in_cat.aggregate(min_price=Min("selling_price"))
+        min_price = agg["min_price"]
+
+        if min_price is None:
+            # No dishes link to this category → hide it.
+            continue
+
+        result.append(serialize_category(request, cat, min_price=min_price))
 
     return api_success({"categories": result})
 
@@ -508,9 +628,7 @@ def products(request):
     )
 
     qs = _visible_dishes_qs(country, location=location)
-
-    if category_slug:
-        qs = qs.filter(category__slug=category_slug)
+    qs = _filter_dishes_by_category_slug(qs, category_slug)
 
     if search_term:
         qs = qs.filter(
@@ -520,7 +638,7 @@ def products(request):
             | Q(short_description__icontains=search_term)
         )
 
-    qs = qs.order_by("site_sort_order", "name")
+    qs = qs.order_by("site_sort_order", "name").distinct()
 
     total = qs.count()
     start = (page - 1) * limit
@@ -599,45 +717,37 @@ def search(request):
         | Q(public_name__icontains=query)
         | Q(composition__icontains=query)
         | Q(short_description__icontains=query)
-    ).order_by("site_sort_order", "name")[:MAX_PAGE_LIMIT]
+    ).order_by("site_sort_order", "name").distinct()[:MAX_PAGE_LIMIT]
 
     products_payload = [
         serialize_product_card(request, d, location=location) for d in dishes_qs
     ]
 
     # --- category search ---
-    # Match by name or public_name, restricted to categories that have at
-    # least one visible+available dish.
     visible_dishes_qs = _visible_dishes_qs(country, location=location)
-    category_ids_with_dishes = (
-        visible_dishes_qs
-        .values_list("category_id", flat=True)
-        .distinct()
-    )
 
     cats_qs = DishCategory.objects.filter(
         country=country,
         is_visible_on_site=True,
-        id__in=[cid for cid in category_ids_with_dishes if cid is not None],
     ).filter(
         Q(name__icontains=query) | Q(public_name__icontains=query)
     ).order_by("site_sort_order", "name")
 
-    # min_price for matched categories
-    aggregates = (
-        visible_dishes_qs
-        .filter(category_id__in=cats_qs.values_list("id", flat=True))
-        .values("category_id")
-        .annotate(min_price=Min("selling_price"))
-    )
-    min_price_by_cat = {
-        row["category_id"]: row["min_price"] for row in aggregates
-    }
+    categories_payload = []
+    for cat in cats_qs:
+        dishes_in_cat = visible_dishes_qs.filter(
+            Q(public_categories=cat)
+            | Q(category=cat, public_categories__isnull=True)
+        ).distinct()
 
-    categories_payload = [
-        serialize_category(request, cat, min_price=min_price_by_cat.get(cat.id))
-        for cat in cats_qs
-    ]
+        agg = dishes_in_cat.aggregate(min_price=Min("selling_price"))
+        min_price = agg["min_price"]
+        if min_price is None:
+            continue
+
+        categories_payload.append(
+            serialize_category(request, cat, min_price=min_price)
+        )
 
     return api_success({
         "products": products_payload,

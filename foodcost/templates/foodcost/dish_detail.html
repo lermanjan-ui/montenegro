@@ -602,6 +602,613 @@
 	.extra-add-form {
 	    grid-template-columns: 1.8fr 0.9fr 0.8fr 160px;
 	}
+
+	/* ===== Part 3: dish tabs ===== */
+	.dish-tabs {
+	    display: flex;
+	    gap: 8px;
+	    flex-wrap: wrap;
+	    margin-top: 18px;
+	    border-top: 1px solid #e5e7eb;
+	    padding-top: 14px;
+	}
+
+	.dish-tab {
+	    text-decoration: none;
+	    color: #374151;
+	    background: #f3f4f6;
+	    padding: 9px 14px;
+	    border-radius: 999px;
+	    font-weight: 800;
+	    font-size: 13px;
+	}
+
+	.dish-tab.active,
+	.dish-tab:hover {
+	    background: #111827;
+	    color: white;
+	}
+
+	/* =================================================================== *
+	 * Part 5 — Website-content blocks (Sait / Galereya / Dopolneniya /    *
+	 * Dostupnost). Design tokens follow the project UX/UI Guide v2.       *
+	 * All selectors live inside the .ws scope so they cannot leak to      *
+	 * the rest of the page or to other apps.                              *
+	 * =================================================================== */
+
+	.ws {
+	    /* design tokens — kept local to this scope */
+	    --ws-bg:            #F5F7FB;
+	    --ws-card:          #FFFFFF;
+	    --ws-border:        #E5EAF2;
+	    --ws-border-strong: #DCE3EE;
+	    --ws-primary:       #2563FF;
+	    --ws-primary-hover: #1D4ED8;
+	    --ws-primary-light: #EEF4FF;
+	    --ws-text:          #334155;
+	    --ws-text-primary:  #0F172A;
+	    --ws-text-secondary:#64748B;
+	    --ws-placeholder:   #94A3B8;
+	    --ws-success:       #16A34A;
+	    --ws-danger:        #EF4444;
+	    --ws-warning:       #F59E0B;
+	}
+
+	/* Card override — same visual language as the rest of the page,
+	   but with the design-system tokens and softer radii.                */
+	.ws.card {
+	    background: var(--ws-card);
+	    border: 1px solid var(--ws-border);
+	    border-radius: 20px;
+	    padding: 28px 28px 24px;
+	    margin-bottom: 24px;
+	    box-shadow: none;
+	}
+
+	.ws .ws-section-head {
+	    margin: 0 0 6px;
+	    font-size: 24px;
+	    font-weight: 700;
+	    color: var(--ws-text-primary);
+	    letter-spacing: -0.01em;
+	}
+
+	.ws .ws-section-sub {
+	    margin: 0 0 22px;
+	    color: var(--ws-text-secondary);
+	    font-size: 13px;
+	    font-weight: 400;
+	}
+
+	.ws .ws-subsection {
+	    margin: 0 0 14px;
+	    font-size: 20px;
+	    font-weight: 600;
+	    color: var(--ws-text-primary);
+	}
+
+	.ws .ws-fieldgroup {
+	    border: 1px solid var(--ws-border);
+	    border-radius: 16px;
+	    padding: 22px;
+	    margin-bottom: 18px;
+	    background: var(--ws-card);
+	}
+
+	.ws .ws-fieldgroup-title {
+	    margin: 0 0 18px;
+	    font-size: 16px;
+	    font-weight: 700;
+	    color: var(--ws-text-primary);
+	}
+
+	/* Form labels & inputs */
+	.ws label {
+	    display: block;
+	    color: var(--ws-text-primary);
+	    font-size: 13px;
+	    font-weight: 600;
+	    margin: 0 0 8px;
+	}
+
+	.ws .ws-input,
+	.ws .ws-select,
+	.ws .ws-textarea {
+	    width: 100%;
+	    box-sizing: border-box;
+	    height: 44px;
+	    padding: 0 14px;
+	    border-radius: 12px;
+	    border: 1px solid var(--ws-border-strong);
+	    background: var(--ws-card);
+	    color: var(--ws-text-primary);
+	    font-size: 14px;
+	    font-weight: 400;
+	    line-height: 1.4;
+	    transition: border-color .15s, box-shadow .15s;
+	}
+
+	.ws .ws-textarea {
+	    height: auto;
+	    min-height: 96px;
+	    padding: 12px 14px;
+	    resize: vertical;
+	    line-height: 1.5;
+	}
+
+	.ws .ws-input::placeholder,
+	.ws .ws-textarea::placeholder,
+	.ws .ws-select::placeholder {
+	    color: var(--ws-placeholder);
+	}
+
+	.ws .ws-input:focus,
+	.ws .ws-select:focus,
+	.ws .ws-textarea:focus {
+	    outline: none;
+	    border-color: var(--ws-primary);
+	    box-shadow: 0 0 0 4px rgba(37, 99, 255, 0.10);
+	}
+
+	.ws .ws-select {
+	    appearance: none;
+	    -webkit-appearance: none;
+	    -moz-appearance: none;
+	    cursor: pointer;
+	    padding-right: 40px;
+	    background-image: url("data:image/svg+xml;utf8,<svg fill='none' height='18' viewBox='0 0 20 20' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M5.5 7.5L10 12l4.5-4.5' stroke='%2364748B' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+	    background-repeat: no-repeat;
+	    background-position: right 14px center;
+	}
+
+	.ws .ws-help {
+	    margin: 8px 0 0;
+	    color: var(--ws-text-secondary);
+	    font-size: 12px;
+	    font-weight: 400;
+	    line-height: 1.45;
+	}
+
+	/* Grid layouts */
+	.ws .ws-grid-5 {
+	    display: grid;
+	    grid-template-columns: repeat(5, 1fr);
+	    gap: 16px;
+	}
+
+	.ws .ws-grid-2 {
+	    display: grid;
+	    grid-template-columns: 1fr 1fr;
+	    gap: 16px;
+	}
+
+	.ws .ws-grid-3 {
+	    display: grid;
+	    grid-template-columns: repeat(3, 1fr);
+	    gap: 16px;
+	}
+
+	.ws .ws-grid-add-cat {
+	    display: grid;
+	    grid-template-columns: 1fr auto;
+	    gap: 12px;
+	    align-items: end;
+	}
+
+	.ws .ws-grid-add-addon {
+	    display: grid;
+	    grid-template-columns: 1fr 1fr auto;
+	    gap: 12px;
+	    align-items: end;
+	}
+
+	.ws .ws-row-gap-md { row-gap: 18px; }
+	.ws .ws-mt-18 { margin-top: 18px; }
+
+	@media (max-width: 1100px) {
+	    .ws .ws-grid-5 { grid-template-columns: repeat(2, 1fr); }
+	    .ws .ws-grid-3 { grid-template-columns: 1fr; }
+	    .ws .ws-grid-add-addon { grid-template-columns: 1fr; }
+	    .ws .ws-grid-add-cat   { grid-template-columns: 1fr; }
+	}
+	@media (max-width: 720px) {
+	    .ws .ws-grid-5,
+	    .ws .ws-grid-2 { grid-template-columns: 1fr; }
+	}
+
+	/* Buttons */
+	.ws .ws-btn {
+	    display: inline-flex;
+	    align-items: center;
+	    justify-content: center;
+	    gap: 8px;
+	    height: 44px;
+	    padding: 0 18px;
+	    border-radius: 12px;
+	    font-size: 14px;
+	    font-weight: 600;
+	    cursor: pointer;
+	    border: 1px solid transparent;
+	    transition: background-color .15s, border-color .15s, color .15s;
+	    white-space: nowrap;
+	    text-decoration: none;
+	    line-height: 1;
+	}
+	.ws .ws-btn-primary {
+	    background: var(--ws-primary);
+	    color: #fff;
+	    border-color: var(--ws-primary);
+	}
+	.ws .ws-btn-primary:hover {
+	    background: var(--ws-primary-hover);
+	    border-color: var(--ws-primary-hover);
+	}
+	.ws .ws-btn-secondary {
+	    background: var(--ws-card);
+	    color: var(--ws-text-primary);
+	    border-color: var(--ws-border-strong);
+	}
+	.ws .ws-btn-secondary:hover {
+	    background: var(--ws-primary-light);
+	    border-color: var(--ws-primary);
+	    color: var(--ws-primary);
+	}
+	.ws .ws-btn-danger {
+	    background: var(--ws-card);
+	    color: var(--ws-danger);
+	    border-color: #FECACA;
+	}
+	.ws .ws-btn-danger:hover {
+	    background: #FEF2F2;
+	    border-color: var(--ws-danger);
+	}
+	.ws .ws-btn-sm { height: 36px; padding: 0 12px; font-size: 13px; }
+
+	.ws .ws-actions {
+	    display: flex;
+	    justify-content: flex-end;
+	    margin-top: 24px;
+	    padding-top: 22px;
+	    border-top: 1px solid var(--ws-border);
+	}
+
+	/* Checkbox cards (the icon+label boxes in "Показывать на сайте") */
+	.ws .ws-toggle-cards {
+	    display: grid;
+	    grid-template-columns: repeat(6, 1fr);
+	    gap: 12px;
+	}
+	@media (max-width: 1100px) { .ws .ws-toggle-cards { grid-template-columns: repeat(3, 1fr); } }
+	@media (max-width: 720px)  { .ws .ws-toggle-cards { grid-template-columns: repeat(2, 1fr); } }
+
+	.ws .ws-toggle-card {
+	    display: flex;
+	    align-items: center;
+	    gap: 12px;
+	    padding: 14px 14px;
+	    border: 1px solid var(--ws-border-strong);
+	    border-radius: 14px;
+	    background: var(--ws-card);
+	    cursor: pointer;
+	    transition: border-color .15s, background-color .15s;
+	    min-height: 56px;
+	}
+	.ws .ws-toggle-card:hover { border-color: var(--ws-primary); }
+	.ws .ws-toggle-card input[type="checkbox"] {
+	    width: 18px;
+	    height: 18px;
+	    margin: 0;
+	    accent-color: var(--ws-primary);
+	    flex-shrink: 0;
+	}
+	.ws .ws-toggle-card .ws-toggle-icon {
+	    width: 28px;
+	    height: 28px;
+	    display: inline-flex;
+	    align-items: center;
+	    justify-content: center;
+	    color: var(--ws-text);
+	    flex-shrink: 0;
+	}
+	.ws .ws-toggle-card .ws-toggle-label {
+	    color: var(--ws-text-primary);
+	    font-size: 13px;
+	    font-weight: 600;
+	    line-height: 1.25;
+	}
+	.ws .ws-toggle-card.ws-toggle-card-active {
+	    border-color: var(--ws-primary);
+	    background: var(--ws-primary-light);
+	}
+	.ws .ws-toggle-card.ws-toggle-card-active .ws-toggle-icon {
+	    color: var(--ws-primary);
+	}
+
+	/* iOS-style switch (used in availability table) */
+	.ws .ws-switch {
+	    position: relative;
+	    display: inline-block;
+	    width: 44px;
+	    height: 24px;
+	    flex-shrink: 0;
+	}
+	.ws .ws-switch input {
+	    opacity: 0;
+	    width: 0;
+	    height: 0;
+	}
+	.ws .ws-switch-track {
+	    position: absolute;
+	    inset: 0;
+	    background: #CBD5E1;
+	    border-radius: 999px;
+	    cursor: pointer;
+	    transition: background-color .2s;
+	}
+	.ws .ws-switch-track::before {
+	    content: "";
+	    position: absolute;
+	    top: 2px;
+	    left: 2px;
+	    width: 20px;
+	    height: 20px;
+	    background: #fff;
+	    border-radius: 50%;
+	    box-shadow: 0 1px 2px rgba(0,0,0,.18);
+	    transition: transform .2s;
+	}
+	.ws .ws-switch input:checked + .ws-switch-track {
+	    background: var(--ws-primary);
+	}
+	.ws .ws-switch input:checked + .ws-switch-track::before {
+	    transform: translateX(20px);
+	}
+	.ws .ws-switch input:focus-visible + .ws-switch-track {
+	    box-shadow: 0 0 0 4px rgba(37,99,255,0.18);
+	}
+
+	/* Attached pill / row used by categories + addons */
+	.ws .ws-pill-row {
+	    display: flex;
+	    align-items: center;
+	    justify-content: space-between;
+	    gap: 12px;
+	    padding: 12px 16px;
+	    border: 1px solid var(--ws-border);
+	    border-radius: 14px;
+	    background: var(--ws-card);
+	    margin-top: 10px;
+	}
+	.ws .ws-pill-row + .ws-pill-row { margin-top: 8px; }
+	.ws .ws-pill-main {
+	    display: flex;
+	    align-items: center;
+	    gap: 12px;
+	    min-width: 0;
+	    flex: 1;
+	}
+	.ws .ws-pill-name {
+	    font-weight: 600;
+	    color: var(--ws-text-primary);
+	    font-size: 14px;
+	}
+	.ws .ws-pill-sub {
+	    color: var(--ws-text-secondary);
+	    font-size: 12px;
+	    margin-top: 2px;
+	}
+	.ws .ws-pill-actions {
+	    display: flex;
+	    gap: 8px;
+	    align-items: center;
+	    flex-shrink: 0;
+	}
+
+	/* Status badges */
+	.ws .ws-badge {
+	    display: inline-flex;
+	    align-items: center;
+	    gap: 6px;
+	    padding: 4px 10px;
+	    border-radius: 999px;
+	    font-size: 12px;
+	    font-weight: 600;
+	    line-height: 1;
+	    white-space: nowrap;
+	}
+	.ws .ws-badge-success {
+	    background: #DCFCE7;
+	    color: #15803D;
+	}
+	.ws .ws-badge-muted {
+	    background: #F1F5F9;
+	    color: var(--ws-text-secondary);
+	}
+	.ws .ws-badge-warning {
+	    background: #FEF3C7;
+	    color: #92400E;
+	}
+	.ws .ws-badge-danger {
+	    background: #FEE2E2;
+	    color: #991B1B;
+	}
+
+	/* Banner (e.g. global stop-list warning) */
+	.ws .ws-banner {
+	    display: flex;
+	    align-items: center;
+	    gap: 12px;
+	    padding: 14px 16px;
+	    border-radius: 14px;
+	    margin-bottom: 18px;
+	    font-size: 13px;
+	    font-weight: 500;
+	}
+	.ws .ws-banner-warning {
+	    background: #FEF3C7;
+	    color: #78350F;
+	    border: 1px solid #FDE68A;
+	}
+	.ws .ws-banner-info {
+	    background: var(--ws-primary-light);
+	    color: var(--ws-text);
+	    border: 1px solid #DBEAFE;
+	}
+
+	/* Empty / muted hints */
+	.ws .ws-empty {
+	    color: var(--ws-text-secondary);
+	    font-size: 13px;
+	    padding: 14px 0 2px;
+	}
+
+	/* Upload zone — dashed border (matches screenshot) */
+	.ws .ws-upload-zone {
+	    border: 1.5px dashed var(--ws-border-strong);
+	    border-radius: 14px;
+	    background: var(--ws-card);
+	    transition: border-color .15s, background-color .15s;
+	    padding: 18px 18px;
+	    text-align: center;
+	    cursor: pointer;
+	    color: var(--ws-primary);
+	    font-weight: 600;
+	    font-size: 14px;
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	    gap: 10px;
+	    min-height: 64px;
+	}
+	.ws .ws-upload-zone:hover {
+	    border-color: var(--ws-primary);
+	    background: var(--ws-primary-light);
+	}
+	.ws .ws-upload-zone input[type="file"] {
+	    position: absolute;
+	    opacity: 0;
+	    pointer-events: none;
+	    width: 0;
+	    height: 0;
+	}
+	.ws .ws-upload-wrap {
+	    position: relative;
+	}
+	.ws .ws-upload-filename {
+	    margin-top: 8px;
+	    font-size: 12px;
+	    color: var(--ws-text-secondary);
+	}
+	.ws .ws-photo-preview {
+	    margin-bottom: 12px;
+	    display: inline-block;
+	    border: 1px solid var(--ws-border);
+	    border-radius: 14px;
+	    overflow: hidden;
+	    background: var(--ws-bg);
+	}
+	.ws .ws-photo-preview img {
+	    display: block;
+	    max-width: 220px;
+	    max-height: 160px;
+	    object-fit: cover;
+	}
+
+	/* Availability table — header row + data rows */
+	.ws .ws-availability-table {
+	    margin-top: 14px;
+	}
+	.ws .ws-availability-head,
+	.ws .ws-availability-row {
+	    display: grid;
+	    grid-template-columns: 1.4fr 0.9fr 2fr 0.7fr 130px;
+	    gap: 16px;
+	    align-items: center;
+	    padding: 14px 8px;
+	}
+	.ws .ws-availability-head {
+	    color: var(--ws-text-secondary);
+	    font-size: 12px;
+	    font-weight: 600;
+	    text-transform: none;
+	    border-bottom: 1px solid var(--ws-border);
+	    padding-top: 8px;
+	    padding-bottom: 8px;
+	}
+	.ws .ws-availability-row {
+	    border-bottom: 1px solid var(--ws-border);
+	    min-height: 64px;
+	}
+	.ws .ws-availability-row:last-child { border-bottom: 0; }
+	.ws .ws-availability-name {
+	    font-weight: 600;
+	    color: var(--ws-text-primary);
+	    font-size: 14px;
+	}
+	.ws .ws-availability-sub {
+	    color: var(--ws-text-secondary);
+	    font-size: 12px;
+	    margin-top: 2px;
+	}
+	@media (max-width: 900px) {
+	    .ws .ws-availability-head { display: none; }
+	    .ws .ws-availability-row {
+	        grid-template-columns: 1fr;
+	        row-gap: 10px;
+	    }
+	}
+
+	/* Gallery grid */
+	.ws .ws-gallery-grid {
+	    display: grid;
+	    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	    gap: 16px;
+	    margin-top: 14px;
+	}
+	.ws .ws-gallery-item {
+	    border: 1px solid var(--ws-border);
+	    border-radius: 16px;
+	    background: var(--ws-card);
+	    padding: 14px;
+	}
+	.ws .ws-gallery-thumb {
+	    display: block;
+	    width: 100%;
+	    height: 160px;
+	    object-fit: cover;
+	    border-radius: 12px;
+	    border: 1px solid var(--ws-border);
+	    margin-bottom: 12px;
+	    background: var(--ws-bg);
+	}
+	.ws .ws-gallery-item details {
+	    margin: 10px 0;
+	}
+	.ws .ws-gallery-item summary {
+	    cursor: pointer;
+	    font-size: 12px;
+	    font-weight: 600;
+	    color: var(--ws-text-secondary);
+	    list-style: none;
+	}
+	.ws .ws-gallery-item summary::-webkit-details-marker { display: none; }
+	.ws .ws-gallery-item .ws-textarea {
+	    min-height: 60px;
+	    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	    font-size: 12px;
+	    margin-top: 6px;
+	}
+
+	/* Footer line under availability */
+	.ws .ws-footnote {
+	    margin-top: 14px;
+	    color: var(--ws-text-secondary);
+	    font-size: 12px;
+	    display: flex;
+	    align-items: center;
+	    gap: 6px;
+	}
+
 </style>
 
 <div class="page">
@@ -640,6 +1247,7 @@
         <div class="readonly-note">Режим просмотра: редактирование недоступно.</div>
     {% endif %}
 
+    {% if can_view_dish_finance %}
     <div class="summary">
         <div class="metric"><span>Себестоимость</span><b id="summary-cost">{{ dish.calculate_cost|floatformat:2 }}</b></div>
         <div class="metric"><span>Фудкост</span><b id="summary-foodcost">{{ dish.foodcost|floatformat:1 }}</b>%</div>
@@ -647,9 +1255,47 @@
         <div class="metric"><span>Время</span><b>{{ dish.total_cooking_minutes|floatformat:1 }} мин</b></div>
         <div class="metric"><span>Цена</span><b>{{ dish.selling_price|floatformat:2 }}</b></div>
     </div>
+    {% else %}
+    <div class="summary">
+        <div class="metric"><span>Цена</span><b>{{ dish.selling_price|floatformat:2 }}</b></div>
+        {% if dish.public_weight %}
+            <div class="metric"><span>Вес</span><b>{{ dish.public_weight }}</b></div>
+        {% endif %}
+        {% if dish.cooking_time %}
+            <div class="metric"><span>Время</span><b>{{ dish.cooking_time }}</b></div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# 🧭 Tab navigation — sections visible to the current user #}
+    <div class="dish-tabs">
+        {% if can_edit_dish_base or can_view_dish_finance %}
+            <a href="#tab-general" class="dish-tab active" data-tab="tab-general">Общие</a>
+        {% endif %}
+        {% if can_view_dish_finance %}
+            <a href="#tab-cost" class="dish-tab" data-tab="tab-cost">Себестоимость</a>
+            <a href="#tab-ingredients" class="dish-tab" data-tab="tab-ingredients">Ингредиенты</a>
+        {% endif %}
+        {% if can_edit_dish_site %}
+            <a href="#tab-website" class="dish-tab" data-tab="tab-website">Сайт</a>
+        {% endif %}
+        {% if can_edit_dish_gallery %}
+            <a href="#tab-gallery" class="dish-tab" data-tab="tab-gallery">Галерея</a>
+        {% endif %}
+        {% if can_edit_dish_addons %}
+            <a href="#tab-addons" class="dish-tab" data-tab="tab-addons">Дополнения</a>
+        {% endif %}
+        {% if can_edit_dish_availability %}
+            <a href="#tab-availability" class="dish-tab" data-tab="tab-availability">Доступность</a>
+        {% endif %}
+        {% if can_view_tech_card %}
+            <a href="#tab-techcard" class="dish-tab" data-tab="tab-techcard">Техкарта</a>
+        {% endif %}
+    </div>
 </div>
 
-<div class="card">
+{% if can_edit_dish_base or can_view_dish_finance %}
+<div class="card" id="tab-general">
     <h2>Основные данные</h2>
 
     <form method="post">
@@ -659,13 +1305,13 @@
         <div class="main-grid">
             <div>
                 <label>Название</label>
-                <input name="name" value="{{ dish.name }}" {% if not can_edit %}readonly{% endif %}>
+                <input name="name" value="{{ dish.name }}" {% if not can_edit_dish_base %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Категория</label>
 
-                {% if can_edit %}
+                {% if can_edit_dish_base %}
                     <select name="category_id">
                         <option value="">Без категории</option>
                         {% for category in categories %}
@@ -681,21 +1327,21 @@
 
             <div>
                 <label>Выход, кг</label>
-                <input type="text" name="final_weight" value="{{ dish.final_weight }}" {% if not can_edit %}readonly{% endif %}>
+                <input type="text" name="final_weight" value="{{ dish.final_weight }}" {% if not can_edit_dish_base %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Цена продажи</label>
-                <input type="text" name="selling_price" value="{{ dish.selling_price }}" {% if not can_edit %}readonly{% endif %}>
+                <input type="text" name="selling_price" value="{{ dish.selling_price }}" {% if not can_edit_dish_base %}readonly{% endif %}>
             </div>
 
             <div>
                 <label>Время блюда, мин</label>
-                <input type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}" {% if not can_edit %}readonly{% endif %}>
+                <input type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}" {% if not can_edit_dish_base %}readonly{% endif %}>
             </div>
         </div>
 
-        {% if can_edit %}
+        {% if can_edit_dish_base %}
         <div class="category-row">
             <div class="category-help">
                 <strong>Создать новую категорию</strong><br>
@@ -712,20 +1358,24 @@
         </div>
         {% endif %}
 
-		        <div style="margin-top:16px;">
+		        {% if can_view_tech_card %}
+		        <div style="margin-top:16px;" id="tab-techcard">
 		            <label>Общая техкарта / заметки</label>
-		            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача..." {% if not can_edit %}readonly{% endif %}>{{ dish.tech_card }}</textarea>
+		            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача..." {% if not can_edit_dish_base %}readonly{% endif %}>{{ dish.tech_card }}</textarea>
 		        </div>
+		        {% endif %}
 
-		        {% if can_edit %}
+		        {% if can_edit_dish_base %}
 		            <div class="main-save-bottom">
 		                <button type="submit">Сохранить изменения</button>
 		            </div>
 		        {% endif %}
 		    </form>
 		</div>
+{% endif %}
 
-<div class="card">
+{% if can_view_dish_finance %}
+<div class="card" id="tab-cost">
     <h2>Разбор себестоимости</h2>
 
     <div class="table-wrap">
@@ -740,8 +1390,10 @@
         </table>
     </div>
 </div>
+{% endif %}
 
-<div class="card">
+{% if can_view_dish_finance %}
+<div class="card" id="tab-ingredients">
     <h2>Продукты</h2>
 
     <div class="product-grid">
@@ -1138,6 +1790,506 @@
         {% endif %}
     </div>
 </div>
+{% endif %}{# end can_view_dish_finance — covers Cost/Products/Preparations/Packaging/Labor/Extras #}
+
+{# =============================================================== #}
+{# 🌐 САЙТ — Information for website (redesigned, Part 5)          #}
+{# =============================================================== #}
+{% if can_edit_dish_site %}
+<div class="ws card" id="tab-website">
+    <h2 class="ws-section-head">Информация для сайта</h2>
+    <p class="ws-section-sub">Заполните данные, которые будут отображаться на вашем сайте и в поисковых системах.</p>
+
+    {# ---------- Основная информация ---------- #}
+    <div class="ws-fieldgroup">
+        <h3 class="ws-fieldgroup-title">Основная информация</h3>
+
+        <form method="post" id="ws-site-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_site">
+
+            <div class="ws-grid-5 ws-row-gap-md">
+                <div>
+                    <label for="ws-public-name">Публичное название *</label>
+                    <input id="ws-public-name" class="ws-input" type="text"
+                           name="public_name" value="{{ dish.public_name }}"
+                           placeholder="Например: Семейное кафе у парка">
+                    <p class="ws-help">Если пусто — используется обычное название бренда.</p>
+                </div>
+
+                <div>
+                    <label for="ws-slug">Slug (адрес страницы) *</label>
+                    <input id="ws-slug" class="ws-input" type="text"
+                           name="slug" value="{{ dish.slug }}"
+                           placeholder="pizza-pepperoni">
+                    <p class="ws-help">Только латиница, цифры и дефисы.<br>Например: pizza-pepperoni</p>
+                </div>
+
+                <div>
+                    <label for="ws-badge">Бейдж (метка)</label>
+                    <input id="ws-badge" class="ws-input" type="text"
+                           name="badge" value="{{ dish.badge }}"
+                           placeholder="Например: Хит, Новинка…">
+                </div>
+
+                <div>
+                    <label for="ws-spice">Острота</label>
+                    <input id="ws-spice" class="ws-input" type="text"
+                           name="spice_level" value="{{ dish.spice_level }}"
+                           placeholder="🌶 Не острая / Острая">
+                </div>
+
+                <div>
+                    <label for="ws-sort">Порядок сортировки</label>
+                    <input id="ws-sort" class="ws-input" type="number"
+                           name="site_sort_order" value="{{ dish.site_sort_order }}"
+                           min="0" step="1">
+                    <p class="ws-help">Меньше число — выше позиция.</p>
+                </div>
+            </div>
+
+            <p class="ws-help ws-mt-18">
+                Вес и время приготовления берутся из основных данных блюда
+                ({{ dish.final_weight }} кг, {{ dish.cooking_minutes|floatformat:0 }} мин) —
+                задавать отдельно не нужно.
+            </p>
+
+            <div class="ws-mt-18">
+                <label for="ws-short-desc">Краткое описание</label>
+                <input id="ws-short-desc" class="ws-input" type="text"
+                       name="short_description" value="{{ dish.short_description }}"
+                       placeholder="Одной строкой">
+            </div>
+
+            <div class="ws-grid-2 ws-mt-18">
+                <div>
+                    <label for="ws-composition">Состав</label>
+                    <textarea id="ws-composition" class="ws-textarea"
+                              name="composition"
+                              placeholder="Томатный соус, пепперони, моцарелла…">{{ dish.composition }}</textarea>
+                </div>
+                <div>
+                    <label for="ws-full-desc">Полное описание</label>
+                    <textarea id="ws-full-desc" class="ws-textarea"
+                              name="public_description"
+                              placeholder="Подробное описание для карточки блюда">{{ dish.public_description }}</textarea>
+                </div>
+            </div>
+
+            <div class="ws-mt-18">
+                <label>Показывать на сайте</label>
+                <div class="ws-toggle-cards">
+                    <label class="ws-toggle-card{% if dish.is_visible_on_site %} ws-toggle-card-active{% endif %}">
+                        <input type="checkbox" name="is_visible_on_site" value="1" {% if dish.is_visible_on_site %}checked{% endif %}>
+                        <span class="ws-toggle-icon" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </span>
+                        <span class="ws-toggle-label">Показывать<br>на сайте</span>
+                    </label>
+
+                    <label class="ws-toggle-card{% if dish.is_stop_list %} ws-toggle-card-active{% endif %}">
+                        <input type="checkbox" name="is_stop_list" value="1" {% if dish.is_stop_list %}checked{% endif %}>
+                        <span class="ws-toggle-icon" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+                        </span>
+                        <span class="ws-toggle-label">Глобальный<br>стоп-лист</span>
+                    </label>
+
+                    <label class="ws-toggle-card{% if dish.is_featured %} ws-toggle-card-active{% endif %}">
+                        <input type="checkbox" name="is_featured" value="1" {% if dish.is_featured %}checked{% endif %}>
+                        <span class="ws-toggle-icon" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8.5 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 9 8.5 12 2"/></svg>
+                        </span>
+                        <span class="ws-toggle-label">Рекомендуем</span>
+                    </label>
+
+                    <label class="ws-toggle-card{% if dish.is_new %} ws-toggle-card-active{% endif %}">
+                        <input type="checkbox" name="is_new" value="1" {% if dish.is_new %}checked{% endif %}>
+                        <span class="ws-toggle-icon" aria-hidden="true">
+                            <svg width="28" height="22" viewBox="0 0 36 22" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="1" y="3" width="34" height="16" rx="4"/><text x="18" y="15" text-anchor="middle" font-size="9" font-family="Inter, sans-serif" font-weight="700" fill="currentColor" stroke="none">NEW</text></svg>
+                        </span>
+                        <span class="ws-toggle-label">Новинка</span>
+                    </label>
+
+                    <label class="ws-toggle-card{% if dish.is_spicy %} ws-toggle-card-active{% endif %}">
+                        <input type="checkbox" name="is_spicy" value="1" {% if dish.is_spicy %}checked{% endif %}>
+                        <span class="ws-toggle-icon" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5c2.5 0 4 1 5 3"/><path d="M19 9c-1 6-6 11-12 11-2 0-4-1-4-3 0-3 4-5 8-5s5-2 5-5"/></svg>
+                        </span>
+                        <span class="ws-toggle-label">Острое</span>
+                    </label>
+
+                    <label class="ws-toggle-card{% if dish.is_vegetarian %} ws-toggle-card-active{% endif %}">
+                        <input type="checkbox" name="is_vegetarian" value="1" {% if dish.is_vegetarian %}checked{% endif %}>
+                        <span class="ws-toggle-icon" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20c5-1 9-5 10-10 0-3 0-7 0-7s-4 0-7 0c-5 1-9 5-10 10 0 3 0 7 0 7s4 0 7 0Z"/><path d="M3 21l8-8"/></svg>
+                        </span>
+                        <span class="ws-toggle-label">Вегетарианское</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="ws-actions">
+                <button type="submit" class="ws-btn ws-btn-primary">Сохранить информацию для сайта</button>
+            </div>
+        </form>
+    </div>
+
+    {# ---------- Категории на сайте (Part 5 UX fix) ---------- #}
+    <div class="ws-fieldgroup">
+        <h3 class="ws-fieldgroup-title">Категории на сайте</h3>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_public_category">
+
+            <div class="ws-grid-add-cat">
+                <div>
+                    <label for="ws-add-cat">Добавить категорию</label>
+                    <select id="ws-add-cat" class="ws-select" name="category_id" required>
+                        <option value="">Выберите категорию</option>
+                        {% for cat in available_public_categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}{% if not cat.is_visible_on_site %} (скрыта на сайте){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="ws-btn ws-btn-primary">Добавить категорию</button>
+            </div>
+        </form>
+
+        {% if attached_public_categories %}
+            <div style="margin-top: 18px;">
+                {% for cat in attached_public_categories %}
+                    <div class="ws-pill-row">
+                        <div class="ws-pill-main">
+                            <div>
+                                <div class="ws-pill-name">{{ cat.name }}</div>
+                                {% if cat.public_name and cat.public_name != cat.name %}
+                                    <div class="ws-pill-sub">Публичное: {{ cat.public_name }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="ws-pill-actions">
+                            {% if cat.is_visible_on_site %}
+                                <span class="ws-badge ws-badge-success">● Показывается на сайте</span>
+                            {% else %}
+                                <span class="ws-badge ws-badge-muted">● Скрыта на сайте</span>
+                            {% endif %}
+                            <form method="post" style="margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_public_category">
+                                <input type="hidden" name="category_id" value="{{ cat.id }}">
+                                <button type="submit" class="ws-btn ws-btn-danger ws-btn-sm"
+                                        onclick="return confirm('Удалить категорию из блюда? Сама категория останется в системе.')">
+                                    Удалить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="ws-empty">
+                Категории для сайта не выбраны. На сайте используется основная категория блюда
+                {% if dish.category %}— «{{ dish.category.name }}»{% endif %}.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{# =============================================================== #}
+{# 🖼 ФОТО И ГАЛЕРЕЯ                                                #}
+{# =============================================================== #}
+{% if can_edit_dish_gallery %}
+<div class="ws card" id="tab-gallery">
+    <h2 class="ws-section-head">Фото и галерея</h2>
+
+    <div class="ws-grid-2">
+        {# ---------- Главное фото ---------- #}
+        <div>
+            <h3 class="ws-fieldgroup-title" style="margin-bottom:6px;">Главное фото</h3>
+            <p class="ws-help" style="margin-top:0;margin-bottom:14px;">Отображается в карточке блюда и в списках.</p>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_main_photo">
+
+                {% if dish.photo %}
+                    <div class="ws-photo-preview">
+                        <img src="{{ dish.photo.url }}" alt="">
+                    </div>
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:500;margin:6px 0 12px;color:var(--ws-text);font-size:13px;">
+                        <input type="checkbox" name="photo_clear" value="1" style="accent-color: var(--ws-danger);">
+                        Удалить текущее фото
+                    </label>
+                {% endif %}
+
+                <div class="ws-upload-wrap">
+                    <label class="ws-upload-zone" for="ws-main-photo-file">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span id="ws-main-photo-label">Загрузить фото</span>
+                    </label>
+                    <input id="ws-main-photo-file" type="file" name="photo" accept="image/*"
+                           onchange="document.getElementById('ws-main-photo-label').textContent = this.files[0] ? this.files[0].name : 'Загрузить фото';">
+                </div>
+                <p class="ws-help">JPG, PNG или WebP. Рекомендуемый размер — 1200×800 px.</p>
+
+                <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                    <button type="submit" class="ws-btn ws-btn-secondary ws-btn-sm">Сохранить фото</button>
+                </div>
+            </form>
+        </div>
+
+        {# ---------- Галерея изображений ---------- #}
+        <div>
+            <h3 class="ws-fieldgroup-title" style="margin-bottom:6px;">Галерея изображений</h3>
+            <p class="ws-help" style="margin-top:0;margin-bottom:14px;">Дополнительные фото блюда.</p>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_gallery_image">
+
+                <div class="ws-upload-wrap">
+                    <label class="ws-upload-zone" for="ws-gallery-file">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span id="ws-gallery-file-label">Добавить изображения</span>
+                    </label>
+                    <input id="ws-gallery-file" type="file" name="image" accept="image/*" required
+                           onchange="document.getElementById('ws-gallery-file-label').textContent = this.files[0] ? this.files[0].name : 'Добавить изображения';">
+                </div>
+
+                <div class="ws-grid-3" style="margin-top:14px;align-items:end;">
+                    <div>
+                        <label for="ws-gallery-alt">Alt-текст (необязательно)</label>
+                        <input id="ws-gallery-alt" class="ws-input" type="text"
+                               name="alt_text" placeholder="Краткое описание для SEO">
+                    </div>
+                    <div>
+                        <label for="ws-gallery-sort">Порядок</label>
+                        <input id="ws-gallery-sort" class="ws-input" type="number"
+                               name="sort_order" value="0" min="0" step="1">
+                    </div>
+                    <button type="submit" class="ws-btn ws-btn-secondary">Загрузить галерею</button>
+                </div>
+            </form>
+
+            {% if not gallery_images %}
+                <p class="ws-empty">Изображений в галерее пока нет.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if gallery_images %}
+        <div class="ws-gallery-grid">
+            {% for img in gallery_images %}
+                <div class="ws-gallery-item">
+                    {% if img.image %}
+                        <img class="ws-gallery-thumb" src="{{ img.image.url }}" alt="{{ img.alt_text }}">
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_gallery_image">
+                        <input type="hidden" name="image_id" value="{{ img.id }}">
+
+                        <div style="display:grid;grid-template-columns:1fr 80px;gap:8px;margin-bottom:10px;">
+                            <input class="ws-input" type="text" name="alt_text" value="{{ img.alt_text }}" placeholder="Alt-текст" style="height:40px;">
+                            <input class="ws-input" type="number" name="sort_order" value="{{ img.sort_order }}" min="0" step="1" style="height:40px;">
+                        </div>
+
+                        <label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:13px;margin-bottom:10px;color:var(--ws-text);">
+                            <input type="checkbox" name="is_active" value="1" {% if img.is_active %}checked{% endif %} style="accent-color: var(--ws-primary);">
+                            Активно (показывать на сайте)
+                        </label>
+
+                        <details>
+                            <summary>Crop-данные (JSON, опц.)</summary>
+                            <textarea class="ws-textarea" name="crop_data" rows="3"
+                                placeholder='{"x":0,"y":0,"width":100,"height":100}'></textarea>
+                            <p class="ws-help">Зарезервировано для будущего UI обрезки. Текущее значение:
+                                <code style="font-size:11px;">{{ img.crop_data|default_if_none:"" }}</code>.
+                                Оставьте пустым, чтобы не менять.
+                            </p>
+                        </details>
+
+                        <div style="display:flex;gap:8px;margin-top:10px;">
+                            <button type="submit" class="ws-btn ws-btn-secondary ws-btn-sm" style="flex:1;">Сохранить</button>
+                        </div>
+                    </form>
+
+                    <form method="post" style="margin-top:8px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_gallery_image">
+                        <input type="hidden" name="image_id" value="{{ img.id }}">
+                        <button type="submit" class="ws-btn ws-btn-danger ws-btn-sm" style="width:100%;"
+                                onclick="return confirm('Удалить изображение из галереи?')">
+                            Удалить
+                        </button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# =============================================================== #}
+{# ➕ ДОПОЛНЕНИЯ                                                    #}
+{# =============================================================== #}
+{% if can_edit_dish_addons %}
+<div class="ws card" id="tab-addons">
+    <h2 class="ws-section-head">Дополнения</h2>
+    <p class="ws-section-sub">
+        Дополнения — это другие блюда из ЕРП, цена и себестоимость берутся из своей карточки этого блюда; стоимость и доступность работают
+        так же, как у обычного блюда. Сгруппируйте дополнения по папкам (например, «Соусы», «Добавки к пицце») — если оставить пустым,
+        будет «Дополнительно».
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_dish_addon">
+
+        <div class="ws-grid-add-addon">
+            <div>
+                <label for="ws-addon-dish">Блюдо-дополнение</label>
+                <select id="ws-addon-dish" class="ws-select" name="addon_dish_id" required>
+                    <option value="">Выберите блюдо</option>
+                    {% for d in available_addon_dishes %}
+                        <option value="{{ d.id }}">{{ d.name }} — {{ d.selling_price|floatformat:0 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="ws-addon-group">Группа (подпись на сайте)</label>
+                <input id="ws-addon-group" class="ws-input" type="text"
+                       name="group_name" placeholder="Например: Соусы">
+            </div>
+            <button type="submit" class="ws-btn ws-btn-primary">Добавить</button>
+        </div>
+    </form>
+
+    <h3 class="ws-subsection" style="margin-top:24px;font-size:14px;">Прикреплённые дополнения</h3>
+
+    {% if dish_addons_by_group %}
+        {% for group_name, links in dish_addons_by_group %}
+            <div style="margin-bottom:18px;">
+                <div style="font-weight:600;color:var(--ws-text-primary);font-size:13px;margin-bottom:8px;">
+                    {{ group_name }}
+                    <span style="color:var(--ws-text-secondary);font-weight:500;margin-left:6px;">— {{ links|length }} шт</span>
+                </div>
+
+                {% for link in links %}
+                    <div class="ws-pill-row">
+                        <div class="ws-pill-main">
+                            <div>
+                                <div class="ws-pill-name">{{ link.addon_dish.name }}</div>
+                                <div class="ws-pill-sub">Цена: {{ link.addon_dish.selling_price|floatformat:0 }}</div>
+                            </div>
+                        </div>
+                        <div class="ws-pill-actions">
+                            {% if link.addon_dish.is_stop_list %}
+                                <span class="ws-badge ws-badge-danger">В стоп-листе</span>
+                            {% elif not link.addon_dish.is_visible_on_site %}
+                                <span class="ws-badge ws-badge-muted">Скрыто на сайте</span>
+                            {% else %}
+                                <span class="ws-badge ws-badge-success">● На сайте</span>
+                            {% endif %}
+
+                            <a href="/c/{{ country.slug }}/dish/{{ link.addon_dish.id }}/"
+                               class="ws-btn ws-btn-secondary ws-btn-sm">Открыть</a>
+
+                            <form method="post" style="margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_dish_addon">
+                                <input type="hidden" name="addon_id" value="{{ link.id }}">
+                                <button type="submit" class="ws-btn ws-btn-danger ws-btn-sm"
+                                        onclick="return confirm('Открепить дополнение?')">
+                                    Открепить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="ws-empty">Дополнений пока нет. Прикрепите первое сверху.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{# =============================================================== #}
+{# 🚦 ДОСТУПНОСТЬ ПО ФИЛИАЛАМ                                       #}
+{# =============================================================== #}
+{% if can_edit_dish_availability %}
+<div class="ws card" id="tab-availability">
+    <h2 class="ws-section-head">Доступность по филиалам</h2>
+    <p class="ws-section-sub">Один переключатель на филиал: «Доступно» — блюдо показывается и заказывается, выключите — блюдо скрыто на сайте этого филиала.</p>
+
+    {% if dish.is_stop_list %}
+        <div class="ws-banner ws-banner-warning">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Блюдо в глобальном стоп-листе. На сайте будет скрыто на всех филиалах.
+        </div>
+    {% endif %}
+
+    {% if availability_rows %}
+        <div class="ws-availability-table">
+            <div class="ws-availability-head">
+                <div>Филиал</div>
+                <div>Доступно</div>
+                <div>Комментарий (опц.)</div>
+                <div>Без записи</div>
+                <div></div>
+            </div>
+
+            {% for row in availability_rows %}
+                <form method="post" class="ws-availability-row">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_availability">
+                    <input type="hidden" name="location_id" value="{{ row.location.id }}">
+
+                    <div>
+                        <div class="ws-availability-name">{{ row.location.name }}</div>
+                        {% if row.location.public_name and row.location.public_name != row.location.name %}
+                            <div class="ws-availability-sub">{{ row.location.public_name }}</div>
+                        {% endif %}
+                    </div>
+
+                    <label class="ws-switch" title="Доступно">
+                        <input type="checkbox" name="is_available" value="1" {% if row.is_available %}checked{% endif %}>
+                        <span class="ws-switch-track"></span>
+                    </label>
+
+                    <input class="ws-input" type="text" name="comment"
+                           value="{{ row.comment }}"
+                           placeholder="Комментарий (опционально)" style="height:40px;">
+
+                    <div>
+                        {% if row.updated_at %}
+                            <span class="ws-availability-sub" title="Обновлено: {{ row.updated_at|date:'d.m.Y H:i' }}">
+                                {{ row.updated_at|date:"d.m" }}
+                            </span>
+                        {% else %}
+                            <input type="checkbox" checked disabled style="accent-color: var(--ws-text-secondary);">
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="ws-btn ws-btn-secondary ws-btn-sm">Сохранить</button>
+                </form>
+            {% endfor %}
+        </div>
+
+        <p class="ws-footnote">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Изменения применяются сразу после сохранения.
+        </p>
+    {% else %}
+        <p class="ws-empty">В этой стране нет активных филиалов.</p>
+    {% endif %}
+</div>
+{% endif %}
 
 </div>
 
@@ -1298,6 +2450,49 @@ window.addEventListener("load", function() {
 setupDatalistHiddenInputs();
 syncGrossToNet();
 setupLiveCalculation();
+
+// ===== Part 3: dish tabs — visual highlight + smooth scroll =====
+(function setupDishTabs() {
+    const tabs = document.querySelectorAll(".dish-tab");
+    if (!tabs.length) return;
+
+    function activate(tab) {
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+    }
+
+    // Reflect URL hash on load
+    if (window.location.hash) {
+        const match = Array.from(tabs).find(
+            t => "#" + t.dataset.tab === window.location.hash
+        );
+        if (match) activate(match);
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener("click", function(e) {
+            const targetId = tab.dataset.tab;
+            const target = document.getElementById(targetId);
+            if (target) {
+                e.preventDefault();
+                activate(tab);
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+                history.replaceState(null, "", "#" + targetId);
+            }
+        });
+    });
+})();
+
+// ===== Part 5: reactive highlight for the .ws-toggle-card boxes =====
+(function setupToggleCards() {
+    document.querySelectorAll(".ws-toggle-card input[type='checkbox']").forEach(cb => {
+        cb.addEventListener("change", () => {
+            const card = cb.closest(".ws-toggle-card");
+            if (!card) return;
+            card.classList.toggle("ws-toggle-card-active", cb.checked);
+        });
+    });
+})();
 </script>
 
 {% endblock %}

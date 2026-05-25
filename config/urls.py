@@ -14,13 +14,23 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path
-
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('foodcost.urls')),
 ]
+
+# 🖼 Serve uploaded media files in development (DEBUG=True).
+# In production (Railway), put MEDIA on a cloud storage backend
+# (S3 / Cloudinary / a mounted volume); WhiteNoise serves static
+# files only, not user uploads.
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT,
+    )
