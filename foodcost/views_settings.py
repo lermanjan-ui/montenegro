@@ -127,13 +127,19 @@ def settings_page(request, country_slug):
             name = request.POST.get("name", "").strip()
 
             if name:
-                DishCategory.objects.create(
+                category = DishCategory.objects.create(
                     country=country,
                     name=name,
                     is_visible_on_site=bool(
                         request.POST.get("is_visible_on_site")
                     ),
                 )
+
+                # Optional photo upload on creation.
+                uploaded_photo = request.FILES.get("photo")
+                if uploaded_photo:
+                    category.photo = uploaded_photo
+                    category.save(update_fields=["photo"])
 
         if action == "update_category":
 
@@ -169,6 +175,24 @@ def settings_page(request, country_slug):
             item.is_visible_on_site = bool(
                 request.POST.get("is_visible_on_site")
             )
+
+            # Photo handling — order matters:
+            #   1. New upload always wins over photo_clear (saner UX if both
+            #      end up posted together).
+            #   2. Otherwise photo_clear deletes the file from storage and
+            #      detaches the field.
+            #   3. If neither is present, the existing photo is preserved.
+            uploaded_photo = request.FILES.get("photo")
+            if uploaded_photo:
+                # If a photo already exists, delete its file on disk to avoid
+                # orphaned uploads accumulating in MEDIA_ROOT.
+                if item.photo:
+                    item.photo.delete(save=False)
+                item.photo = uploaded_photo
+            elif request.POST.get("photo_clear"):
+                if item.photo:
+                    item.photo.delete(save=False)
+                item.photo = None
 
             item.save()
 

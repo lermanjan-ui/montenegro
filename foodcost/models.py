@@ -190,7 +190,7 @@ class DishCategory(models.Model):
     )
 
     photo = models.ImageField(
-        upload_to="categories/",
+        upload_to="category_photos/",
         null=True,
         blank=True
     )

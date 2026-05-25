@@ -258,6 +258,99 @@ button:hover{
     accent-color:#2563ff;
 }
 
+.cat-photo-row{
+    display:grid;
+    grid-template-columns:88px minmax(0,1fr);
+    gap:14px;
+    align-items:flex-start;
+}
+
+.cat-photo-preview{
+    width:88px;
+    height:88px;
+    border-radius:14px;
+    border:1px solid #e5e7eb;
+    background:#f9fafb;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+}
+
+.cat-photo-preview img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+.cat-photo-empty{
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:800;
+    text-align:center;
+    line-height:1.2;
+    padding:6px;
+}
+
+.cat-photo-controls{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+}
+
+.cat-photo-file{
+    font-size:12px;
+}
+
+.cat-photo-file::-webkit-file-upload-button,
+.cat-photo-file::file-selector-button{
+    background:#f3f4f6;
+    border:1px solid #d1d5db;
+    border-radius:9px;
+    padding:6px 10px;
+    font-weight:850;
+    font-size:12px;
+    color:#111827;
+    cursor:pointer;
+    margin-right:8px;
+}
+
+.cat-photo-clear{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    font-weight:800;
+    color:#b91c1c;
+}
+
+.cat-photo-clear input{
+    width:auto;
+    margin:0;
+    accent-color:#b91c1c;
+}
+
+.cat-photo-hint{
+    color:#6b7280;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.4;
+}
+
+@media (max-width:700px){
+    .cat-photo-row{
+        grid-template-columns:1fr;
+    }
+
+    .cat-photo-preview{
+        width:100%;
+        height:140px;
+    }
+}
+
 .empty{
     color:#6b7280;
     font-size:13px;
@@ -621,7 +714,7 @@ button:hover{
         <div class="settings-card">
             <div class="settings-title">Категории блюд</div>
 
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_category">
 
@@ -639,6 +732,23 @@ button:hover{
                     <input type="checkbox" name="is_visible_on_site" value="1">
                     Показывать на сайте
                 </label>
+
+                <div class="cat-photo-row" style="margin-bottom:14px;">
+                    <div class="cat-photo-preview">
+                        <div class="cat-photo-empty">Фото не выбрано</div>
+                    </div>
+                    <div class="cat-photo-controls">
+                        <label class="cat-field-label" for="cat-create-photo">Фото категории (опционально)</label>
+                        <input
+                            id="cat-create-photo"
+                            class="cat-photo-file"
+                            type="file"
+                            name="photo"
+                            accept="image/*"
+                        >
+                        <div class="cat-photo-hint">JPG, PNG или WebP. Используется на сайте.</div>
+                    </div>
+                </div>
             </form>
 
             <div class="items-list">
@@ -682,7 +792,7 @@ button:hover{
                             </form>
                         </div>
 
-                        <form method="post" class="cat-edit-form">
+                        <form method="post" enctype="multipart/form-data" class="cat-edit-form">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="update_category">
                             <input type="hidden" name="item_id" value="{{ item.id }}">
@@ -717,6 +827,33 @@ button:hover{
                                         value="{{ item.slug }}"
                                         placeholder="pizza"
                                     >
+                                </div>
+                            </div>
+
+                            <div class="cat-photo-row">
+                                <div class="cat-photo-preview">
+                                    {% if item.photo %}
+                                        <img src="{{ item.photo.url }}" alt="{{ item.name }}">
+                                    {% else %}
+                                        <div class="cat-photo-empty">Фото не загружено</div>
+                                    {% endif %}
+                                </div>
+                                <div class="cat-photo-controls">
+                                    <label class="cat-field-label" for="cat-photo-{{ item.id }}">Фото для сайта</label>
+                                    <input
+                                        id="cat-photo-{{ item.id }}"
+                                        class="cat-photo-file"
+                                        type="file"
+                                        name="photo"
+                                        accept="image/*"
+                                    >
+                                    {% if item.photo %}
+                                        <label class="cat-photo-clear">
+                                            <input type="checkbox" name="photo_clear" value="1">
+                                            Удалить текущее фото
+                                        </label>
+                                    {% endif %}
+                                    <div class="cat-photo-hint">Если загружено новое фото — оно заменит старое.</div>
                                 </div>
                             </div>
 
