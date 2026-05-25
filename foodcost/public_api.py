@@ -1,22 +1,28 @@
 """
-🌐 Public Read-Only API for Raccoon.uz website.
+🌐 Public API for Raccoon.uz website.
 
-Endpoints (all under /api/public/):
-    GET /api/public/locations
-    GET /api/public/categories
-    GET /api/public/products
-    GET /api/public/products/<slug:slug>
-    GET /api/public/search
+Read-only endpoints (Parts 2 & 4 catalog):
+    GET  /api/public/locations
+    GET  /api/public/categories
+    GET  /api/public/products
+    GET  /api/public/products/<slug:slug>
+    GET  /api/public/search
+
+Cart & order endpoints (Part 4 write API):
+    POST /api/public/cart/calculate/
+    POST /api/public/orders/create/
+    GET  /api/public/orders/<public_order_number>/
 
 Country awareness:
-    Default country slug is "uzbekistan". Override via ?country_slug=...
-    Models are not country-hardcoded; this module is the only place where
-    Uzbekistan is treated as the public default.
+    Default country slug is "uzbekistan". Override via ?country_slug=... on
+    GET endpoints, or via the "country_slug" key in the JSON body on POST
+    endpoints. Models are not country-hardcoded; this module is the only
+    place where Uzbekistan is treated as the public default.
 
 This module intentionally exposes ONLY website-safe data:
     NO tech_card, NO cost/margin/foodcost, NO supplier/employee data.
 
-Part 4 changes:
+Catalog rules (Parts 2 & legacy Part 4):
     - Categories use Dish.public_categories (M2M) with fallback to dish.category.
     - One dish can appear in multiple categories.
     - Product card weight = final_weight in grams (e.g. "520 г").
@@ -25,13 +31,26 @@ Part 4 changes:
     - Addons come from DishAddon (Dish-as-addon), grouped by group_name.
       The legacy AddonGroup / AddonItem / DishAddonGroup / CategoryAddonGroup
       models remain in the schema but are no longer surfaced here.
+
+Cart & order rules (Part 4 write API):
+    - Backend ALWAYS recalculates totals server-side; frontend totals are
+      never trusted.
+    - addons[] is a list of Dish IDs that must exist in DishAddon links to
+      the parent dish AND must themselves be available.
+    - Per-location DishAvailability is honored for both dishes and addons.
+    - Delivery price comes from DeliveryZone when delivery_zone_id is given;
+      otherwise 0. If subtotal ≥ zone.free_delivery_threshold → free.
+    - public_order_number format: RCN-{year}-{order.id:06d} (unique by PK).
 """
 
-from decimal import Decimal
+import json
+from decimal import Decimal, InvalidOperation
 
+from django.db import transaction
 from django.db.models import Min, Q
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
@@ -42,6 +61,12 @@ from .models import (
     DishAvailability,
     DishGalleryImage,
     DishAddon,
+    # Part 4 — write API
+    Order,
+    OrderItem,
+    OrderSource,
+    Customer,
+    DeliveryZone,
 )
 
 
@@ -752,4 +777,798 @@ def search(request):
     return api_success({
         "products": products_payload,
         "categories": categories_payload,
+    })
+
+
+# =============================================================================
+# 🛒  PART 4 — CART / ORDER WRITE API
+# =============================================================================
+#
+# All POST endpoints accept JSON bodies. Country resolution mirrors the GET
+# helper above but reads "country_slug" from the parsed JSON payload instead
+# of the query string. Totals are always recomputed server-side; nothing
+# from the request body is trusted as authoritative.
+#
+# Public order numbers use the format RCN-{year}-{order.id:06d}, derived
+# from the order's primary key right after creation. Uniqueness is then
+# guaranteed by the PK.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Status labels — single source of truth for the public order tracker.
+# -----------------------------------------------------------------------------
+#
+# The spec lists six logical statuses (new / accepted / cooking / delivery /
+# done / cancelled). Our Order.STATUS_CHOICES only has five (no "accepted").
+# We expose all six labels here so the public tracker keeps working if an
+# operator later introduces "accepted" as a custom status, but newly-created
+# orders use the model's default ("new").
+PUBLIC_STATUS_LABELS = {
+    "new":       "Новый",
+    "accepted":  "Принят",
+    "cooking":   "Готовится",
+    "delivery":  "В доставке",
+    "done":      "Завершён",
+    "cancelled": "Отменён",
+}
+
+
+def _status_label(status):
+    """Return the public-facing label for a status code, with safe fallback."""
+    return PUBLIC_STATUS_LABELS.get(status, status or "")
+
+
+# -----------------------------------------------------------------------------
+# Request parsing helpers
+# -----------------------------------------------------------------------------
+
+def _parse_json_body(request):
+    """
+    Parse the request body as JSON.
+
+    Returns (payload, error_response). On success payload is a dict and the
+    error is None; on failure payload is None and the error is a 400 JSON
+    response with code INVALID_JSON.
+    """
+    try:
+        raw = request.body.decode("utf-8") if request.body else ""
+    except UnicodeDecodeError:
+        return None, api_error(
+            "INVALID_JSON",
+            "Request body must be UTF-8 encoded JSON",
+            status=400,
+        )
+
+    if not raw.strip():
+        return {}, None
+
+    try:
+        payload = json.loads(raw)
+    except (ValueError, TypeError):
+        return None, api_error(
+            "INVALID_JSON",
+            "Request body is not valid JSON",
+            status=400,
+        )
+
+    if not isinstance(payload, dict):
+        return None, api_error(
+            "INVALID_JSON",
+            "Request body must be a JSON object",
+            status=400,
+        )
+
+    return payload, None
+
+
+def _get_country_from_payload(payload):
+    """
+    Resolve the public country from a parsed JSON payload.
+
+    Mirrors get_public_country() but reads from a dict (POST body) instead of
+    request.GET. Returns (country, error_response).
+    """
+    requested_slug = str(payload.get("country_slug") or "").strip().lower()
+
+    if not requested_slug:
+        requested_slug = DEFAULT_COUNTRY_SLUG
+
+    country = Country.objects.filter(slug=requested_slug).first()
+
+    if country is None:
+        # Permissive fallback: e.g. name "Узбекистан" / "Uzbekistan"
+        country = Country.objects.filter(name__icontains="uzbek").first()
+
+    if country is None:
+        return None, api_error(
+            "COUNTRY_NOT_FOUND",
+            "Public country is not configured",
+            details={"requested_slug": requested_slug},
+            status=404,
+        )
+
+    return country, None
+
+
+def _coerce_int(value, default=None):
+    """Best-effort int coercion. Returns default for None / invalid input."""
+    if value is None or value == "":
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _money(value):
+    """Convert any numeric-ish input to a Decimal usable by DB fields."""
+    if value is None:
+        return Decimal("0")
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return Decimal("0")
+
+
+# -----------------------------------------------------------------------------
+# Cart validation + pricing core
+# -----------------------------------------------------------------------------
+#
+# Shared by both /cart/calculate/ and /orders/create/ so the calculation
+# logic is implemented exactly once. The result includes per-item line
+# details, the matching DishAddon objects (for later persistence), and
+# the aggregated totals.
+# -----------------------------------------------------------------------------
+
+def _validate_and_price_cart(country, location, items_raw, delivery_zone=None):
+    """
+    Validate raw cart items and compute prices server-side.
+
+    Args:
+        country:      Country instance.
+        location:     Location instance or None.
+        items_raw:    List of {dish_id, quantity, addons[]} dicts.
+        delivery_zone: DeliveryZone instance or None.
+
+    Returns:
+        (result, error_response)
+
+    On success, `result` is a dict:
+        {
+            "lines": [ ...per-item dicts ready for serialization... ],
+            "line_objects": [ {dish, quantity, addon_links, ...} ... ],
+            "subtotal":       Decimal,
+            "delivery_price": Decimal,
+            "total":          Decimal,
+            "free_delivery":  bool,
+        }
+    On failure, returns (None, api_error(...)).
+    """
+    if not isinstance(items_raw, list) or len(items_raw) == 0:
+        return None, api_error(
+            "EMPTY_CART",
+            "Cart must contain at least one item",
+            status=400,
+        )
+
+    lines = []
+    line_objects = []
+    subtotal = Decimal("0")
+
+    for index, raw_item in enumerate(items_raw):
+        if not isinstance(raw_item, dict):
+            return None, api_error(
+                "INVALID_JSON",
+                "Each cart item must be a JSON object",
+                details={"index": index},
+                status=400,
+            )
+
+        dish_id = _coerce_int(raw_item.get("dish_id"))
+        if not dish_id:
+            return None, api_error(
+                "DISH_NOT_FOUND",
+                "Cart item is missing a valid dish_id",
+                details={"index": index},
+                status=400,
+            )
+
+        quantity = _coerce_int(raw_item.get("quantity"), default=1) or 1
+        if quantity < 1:
+            return None, api_error(
+                "INVALID_QUANTITY",
+                "Quantity must be at least 1",
+                details={"index": index, "dish_id": dish_id, "quantity": quantity},
+                status=400,
+            )
+
+        dish = (
+            Dish.objects.filter(id=dish_id, country=country)
+            .select_related("category")
+            .first()
+        )
+        if dish is None:
+            return None, api_error(
+                "DISH_NOT_FOUND",
+                "Dish does not exist in this country",
+                details={"index": index, "dish_id": dish_id},
+                status=404,
+            )
+
+        if not is_dish_available(dish, location=location):
+            return None, api_error(
+                "DISH_UNAVAILABLE",
+                "Dish is currently unavailable",
+                details={
+                    "index": index,
+                    "dish_id": dish.id,
+                    "dish_name": _display_name(dish),
+                },
+                status=409,
+            )
+
+        # ---- Addons ----
+        raw_addon_ids = raw_item.get("addons") or []
+        if not isinstance(raw_addon_ids, list):
+            return None, api_error(
+                "INVALID_JSON",
+                "Addons must be a list of dish IDs",
+                details={"index": index, "dish_id": dish.id},
+                status=400,
+            )
+
+        addons_payload = []
+        addon_links_for_line = []
+        addons_price = Decimal("0")
+
+        if raw_addon_ids:
+            addon_ids_clean = []
+            for raw_aid in raw_addon_ids:
+                aid = _coerce_int(raw_aid)
+                if not aid:
+                    return None, api_error(
+                        "ADDON_UNAVAILABLE",
+                        "Addon id is invalid",
+                        details={
+                            "index": index,
+                            "dish_id": dish.id,
+                            "addon_id": raw_aid,
+                        },
+                        status=400,
+                    )
+                addon_ids_clean.append(aid)
+
+            # Only accept addons that are actually linked to this dish via
+            # DishAddon, are themselves active links, and whose addon_dish
+            # belongs to the same country. Anything else is rejected.
+            valid_links = (
+                DishAddon.objects.filter(
+                    dish=dish,
+                    is_active=True,
+                    addon_dish_id__in=addon_ids_clean,
+                    addon_dish__country=country,
+                )
+                .select_related("addon_dish")
+            )
+            valid_links_by_id = {l.addon_dish_id: l for l in valid_links}
+
+            # Preserve the order the caller sent.
+            for aid in addon_ids_clean:
+                link = valid_links_by_id.get(aid)
+                if link is None:
+                    return None, api_error(
+                        "ADDON_UNAVAILABLE",
+                        "Addon is not attached to this dish or is inactive",
+                        details={
+                            "index": index,
+                            "dish_id": dish.id,
+                            "addon_id": aid,
+                        },
+                        status=409,
+                    )
+
+                addon_dish = link.addon_dish
+                if not is_dish_available(addon_dish, location=location):
+                    return None, api_error(
+                        "ADDON_UNAVAILABLE",
+                        "Addon is currently unavailable",
+                        details={
+                            "index": index,
+                            "dish_id": dish.id,
+                            "addon_id": addon_dish.id,
+                            "addon_name": _display_name(addon_dish),
+                        },
+                        status=409,
+                    )
+
+                addon_price = _money(addon_dish.selling_price)
+                addons_price += addon_price
+                addons_payload.append({
+                    "id": addon_dish.id,
+                    "name": _display_name(addon_dish),
+                    "price": _to_float(addon_price),
+                })
+                addon_links_for_line.append(link)
+
+        base_price = _money(dish.selling_price)
+        per_unit = base_price + addons_price
+        line_total = per_unit * Decimal(quantity)
+        subtotal += line_total
+
+        lines.append({
+            "dish": {
+                "id": dish.id,
+                "name": _display_name(dish),
+                "slug": dish.slug or "",
+            },
+            "quantity": quantity,
+            "base_price": _to_float(base_price),
+            "addons": addons_payload,
+            "addons_price": _to_float(addons_price),
+            "total_price": _to_float(line_total),
+        })
+
+        line_objects.append({
+            "dish": dish,
+            "quantity": quantity,
+            "base_price": base_price,
+            "addons_price": addons_price,
+            "per_unit": per_unit,
+            "total_price": line_total,
+            "addon_links": addon_links_for_line,
+        })
+
+    # ---- Delivery ----
+    delivery_price = Decimal("0")
+    free_delivery = False
+    if delivery_zone is not None:
+        threshold = _money(delivery_zone.free_delivery_threshold)
+        if threshold > 0 and subtotal >= threshold:
+            delivery_price = Decimal("0")
+            free_delivery = True
+        else:
+            delivery_price = _money(delivery_zone.delivery_price)
+
+    total = subtotal + delivery_price
+
+    return {
+        "lines": lines,
+        "line_objects": line_objects,
+        "subtotal": subtotal,
+        "delivery_price": delivery_price,
+        "total": total,
+        "free_delivery": free_delivery,
+    }, None
+
+
+def _resolve_delivery_zone(country, location, payload):
+    """
+    Resolve an optional DeliveryZone from the payload.
+
+    Returns (zone_or_none, error_response).
+
+    Rules:
+      - If delivery_zone_id is omitted or 0, returns (None, None) → free.
+      - If given, zone must exist, be active, belong to the same country,
+        and (if a location was specified) match that location.
+    """
+    raw_zone_id = payload.get("delivery_zone_id")
+    if raw_zone_id in (None, "", 0, "0"):
+        return None, None
+
+    zone_id = _coerce_int(raw_zone_id)
+    if zone_id is None:
+        return None, api_error(
+            "INVALID_JSON",
+            "delivery_zone_id must be an integer",
+            status=400,
+        )
+
+    qs = DeliveryZone.objects.filter(
+        id=zone_id,
+        country=country,
+        is_active=True,
+    )
+    if location is not None:
+        qs = qs.filter(location=location)
+
+    zone = qs.first()
+    if zone is None:
+        return None, api_error(
+            "LOCATION_NOT_FOUND",
+            "Delivery zone not found for this location",
+            details={"delivery_zone_id": zone_id},
+            status=404,
+        )
+
+    return zone, None
+
+
+def _require_location_from_payload(country, payload, required=True):
+    """
+    Resolve location from the JSON body.
+
+    If required=True and no valid location is found, returns an error.
+    If required=False, returns (None, None) when no id is provided.
+    """
+    raw = payload.get("location_id")
+    if raw in (None, "", 0, "0"):
+        if required:
+            return None, api_error(
+                "LOCATION_NOT_FOUND",
+                "location_id is required",
+                status=400,
+            )
+        return None, None
+
+    location_id = _coerce_int(raw)
+    if location_id is None:
+        return None, api_error(
+            "LOCATION_NOT_FOUND",
+            "location_id must be an integer",
+            details={"location_id": raw},
+            status=400,
+        )
+
+    location = Location.objects.filter(
+        id=location_id,
+        country=country,
+        is_active=True,
+    ).first()
+
+    if location is None:
+        return None, api_error(
+            "LOCATION_NOT_FOUND",
+            "Location does not exist in this country",
+            details={"location_id": location_id},
+            status=404,
+        )
+
+    return location, None
+
+
+# -----------------------------------------------------------------------------
+# Order helpers — addon summary, public number, website order source
+# -----------------------------------------------------------------------------
+
+def _format_addon_summary_for_line(line):
+    """
+    Build a one-line, human-readable addon summary for cashier_comment.
+
+    Example: "Пепперони ×2: + Сырный соус, + Картофель фри"
+    """
+    addon_names = [_display_name(l.addon_dish) for l in line["addon_links"]]
+    if not addon_names:
+        return None
+    return "{name} ×{qty}: + {addons}".format(
+        name=_display_name(line["dish"]),
+        qty=line["quantity"],
+        addons=", ".join(addon_names),
+    )
+
+
+def _build_cashier_addon_summary(line_objects):
+    """Aggregate addon summaries across all lines into one block of text."""
+    parts = []
+    for line in line_objects:
+        summary = _format_addon_summary_for_line(line)
+        if summary:
+            parts.append(summary)
+    if not parts:
+        return ""
+    return "Допы с сайта:\n" + "\n".join(parts)
+
+
+def _generate_public_order_number(order):
+    """
+    Build RCN-{year}-{id:06d} from an already-saved Order's PK.
+
+    Uniqueness is guaranteed by the PK. The year prefix is taken from
+    the order's created_at (auto_now_add) so reruns / backfills are
+    consistent with when the order was placed.
+    """
+    year = (order.created_at or timezone.now()).year
+    return "RCN-{year}-{pk:06d}".format(year=year, pk=order.id)
+
+
+def _get_or_create_website_source(country):
+    """Get or create the "Сайт" OrderSource for the given country."""
+    source, _ = OrderSource.objects.get_or_create(
+        country=country,
+        name="Сайт",
+        defaults={"is_active": True},
+    )
+    return source
+
+
+def _get_or_create_website_customer(country, name, phone):
+    """
+    Resolve a Customer by phone in this country, or create a new one.
+
+    Phone is normalized only by stripping whitespace; we do not silently
+    rewrite it because operators rely on the exact format the user typed.
+    """
+    phone_clean = (phone or "").strip()
+    name_clean = (name or "").strip() or phone_clean
+
+    if not phone_clean:
+        # The endpoint should have rejected this earlier; defensive fallback:
+        return Customer.objects.create(
+            country=country,
+            phone="",
+            name=name_clean or "Гость с сайта",
+        )
+
+    customer = Customer.objects.filter(
+        country=country, phone=phone_clean
+    ).first()
+    if customer is not None:
+        if name_clean and customer.name != name_clean:
+            customer.name = name_clean
+            customer.save(update_fields=["name"])
+        return customer
+
+    return Customer.objects.create(
+        country=country,
+        phone=phone_clean,
+        name=name_clean,
+    )
+
+
+# -----------------------------------------------------------------------------
+# Order serializers — only website-safe data
+# -----------------------------------------------------------------------------
+
+def _serialize_order_item_for_tracking(item):
+    """Return a website-safe dict describing one OrderItem."""
+    dish = item.dish
+    return {
+        "dish_id": dish.id if dish else None,
+        "name": _display_name(dish) if dish else "",
+        "quantity": _to_float(item.quantity),
+        "price": _to_float(item.price_snapshot),
+        "total_price": _to_float(item.total_price),
+    }
+
+
+def _serialize_order_for_tracking(order):
+    """Return the public tracking payload for one Order. No internal data."""
+    items_payload = [
+        _serialize_order_item_for_tracking(it)
+        for it in order.items.select_related("dish").all()
+    ]
+    return {
+        "order_id": order.id,
+        "public_order_number": order.public_order_number or "",
+        "status": order.status,
+        "status_label": _status_label(order.status),
+        "created_at": order.created_at.isoformat() if order.created_at else None,
+        "fulfillment_method": order.fulfillment_method or "",
+        "customer_name": order.customer_name or "",
+        "delivery_address": order.delivery_address or "",
+        "subtotal": _to_float(order.subtotal_amount),
+        "delivery_price": _to_float(order.delivery_amount),
+        "total": _to_float(order.total_amount),
+        "items": items_payload,
+    }
+
+
+# =============================================================================
+# 🛒  ENDPOINT: POST /api/public/cart/calculate/
+# =============================================================================
+
+@csrf_exempt
+@require_POST
+def cart_calculate(request):
+    """
+    Recalculate cart totals from the items in the request body.
+
+    The frontend sends raw items; we ignore any totals it might have computed
+    and recompute everything from authoritative DB prices. Useful for the
+    cart preview page right before order submission.
+    """
+    payload, err = _parse_json_body(request)
+    if err:
+        return err
+
+    country, err = _get_country_from_payload(payload)
+    if err:
+        return err
+
+    # location is optional for cart calculation — it only affects availability.
+    location, err = _require_location_from_payload(country, payload, required=False)
+    if err:
+        return err
+
+    delivery_zone, err = _resolve_delivery_zone(country, location, payload)
+    if err:
+        return err
+
+    result, err = _validate_and_price_cart(
+        country=country,
+        location=location,
+        items_raw=payload.get("items") or [],
+        delivery_zone=delivery_zone,
+    )
+    if err:
+        return err
+
+    return api_success({
+        "items": result["lines"],
+        "subtotal": _to_float(result["subtotal"]),
+        "delivery_price": _to_float(result["delivery_price"]),
+        "free_delivery": bool(result["free_delivery"]),
+        "total": _to_float(result["total"]),
+    })
+
+
+# =============================================================================
+# 🛒  ENDPOINT: POST /api/public/orders/create/
+# =============================================================================
+
+@csrf_exempt
+@require_POST
+def order_create(request):
+    """
+    Create an Order + OrderItem rows from the public website.
+
+    Server recomputes prices from DB, never trusts frontend totals. Wrapped
+    in a transaction so the order is either fully persisted (with public
+    number) or not at all.
+    """
+    payload, err = _parse_json_body(request)
+    if err:
+        return err
+
+    country, err = _get_country_from_payload(payload)
+    if err:
+        return err
+
+    location, err = _require_location_from_payload(country, payload, required=True)
+    if err:
+        return err
+
+    customer_name = str(payload.get("customer_name") or "").strip()
+    customer_phone = str(payload.get("customer_phone") or "").strip()
+    delivery_address = str(payload.get("delivery_address") or "").strip()
+    customer_comment = str(payload.get("comment") or "").strip()
+
+    if not customer_name or not customer_phone:
+        return api_error(
+            "INVALID_JSON",
+            "customer_name and customer_phone are required",
+            status=400,
+        )
+
+    fulfillment_method = (
+        str(payload.get("fulfillment_method") or "").strip().lower()
+        or Order.FULFILLMENT_DELIVERY
+    )
+    if fulfillment_method not in (
+        Order.FULFILLMENT_DELIVERY, Order.FULFILLMENT_PICKUP,
+    ):
+        fulfillment_method = Order.FULFILLMENT_DELIVERY
+
+    # Delivery address only required for delivery orders.
+    if fulfillment_method == Order.FULFILLMENT_DELIVERY and not delivery_address:
+        return api_error(
+            "INVALID_JSON",
+            "delivery_address is required for delivery orders",
+            status=400,
+        )
+
+    delivery_zone, err = _resolve_delivery_zone(country, location, payload)
+    if err:
+        return err
+
+    # Pickup orders ignore delivery fees entirely.
+    if fulfillment_method == Order.FULFILLMENT_PICKUP:
+        delivery_zone = None
+
+    result, err = _validate_and_price_cart(
+        country=country,
+        location=location,
+        items_raw=payload.get("items") or [],
+        delivery_zone=delivery_zone,
+    )
+    if err:
+        return err
+
+    source = _get_or_create_website_source(country)
+    customer = _get_or_create_website_customer(country, customer_name, customer_phone)
+
+    addon_summary = _build_cashier_addon_summary(result["line_objects"])
+
+    with transaction.atomic():
+        order = Order.objects.create(
+            country=country,
+            location=location,
+            customer=customer,
+            source=source,
+            order_date=timezone.now(),
+            customer_name=customer_name,
+            customer_phone=customer_phone,
+            delivery_address=delivery_address,
+            customer_comment=customer_comment,
+            cashier_comment=addon_summary,
+            subtotal_amount=result["subtotal"],
+            discount_amount=Decimal("0"),
+            delivery_amount=result["delivery_price"],
+            total_amount=result["total"],
+            status=Order.STATUS_NEW,
+            fulfillment_method=fulfillment_method,
+            payment_status=Order.PAYMENT_STATUS_PENDING,
+        )
+
+        # Now we have order.id → generate public_order_number deterministically.
+        order.public_order_number = _generate_public_order_number(order)
+        order.save(update_fields=["public_order_number"])
+
+        for line in result["line_objects"]:
+            try:
+                dish_cost = Decimal(str(line["dish"].calculate_cost() or 0))
+            except Exception:
+                dish_cost = Decimal("0")
+
+            OrderItem.objects.create(
+                order=order,
+                dish=line["dish"],
+                quantity=Decimal(line["quantity"]),
+                price_snapshot=line["per_unit"],
+                cost_snapshot=dish_cost,
+                total_price=line["total_price"],
+            )
+
+    return api_success({
+        "order_id": order.id,
+        "public_order_number": order.public_order_number,
+        "status": order.status,
+        "status_label": _status_label(order.status),
+        "subtotal": _to_float(order.subtotal_amount),
+        "delivery_price": _to_float(order.delivery_amount),
+        "total": _to_float(order.total_amount),
+    })
+
+
+# =============================================================================
+# 🛒  ENDPOINT: GET /api/public/orders/<public_order_number>/
+# =============================================================================
+
+@csrf_exempt
+@require_GET
+def order_tracking(request, public_order_number):
+    """
+    Public order tracking endpoint — looks up an order by its public number.
+
+    Returns ONLY website-safe data: no margin, no cost, no employee info,
+    no internal cashier comments.
+    """
+    number = (public_order_number or "").strip()
+    if not number:
+        return api_error(
+            "INVALID_JSON",
+            "public_order_number is required",
+            status=400,
+        )
+
+    order = (
+        Order.objects.filter(public_order_number=number)
+        .select_related("country", "location")
+        .first()
+    )
+
+    if order is None:
+        return api_error(
+            "DISH_NOT_FOUND",  # generic "not found" — we do not leak whether
+                               # the number ever existed.
+            "Order not found",
+            details={"public_order_number": number},
+            status=404,
+        )
+
+    return api_success({
+        "order": _serialize_order_for_tracking(order),
     })

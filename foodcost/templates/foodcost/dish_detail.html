@@ -1004,6 +1004,91 @@
 	    flex-shrink: 0;
 	}
 
+	/* Category chips (compact, side-by-side pills with a small remove button).
+	   Used in the "Категории на сайте" block — replaces the multi-select.    */
+	.ws .ws-chip-list {
+	    display: flex;
+	    flex-wrap: wrap;
+	    gap: 10px;
+	    margin: 4px 0 6px;
+	}
+	.ws .ws-chip {
+	    display: inline-flex;
+	    align-items: center;
+	    gap: 10px;
+	    padding: 8px 6px 8px 14px;
+	    border: 1px solid var(--ws-border-strong);
+	    border-radius: 999px;
+	    background: var(--ws-card);
+	    transition: border-color .15s, background-color .15s;
+	    max-width: 100%;
+	    min-height: 40px;
+	}
+	.ws .ws-chip:hover { border-color: var(--ws-primary); }
+	.ws .ws-chip-dot {
+	    width: 8px;
+	    height: 8px;
+	    border-radius: 50%;
+	    flex-shrink: 0;
+	    background: var(--ws-success);
+	}
+	.ws .ws-chip-dot.ws-chip-dot-muted { background: #CBD5E1; }
+	.ws .ws-chip-body {
+	    display: flex;
+	    flex-direction: column;
+	    min-width: 0;
+	    line-height: 1.15;
+	}
+	.ws .ws-chip-name {
+	    font-size: 13px;
+	    font-weight: 600;
+	    color: var(--ws-text-primary);
+	    white-space: nowrap;
+	    overflow: hidden;
+	    text-overflow: ellipsis;
+	    max-width: 220px;
+	}
+	.ws .ws-chip-sub {
+	    font-size: 11px;
+	    color: var(--ws-text-secondary);
+	    margin-top: 2px;
+	    white-space: nowrap;
+	    overflow: hidden;
+	    text-overflow: ellipsis;
+	    max-width: 220px;
+	}
+	.ws .ws-chip-status {
+	    font-size: 11px;
+	    font-weight: 500;
+	    color: var(--ws-text-secondary);
+	}
+	.ws .ws-chip-remove {
+	    display: inline-flex;
+	    align-items: center;
+	    justify-content: center;
+	    width: 26px;
+	    height: 26px;
+	    margin: 0;
+	    padding: 0;
+	    border-radius: 50%;
+	    border: none;
+	    background: transparent;
+	    color: var(--ws-text-secondary);
+	    cursor: pointer;
+	    transition: background-color .15s, color .15s;
+	    flex-shrink: 0;
+	}
+	.ws .ws-chip-remove:hover {
+	    background: #FEE2E2;
+	    color: var(--ws-danger);
+	}
+	.ws .ws-chip-form { margin: 0; display: inline-flex; }
+	.ws .ws-chip-hidden {
+	    border-color: #FDE68A;
+	    background: #FFFBEB;
+	}
+	.ws .ws-chip-hidden .ws-chip-dot { background: var(--ws-warning); }
+
 	/* Status badges */
 	.ws .ws-badge {
 	    display: inline-flex;
@@ -1935,63 +2020,72 @@
         </form>
     </div>
 
-    {# ---------- Категории на сайте (Part 5 UX fix) ---------- #}
+    {# ---------- Категории на сайте (chip-based UX) ---------- #}
     <div class="ws-fieldgroup">
         <h3 class="ws-fieldgroup-title">Категории на сайте</h3>
 
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="add_public_category">
-
-            <div class="ws-grid-add-cat">
-                <div>
-                    <label for="ws-add-cat">Добавить категорию</label>
-                    <select id="ws-add-cat" class="ws-select" name="category_id" required>
-                        <option value="">Выберите категорию</option>
-                        {% for cat in available_public_categories %}
-                            <option value="{{ cat.id }}">{{ cat.name }}{% if not cat.is_visible_on_site %} (скрыта на сайте){% endif %}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <button type="submit" class="ws-btn ws-btn-primary">Добавить категорию</button>
-            </div>
-        </form>
+        <p class="ws-help" style="margin-top:-12px;margin-bottom:14px;">
+            Блюдо может быть прикреплено к нескольким категориям на сайте.
+            Если ничего не выбрано — используется основная категория блюда.
+        </p>
 
         {% if attached_public_categories %}
-            <div style="margin-top: 18px;">
+            <div class="ws-chip-list">
                 {% for cat in attached_public_categories %}
-                    <div class="ws-pill-row">
-                        <div class="ws-pill-main">
-                            <div>
-                                <div class="ws-pill-name">{{ cat.name }}</div>
-                                {% if cat.public_name and cat.public_name != cat.name %}
-                                    <div class="ws-pill-sub">Публичное: {{ cat.public_name }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="ws-pill-actions">
-                            {% if cat.is_visible_on_site %}
-                                <span class="ws-badge ws-badge-success">● Показывается на сайте</span>
-                            {% else %}
-                                <span class="ws-badge ws-badge-muted">● Скрыта на сайте</span>
+                    <span class="ws-chip{% if not cat.is_visible_on_site %} ws-chip-hidden{% endif %}"
+                          title="{% if cat.is_visible_on_site %}Показывается на сайте{% else %}Скрыта на сайте — отредактируйте категорию, чтобы включить{% endif %}">
+                        <span class="ws-chip-dot{% if not cat.is_visible_on_site %} ws-chip-dot-muted{% endif %}" aria-hidden="true"></span>
+                        <span class="ws-chip-body">
+                            <span class="ws-chip-name">{{ cat.name }}</span>
+                            {% if cat.public_name and cat.public_name != cat.name %}
+                                <span class="ws-chip-sub">{{ cat.public_name }}</span>
+                            {% elif not cat.is_visible_on_site %}
+                                <span class="ws-chip-sub">Скрыта на сайте</span>
                             {% endif %}
-                            <form method="post" style="margin:0;">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="remove_public_category">
-                                <input type="hidden" name="category_id" value="{{ cat.id }}">
-                                <button type="submit" class="ws-btn ws-btn-danger ws-btn-sm"
-                                        onclick="return confirm('Удалить категорию из блюда? Сама категория останется в системе.')">
-                                    Удалить
-                                </button>
-                            </form>
-                        </div>
-                    </div>
+                        </span>
+                        <form method="post" class="ws-chip-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove_public_category">
+                            <input type="hidden" name="category_id" value="{{ cat.id }}">
+                            <button type="submit" class="ws-chip-remove"
+                                    aria-label="Удалить категорию «{{ cat.name }}»"
+                                    title="Удалить категорию из блюда (сама категория останется в системе)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </form>
+                    </span>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="ws-empty">
-                Категории для сайта не выбраны. На сайте используется основная категория блюда
-                {% if dish.category %}— «{{ dish.category.name }}»{% endif %}.
+            <p class="ws-empty" style="margin:0 0 14px;">
+                Категории для сайта не выбраны. На сайте используется основная категория блюда{% if dish.category %} — «{{ dish.category.name }}»{% endif %}.
+            </p>
+        {% endif %}
+
+        {% if available_public_categories %}
+            <form method="post" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_public_category">
+
+                <div class="ws-grid-add-cat">
+                    <div>
+                        <label for="ws-add-cat">Добавить категорию</label>
+                        <select id="ws-add-cat" class="ws-select" name="category_id" required>
+                            <option value="">Выберите категорию</option>
+                            {% for cat in available_public_categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}{% if not cat.is_visible_on_site %} (скрыта на сайте){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="ws-btn ws-btn-primary">Добавить категорию</button>
+                </div>
+            </form>
+        {% else %}
+            <p class="ws-help" style="margin-top:14px;">
+                Все доступные категории уже прикреплены. Создайте новую в основных данных блюда, чтобы привязать её к сайту.
             </p>
         {% endif %}
     </div>

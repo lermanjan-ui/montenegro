@@ -167,4 +167,23 @@ urlpatterns = [
         public_api.search,
         name="public_search",
     ),
+
+    # =========================================================================
+    # 🛒 PUBLIC API (Part 4) — cart calculation + order create + tracking
+    # =========================================================================
+    path(
+        "api/public/cart/calculate/",
+        public_api.cart_calculate,
+        name="public_cart_calculate",
+    ),
+    path(
+        "api/public/orders/create/",
+        public_api.order_create,
+        name="public_order_create",
+    ),
+    path(
+        "api/public/orders/<str:public_order_number>/",
+        public_api.order_tracking,
+        name="public_order_tracking",
+    ),
 ]
