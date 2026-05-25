@@ -32,6 +32,19 @@ Catalog rules (Parts 2 & legacy Part 4):
       The legacy AddonGroup / AddonItem / DishAddonGroup / CategoryAddonGroup
       models remain in the schema but are no longer surfaced here.
 
+Media URLs (Part 6):
+    - Every image field surfaced by this API (dish.photo, dish.gallery,
+      category.photo) is returned as an ABSOLUTE URL via
+      request.build_absolute_uri(file.url). When the field is empty the API
+      returns null, never an empty string or a bare "/media/..." path.
+    - Whether the URL points at local /media/ or at an external storage
+      (S3 / Cloudinary / Render disk-mounted host) is decided by Django's
+      configured storage backend — this module does not hard-code paths.
+    - On production with DEBUG=False, Django itself does NOT serve /media/.
+      Mounting a persistent disk + a media-serving route OR switching to an
+      S3/Cloudinary backend is required for these absolute URLs to actually
+      load in a browser.
+
 Cart & order rules (Part 4 write API):
     - Backend ALWAYS recalculates totals server-side; frontend totals are
       never trusted.
@@ -174,6 +187,28 @@ def _abs_url(request, file_field):
         except Exception:
             return url
     return url
+
+
+def _resolve_image(request, file_field, external_url):
+    """
+    Resolve which image URL to return to the frontend, with strict priority:
+
+      1. external_url — if non-empty (after strip), use it AS-IS. This is a
+                        full external URL (CDN / Telegram / any direct link)
+                        provided by an operator. It is NOT wrapped in
+                        build_absolute_uri — it is already absolute.
+      2. file_field   — if an upload exists, return its absolute URL via
+                        _abs_url(request, file_field). The storage backend
+                        decides where the file lives.
+      3. None         — no image at all.
+
+    Used uniformly for category.photo / category.photo_url and
+    dish.photo / dish.photo_url so the API behavior is consistent.
+    """
+    raw_url = (external_url or "").strip()
+    if raw_url:
+        return raw_url
+    return _abs_url(request, file_field)
 
 
 def _safe_int(value, default, min_value=None, max_value=None):
@@ -321,11 +356,31 @@ def serialize_location(request, location):
 
 
 def serialize_category(request, category, min_price=None):
+    """
+    Public category payload.
+
+    Returns:
+      - "id"          : DishCategory PK
+      - "name"        : human-readable name (public_name → name fallback,
+                        same convention as serialize_location)
+      - "public_name" : raw public_name field (may be empty string)
+      - "slug"        : URL slug
+      - "photo"       : external photo_url → uploaded photo absolute URL
+                        → None. Resolved via _resolve_image so the priority
+                        is consistent with the dish endpoints.
+      - "sort_order"  : site_sort_order (int)
+      - "min_price"   : lowest visible-dish price in this category, or None
+    """
     return {
         "id": category.id,
         "name": _display_name(category),
+        "public_name": (category.public_name or "").strip(),
         "slug": category.slug or "",
-        "photo": _abs_url(request, category.photo),
+        "photo": _resolve_image(
+            request,
+            category.photo,
+            getattr(category, "photo_url", "") or "",
+        ),
         "min_price": _to_float(min_price) if min_price is not None else None,
         "sort_order": int(category.site_sort_order or 0),
     }
@@ -396,7 +451,11 @@ def serialize_product_card(request, dish, location=None):
         ),
         "name": _display_name(dish),
         "slug": dish.slug or "",
-        "image": _abs_url(request, dish.photo),
+        "image": _resolve_image(
+            request,
+            dish.photo,
+            getattr(dish, "photo_url", "") or "",
+        ),
         "weight": _format_weight(dish),
         "cooking_time": _format_cooking_time(dish),
         "price": _to_float(dish.selling_price),
@@ -485,7 +544,11 @@ def serialize_product_detail(request, dish, location=None):
         "composition": dish.composition or "",
         "short_description": dish.short_description or "",
         "public_description": dish.public_description or "",
-        "image": _abs_url(request, dish.photo),
+        "image": _resolve_image(
+            request,
+            dish.photo,
+            getattr(dish, "photo_url", "") or "",
+        ),
         "gallery": _serialize_dish_gallery(request, dish),
         "weight": _format_weight(dish),
         "cooking_time": _format_cooking_time(dish),

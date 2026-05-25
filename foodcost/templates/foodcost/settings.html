@@ -733,12 +733,25 @@ button:hover{
                     Показывать на сайте
                 </label>
 
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label" for="cat-create-photo-url">Ссылка на фото (приоритет)</label>
+                    <input
+                        id="cat-create-photo-url"
+                        name="photo_url"
+                        type="url"
+                        placeholder="https://example.com/category.jpg"
+                    >
+                    <div class="cat-photo-hint" style="margin-top:4px;">
+                        Используется на сайте вместо загруженного файла.
+                    </div>
+                </div>
+
                 <div class="cat-photo-row" style="margin-bottom:14px;">
                     <div class="cat-photo-preview">
                         <div class="cat-photo-empty">Фото не выбрано</div>
                     </div>
                     <div class="cat-photo-controls">
-                        <label class="cat-field-label" for="cat-create-photo">Фото категории (опционально)</label>
+                        <label class="cat-field-label" for="cat-create-photo">Загруженное фото (резерв)</label>
                         <input
                             id="cat-create-photo"
                             class="cat-photo-file"
@@ -746,7 +759,9 @@ button:hover{
                             name="photo"
                             accept="image/*"
                         >
-                        <div class="cat-photo-hint">JPG, PNG или WebP. Используется на сайте.</div>
+                        <div class="cat-photo-hint">
+                            JPG, PNG или WebP. Используется, только если выше не указана внешняя ссылка.
+                        </div>
                     </div>
                 </div>
             </form>
@@ -830,16 +845,33 @@ button:hover{
                                 </div>
                             </div>
 
+                            <div>
+                                <label class="cat-field-label" for="cat-photo-url-{{ item.id }}">Ссылка на фото (приоритет)</label>
+                                <input
+                                    id="cat-photo-url-{{ item.id }}"
+                                    name="photo_url"
+                                    type="url"
+                                    value="{{ item.photo_url }}"
+                                    placeholder="https://example.com/category.jpg"
+                                >
+                                <div class="cat-photo-hint" style="margin-top:4px;">
+                                    Если указана — используется на сайте вместо загруженного файла.
+                                    Можно вставить ссылку с CDN, Telegram, любого хостинга.
+                                </div>
+                            </div>
+
                             <div class="cat-photo-row">
                                 <div class="cat-photo-preview">
-                                    {% if item.photo %}
+                                    {% if item.photo_url %}
+                                        <img src="{{ item.photo_url }}" alt="{{ item.name }}">
+                                    {% elif item.photo %}
                                         <img src="{{ item.photo.url }}" alt="{{ item.name }}">
                                     {% else %}
                                         <div class="cat-photo-empty">Фото не загружено</div>
                                     {% endif %}
                                 </div>
                                 <div class="cat-photo-controls">
-                                    <label class="cat-field-label" for="cat-photo-{{ item.id }}">Фото для сайта</label>
+                                    <label class="cat-field-label" for="cat-photo-{{ item.id }}">Загруженное фото (резерв)</label>
                                     <input
                                         id="cat-photo-{{ item.id }}"
                                         class="cat-photo-file"
@@ -850,10 +882,12 @@ button:hover{
                                     {% if item.photo %}
                                         <label class="cat-photo-clear">
                                             <input type="checkbox" name="photo_clear" value="1">
-                                            Удалить текущее фото
+                                            Удалить загруженный файл
                                         </label>
                                     {% endif %}
-                                    <div class="cat-photo-hint">Если загружено новое фото — оно заменит старое.</div>
+                                    <div class="cat-photo-hint">
+                                        Используется, только если выше не указана внешняя ссылка.
+                                    </div>
                                 </div>
                             </div>
 

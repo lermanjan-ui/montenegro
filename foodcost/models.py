@@ -195,6 +195,14 @@ class DishCategory(models.Model):
         blank=True
     )
 
+    # 🔗 External photo URL (CDN / Telegram / any direct link).
+    # Has PRIORITY over the uploaded `photo` field — see public_api.
+    # Useful when we don't want to depend on local media storage.
+    photo_url = models.URLField(
+        blank=True,
+        default=""
+    )
+
     is_visible_on_site = models.BooleanField(
         default=False
     )
@@ -311,6 +319,14 @@ class Dish(models.Model):
         upload_to="dishes/",
         null=True,
         blank=True
+    )
+
+    # 🔗 External photo URL (CDN / Telegram / any direct link).
+    # Has PRIORITY over the uploaded `photo` field — see public_api.
+    # Useful when we don't want to depend on local media storage.
+    photo_url = models.URLField(
+        blank=True,
+        default=""
     )
 
     gallery = models.JSONField(

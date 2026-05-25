@@ -473,6 +473,11 @@ def dish_detail(request, country_slug, dish_id):
             dish.spice_level = (request.POST.get("spice_level") or "").strip()
             dish.badge = (request.POST.get("badge") or "").strip()
 
+            # 🔗 External photo URL — has PRIORITY over uploaded photo in
+            # the public API. Stored independently so the uploaded photo
+            # remains as a fallback / backup.
+            dish.photo_url = (request.POST.get("photo_url") or "").strip()
+
             try:
                 dish.site_sort_order = int(request.POST.get("site_sort_order") or 0)
             except (TypeError, ValueError):

@@ -133,6 +133,7 @@ def settings_page(request, country_slug):
                     is_visible_on_site=bool(
                         request.POST.get("is_visible_on_site")
                     ),
+                    photo_url=(request.POST.get("photo_url") or "").strip(),
                 )
 
                 # Optional photo upload on creation.
@@ -175,6 +176,11 @@ def settings_page(request, country_slug):
             item.is_visible_on_site = bool(
                 request.POST.get("is_visible_on_site")
             )
+
+            # 🔗 External photo URL — has PRIORITY over uploaded photo
+            # in the public API. Stored independently so the operator
+            # can keep both (e.g. keep an upload as backup).
+            item.photo_url = (request.POST.get("photo_url") or "").strip()
 
             # Photo handling — order matters:
             #   1. New upload always wins over photo_clear (saner UX if both

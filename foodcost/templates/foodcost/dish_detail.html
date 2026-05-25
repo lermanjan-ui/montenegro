@@ -1940,6 +1940,23 @@
             </p>
 
             <div class="ws-mt-18">
+                <label for="ws-photo-url">Ссылка на главное фото (приоритет)</label>
+                <input id="ws-photo-url" class="ws-input" type="url"
+                       name="photo_url" value="{{ dish.photo_url }}"
+                       placeholder="https://example.com/dish.jpg">
+                <p class="ws-help">
+                    Если указана — используется на сайте вместо загруженного файла.
+                    Можно вставить ссылку с CDN, Telegram, любого хостинга.
+                    Если поле пустое, сайт будет использовать загруженное «Главное фото» ниже.
+                </p>
+                {% if dish.photo_url %}
+                    <div style="margin-top:10px;">
+                        <img src="{{ dish.photo_url }}" alt="" style="max-width:220px;max-height:160px;object-fit:cover;border:1px solid var(--ws-border);border-radius:14px;background:var(--ws-bg);">
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="ws-mt-18">
                 <label for="ws-short-desc">Краткое описание</label>
                 <input id="ws-short-desc" class="ws-input" type="text"
                        name="short_description" value="{{ dish.short_description }}"
@@ -2104,6 +2121,14 @@
         <div>
             <h3 class="ws-fieldgroup-title" style="margin-bottom:6px;">Главное фото</h3>
             <p class="ws-help" style="margin-top:0;margin-bottom:14px;">Отображается в карточке блюда и в списках.</p>
+
+            {% if dish.photo_url %}
+                <div style="padding:10px 12px;border:1px solid #FDE68A;background:#FFFBEB;border-radius:12px;font-size:12px;color:#78350F;margin-bottom:14px;line-height:1.45;">
+                    🔗 Сейчас на сайте используется внешняя ссылка из поля
+                    «Ссылка на главное фото» (выше). Загруженное ниже фото — резервное,
+                    оно будет показано, только если очистить ссылку.
+                </div>
+            {% endif %}
 
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
