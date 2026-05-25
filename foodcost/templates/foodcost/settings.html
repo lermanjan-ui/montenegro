@@ -180,6 +180,84 @@ button:hover{
     align-items:center;
 }
 
+/* ===== Категории блюд — expanded edit form (Part: settings UX) ===== */
+.cat-edit-form{
+    display:grid;
+    gap:10px;
+    margin-top:12px;
+}
+
+.cat-edit-row{
+    display:grid;
+    gap:10px;
+    align-items:center;
+}
+
+.cat-edit-row-fields{
+    grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,1fr);
+}
+
+.cat-edit-row-controls{
+    grid-template-columns:120px minmax(0,1fr) auto;
+}
+
+.cat-field-label{
+    display:block;
+    font-size:11px;
+    font-weight:900;
+    color:#6b7280;
+    letter-spacing:.02em;
+    margin-bottom:4px;
+    text-transform:uppercase;
+}
+
+.cat-status-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    line-height:1;
+    letter-spacing:.01em;
+    white-space:nowrap;
+    margin-top:6px;
+}
+
+.cat-status-on{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.cat-status-off{
+    background:#f1f5f9;
+    color:#475569;
+}
+
+.cat-status-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:currentColor;
+}
+
+.cat-visibility-toggle{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:850;
+    color:#374151;
+    padding:0 4px;
+}
+
+.cat-visibility-toggle input{
+    width:auto;
+    margin:0;
+    accent-color:#2563ff;
+}
+
 .empty{
     color:#6b7280;
     font-size:13px;
@@ -215,6 +293,11 @@ button:hover{
     .promo-form,
     .source-edit-form,
     .category-edit-form{
+        grid-template-columns:1fr;
+    }
+
+    .cat-edit-row-fields,
+    .cat-edit-row-controls{
         grid-template-columns:1fr;
     }
 
@@ -538,24 +621,44 @@ button:hover{
         <div class="settings-card">
             <div class="settings-title">Категории блюд</div>
 
-            <form method="post" class="add-form">
+            <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_category">
 
-                <input
-                    name="name"
-                    placeholder="Название категории"
-                    required
-                >
+                <div class="add-form">
+                    <input
+                        name="name"
+                        placeholder="Название категории"
+                        required
+                    >
 
-                <button type="submit">Добавить</button>
+                    <button type="submit">Добавить</button>
+                </div>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" name="is_visible_on_site" value="1">
+                    Показывать на сайте
+                </label>
             </form>
 
             <div class="items-list">
                 {% for item in categories %}
                     <div class="item-row">
                         <div class="item-main">
-                            <div class="item-name">{{ item.name }}</div>
+                            <div>
+                                <div class="item-name">{{ item.name }}</div>
+                                {% if item.is_visible_on_site %}
+                                    <span class="cat-status-badge cat-status-on">
+                                        <span class="cat-status-dot"></span>
+                                        Показывается на сайте
+                                    </span>
+                                {% else %}
+                                    <span class="cat-status-badge cat-status-off">
+                                        <span class="cat-status-dot"></span>
+                                        Скрыта на сайте
+                                    </span>
+                                {% endif %}
+                            </div>
 
                             <form method="post">
                                 {% csrf_token %}
@@ -579,18 +682,69 @@ button:hover{
                             </form>
                         </div>
 
-                        <form method="post" class="category-edit-form">
+                        <form method="post" class="cat-edit-form">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="update_category">
                             <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                            <input
-                                name="name"
-                                value="{{ item.name }}"
-                                required
-                            >
+                            <div class="cat-edit-row cat-edit-row-fields">
+                                <div>
+                                    <label class="cat-field-label" for="cat-name-{{ item.id }}">Название</label>
+                                    <input
+                                        id="cat-name-{{ item.id }}"
+                                        name="name"
+                                        value="{{ item.name }}"
+                                        placeholder="Название (для админки)"
+                                        required
+                                    >
+                                </div>
 
-                            <button type="submit">Сохранить</button>
+                                <div>
+                                    <label class="cat-field-label" for="cat-public-name-{{ item.id }}">Название на сайте</label>
+                                    <input
+                                        id="cat-public-name-{{ item.id }}"
+                                        name="public_name"
+                                        value="{{ item.public_name }}"
+                                        placeholder="Если пусто — берётся обычное"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label class="cat-field-label" for="cat-slug-{{ item.id }}">Slug (адрес)</label>
+                                    <input
+                                        id="cat-slug-{{ item.id }}"
+                                        name="slug"
+                                        value="{{ item.slug }}"
+                                        placeholder="pizza"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="cat-edit-row cat-edit-row-controls">
+                                <div>
+                                    <label class="cat-field-label" for="cat-sort-{{ item.id }}">Порядок</label>
+                                    <input
+                                        id="cat-sort-{{ item.id }}"
+                                        name="site_sort_order"
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="{{ item.site_sort_order }}"
+                                    >
+                                </div>
+
+                                <label class="cat-visibility-toggle">
+                                    <input
+                                        type="checkbox"
+                                        name="is_visible_on_site"
+                                        value="1"
+                                        {% if item.is_visible_on_site %}checked{% endif %}
+                                    >
+                                    Показывать на сайте
+                                </label>
+
+                                <button type="submit">Сохранить</button>
+                            </div>
                         </form>
                     </div>
                 {% empty %}

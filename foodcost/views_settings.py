@@ -130,6 +130,9 @@ def settings_page(request, country_slug):
                 DishCategory.objects.create(
                     country=country,
                     name=name,
+                    is_visible_on_site=bool(
+                        request.POST.get("is_visible_on_site")
+                    ),
                 )
 
         if action == "update_category":
@@ -144,6 +147,28 @@ def settings_page(request, country_slug):
                 "name",
                 ""
             ).strip()
+
+            # ===== Public website fields =====
+            item.public_name = request.POST.get(
+                "public_name",
+                ""
+            ).strip()
+
+            item.slug = request.POST.get(
+                "slug",
+                ""
+            ).strip()
+
+            try:
+                item.site_sort_order = int(
+                    request.POST.get("site_sort_order") or 0
+                )
+            except (TypeError, ValueError):
+                item.site_sort_order = 0
+
+            item.is_visible_on_site = bool(
+                request.POST.get("is_visible_on_site")
+            )
 
             item.save()
 
