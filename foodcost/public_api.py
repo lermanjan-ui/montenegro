@@ -195,15 +195,10 @@ def _resolve_image(request, file_field, external_url):
 
       1. external_url — if non-empty (after strip), use it AS-IS. This is a
                         full external URL (CDN / Telegram / any direct link)
-                        provided by an operator. It is NOT wrapped in
-                        build_absolute_uri — it is already absolute.
+                        and is NOT wrapped in build_absolute_uri.
       2. file_field   — if an upload exists, return its absolute URL via
-                        _abs_url(request, file_field). The storage backend
-                        decides where the file lives.
+                        _abs_url(request, file_field).
       3. None         — no image at all.
-
-    Used uniformly for category.photo / category.photo_url and
-    dish.photo / dish.photo_url so the API behavior is consistent.
     """
     raw_url = (external_url or "").strip()
     if raw_url:
@@ -365,9 +360,10 @@ def serialize_category(request, category, min_price=None):
                         same convention as serialize_location)
       - "public_name" : raw public_name field (may be empty string)
       - "slug"        : URL slug
-      - "photo"       : external photo_url → uploaded photo absolute URL
-                        → None. Resolved via _resolve_image so the priority
-                        is consistent with the dish endpoints.
+      - "photo"       : absolute URL or None — built via build_absolute_uri
+                        on category.photo.url, so the storage backend
+                        (local FileSystemStorage / S3 / Cloudinary) decides
+                        the actual URL.
       - "sort_order"  : site_sort_order (int)
       - "min_price"   : lowest visible-dish price in this category, or None
     """
@@ -386,26 +382,44 @@ def serialize_category(request, category, min_price=None):
     }
 
 
+def _weight_grams_value(dish):
+    """
+    Return weight in grams as an int, or None if unknown.
+
+    Conventions in this project:
+      - Dish.final_weight is stored in KILOGRAMS (Decimal). 0.520 → 520 g.
+      - There is no explicit grams field on Dish; the public_weight field is
+        a free-form display string (e.g. "350 г", "0.5 кг", "S/M/L").
+    """
+    weight_kg = getattr(dish, "final_weight", None)
+    if weight_kg is None:
+        return None
+    try:
+        grams = int(round(float(weight_kg) * 1000))
+    except (TypeError, ValueError):
+        return None
+    if grams <= 0:
+        return None
+    return grams
+
+
 def _format_weight(dish):
     """
-    Public weight string. Priority:
+    Public weight display string. Priority:
       1. Explicit dish.public_weight if set.
-      2. Convert final_weight (kg) to grams: 0.520 → "520 г".
-    Returns "" if both are missing.
+      2. final_weight (kg) → "X г".
+      3. Empty string only if absolutely nothing is known.
+
+    The numeric value is exposed separately via _weight_grams_value so the
+    frontend can format it however it wants.
     """
     raw = (getattr(dish, "public_weight", "") or "").strip()
     if raw:
         return raw
-    weight_kg = getattr(dish, "final_weight", None)
-    if weight_kg is None:
-        return ""
-    try:
-        grams = int(round(float(weight_kg) * 1000))
-    except (TypeError, ValueError):
-        return ""
-    if grams <= 0:
-        return ""
-    return f"{grams} г"
+    grams = _weight_grams_value(dish)
+    if grams is not None:
+        return f"{grams} г"
+    return ""
 
 
 def _format_cooking_time(dish):
@@ -479,58 +493,187 @@ def _serialize_dish_gallery(request, dish):
 
 
 def _serialize_addon_entry(request, link, location=None):
-    """Serialize a single DishAddon link as a website-ready addon item."""
+    """
+    Serialize one DishAddon link as a website-ready addon item.
+
+    The flat shape is what the website cart uses; `group` carries the
+    DishAddon.group_name so a UI can still render them grouped if it
+    wants to, without an extra round of grouping logic.
+    """
     addon = link.addon_dish
+    group_label = (link.group_name or "").strip() or "Дополнительно"
     return {
         "id": addon.id,
         "name": _display_name(addon),
         "slug": addon.slug or "",
         "price": _to_float(addon.selling_price),
         "is_available": is_dish_available(addon, location=location),
+        "group": group_label,
+        "image": _resolve_image(
+            request,
+            addon.photo,
+            getattr(addon, "photo_url", "") or "",
+        ),
     }
 
 
-def _collect_dish_addons(request, dish, location=None):
+def _build_dish_addons(request, dish, location=None):
     """
-    Build the addons payload for a product detail.
+    Centralised addon collector — single DB hit, two output shapes.
 
-    Returns a list of groups:
-        [
-          {"name": "Соусы", "items": [ {...}, {...} ]},
-          {"name": "Добавить к пицце", "items": [ ... ]},
-        ]
-    Group label defaults to "Дополнительно" when DishAddon.group_name is empty.
-    Only active links and addon dishes that are themselves visible on site
-    are included (availability per-location is reflected in `is_available`).
+    Returns a dict:
+        {
+          "flat":   [ {id, name, slug, price, is_available, group, image}, ... ],
+          "groups": [ {"name": "Соусы", "items": [...]}, ... ],
+        }
+
+    Filtering:
+      - DishAddon.is_active = True
+      - addon_dish.is_visible_on_site = True
+      - addon_dish.is_stop_list = False
+    Per-location availability is reflected on `is_available` per item, not by
+    excluding the addon entirely — the frontend can still show it greyed-out.
     """
     links = (
         DishAddon.objects.filter(dish=dish, is_active=True)
-        .select_related("addon_dish")
+        .select_related("addon_dish", "addon_dish__category")
         .order_by("group_name", "sort_order", "id")
     )
 
+    flat = []
     grouped = {}
-    order = []
+    group_order = []
+
     for link in links:
         addon = link.addon_dish
-        # Only show addons that are at least visible on site. Per-branch
-        # availability is reflected via is_available on the serialized item.
         if not getattr(addon, "is_visible_on_site", False):
             continue
         if getattr(addon, "is_stop_list", False):
             continue
 
-        key = (link.group_name or "").strip() or "Дополнительно"
-        if key not in grouped:
-            grouped[key] = []
-            order.append(key)
-        grouped[key].append(_serialize_addon_entry(request, link, location=location))
+        entry = _serialize_addon_entry(request, link, location=location)
+        flat.append(entry)
 
-    return [{"name": k, "items": grouped[k]} for k in order]
+        group_key = entry["group"]
+        if group_key not in grouped:
+            grouped[group_key] = []
+            group_order.append(group_key)
+        grouped[group_key].append(entry)
+
+    return {
+        "flat": flat,
+        "groups": [{"name": k, "items": grouped[k]} for k in group_order],
+    }
+
+
+def _collect_dish_addons(request, dish, location=None):
+    """
+    Back-compat wrapper: returns the GROUPED shape.
+
+    Kept so any older caller that imported _collect_dish_addons keeps
+    working. New code should use _build_dish_addons() directly.
+    """
+    return _build_dish_addons(request, dish, location=location)["groups"]
+
+
+# -----------------------------------------------------------------------------
+# 🎯 Upsell / "you may also like" — auto-derived from the same categories.
+# -----------------------------------------------------------------------------
+
+DEFAULT_UPSELL_LIMIT = 4
+
+
+def _build_upsell_products(request, dish, location=None, limit=DEFAULT_UPSELL_LIMIT):
+    """
+    Build "upsell_products" — other visible, available dishes from the same
+    public categories as `dish` (or from the legacy single `category` if
+    public_categories is empty). Self is excluded.
+
+    Output shape matches the spec:
+        [
+          {"id": 52, "name": "Cola", "slug": "cola",
+           "image": "https://...", "price": 12000, "is_available": true},
+          ...
+        ]
+
+    Image priority: photo_url → uploaded photo absolute URL → null,
+    same as elsewhere in this module.
+
+    No new DB tables / no manual relations — the picks are derived from
+    the existing category links, so this works for any project without
+    extra setup.
+    """
+    if limit <= 0:
+        return []
+
+    category_ids = _dish_public_category_ids(dish)
+    if not category_ids:
+        return []
+
+    # Base queryset: same country, visible, not in global stop-list,
+    # excluding the current dish.
+    qs = (
+        _visible_dishes_qs(dish.country, location=location)
+        .filter(
+            Q(public_categories__id__in=category_ids)
+            | Q(
+                category_id__in=category_ids,
+                public_categories__isnull=True,
+            )
+        )
+        .exclude(id=dish.id)
+        .distinct()
+        .order_by("site_sort_order", "name")
+    )
+
+    items = []
+    seen_ids = set()
+    for candidate in qs[: limit * 3]:  # over-fetch in case dup IDs leak in
+        if candidate.id in seen_ids:
+            continue
+        seen_ids.add(candidate.id)
+        items.append({
+            "id": candidate.id,
+            "name": _display_name(candidate),
+            "slug": candidate.slug or "",
+            "image": _resolve_image(
+                request,
+                candidate.photo,
+                getattr(candidate, "photo_url", "") or "",
+            ),
+            "price": _to_float(candidate.selling_price),
+            "is_available": is_dish_available(candidate, location=location),
+        })
+        if len(items) >= limit:
+            break
+
+    return items
 
 
 def serialize_product_detail(request, dish, location=None):
+    """
+    Public product detail payload.
+
+    Stable fields (do NOT remove — the website depends on them):
+        id, category_id, category_slug, category_ids,
+        name, slug, composition, short_description, public_description,
+        image, gallery,
+        weight, cooking_time, spice_level,
+        price, old_price, badge,
+        is_new, is_featured, is_spicy, is_vegetarian, is_available,
+        addons, upsell_products.
+
+    Newly populated (were always present but were empty / missing data):
+        - "weight"           — never empty when final_weight is known
+        - "weight_grams"     — numeric weight in grams, or null
+        - "final_weight_kg"  — raw final_weight as float, or null
+        - "addons"           — flat list per the website spec
+        - "addon_groups"     — original grouped shape (back-compat)
+        - "upsell_products"  — auto-derived from the same categories
+        - "image"            — now respects photo_url first
+    """
     primary_cat = _primary_category_for_card(dish)
+    addons_payload = _build_dish_addons(request, dish, location=location)
 
     return {
         "id": dish.id,
@@ -550,7 +693,11 @@ def serialize_product_detail(request, dish, location=None):
             getattr(dish, "photo_url", "") or "",
         ),
         "gallery": _serialize_dish_gallery(request, dish),
+        # Weight: keep the stable string field for back-compat, and expose
+        # numeric variants so the frontend can format itself if it wants.
         "weight": _format_weight(dish),
+        "weight_grams": _weight_grams_value(dish),
+        "final_weight_kg": _to_float(getattr(dish, "final_weight", None)),
         "cooking_time": _format_cooking_time(dish),
         "spice_level": dish.spice_level or "",
         "price": _to_float(dish.selling_price),
@@ -561,9 +708,12 @@ def serialize_product_detail(request, dish, location=None):
         "is_spicy": bool(dish.is_spicy),
         "is_vegetarian": bool(dish.is_vegetarian),
         "is_available": is_dish_available(dish, location=location),
-        "addons": _collect_dish_addons(request, dish, location=location),
-        # Reserved for later. Empty for now so the website can render safely.
-        "upsell_products": [],
+        # Flat list per the website spec — what the cart UI consumes.
+        "addons": addons_payload["flat"],
+        # Grouped shape — kept for any older client that already used it.
+        "addon_groups": addons_payload["groups"],
+        # Auto-derived recommendations from the same public categories.
+        "upsell_products": _build_upsell_products(request, dish, location=location),
     }
 
 
@@ -758,11 +908,26 @@ def product_detail(request, slug):
 
     location = _resolve_location(country, request.GET.get("location_id"))
 
-    dish = Dish.objects.filter(
-        country=country,
-        slug=slug,
-        is_visible_on_site=True,
-    ).select_related("category").first()
+    # Eager-load every relation the serializer / addon / upsell / gallery
+    # helpers will touch, so the whole detail view is a small handful of
+    # queries instead of one-per-addon and one-per-gallery-image.
+    dish = (
+        Dish.objects
+        .filter(
+            country=country,
+            slug=slug,
+            is_visible_on_site=True,
+        )
+        .select_related("category", "country")
+        .prefetch_related(
+            "public_categories",
+            "gallery_images",
+            "addon_links",
+            "addon_links__addon_dish",
+            "addon_links__addon_dish__category",
+        )
+        .first()
+    )
 
     if dish is None:
         return api_error(
