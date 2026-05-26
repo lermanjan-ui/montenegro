@@ -60,6 +60,25 @@ def clean_decimal(value, default="0"):
         return default
     return str(value).replace(",", ".")
 
+
+def _parse_optional_decimal(value):
+    """
+    Parse a Decimal from a form value that may be empty or invalid.
+
+    Returns Decimal or None. Empty / invalid input yields None so the model
+    receives a SQL NULL (latitude / longitude fields are nullable). Comma is
+    accepted as the decimal separator, since users often type "41,2995".
+    """
+    if value is None:
+        return None
+    raw = str(value).strip().replace(",", ".")
+    if not raw:
+        return None
+    try:
+        return Decimal(raw)
+    except Exception:
+        return None
+
 def get_country(country_slug, user=None):
     country = get_object_or_404(Country, slug=country_slug)
 
@@ -1620,18 +1639,104 @@ def user_access_list(request, country_slug):
         action = request.POST.get("action")
 
         if action == "create_location":
-            location_name = request.POST.get("location_name")
-            telegram_thread_id = request.POST.get("telegram_thread_id")
+            location_name = (request.POST.get("location_name") or "").strip()
 
             if not location_name:
                 error = "Укажи название филиала"
             else:
+                # Telegram thread id — BigIntegerField, accepts empty.
+                tg_raw = (request.POST.get("telegram_thread_id") or "").strip()
+                try:
+                    tg_thread_id = int(tg_raw) if tg_raw else None
+                except (TypeError, ValueError):
+                    tg_thread_id = None
+
+                # site_sort_order — PositiveIntegerField, accepts blank.
+                try:
+                    sort_order = int(request.POST.get("site_sort_order") or 0)
+                except (TypeError, ValueError):
+                    sort_order = 0
+                if sort_order < 0:
+                    sort_order = 0
+
                 Location.objects.create(
                     country=country,
                     name=location_name,
-                    telegram_thread_id=telegram_thread_id or None,
+                    telegram_thread_id=tg_thread_id,
+                    public_name=(request.POST.get("public_name") or "").strip(),
+                    address=(request.POST.get("address") or "").strip(),
+                    phone=(request.POST.get("phone") or "").strip(),
+                    latitude=_parse_optional_decimal(request.POST.get("latitude")),
+                    longitude=_parse_optional_decimal(request.POST.get("longitude")),
+                    working_hours=(request.POST.get("working_hours") or "").strip(),
+                    site_sort_order=sort_order,
+                    # NB: HTML checkbox is present only when checked.
+                    is_active=bool(request.POST.get("is_active")),
+                    is_visible_on_site=bool(request.POST.get("is_visible_on_site")),
+                    supports_pickup=bool(request.POST.get("supports_pickup")),
+                    supports_delivery=bool(request.POST.get("supports_delivery")),
                 )
 
+                return redirect(f"/c/{country.slug}/users/")
+
+        if action == "update_location":
+            item = get_object_or_404(
+                Location,
+                id=request.POST.get("location_id"),
+                country=country,
+            )
+
+            new_name = (request.POST.get("location_name") or "").strip()
+            if not new_name:
+                error = "Название филиала не может быть пустым"
+            else:
+                item.name = new_name
+
+                tg_raw = (request.POST.get("telegram_thread_id") or "").strip()
+                try:
+                    item.telegram_thread_id = int(tg_raw) if tg_raw else None
+                except (TypeError, ValueError):
+                    item.telegram_thread_id = None
+
+                item.public_name = (request.POST.get("public_name") or "").strip()
+                item.address = (request.POST.get("address") or "").strip()
+                item.phone = (request.POST.get("phone") or "").strip()
+                item.latitude = _parse_optional_decimal(request.POST.get("latitude"))
+                item.longitude = _parse_optional_decimal(request.POST.get("longitude"))
+                item.working_hours = (request.POST.get("working_hours") or "").strip()
+
+                try:
+                    sort_order = int(request.POST.get("site_sort_order") or 0)
+                except (TypeError, ValueError):
+                    sort_order = 0
+                if sort_order < 0:
+                    sort_order = 0
+                item.site_sort_order = sort_order
+
+                item.is_active = bool(request.POST.get("is_active"))
+                item.is_visible_on_site = bool(request.POST.get("is_visible_on_site"))
+                item.supports_pickup = bool(request.POST.get("supports_pickup"))
+                item.supports_delivery = bool(request.POST.get("supports_delivery"))
+                item.save()
+
+                return redirect(f"/c/{country.slug}/users/")
+
+        if action == "delete_location":
+            item = get_object_or_404(
+                Location,
+                id=request.POST.get("location_id"),
+                country=country,
+            )
+            # Soft safety: if any UserProfile points at this location, refuse.
+            # Order.location uses on_delete=SET_NULL so deletion is safe for
+            # historical orders — they keep their data, just lose the FK.
+            if UserProfile.objects.filter(location=item).exists():
+                error = (
+                    "Нельзя удалить филиал: к нему привязаны пользователи. "
+                    "Сначала отвяжите их."
+                )
+            else:
+                item.delete()
                 return redirect(f"/c/{country.slug}/users/")
 
         if action == "create_user":
@@ -1701,7 +1806,9 @@ def user_access_list(request, country_slug):
 
     countries = Country.objects.all().order_by("name")
 
-    locations = Location.objects.all().order_by("name")
+    locations = Location.objects.filter(country=country).order_by(
+        "site_sort_order", "name"
+    )
 
     return render(request, "foodcost/user_access_list.html", {
         "country": country,

@@ -254,11 +254,115 @@
         font-weight: 800;
     }
 
+    /* ===== Филиалы (Part 6 — branch management) ===== */
+    .branch-row {
+        border: 1px solid #eef2f7;
+        background: #fbfcfd;
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+    }
+
+    .branch-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .branch-title {
+        font-weight: 950;
+        color: #111827;
+        font-size: 16px;
+    }
+
+    .branch-sub {
+        color: #6b7280;
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-top: 3px;
+    }
+
+    .branch-badges {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .branch-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .branch-badge-on {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .branch-badge-off {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .branch-edit {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px dashed #e5e7eb;
+    }
+
+    .branch-row .form-grid {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+
+    .branch-row details > summary {
+        cursor: pointer;
+        font-weight: 900;
+        color: #2563ff;
+        font-size: 13px;
+        user-select: none;
+        list-style: none;
+    }
+
+    .branch-row details > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .branch-row details > summary::before {
+        content: "▸ ";
+        color: #2563ff;
+    }
+
+    .branch-row details[open] > summary::before {
+        content: "▾ ";
+    }
+
+    .branch-delete-btn {
+        background: #fff;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    .branch-delete-btn:hover {
+        background: #fef2f2;
+    }
+
     @media (max-width: 1000px) {
         .form-grid,
         .access-grid,
         .user-view,
         .edit-main-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .branch-row .form-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -274,26 +378,205 @@
 </div>
 
 <div class="card">
-    <h2>Создать филиал</h2>
+    <h2>Филиалы</h2>
+    <p class="muted" style="margin-bottom:18px;">
+        Создание, редактирование и отключение филиалов. Поля с пометкой
+        «для сайта» используются на публичном фронте — если филиал скрыт,
+        он не появится в каталоге и не примет онлайн-заказы.
+    </p>
 
-    <form method="post" class="form-grid">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="create_location">
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
 
-        <div>
-            <label>Название филиала</label>
-            <input name="location_name" placeholder="Например: Яшнобод">
+    <details style="margin-bottom:18px;">
+        <summary style="cursor:pointer;font-weight:900;color:#2563ff;font-size:14px;user-select:none;">
+            + Создать новый филиал
+        </summary>
+
+        <form method="post" class="create-form" style="margin-top:14px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_location">
+
+            <div class="form-grid">
+                <div>
+                    <label>Название филиала *</label>
+                    <input name="location_name" placeholder="Например: Яшнобод" required>
+                </div>
+                <div>
+                    <label>Telegram thread ID</label>
+                    <input name="telegram_thread_id" placeholder="Например: 2" type="number">
+                </div>
+                <div>
+                    <label>Название для сайта</label>
+                    <input name="public_name" placeholder="Raccoon · Яшнобод">
+                </div>
+                <div>
+                    <label>Порядок на сайте</label>
+                    <input name="site_sort_order" type="number" min="0" step="1" value="0">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div style="grid-column: span 2;">
+                    <label>Адрес</label>
+                    <input name="address" placeholder="ул. Шахрисабз, 14">
+                </div>
+                <div>
+                    <label>Телефон</label>
+                    <input name="phone" placeholder="+998 ...">
+                </div>
+                <div>
+                    <label>Часы работы</label>
+                    <input name="working_hours" placeholder="12:00–24:00">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div>
+                    <label>Широта</label>
+                    <input name="latitude" placeholder="41.2995">
+                </div>
+                <div>
+                    <label>Долгота</label>
+                    <input name="longitude" placeholder="69.2401">
+                </div>
+                <div class="checkbox-panel" style="grid-column: span 2;">
+                    <div class="checkbox-title">Статус</div>
+                    <div class="checkboxes">
+                        <label><input type="checkbox" name="is_active" checked> Активен</label>
+                        <label><input type="checkbox" name="is_visible_on_site"> Показывать на сайте</label>
+                        <label><input type="checkbox" name="supports_delivery" checked> Доставка</label>
+                        <label><input type="checkbox" name="supports_pickup"> Самовывоз</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-actions">
+                <button type="submit">Создать филиал</button>
+            </div>
+        </form>
+    </details>
+
+    {% for branch in locations %}
+        <div class="branch-row">
+            <div class="branch-head">
+                <div>
+                    <div class="branch-title">{{ branch.name }}</div>
+                    <div class="branch-sub">
+                        {% if branch.public_name %}{{ branch.public_name }}{% if branch.address %} · {% endif %}{% endif %}
+                        {{ branch.address }}
+                        {% if branch.phone %} · {{ branch.phone }}{% endif %}
+                    </div>
+                </div>
+                <div class="branch-badges">
+                    {% if branch.is_active %}
+                        <span class="branch-badge branch-badge-on">Активен</span>
+                    {% else %}
+                        <span class="branch-badge branch-badge-off">Отключён</span>
+                    {% endif %}
+
+                    {% if branch.is_visible_on_site %}
+                        <span class="branch-badge branch-badge-on">На сайте</span>
+                    {% else %}
+                        <span class="branch-badge branch-badge-off">Скрыт</span>
+                    {% endif %}
+
+                    {% if branch.supports_delivery %}
+                        <span class="branch-badge branch-badge-on">Доставка</span>
+                    {% else %}
+                        <span class="branch-badge branch-badge-off">Без доставки</span>
+                    {% endif %}
+
+                    {% if branch.supports_pickup %}
+                        <span class="branch-badge branch-badge-on">Самовывоз</span>
+                    {% else %}
+                        <span class="branch-badge branch-badge-off">Без самовывоза</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <details class="branch-edit">
+                <summary>Редактировать</summary>
+
+                <form method="post" class="create-form" style="margin-top:14px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_location">
+                    <input type="hidden" name="location_id" value="{{ branch.id }}">
+
+                    <div class="form-grid">
+                        <div>
+                            <label>Название филиала *</label>
+                            <input name="location_name" value="{{ branch.name }}" required>
+                        </div>
+                        <div>
+                            <label>Telegram thread ID</label>
+                            <input name="telegram_thread_id" type="number" value="{% if branch.telegram_thread_id is not None %}{{ branch.telegram_thread_id }}{% endif %}">
+                        </div>
+                        <div>
+                            <label>Название для сайта</label>
+                            <input name="public_name" value="{{ branch.public_name }}">
+                        </div>
+                        <div>
+                            <label>Порядок на сайте</label>
+                            <input name="site_sort_order" type="number" min="0" step="1" value="{{ branch.site_sort_order }}">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div style="grid-column: span 2;">
+                            <label>Адрес</label>
+                            <input name="address" value="{{ branch.address }}">
+                        </div>
+                        <div>
+                            <label>Телефон</label>
+                            <input name="phone" value="{{ branch.phone }}">
+                        </div>
+                        <div>
+                            <label>Часы работы</label>
+                            <input name="working_hours" value="{{ branch.working_hours }}">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div>
+                            <label>Широта</label>
+                            <input name="latitude" value="{% if branch.latitude is not None %}{{ branch.latitude }}{% endif %}">
+                        </div>
+                        <div>
+                            <label>Долгота</label>
+                            <input name="longitude" value="{% if branch.longitude is not None %}{{ branch.longitude }}{% endif %}">
+                        </div>
+                        <div class="checkbox-panel" style="grid-column: span 2;">
+                            <div class="checkbox-title">Статус</div>
+                            <div class="checkboxes">
+                                <label><input type="checkbox" name="is_active" {% if branch.is_active %}checked{% endif %}> Активен</label>
+                                <label><input type="checkbox" name="is_visible_on_site" {% if branch.is_visible_on_site %}checked{% endif %}> Показывать на сайте</label>
+                                <label><input type="checkbox" name="supports_delivery" {% if branch.supports_delivery %}checked{% endif %}> Доставка</label>
+                                <label><input type="checkbox" name="supports_pickup" {% if branch.supports_pickup %}checked{% endif %}> Самовывоз</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="edit-actions">
+                        <button type="submit">Сохранить</button>
+                    </div>
+                </form>
+
+                <form method="post" style="margin-top:10px;text-align:right;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_location">
+                    <input type="hidden" name="location_id" value="{{ branch.id }}">
+                    <button type="submit" class="branch-delete-btn"
+                            onclick="return confirm('Удалить филиал «{{ branch.name|escapejs }}»? Это действие необратимо.')">
+                        Удалить филиал
+                    </button>
+                </form>
+            </details>
         </div>
-
-        <div>
-            <label>Telegram thread ID</label>
-            <input name="telegram_thread_id" placeholder="Например: 2">
-        </div>
-
-        <div>
-            <button type="submit">Создать филиал</button>
-        </div>
-    </form>
+    {% empty %}
+        <div class="empty">Пока нет филиалов</div>
+    {% endfor %}
 </div>
 
 <div class="card">

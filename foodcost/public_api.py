@@ -386,6 +386,33 @@ def serialize_location(request, location):
         "supports_pickup": bool(location.supports_pickup),
         # Schedule-based open/closed logic comes in a later part.
         "is_open": True,
+        "site_sort_order": int(location.site_sort_order or 0),
+    }
+
+
+# Default ETA shown to a public user picking up an order. Until we model
+# per-branch prep times this stays a single human-readable string.
+DEFAULT_PICKUP_READY_TIME = "15–20 мин"
+
+
+def _serialize_pickup_point(request, location):
+    """
+    Pickup-point payload — superset of serialize_location with `ready_time`
+    and without supports_* (every entry in this list supports pickup by
+    definition, so those flags would be noise).
+    """
+    return {
+        "id": location.id,
+        "name": _display_name(location),
+        "public_name": _display_name(location),
+        "address": location.address or "",
+        "phone": location.phone or "",
+        "latitude": _to_float(location.latitude),
+        "longitude": _to_float(location.longitude),
+        "working_hours": location.working_hours or "",
+        "is_open": True,
+        "ready_time": DEFAULT_PICKUP_READY_TIME,
+        "site_sort_order": int(location.site_sort_order or 0),
     }
 
 
@@ -1567,14 +1594,37 @@ def _resolve_delivery_zone(country, location, payload):
     return zone, None
 
 
-def _require_location_from_payload(country, payload, required=True):
+def _require_location_from_payload(
+    country,
+    payload,
+    required=True,
+    fulfillment_method=None,
+):
     """
     Resolve location from the JSON body.
 
-    If required=True and no valid location is found, returns an error.
-    If required=False, returns (None, None) when no id is provided.
+    Args:
+        country:              Country instance.
+        payload:              parsed JSON body.
+        required:             when True, missing id returns an error.
+        fulfillment_method:   optional "delivery" / "pickup" — when given,
+                              also enforces the spec's per-mode filters:
+                                delivery → is_visible_on_site + supports_delivery
+                                pickup   → is_visible_on_site + supports_pickup
+                              When None, only is_active is checked (back-compat
+                              with cart_calculate, which surfaces availability
+                              for any active branch).
+
+    For pickup orders the spec uses `pickup_point_id`; we accept both
+    `pickup_point_id` and `location_id` (in that order) for cleaner client
+    payloads without breaking older clients.
     """
-    raw = payload.get("location_id")
+    # Accept pickup_point_id first, then fall back to location_id, so the
+    # frontend can use the semantically correct key for pickup orders.
+    raw = payload.get("pickup_point_id")
+    if raw in (None, "", 0, "0"):
+        raw = payload.get("location_id")
+
     if raw in (None, "", 0, "0"):
         if required:
             return None, api_error(
@@ -1593,17 +1643,34 @@ def _require_location_from_payload(country, payload, required=True):
             status=400,
         )
 
-    location = Location.objects.filter(
-        id=location_id,
-        country=country,
-        is_active=True,
-    ).first()
+    # Base filter: country + active.
+    filters = {
+        "id": location_id,
+        "country": country,
+        "is_active": True,
+    }
+
+    # When the caller knows the fulfillment mode, enforce site-visibility
+    # plus the matching capability flag. This is the rule the spec requires
+    # for order creation; cart preview keeps the base filter and surfaces
+    # availability via lines / flags instead of hard-failing.
+    if fulfillment_method == Order.FULFILLMENT_PICKUP:
+        filters["is_visible_on_site"] = True
+        filters["supports_pickup"] = True
+    elif fulfillment_method == Order.FULFILLMENT_DELIVERY:
+        filters["is_visible_on_site"] = True
+        filters["supports_delivery"] = True
+
+    location = Location.objects.filter(**filters).first()
 
     if location is None:
         return None, api_error(
             "LOCATION_NOT_FOUND",
-            "Location does not exist in this country",
-            details={"location_id": location_id},
+            "Location does not exist or does not match the chosen fulfillment",
+            details={
+                "location_id": location_id,
+                "fulfillment_method": fulfillment_method,
+            },
             status=404,
         )
 
@@ -1958,24 +2025,18 @@ def order_create(request):
 
     fulfillment_method = _resolve_fulfillment_method(payload)
 
-    # location_id is required for any order — pickup_point for pickup orders,
-    # the serving branch for delivery orders.
-    location, err = _require_location_from_payload(country, payload, required=True)
+    # location_id (or pickup_point_id) is required for any order. The
+    # resolver enforces the per-mode filters required by spec:
+    #   delivery → is_active + is_visible_on_site + supports_delivery
+    #   pickup   → is_active + is_visible_on_site + supports_pickup
+    location, err = _require_location_from_payload(
+        country,
+        payload,
+        required=True,
+        fulfillment_method=fulfillment_method,
+    )
     if err:
         return err
-
-    # For pickup orders we also require that this location actually allows
-    # pickup. Operators may temporarily disable pickup on a specific branch.
-    if (
-        fulfillment_method == Order.FULFILLMENT_PICKUP
-        and not getattr(location, "supports_pickup", True)
-    ):
-        return api_error(
-            "LOCATION_NOT_FOUND",
-            "Selected pickup point does not support pickup",
-            details={"location_id": location.id},
-            status=400,
-        )
 
     customer_name = str(payload.get("customer_name") or "").strip()
     customer_phone = str(payload.get("customer_phone") or "").strip()
@@ -2188,7 +2249,7 @@ def pickup_points(request):
     ).order_by("site_sort_order", "name")
 
     return api_success({
-        "pickup_points": [serialize_location(request, loc) for loc in qs],
+        "pickup_points": [_serialize_pickup_point(request, loc) for loc in qs],
     })
 
 
