@@ -106,11 +106,14 @@ import os
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
- #CORS_ALLOWED_ORIGINS = [
-  #   "http://localhost:3000",
-  #   "http://127.0.0.1:3000",
- #]
-CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://raccoon.uz",
+    "https://www.raccoon.uz",
+]
+
 CORS_ALLOW_METHODS = [
     "GET",
     "POST",
@@ -125,3 +128,5 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+CORS_URLS_REGEX = r"^/api/.*$"
