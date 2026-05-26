@@ -61,7 +61,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
 from django.db.models import Min, Q
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -386,33 +386,6 @@ def serialize_location(request, location):
         "supports_pickup": bool(location.supports_pickup),
         # Schedule-based open/closed logic comes in a later part.
         "is_open": True,
-        "site_sort_order": int(location.site_sort_order or 0),
-    }
-
-
-# Default ETA shown to a public user picking up an order. Until we model
-# per-branch prep times this stays a single human-readable string.
-DEFAULT_PICKUP_READY_TIME = "15–20 мин"
-
-
-def _serialize_pickup_point(request, location):
-    """
-    Pickup-point payload — superset of serialize_location with `ready_time`
-    and without supports_* (every entry in this list supports pickup by
-    definition, so those flags would be noise).
-    """
-    return {
-        "id": location.id,
-        "name": _display_name(location),
-        "public_name": _display_name(location),
-        "address": location.address or "",
-        "phone": location.phone or "",
-        "latitude": _to_float(location.latitude),
-        "longitude": _to_float(location.longitude),
-        "working_hours": location.working_hours or "",
-        "is_open": True,
-        "ready_time": DEFAULT_PICKUP_READY_TIME,
-        "site_sort_order": int(location.site_sort_order or 0),
     }
 
 
@@ -1291,7 +1264,9 @@ def _validate_and_price_cart(
     Args:
         country:           Country instance.
         location:          Location instance or None.
-        items_raw:         List of {dish_id, quantity, addons[]} dicts.
+        items_raw:         List of {dish_id, quantity, addon_ids[]} dicts.
+                           Legacy key "addons" is accepted as a fallback for
+                           addon_ids so older clients keep working.
         delivery_zone:     DeliveryZone instance or None.
         fulfillment_method:"delivery" or "pickup". Pickup forces delivery=0.
         promo_code:        PromoCode instance or None. When given, applies
@@ -1379,11 +1354,17 @@ def _validate_and_price_cart(
             )
 
         # ---- Addons ----
-        raw_addon_ids = raw_item.get("addons") or []
+        # Frontend contract: prefer "addon_ids" (current website field name);
+        # fall back to legacy "addons" so old clients keep working unchanged.
+        raw_addon_ids = (
+            raw_item.get("addon_ids")
+            if raw_item.get("addon_ids") is not None
+            else raw_item.get("addons")
+        ) or []
         if not isinstance(raw_addon_ids, list):
             return None, api_error(
                 "INVALID_JSON",
-                "Addons must be a list of dish IDs",
+                "addon_ids must be a list of dish IDs",
                 details={"index": index, "dish_id": dish.id},
                 status=400,
             )
@@ -1594,37 +1575,14 @@ def _resolve_delivery_zone(country, location, payload):
     return zone, None
 
 
-def _require_location_from_payload(
-    country,
-    payload,
-    required=True,
-    fulfillment_method=None,
-):
+def _require_location_from_payload(country, payload, required=True):
     """
     Resolve location from the JSON body.
 
-    Args:
-        country:              Country instance.
-        payload:              parsed JSON body.
-        required:             when True, missing id returns an error.
-        fulfillment_method:   optional "delivery" / "pickup" — when given,
-                              also enforces the spec's per-mode filters:
-                                delivery → is_visible_on_site + supports_delivery
-                                pickup   → is_visible_on_site + supports_pickup
-                              When None, only is_active is checked (back-compat
-                              with cart_calculate, which surfaces availability
-                              for any active branch).
-
-    For pickup orders the spec uses `pickup_point_id`; we accept both
-    `pickup_point_id` and `location_id` (in that order) for cleaner client
-    payloads without breaking older clients.
+    If required=True and no valid location is found, returns an error.
+    If required=False, returns (None, None) when no id is provided.
     """
-    # Accept pickup_point_id first, then fall back to location_id, so the
-    # frontend can use the semantically correct key for pickup orders.
-    raw = payload.get("pickup_point_id")
-    if raw in (None, "", 0, "0"):
-        raw = payload.get("location_id")
-
+    raw = payload.get("location_id")
     if raw in (None, "", 0, "0"):
         if required:
             return None, api_error(
@@ -1643,34 +1601,17 @@ def _require_location_from_payload(
             status=400,
         )
 
-    # Base filter: country + active.
-    filters = {
-        "id": location_id,
-        "country": country,
-        "is_active": True,
-    }
-
-    # When the caller knows the fulfillment mode, enforce site-visibility
-    # plus the matching capability flag. This is the rule the spec requires
-    # for order creation; cart preview keeps the base filter and surfaces
-    # availability via lines / flags instead of hard-failing.
-    if fulfillment_method == Order.FULFILLMENT_PICKUP:
-        filters["is_visible_on_site"] = True
-        filters["supports_pickup"] = True
-    elif fulfillment_method == Order.FULFILLMENT_DELIVERY:
-        filters["is_visible_on_site"] = True
-        filters["supports_delivery"] = True
-
-    location = Location.objects.filter(**filters).first()
+    location = Location.objects.filter(
+        id=location_id,
+        country=country,
+        is_active=True,
+    ).first()
 
     if location is None:
         return None, api_error(
             "LOCATION_NOT_FOUND",
-            "Location does not exist or does not match the chosen fulfillment",
-            details={
-                "location_id": location_id,
-                "fulfillment_method": fulfillment_method,
-            },
+            "Location does not exist in this country",
+            details={"location_id": location_id},
             status=404,
         )
 
@@ -1917,10 +1858,6 @@ def _serialize_order_for_tracking(order):
 @csrf_exempt
 @require_POST
 def cart_calculate(request):
-    
-    if request.method == "OPTIONS":
-        return HttpResponse(status=204)
-        
     """
     Recalculate cart totals from the items in the request body.
 
@@ -1935,7 +1872,15 @@ def cart_calculate(request):
           "fulfillment_method": "delivery" | "pickup",  # default "delivery"
           "delivery_zone_id":1,            # optional; overrides default fee
           "promo_code":      "WELCOME10",  # optional
-          "items": [ { "dish_id": ..., "quantity": ..., "addons": [..] }, ... ]
+          "items": [
+              {
+                  "dish_id":   40,        # required, int
+                  "quantity":  1,         # required, int
+                  "addon_ids": []         # optional, list of Dish ids
+                                          # legacy "addons" key also accepted
+              },
+              ...
+          ]
         }
     """
     payload, err = _parse_json_body(request)
@@ -1988,8 +1933,6 @@ def cart_calculate(request):
         "fulfillment_method": result["fulfillment_method"],
         "total": _to_float(result["total"]),
     })
-    
-    
 
 
 # =============================================================================
@@ -1998,15 +1941,7 @@ def cart_calculate(request):
 
 @csrf_exempt
 @require_POST
-
-
-
 def order_create(request):
-    
-    
-    if request.method == "OPTIONS":
-        return HttpResponse(status=204)
-        
     """
     Create an Order + OrderItem rows from the public website.
 
@@ -2026,8 +1961,35 @@ def order_create(request):
           "customer_phone":  "+998...",
           "delivery_address":"...",                   # required for delivery
           "comment":         "...",                   # optional
-          "items":           [ ... ]
+          "items": [
+            { "dish_id": 40, "quantity": 1, "addon_ids": [] },
+            ...
+          ]
         }
+
+    Each item:
+      - dish_id   (required, int) — the product id from the catalog.
+      - quantity  (required, int) — defaults to 1 if missing.
+      - addon_ids (optional list[int]) — Dish ids of addons attached to the
+                  product. Legacy "addons" key is also accepted for
+                  back-compat with older clients.
+
+    Response (frontend contract):
+        {
+          "success": true,
+          "data": {
+            "order": {
+              "id":           42,
+              "order_number": "RCN-2026-000042",
+              "status":       "new",
+              "total":        185000.0
+            }
+          }
+        }
+
+    For everything else (status_label, fulfillment, payment_method,
+    payment_status, subtotal / discount / delivery breakdown, items snapshot)
+    use GET /api/public/orders/<public_order_number>/.
     """
     payload, err = _parse_json_body(request)
     if err:
@@ -2039,18 +2001,24 @@ def order_create(request):
 
     fulfillment_method = _resolve_fulfillment_method(payload)
 
-    # location_id (or pickup_point_id) is required for any order. The
-    # resolver enforces the per-mode filters required by spec:
-    #   delivery → is_active + is_visible_on_site + supports_delivery
-    #   pickup   → is_active + is_visible_on_site + supports_pickup
-    location, err = _require_location_from_payload(
-        country,
-        payload,
-        required=True,
-        fulfillment_method=fulfillment_method,
-    )
+    # location_id is required for any order — pickup_point for pickup orders,
+    # the serving branch for delivery orders.
+    location, err = _require_location_from_payload(country, payload, required=True)
     if err:
         return err
+
+    # For pickup orders we also require that this location actually allows
+    # pickup. Operators may temporarily disable pickup on a specific branch.
+    if (
+        fulfillment_method == Order.FULFILLMENT_PICKUP
+        and not getattr(location, "supports_pickup", True)
+    ):
+        return api_error(
+            "LOCATION_NOT_FOUND",
+            "Selected pickup point does not support pickup",
+            details={"location_id": location.id},
+            status=400,
+        )
 
     customer_name = str(payload.get("customer_name") or "").strip()
     customer_phone = str(payload.get("customer_phone") or "").strip()
@@ -2175,19 +2143,18 @@ def order_create(request):
                 total_price=line["total_price"],
             )
 
+    # Frontend contract: data.order = { id, order_number, status, total }.
+    # Anything else the website needs after order creation (status_label,
+    # fulfillment, payment, breakdown of subtotal/discount/delivery, etc.)
+    # is available via GET /api/public/orders/<public_order_number>/.
+    # Keeping this minimal makes the contract easy to stabilise.
     return api_success({
-        "order_id": order.id,
-        "public_order_number": order.public_order_number,
-        "status": order.status,
-        "status_label": _status_label(order.status),
-        "fulfillment_method": order.fulfillment_method,
-        "payment_method": payment_key or None,
-        "payment_status": order.payment_status,
-        "applied_promo_code": promo.code if promo else None,
-        "subtotal": _to_float(order.subtotal_amount),
-        "discount_amount": _to_float(order.discount_amount),
-        "delivery_price": _to_float(order.delivery_amount),
-        "total": _to_float(order.total_amount),
+        "order": {
+            "id": order.id,
+            "order_number": order.public_order_number or "",
+            "status": order.status,
+            "total": _to_float(order.total_amount),
+        },
     })
 
 
@@ -2263,7 +2230,7 @@ def pickup_points(request):
     ).order_by("site_sort_order", "name")
 
     return api_success({
-        "pickup_points": [_serialize_pickup_point(request, loc) for loc in qs],
+        "pickup_points": [serialize_location(request, loc) for loc in qs],
     })
 
 
@@ -2274,10 +2241,6 @@ def pickup_points(request):
 @csrf_exempt
 @require_POST
 def promo_check(request):
-    
-    if request.method == "OPTIONS":
-        return HttpResponse(status=204)
-        
     """
     Validate a promo code and (optionally) preview the discount for a given
     subtotal.
@@ -2379,10 +2342,6 @@ def _serialize_customer_address(address):
 @csrf_exempt
 @require_POST
 def customers_lookup(request):
-    
-    if request.method == "OPTIONS":
-        return HttpResponse(status=204)
-        
     """
     Look up a returning customer by phone.
 
