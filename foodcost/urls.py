@@ -186,4 +186,23 @@ urlpatterns = [
         public_api.order_tracking,
         name="public_order_tracking",
     ),
+
+    # =========================================================================
+    # 🧾 PUBLIC API (Part 5) — checkout support: pickup points, promo, lookup
+    # =========================================================================
+    path(
+        "api/public/pickup-points",
+        public_api.pickup_points,
+        name="public_pickup_points",
+    ),
+    path(
+        "api/public/promo/check",
+        public_api.promo_check,
+        name="public_promo_check",
+    ),
+    path(
+        "api/public/customers/lookup",
+        public_api.customers_lookup,
+        name="public_customers_lookup",
+    ),
 ]

@@ -79,7 +79,11 @@ from .models import (
     OrderItem,
     OrderSource,
     Customer,
+    CustomerAddress,
     DeliveryZone,
+    # Part 5 — checkout support
+    PromoCode,
+    PaymentMethod,
 )
 
 
@@ -1102,6 +1106,46 @@ def _status_label(status):
 
 
 # -----------------------------------------------------------------------------
+# 🚚 Delivery fee defaults (Part 5 — public checkout)
+# -----------------------------------------------------------------------------
+#
+# When the request does not specify a delivery_zone_id, we fall back to these
+# country-wide defaults. The spec for Uzbekistan public site:
+#     delivery < 150 000 → fee = 15 000
+#     delivery ≥ 150 000 → fee = 0      (free over threshold)
+#     pickup             → fee = 0      (always)
+#
+# A non-null DeliveryZone in the request OVERRIDES these defaults — zone's
+# own delivery_price and free_delivery_threshold are used instead, so this
+# stays backward-compatible with Part 4 zone-based pricing.
+
+DEFAULT_DELIVERY_FEE = Decimal("15000")
+DEFAULT_FREE_DELIVERY_THRESHOLD = Decimal("150000")
+
+
+# -----------------------------------------------------------------------------
+# 💳 Payment method key mapping (Part 5 — public checkout)
+# -----------------------------------------------------------------------------
+#
+# The public website sends payment_method as a short string ("cash" / "click" /
+# "payme" / "online_card"). The ERP's Order model points at a PaymentMethod
+# record by FK. To keep ERP and website in sync we resolve each key to a
+# PaymentMethod row via get_or_create — see _resolve_payment_method below.
+#
+# `is_cash` is True only for "cash" so cashiers see the right indicator in
+# the existing ERP. All other methods are non-cash.
+
+PAYMENT_METHOD_KEYS = ("cash", "click", "payme", "online_card")
+
+PAYMENT_METHOD_LABELS = {
+    "cash":        "Наличные",
+    "click":       "Click",
+    "payme":       "Payme",
+    "online_card": "Карта онлайн",
+}
+
+
+# -----------------------------------------------------------------------------
 # Request parsing helpers
 # -----------------------------------------------------------------------------
 
@@ -1205,27 +1249,42 @@ def _money(value):
 # the aggregated totals.
 # -----------------------------------------------------------------------------
 
-def _validate_and_price_cart(country, location, items_raw, delivery_zone=None):
+def _validate_and_price_cart(
+    country,
+    location,
+    items_raw,
+    *,
+    delivery_zone=None,
+    fulfillment_method=Order.FULFILLMENT_DELIVERY,
+    promo_code=None,
+):
     """
     Validate raw cart items and compute prices server-side.
 
     Args:
-        country:      Country instance.
-        location:     Location instance or None.
-        items_raw:    List of {dish_id, quantity, addons[]} dicts.
-        delivery_zone: DeliveryZone instance or None.
+        country:           Country instance.
+        location:          Location instance or None.
+        items_raw:         List of {dish_id, quantity, addons[]} dicts.
+        delivery_zone:     DeliveryZone instance or None.
+        fulfillment_method:"delivery" or "pickup". Pickup forces delivery=0.
+        promo_code:        PromoCode instance or None. When given, applies
+                           percent discount to subtotal.
 
     Returns:
         (result, error_response)
 
     On success, `result` is a dict:
         {
-            "lines": [ ...per-item dicts ready for serialization... ],
-            "line_objects": [ {dish, quantity, addon_links, ...} ... ],
-            "subtotal":       Decimal,
-            "delivery_price": Decimal,
-            "total":          Decimal,
-            "free_delivery":  bool,
+            "lines":           [ ...per-item dicts ready for serialization... ],
+            "line_objects":    [ {dish, quantity, addon_links, ...} ... ],
+            "subtotal":        Decimal,
+            "discount_amount": Decimal,
+            "discount_percent":Decimal,
+            "applied_promo":   PromoCode or None,
+            "delivery_price":  Decimal,
+            "total":           Decimal,
+            "free_delivery":   bool,
+            "fulfillment_method": str,
         }
     On failure, returns (None, api_error(...)).
     """
@@ -1407,26 +1466,61 @@ def _validate_and_price_cart(country, location, items_raw, delivery_zone=None):
             "addon_links": addon_links_for_line,
         })
 
+    # ---- Discount (promo code) ----
+    discount_amount = Decimal("0")
+    discount_percent = Decimal("0")
+    if promo_code is not None:
+        try:
+            discount_percent = _money(promo_code.percent)
+        except Exception:
+            discount_percent = Decimal("0")
+        if discount_percent > 0:
+            # 2 dp rounding so cashier-facing totals stay clean.
+            discount_amount = (subtotal * discount_percent / Decimal("100")).quantize(
+                Decimal("0.01")
+            )
+            if discount_amount > subtotal:
+                discount_amount = subtotal
+
+    discounted_subtotal = subtotal - discount_amount
+
     # ---- Delivery ----
     delivery_price = Decimal("0")
     free_delivery = False
-    if delivery_zone is not None:
+
+    if fulfillment_method == Order.FULFILLMENT_PICKUP:
+        # Pickup is always free — irrespective of zone or threshold.
+        delivery_price = Decimal("0")
+        free_delivery = True
+    elif delivery_zone is not None:
+        # Zone overrides the country-wide defaults.
         threshold = _money(delivery_zone.free_delivery_threshold)
-        if threshold > 0 and subtotal >= threshold:
+        if threshold > 0 and discounted_subtotal >= threshold:
             delivery_price = Decimal("0")
             free_delivery = True
         else:
             delivery_price = _money(delivery_zone.delivery_price)
+    else:
+        # Public-checkout default: 15 000 below threshold, free at/above.
+        if discounted_subtotal >= DEFAULT_FREE_DELIVERY_THRESHOLD:
+            delivery_price = Decimal("0")
+            free_delivery = True
+        else:
+            delivery_price = DEFAULT_DELIVERY_FEE
 
-    total = subtotal + delivery_price
+    total = discounted_subtotal + delivery_price
 
     return {
         "lines": lines,
         "line_objects": line_objects,
         "subtotal": subtotal,
+        "discount_amount": discount_amount,
+        "discount_percent": discount_percent,
+        "applied_promo": promo_code,
         "delivery_price": delivery_price,
         "total": total,
         "free_delivery": free_delivery,
+        "fulfillment_method": fulfillment_method,
     }, None
 
 
@@ -1514,6 +1608,113 @@ def _require_location_from_payload(country, payload, required=True):
         )
 
     return location, None
+
+
+# -----------------------------------------------------------------------------
+# 🚚 Fulfillment / promo / payment resolvers (Part 5 — public checkout)
+# -----------------------------------------------------------------------------
+
+def _resolve_fulfillment_method(payload):
+    """
+    Return one of Order.FULFILLMENT_DELIVERY / Order.FULFILLMENT_PICKUP.
+
+    Unknown / missing values default to delivery (the spec's default mode).
+    """
+    raw = str(payload.get("fulfillment_method") or "").strip().lower()
+    if raw == Order.FULFILLMENT_PICKUP:
+        return Order.FULFILLMENT_PICKUP
+    return Order.FULFILLMENT_DELIVERY
+
+
+def _resolve_promo_code(country, payload, *, required=False):
+    """
+    Resolve an optional PromoCode by string code.
+
+    Returns (promo_or_none, error_response).
+
+    Lookup:
+      - code is case-insensitive (we uppercase before searching).
+      - filtered by country and is_active=True.
+
+    Behavior:
+      - empty / missing code → (None, None) when required=False;
+        otherwise → (None, PROMO_INVALID error).
+      - given code but not found / inactive → (None, PROMO_INVALID error).
+    """
+    raw = (payload.get("promo_code") or "")
+    code = str(raw).strip().upper()
+    if not code:
+        if required:
+            return None, api_error(
+                "PROMO_INVALID",
+                "Promo code is required",
+                status=400,
+            )
+        return None, None
+
+    promo = PromoCode.objects.filter(
+        country=country,
+        is_active=True,
+        code__iexact=code,
+    ).first()
+
+    if promo is None:
+        return None, api_error(
+            "PROMO_INVALID",
+            "Promo code is invalid or inactive",
+            details={"promo_code": code},
+            status=400,
+        )
+
+    return promo, None
+
+
+def _resolve_payment_method(country, payload):
+    """
+    Resolve the payment method requested by the website.
+
+    Accepted keys (spec): cash | click | payme | online_card.
+    The website sends a short string; ERP stores a FK to PaymentMethod, so
+    we keep an idempotent get_or_create mapping per country.
+
+    Returns (payment_method_obj_or_none, key_or_empty, error_response).
+
+    - Empty / missing → (None, "", None). This is valid: an order can be
+      created without a chosen payment method (payment_status stays pending).
+    - Unknown key      → (None, key, PAYMENT_METHOD_INVALID error).
+    """
+    raw = str(payload.get("payment_method") or "").strip().lower()
+    if not raw:
+        return None, "", None
+
+    if raw not in PAYMENT_METHOD_KEYS:
+        return None, raw, api_error(
+            "PAYMENT_METHOD_INVALID",
+            "Payment method is not supported",
+            details={
+                "payment_method": raw,
+                "allowed": list(PAYMENT_METHOD_KEYS),
+            },
+            status=400,
+        )
+
+    label = PAYMENT_METHOD_LABELS[raw]
+    payment_method, _created = PaymentMethod.objects.get_or_create(
+        country=country,
+        name=label,
+        defaults={
+            "is_cash": (raw == "cash"),
+            "is_active": True,
+        },
+    )
+
+    # If a pre-existing row had is_active=False, light it up so future orders
+    # don't fail silently.
+    if not payment_method.is_active:
+        payment_method.is_active = True
+        payment_method.save(update_fields=["is_active"])
+
+    return payment_method, raw, None
 
 
 # -----------------------------------------------------------------------------
@@ -1655,6 +1856,16 @@ def cart_calculate(request):
     The frontend sends raw items; we ignore any totals it might have computed
     and recompute everything from authoritative DB prices. Useful for the
     cart preview page right before order submission.
+
+    Body (all optional except items):
+        {
+          "country_slug":    "uzbekistan",
+          "location_id":     1,            # optional; affects availability
+          "fulfillment_method": "delivery" | "pickup",  # default "delivery"
+          "delivery_zone_id":1,            # optional; overrides default fee
+          "promo_code":      "WELCOME10",  # optional
+          "items": [ { "dish_id": ..., "quantity": ..., "addons": [..] }, ... ]
+        }
     """
     payload, err = _parse_json_body(request)
     if err:
@@ -1669,7 +1880,16 @@ def cart_calculate(request):
     if err:
         return err
 
+    fulfillment_method = _resolve_fulfillment_method(payload)
+
     delivery_zone, err = _resolve_delivery_zone(country, location, payload)
+    if err:
+        return err
+    if fulfillment_method == Order.FULFILLMENT_PICKUP:
+        # Ignore any zone passed by the client when picking up — pickup is free.
+        delivery_zone = None
+
+    promo, err = _resolve_promo_code(country, payload, required=False)
     if err:
         return err
 
@@ -1678,6 +1898,8 @@ def cart_calculate(request):
         location=location,
         items_raw=payload.get("items") or [],
         delivery_zone=delivery_zone,
+        fulfillment_method=fulfillment_method,
+        promo_code=promo,
     )
     if err:
         return err
@@ -1685,8 +1907,14 @@ def cart_calculate(request):
     return api_success({
         "items": result["lines"],
         "subtotal": _to_float(result["subtotal"]),
+        "discount_amount": _to_float(result["discount_amount"]),
+        "discount_percent": _to_float(result["discount_percent"]),
+        "applied_promo_code": (
+            result["applied_promo"].code if result["applied_promo"] else None
+        ),
         "delivery_price": _to_float(result["delivery_price"]),
         "free_delivery": bool(result["free_delivery"]),
+        "fulfillment_method": result["fulfillment_method"],
         "total": _to_float(result["total"]),
     })
 
@@ -1701,9 +1929,24 @@ def order_create(request):
     """
     Create an Order + OrderItem rows from the public website.
 
-    Server recomputes prices from DB, never trusts frontend totals. Wrapped
-    in a transaction so the order is either fully persisted (with public
-    number) or not at all.
+    Server recomputes prices from DB — never trusts frontend totals.
+    Wrapped in a transaction so the order is either fully persisted (with
+    public number, promo, payment method, etc.) or not at all.
+
+    Body:
+        {
+          "country_slug":    "uzbekistan",
+          "location_id":     1,
+          "fulfillment_method": "delivery" | "pickup",
+          "payment_method":  "cash" | "click" | "payme" | "online_card",
+          "promo_code":      "WELCOME10",            # optional
+          "delivery_zone_id":1,                       # optional
+          "customer_name":   "...",
+          "customer_phone":  "+998...",
+          "delivery_address":"...",                   # required for delivery
+          "comment":         "...",                   # optional
+          "items":           [ ... ]
+        }
     """
     payload, err = _parse_json_body(request)
     if err:
@@ -1713,9 +1956,26 @@ def order_create(request):
     if err:
         return err
 
+    fulfillment_method = _resolve_fulfillment_method(payload)
+
+    # location_id is required for any order — pickup_point for pickup orders,
+    # the serving branch for delivery orders.
     location, err = _require_location_from_payload(country, payload, required=True)
     if err:
         return err
+
+    # For pickup orders we also require that this location actually allows
+    # pickup. Operators may temporarily disable pickup on a specific branch.
+    if (
+        fulfillment_method == Order.FULFILLMENT_PICKUP
+        and not getattr(location, "supports_pickup", True)
+    ):
+        return api_error(
+            "LOCATION_NOT_FOUND",
+            "Selected pickup point does not support pickup",
+            details={"location_id": location.id},
+            status=400,
+        )
 
     customer_name = str(payload.get("customer_name") or "").strip()
     customer_phone = str(payload.get("customer_phone") or "").strip()
@@ -1729,15 +1989,6 @@ def order_create(request):
             status=400,
         )
 
-    fulfillment_method = (
-        str(payload.get("fulfillment_method") or "").strip().lower()
-        or Order.FULFILLMENT_DELIVERY
-    )
-    if fulfillment_method not in (
-        Order.FULFILLMENT_DELIVERY, Order.FULFILLMENT_PICKUP,
-    ):
-        fulfillment_method = Order.FULFILLMENT_DELIVERY
-
     # Delivery address only required for delivery orders.
     if fulfillment_method == Order.FULFILLMENT_DELIVERY and not delivery_address:
         return api_error(
@@ -1750,15 +2001,29 @@ def order_create(request):
     if err:
         return err
 
-    # Pickup orders ignore delivery fees entirely.
+    # Pickup orders ignore delivery fees entirely — drop any zone.
     if fulfillment_method == Order.FULFILLMENT_PICKUP:
         delivery_zone = None
+        # The order's stored delivery_address column is a TextField (NOT NULL).
+        # Keep an explicit, non-empty marker so cashier UI shows the right
+        # context without confusing the address field.
+        delivery_address = "Самовывоз"
+
+    promo, err = _resolve_promo_code(country, payload, required=False)
+    if err:
+        return err
+
+    payment_method_obj, payment_key, err = _resolve_payment_method(country, payload)
+    if err:
+        return err
 
     result, err = _validate_and_price_cart(
         country=country,
         location=location,
         items_raw=payload.get("items") or [],
         delivery_zone=delivery_zone,
+        fulfillment_method=fulfillment_method,
+        promo_code=promo,
     )
     if err:
         return err
@@ -1766,7 +2031,32 @@ def order_create(request):
     source = _get_or_create_website_source(country)
     customer = _get_or_create_website_customer(country, customer_name, customer_phone)
 
+    # Decide initial payment_status from the chosen method:
+    #   - cash               → CASH        (will be paid on hand-off)
+    #   - online_card / click / payme → PENDING (gateway will finalize)
+    #   - missing            → PENDING
+    if payment_key == "cash":
+        payment_status_value = Order.PAYMENT_STATUS_CASH
+    else:
+        payment_status_value = Order.PAYMENT_STATUS_PENDING
+
+    # Assemble the cashier-facing summary: addon details + payment + promo.
     addon_summary = _build_cashier_addon_summary(result["line_objects"])
+    extra_lines = []
+    if payment_key:
+        extra_lines.append(
+            f"Оплата с сайта: {PAYMENT_METHOD_LABELS.get(payment_key, payment_key)}"
+        )
+    if fulfillment_method == Order.FULFILLMENT_PICKUP:
+        extra_lines.append(f"Самовывоз из: {location.name}")
+    if promo is not None and result["discount_amount"] > 0:
+        extra_lines.append(
+            f"Промокод {promo.code}: −{result['discount_percent']}% "
+            f"(−{result['discount_amount']})"
+        )
+    cashier_comment = "\n\n".join(
+        part for part in (addon_summary, "\n".join(extra_lines)) if part
+    )
 
     with transaction.atomic():
         order = Order.objects.create(
@@ -1774,19 +2064,21 @@ def order_create(request):
             location=location,
             customer=customer,
             source=source,
+            payment_method=payment_method_obj,
+            promo_code=promo,
             order_date=timezone.now(),
             customer_name=customer_name,
             customer_phone=customer_phone,
             delivery_address=delivery_address,
             customer_comment=customer_comment,
-            cashier_comment=addon_summary,
+            cashier_comment=cashier_comment,
             subtotal_amount=result["subtotal"],
-            discount_amount=Decimal("0"),
+            discount_amount=result["discount_amount"],
             delivery_amount=result["delivery_price"],
             total_amount=result["total"],
             status=Order.STATUS_NEW,
             fulfillment_method=fulfillment_method,
-            payment_status=Order.PAYMENT_STATUS_PENDING,
+            payment_status=payment_status_value,
         )
 
         # Now we have order.id → generate public_order_number deterministically.
@@ -1813,7 +2105,12 @@ def order_create(request):
         "public_order_number": order.public_order_number,
         "status": order.status,
         "status_label": _status_label(order.status),
+        "fulfillment_method": order.fulfillment_method,
+        "payment_method": payment_key or None,
+        "payment_status": order.payment_status,
+        "applied_promo_code": promo.code if promo else None,
         "subtotal": _to_float(order.subtotal_amount),
+        "discount_amount": _to_float(order.discount_amount),
         "delivery_price": _to_float(order.delivery_amount),
         "total": _to_float(order.total_amount),
     })
@@ -1857,4 +2154,221 @@ def order_tracking(request, public_order_number):
 
     return api_success({
         "order": _serialize_order_for_tracking(order),
+    })
+
+# =============================================================================
+# 🚏  ENDPOINT: GET /api/public/pickup-points
+# =============================================================================
+
+@csrf_exempt
+@require_GET
+def pickup_points(request):
+    """
+    List active public locations that support pickup.
+
+    Filters:
+      - country = resolved country
+      - is_active = True
+      - is_visible_on_site = True
+      - supports_pickup = True
+
+    Response shape is intentionally a superset of /api/public/locations so a
+    pickup-aware frontend can either reuse the locations payload or call this
+    dedicated endpoint and get the same fields.
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    qs = Location.objects.filter(
+        country=country,
+        is_active=True,
+        is_visible_on_site=True,
+        supports_pickup=True,
+    ).order_by("site_sort_order", "name")
+
+    return api_success({
+        "pickup_points": [serialize_location(request, loc) for loc in qs],
+    })
+
+
+# =============================================================================
+# 🏷  ENDPOINT: POST /api/public/promo/check
+# =============================================================================
+
+@csrf_exempt
+@require_POST
+def promo_check(request):
+    """
+    Validate a promo code and (optionally) preview the discount for a given
+    subtotal.
+
+    Body:
+        {
+          "country_slug": "uzbekistan",
+          "code":         "WELCOME10",
+          "subtotal":     200000           # optional — number, integer or float
+        }
+
+    Success response:
+        {
+          "valid": true,
+          "code": "WELCOME10",
+          "percent": 10.00,
+          "discount_amount": 20000.0       # only when subtotal was sent
+        }
+
+    Failure response (still 200 with success=true; the API surfaces the
+    invalid state via "valid": false so the frontend can show a friendly
+    message without crashing on 4xx):
+        { "valid": false, "code": "WELCOME10" }
+    """
+    payload, err = _parse_json_body(request)
+    if err:
+        return err
+
+    country, err = _get_country_from_payload(payload)
+    if err:
+        return err
+
+    raw_code = str(payload.get("code") or payload.get("promo_code") or "").strip()
+    if not raw_code:
+        return api_error(
+            "PROMO_INVALID",
+            "Promo code is required",
+            status=400,
+        )
+
+    promo = PromoCode.objects.filter(
+        country=country,
+        is_active=True,
+        code__iexact=raw_code.upper(),
+    ).first()
+
+    if promo is None:
+        return api_success({
+            "valid": False,
+            "code": raw_code,
+        })
+
+    response = {
+        "valid": True,
+        "code": promo.code,
+        "percent": _to_float(promo.percent),
+    }
+
+    # Optional subtotal preview.
+    raw_subtotal = payload.get("subtotal")
+    if raw_subtotal is not None:
+        subtotal = _money(raw_subtotal)
+        if subtotal < 0:
+            subtotal = Decimal("0")
+        percent = _money(promo.percent)
+        discount = (subtotal * percent / Decimal("100")).quantize(Decimal("0.01"))
+        if discount > subtotal:
+            discount = subtotal
+        response["subtotal"] = _to_float(subtotal)
+        response["discount_amount"] = _to_float(discount)
+        response["total_after_discount"] = _to_float(subtotal - discount)
+
+    return api_success(response)
+
+
+# =============================================================================
+# 👤  ENDPOINT: POST /api/public/customers/lookup
+# =============================================================================
+
+def _serialize_customer_address(address):
+    """Public-safe address payload — same shape used by the checkout page."""
+    return {
+        "id": address.id,
+        "address": address.address or "",
+        "comment": address.comment or "",
+        "is_default": bool(address.is_default),
+        "apartment": address.apartment or "",
+        "entrance": address.entrance or "",
+        "floor": address.floor or "",
+        "intercom": address.intercom or "",
+        "landmark": address.landmark or "",
+        "courier_comment": address.courier_comment or "",
+        "latitude": _to_float(address.latitude),
+        "longitude": _to_float(address.longitude),
+        "location_id": address.location_id,
+    }
+
+
+@csrf_exempt
+@require_POST
+def customers_lookup(request):
+    """
+    Look up a returning customer by phone.
+
+    Body:
+        {
+          "country_slug": "uzbekistan",
+          "phone":        "+998901234567"
+        }
+
+    Success response (customer not found):
+        { "found": false, "phone": "+998..." }
+
+    Success response (customer found):
+        {
+          "found":     true,
+          "phone":     "+998...",
+          "customer":  { id, name, phone, is_regular },
+          "addresses": [ { ... }, ... ]      # at most 10 most recent
+        }
+
+    Privacy notes:
+      - We do NOT return `is_problematic`, `comment`, or any ERP-only data.
+      - We do NOT distinguish "no customer in this country" from "customer
+        exists but is hidden": both yield {"found": false}. This avoids
+        leaking which numbers are in the system from a public endpoint.
+    """
+    payload, err = _parse_json_body(request)
+    if err:
+        return err
+
+    country, err = _get_country_from_payload(payload)
+    if err:
+        return err
+
+    phone = str(payload.get("phone") or payload.get("customer_phone") or "").strip()
+    if not phone:
+        return api_error(
+            "INVALID_JSON",
+            "phone is required",
+            status=400,
+        )
+
+    customer = (
+        Customer.objects
+        .filter(country=country, phone=phone)
+        .order_by("-updated_at")
+        .first()
+    )
+
+    if customer is None:
+        return api_success({
+            "found": False,
+            "phone": phone,
+        })
+
+    addresses_qs = (
+        CustomerAddress.objects
+        .filter(customer=customer)
+        .order_by("-is_default", "-created_at")[:10]
+    )
+
+    return api_success({
+        "found": True,
+        "phone": phone,
+        "customer": {
+            "id": customer.id,
+            "name": customer.name or "",
+            "phone": customer.phone or "",
+            "is_regular": bool(customer.is_regular),
+        },
+        "addresses": [_serialize_customer_address(a) for a in addresses_qs],
     })
