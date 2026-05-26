@@ -61,7 +61,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
 from django.db.models import Min, Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -1917,6 +1917,10 @@ def _serialize_order_for_tracking(order):
 @csrf_exempt
 @require_POST
 def cart_calculate(request):
+    
+    if request.method == "OPTIONS":
+        return HttpResponse(status=204)
+        
     """
     Recalculate cart totals from the items in the request body.
 
@@ -1984,6 +1988,8 @@ def cart_calculate(request):
         "fulfillment_method": result["fulfillment_method"],
         "total": _to_float(result["total"]),
     })
+    
+    
 
 
 # =============================================================================
@@ -1992,7 +1998,15 @@ def cart_calculate(request):
 
 @csrf_exempt
 @require_POST
+
+
+
 def order_create(request):
+    
+    
+    if request.method == "OPTIONS":
+        return HttpResponse(status=204)
+        
     """
     Create an Order + OrderItem rows from the public website.
 
@@ -2260,6 +2274,10 @@ def pickup_points(request):
 @csrf_exempt
 @require_POST
 def promo_check(request):
+    
+    if request.method == "OPTIONS":
+        return HttpResponse(status=204)
+        
     """
     Validate a promo code and (optionally) preview the discount for a given
     subtotal.
@@ -2361,6 +2379,10 @@ def _serialize_customer_address(address):
 @csrf_exempt
 @require_POST
 def customers_lookup(request):
+    
+    if request.method == "OPTIONS":
+        return HttpResponse(status=204)
+        
     """
     Look up a returning customer by phone.
 
