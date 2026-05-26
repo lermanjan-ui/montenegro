@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
 # 🔧 middleware
 MIDDLEWARE = [
+    "config.cors_middleware.PublicCorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
 
     # 👇 обязательно для Railway
