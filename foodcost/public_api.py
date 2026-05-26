@@ -275,6 +275,41 @@ def is_dish_available(dish, location=None):
     return True
 
 
+def _is_addon_available(dish, location=None):
+    """
+    Availability for an addon item (a Dish used as a modifier of another Dish).
+
+    Differs from is_dish_available() because addon dishes are typically NOT
+    listed in the public catalog at all (they exist only to be picked from a
+    parent dish's add-on list), so `is_visible_on_site` is irrelevant here.
+
+    Rules:
+      - dish.is_stop_list True  → unavailable (hard global stop)
+      - per-location DishAvailability row exists and:
+            * is_available=False → unavailable
+            * is_stop_list=True   → unavailable
+      - otherwise → available.
+    """
+    if dish is None:
+        return False
+    if getattr(dish, "is_stop_list", False):
+        return False
+
+    if location is not None:
+        availability = DishAvailability.objects.filter(
+            country=dish.country,
+            dish=dish,
+            location=location,
+        ).first()
+        if availability is not None:
+            if not availability.is_available:
+                return False
+            if availability.is_stop_list:
+                return False
+
+    return True
+
+
 def _availability_subquery_excluded_dish_ids(country, location):
     """
     Return a set of Dish IDs that should be EXCLUDED from listings because of
@@ -507,7 +542,11 @@ def _serialize_addon_entry(request, link, location=None):
         "name": _display_name(addon),
         "slug": addon.slug or "",
         "price": _to_float(addon.selling_price),
-        "is_available": is_dish_available(addon, location=location),
+        # NB: addons use _is_addon_available, not is_dish_available, because
+        # operators normally keep addon dishes hidden from the main catalog
+        # (is_visible_on_site=False). For addons we only care about stop-list
+        # and per-location availability.
+        "is_available": _is_addon_available(addon, location=location),
         "group": group_label,
         "image": _resolve_image(
             request,
@@ -527,12 +566,20 @@ def _build_dish_addons(request, dish, location=None):
           "groups": [ {"name": "Соусы", "items": [...]}, ... ],
         }
 
-    Filtering:
-      - DishAddon.is_active = True
-      - addon_dish.is_visible_on_site = True
-      - addon_dish.is_stop_list = False
-    Per-location availability is reflected on `is_available` per item, not by
-    excluding the addon entirely — the frontend can still show it greyed-out.
+    Filtering policy:
+      - Only DishAddon.is_active = True. The link itself decides whether the
+        addon is offered for this dish.
+      - We do NOT additionally require addon_dish.is_visible_on_site or
+        addon_dish.is_stop_list = False. Addons are typically things like
+        "Сырный бортик" or "Двойная порция соуса" — they are stored as Dish
+        rows so they can have a selling_price + cost, but operators normally
+        keep them OFF the main public catalog. Filtering them out by
+        is_visible_on_site would silently empty out every product's addon
+        list, which is exactly the bug we're fixing.
+      - Instead, per-link availability is reflected on each item's
+        `is_available` flag so the frontend can grey them out at run time.
+        Per-location DishAvailability is honoured the same way (via
+        is_dish_available inside _serialize_addon_entry).
     """
     links = (
         DishAddon.objects.filter(dish=dish, is_active=True)
@@ -546,9 +593,9 @@ def _build_dish_addons(request, dish, location=None):
 
     for link in links:
         addon = link.addon_dish
-        if not getattr(addon, "is_visible_on_site", False):
-            continue
-        if getattr(addon, "is_stop_list", False):
+        # Defensive: if a DishAddon row points at a deleted dish (FK kept
+        # by CASCADE so this normally can't happen), skip silently.
+        if addon is None:
             continue
 
         entry = _serialize_addon_entry(request, link, location=location)
@@ -562,7 +609,14 @@ def _build_dish_addons(request, dish, location=None):
 
     return {
         "flat": flat,
-        "groups": [{"name": k, "items": grouped[k]} for k in group_order],
+        "groups": [
+            # `id` is a synthetic 1-based index. There is no separate
+            # AddonGroup table in the current schema — groups are derived
+            # from DishAddon.group_name labels — so we expose a stable
+            # per-response index so the frontend can use it as a React key.
+            {"id": idx + 1, "name": k, "items": grouped[k]}
+            for idx, k in enumerate(group_order)
+        ],
     }
 
 
@@ -1299,7 +1353,11 @@ def _validate_and_price_cart(country, location, items_raw, delivery_zone=None):
                     )
 
                 addon_dish = link.addon_dish
-                if not is_dish_available(addon_dish, location=location):
+                # Use _is_addon_available, not is_dish_available — addon dishes
+                # are normally hidden from the public catalog
+                # (is_visible_on_site=False); rejecting them here would make
+                # order creation impossible for any product with addons.
+                if not _is_addon_available(addon_dish, location=location):
                     return None, api_error(
                         "ADDON_UNAVAILABLE",
                         "Addon is currently unavailable",
