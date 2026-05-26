@@ -205,4 +205,18 @@ urlpatterns = [
         public_api.customers_lookup,
         name="public_customers_lookup",
     ),
+
+    # =========================================================================
+    # 🗺  PUBLIC API (Part 8) — delivery zone check by coordinates
+    # =========================================================================
+    path(
+        "api/public/delivery/check",
+        public_api.delivery_check,
+        name="public_delivery_check",
+    ),
+    path(
+        "api/public/delivery/check/",
+        public_api.delivery_check,
+        name="public_delivery_check_slash",
+    ),
 ]

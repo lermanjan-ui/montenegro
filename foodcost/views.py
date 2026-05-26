@@ -49,6 +49,8 @@ from .models import (
     # 🌐 Website content models (Part 4)
     DishGalleryImage,
     DishAddon,
+    # 🗺  Website delivery zones (Part 8)
+    DeliveryZone,
 )
 
 
@@ -1739,6 +1741,123 @@ def user_access_list(request, country_slug):
                 item.delete()
                 return redirect(f"/c/{country.slug}/users/")
 
+        # ---- Delivery zones (Part 8) ----
+
+        if action == "create_delivery_zone":
+            zone_name = (request.POST.get("zone_name") or "").strip()
+            location_id = request.POST.get("zone_location_id")
+
+            zone_location = Location.objects.filter(
+                id=location_id, country=country,
+            ).first() if location_id else None
+
+            if not zone_name:
+                error = "Укажи название зоны доставки"
+            elif zone_location is None:
+                error = "Выбери филиал для зоны доставки"
+            else:
+                try:
+                    sort_order = int(request.POST.get("zone_sort_order") or 0)
+                except (TypeError, ValueError):
+                    sort_order = 0
+                if sort_order < 0:
+                    sort_order = 0
+
+                DeliveryZone.objects.create(
+                    country=country,
+                    location=zone_location,
+                    name=zone_name,
+                    center_latitude=_parse_optional_decimal(
+                        request.POST.get("zone_center_latitude")
+                    ),
+                    center_longitude=_parse_optional_decimal(
+                        request.POST.get("zone_center_longitude")
+                    ),
+                    radius_km=_parse_optional_decimal(
+                        request.POST.get("zone_radius_km")
+                    ),
+                    delivery_price=Decimal(
+                        clean_decimal(request.POST.get("zone_delivery_price"))
+                    ),
+                    free_delivery_threshold=Decimal(
+                        clean_decimal(
+                            request.POST.get("zone_free_delivery_threshold")
+                        )
+                    ),
+                    estimated_time=(
+                        request.POST.get("zone_estimated_time") or "35–45 мин"
+                    ).strip(),
+                    site_sort_order=sort_order,
+                    is_active=bool(request.POST.get("zone_is_active")),
+                )
+
+                return redirect(f"/c/{country.slug}/users/")
+
+        if action == "update_delivery_zone":
+            zone = get_object_or_404(
+                DeliveryZone,
+                id=request.POST.get("zone_id"),
+                country=country,
+            )
+
+            new_name = (request.POST.get("zone_name") or "").strip()
+            location_id = request.POST.get("zone_location_id")
+            zone_location = Location.objects.filter(
+                id=location_id, country=country,
+            ).first() if location_id else None
+
+            if not new_name:
+                error = "Название зоны не может быть пустым"
+            elif zone_location is None:
+                error = "Филиал зоны должен принадлежать этой стране"
+            else:
+                try:
+                    sort_order = int(request.POST.get("zone_sort_order") or 0)
+                except (TypeError, ValueError):
+                    sort_order = 0
+                if sort_order < 0:
+                    sort_order = 0
+
+                zone.name = new_name
+                zone.location = zone_location
+                zone.center_latitude = _parse_optional_decimal(
+                    request.POST.get("zone_center_latitude")
+                )
+                zone.center_longitude = _parse_optional_decimal(
+                    request.POST.get("zone_center_longitude")
+                )
+                zone.radius_km = _parse_optional_decimal(
+                    request.POST.get("zone_radius_km")
+                )
+                zone.delivery_price = Decimal(
+                    clean_decimal(request.POST.get("zone_delivery_price"))
+                )
+                zone.free_delivery_threshold = Decimal(
+                    clean_decimal(
+                        request.POST.get("zone_free_delivery_threshold")
+                    )
+                )
+                zone.estimated_time = (
+                    request.POST.get("zone_estimated_time") or "35–45 мин"
+                ).strip()
+                zone.site_sort_order = sort_order
+                zone.is_active = bool(request.POST.get("zone_is_active"))
+                zone.save()
+
+                return redirect(f"/c/{country.slug}/users/")
+
+        if action == "delete_delivery_zone":
+            zone = get_object_or_404(
+                DeliveryZone,
+                id=request.POST.get("zone_id"),
+                country=country,
+            )
+            # NB: this deletes only the DeliveryZone row. The Location it
+            # points at is untouched (FK is from zone→location, not the
+            # other way round), so existing branches keep working.
+            zone.delete()
+            return redirect(f"/c/{country.slug}/users/")
+
         if action == "create_user":
             username = request.POST.get("username")
             password = request.POST.get("password")
@@ -1810,11 +1929,19 @@ def user_access_list(request, country_slug):
         "site_sort_order", "name"
     )
 
+    delivery_zones = (
+        DeliveryZone.objects
+        .filter(country=country)
+        .select_related("location")
+        .order_by("location__name", "site_sort_order", "name")
+    )
+
     return render(request, "foodcost/user_access_list.html", {
         "country": country,
         "users": users,
         "countries": countries,
         "locations": locations,
+        "delivery_zones": delivery_zones,
         "roles": UserProfile.ROLE_CHOICES,
         "sections": UserProfile.SECTION_CHOICES,
         "error": error,

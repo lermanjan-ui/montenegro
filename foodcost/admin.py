@@ -311,12 +311,17 @@ class DeliveryZoneAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "location",
+        "center_latitude",
+        "center_longitude",
+        "radius_km",
         "delivery_price",
         "free_delivery_threshold",
+        "site_sort_order",
         "is_active",
     )
     list_filter = ("country", "location", "is_active")
     search_fields = ("name", "location__name")
+    list_editable = ("is_active", "site_sort_order")
 
 
 @admin.register(CustomerFavorite)

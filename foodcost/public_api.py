@@ -57,6 +57,7 @@ Cart & order rules (Part 4 write API):
 """
 
 import json
+import math
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
@@ -1575,14 +1576,235 @@ def _resolve_delivery_zone(country, location, payload):
     return zone, None
 
 
-def _require_location_from_payload(country, payload, required=True):
+# -----------------------------------------------------------------------------
+# 📍 Delivery zone auto-matching (Part 8 — coordinates → zone → location)
+# -----------------------------------------------------------------------------
+#
+# These helpers let the website skip "choose your branch" and instead let
+# the ERP pick the serving branch automatically from the customer's address
+# coordinates. Frontend sends lat/lng; we run a haversine match against all
+# active circular zones in the country and pick the nearest one.
+#
+# Important:
+#   - This is MVP-grade matching with circles, no polygons.
+#   - Frontend coordinates are NEVER trusted to choose a branch — we always
+#     re-validate on the server (cart_calculate and orders/create).
+
+
+def _parse_coordinate(value):
+    """Parse a single lat/lng-like value into float; None on failure / empty."""
+    if value is None:
+        return None
+    if isinstance(value, bool):  # bool is an int subclass — guard against it
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            f = float(value)
+        except (TypeError, ValueError):
+            return None
+        if math.isnan(f) or math.isinf(f):
+            return None
+        return f
+    raw = str(value).strip().replace(",", ".")
+    if not raw:
+        return None
+    try:
+        f = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(f) or math.isinf(f):
+        return None
+    return f
+
+
+def _coordinates_in_range(lat, lng):
+    """Validate that lat/lng are within Earth ranges."""
+    return (
+        lat is not None
+        and lng is not None
+        and -90.0 <= lat <= 90.0
+        and -180.0 <= lng <= 180.0
+    )
+
+
+def _parse_coordinates(payload):
+    """
+    Pull (lat, lng) from a request body.
+
+    Accepted shapes:
+        { "latitude": 41.31, "longitude": 69.27 }                  ← flat
+        { "delivery": { "latitude": 41.31, "longitude": 69.27 } }  ← nested
+        { "lat":      41.31, "lng":       69.27 }                  ← short
+
+    Returns (lat, lng, error_response).
+      - (lat, lng, None) when both present and valid.
+      - (None, None, None) when missing entirely (caller decides if required).
+      - (None, None, api_error) when present but malformed / out of range.
+    """
+    sources = [payload]
+    if isinstance(payload.get("delivery"), dict):
+        sources.append(payload["delivery"])
+
+    raw_lat = raw_lng = None
+    for src in sources:
+        if raw_lat is None:
+            raw_lat = src.get("latitude")
+            if raw_lat in (None, ""):
+                raw_lat = src.get("lat")
+        if raw_lng is None:
+            raw_lng = src.get("longitude")
+            if raw_lng in (None, ""):
+                raw_lng = src.get("lng")
+
+    # Both missing → no coordinates were sent.
+    lat_missing = raw_lat in (None, "")
+    lng_missing = raw_lng in (None, "")
+    if lat_missing and lng_missing:
+        return None, None, None
+
+    # One present, one missing — treat as malformed.
+    if lat_missing or lng_missing:
+        return None, None, api_error(
+            "INVALID_COORDINATES",
+            "Both latitude and longitude are required",
+            details={"latitude": raw_lat, "longitude": raw_lng},
+            status=400,
+        )
+
+    lat = _parse_coordinate(raw_lat)
+    lng = _parse_coordinate(raw_lng)
+    if lat is None or lng is None or not _coordinates_in_range(lat, lng):
+        return None, None, api_error(
+            "INVALID_COORDINATES",
+            "Coordinates are out of range",
+            details={"latitude": raw_lat, "longitude": raw_lng},
+            status=400,
+        )
+
+    return lat, lng, None
+
+
+def _haversine_km(lat1, lon1, lat2, lon2):
+    """
+    Great-circle distance between two lat/lng points, in kilometres.
+
+    Uses the standard haversine formula. Mean Earth radius 6371 km is
+    accurate enough for radius-based delivery zones (sub-percent error).
+    """
+    R_KM = 6371.0088
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlam = math.radians(lon2 - lon1)
+    a = (
+        math.sin(dphi / 2.0) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2.0) ** 2
+    )
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return R_KM * c
+
+
+def _find_delivery_zone(country, lat, lng):
+    """
+    Find the best DeliveryZone for the given customer coordinates.
+
+    A zone is eligible iff ALL of:
+      - zone.is_active=True
+      - zone.country=country
+      - zone.radius_km > 0
+      - zone.center_latitude / center_longitude are set
+      - zone.location.is_active=True
+      - zone.location.is_visible_on_site=True
+      - zone.location.supports_delivery=True
+
+    Eligible zones whose haversine distance ≤ radius_km are matched.
+    Tie-break order (spec):
+      1. nearest distance
+      2. lower zone.site_sort_order
+      3. lower location.site_sort_order
+      4. location.name alphabetically
+
+    Returns (zone_or_none, distance_km_or_none).
+    """
+    candidates = (
+        DeliveryZone.objects
+        .filter(
+            country=country,
+            is_active=True,
+            location__is_active=True,
+            location__is_visible_on_site=True,
+            location__supports_delivery=True,
+            center_latitude__isnull=False,
+            center_longitude__isnull=False,
+            radius_km__isnull=False,
+        )
+        .select_related("location")
+    )
+
+    matches = []
+    for zone in candidates:
+        # Defensive: skip non-positive radius even if the column allowed it.
+        try:
+            radius = float(zone.radius_km)
+        except (TypeError, ValueError):
+            continue
+        if radius <= 0:
+            continue
+
+        try:
+            z_lat = float(zone.center_latitude)
+            z_lng = float(zone.center_longitude)
+        except (TypeError, ValueError):
+            continue
+
+        distance = _haversine_km(lat, lng, z_lat, z_lng)
+        if distance <= radius:
+            matches.append((distance, zone))
+
+    if not matches:
+        return None, None
+
+    # Sort by the tiebreaker chain.
+    matches.sort(
+        key=lambda pair: (
+            pair[0],                                  # 1. distance
+            int(pair[1].site_sort_order or 0),        # 2. zone sort
+            int(pair[1].location.site_sort_order or 0),  # 3. location sort
+            (pair[1].location.name or "").lower(),    # 4. location name
+        )
+    )
+    distance, zone = matches[0]
+    return zone, distance
+
+
+def _require_location_from_payload(
+    country,
+    payload,
+    required=True,
+    fulfillment_method=None,
+):
     """
     Resolve location from the JSON body.
 
-    If required=True and no valid location is found, returns an error.
-    If required=False, returns (None, None) when no id is provided.
+    Args:
+        country:              Country instance.
+        payload:              parsed JSON body.
+        required:             when True, missing id returns an error.
+        fulfillment_method:   optional "delivery" / "pickup". When given,
+                              extra filters are enforced per the website spec:
+                                delivery → is_visible_on_site + supports_delivery
+                                pickup   → is_visible_on_site + supports_pickup
+                              When None, only is_active is checked.
+
+    For pickup orders the website sends `pickup_point_id`. We accept both
+    `pickup_point_id` and `location_id` (pickup_point_id takes priority for
+    pickup orders).
     """
-    raw = payload.get("location_id")
+    # Pickup orders use pickup_point_id; fall through to location_id.
+    raw = payload.get("pickup_point_id")
+    if raw in (None, "", 0, "0"):
+        raw = payload.get("location_id")
+
     if raw in (None, "", 0, "0"):
         if required:
             return None, api_error(
@@ -1601,17 +1823,28 @@ def _require_location_from_payload(country, payload, required=True):
             status=400,
         )
 
-    location = Location.objects.filter(
-        id=location_id,
-        country=country,
-        is_active=True,
-    ).first()
+    filters = {
+        "id": location_id,
+        "country": country,
+        "is_active": True,
+    }
+    if fulfillment_method == Order.FULFILLMENT_PICKUP:
+        filters["is_visible_on_site"] = True
+        filters["supports_pickup"] = True
+    elif fulfillment_method == Order.FULFILLMENT_DELIVERY:
+        filters["is_visible_on_site"] = True
+        filters["supports_delivery"] = True
+
+    location = Location.objects.filter(**filters).first()
 
     if location is None:
         return None, api_error(
             "LOCATION_NOT_FOUND",
-            "Location does not exist in this country",
-            details={"location_id": location_id},
+            "Location does not exist or does not match the chosen fulfillment",
+            details={
+                "location_id": location_id,
+                "fulfillment_method": fulfillment_method,
+            },
             status=404,
         )
 
@@ -1862,26 +2095,32 @@ def cart_calculate(request):
     Recalculate cart totals from the items in the request body.
 
     The frontend sends raw items; we ignore any totals it might have computed
-    and recompute everything from authoritative DB prices. Useful for the
-    cart preview page right before order submission.
+    and recompute everything from authoritative DB prices.
 
-    Body (all optional except items):
+    Body:
         {
           "country_slug":    "uzbekistan",
-          "location_id":     1,            # optional; affects availability
+          "location_id":     1,            # optional — used only when no coords
           "fulfillment_method": "delivery" | "pickup",  # default "delivery"
-          "delivery_zone_id":1,            # optional; overrides default fee
+          "delivery_zone_id":1,            # optional — only when no coords
           "promo_code":      "WELCOME10",  # optional
+          "latitude":        41.3111,      # optional — auto-resolves zone
+          "longitude":       69.2797,      # optional — auto-resolves zone
           "items": [
-              {
-                  "dish_id":   40,        # required, int
-                  "quantity":  1,         # required, int
-                  "addon_ids": []         # optional, list of Dish ids
-                                          # legacy "addons" key also accepted
-              },
+              { "dish_id": 40, "quantity": 1, "addon_ids": [] },
               ...
           ]
         }
+
+    Coordinate resolution (delivery only):
+      - When latitude+longitude are present and fulfillment is delivery,
+        the server picks the serving branch and zone automatically. The
+        frontend's location_id and delivery_zone_id are IGNORED to prevent
+        spoofing.
+      - When coords are absent, the older behavior is preserved:
+        delivery_zone_id (if any) or the country-wide default fee.
+
+    Pickup never uses coordinates and always has delivery_amount = 0.
     """
     payload, err = _parse_json_body(request)
     if err:
@@ -1891,19 +2130,42 @@ def cart_calculate(request):
     if err:
         return err
 
-    # location is optional for cart calculation — it only affects availability.
-    location, err = _require_location_from_payload(country, payload, required=False)
-    if err:
-        return err
-
     fulfillment_method = _resolve_fulfillment_method(payload)
 
-    delivery_zone, err = _resolve_delivery_zone(country, location, payload)
+    # ---- Coordinates (delivery only) ----
+    lat, lng, err = _parse_coordinates(payload)
     if err:
         return err
-    if fulfillment_method == Order.FULFILLMENT_PICKUP:
-        # Ignore any zone passed by the client when picking up — pickup is free.
-        delivery_zone = None
+
+    matched_zone = None
+    matched_distance_km = None
+    location = None
+    delivery_zone = None
+
+    if fulfillment_method == Order.FULFILLMENT_DELIVERY and lat is not None:
+        # Coordinates win: server picks branch + zone, frontend cannot override.
+        matched_zone, matched_distance_km = _find_delivery_zone(country, lat, lng)
+        if matched_zone is None:
+            return api_error(
+                "OUT_OF_DELIVERY_ZONE",
+                "Пока не доставляем по этому адресу",
+                details={"latitude": lat, "longitude": lng},
+                status=400,
+            )
+        location = matched_zone.location
+        delivery_zone = matched_zone
+    else:
+        # Legacy / no-coords path — location and zone resolved from payload.
+        location, err = _require_location_from_payload(
+            country, payload, required=False
+        )
+        if err:
+            return err
+        delivery_zone, err = _resolve_delivery_zone(country, location, payload)
+        if err:
+            return err
+        if fulfillment_method == Order.FULFILLMENT_PICKUP:
+            delivery_zone = None
 
     promo, err = _resolve_promo_code(country, payload, required=False)
     if err:
@@ -1920,7 +2182,9 @@ def cart_calculate(request):
     if err:
         return err
 
-    return api_success({
+    # Build response — existing fields kept, zone-related fields added when
+    # the zone was matched so the frontend can show "Доставит: <branch>".
+    response = {
         "items": result["lines"],
         "subtotal": _to_float(result["subtotal"]),
         "discount_amount": _to_float(result["discount_amount"]),
@@ -1928,11 +2192,23 @@ def cart_calculate(request):
         "applied_promo_code": (
             result["applied_promo"].code if result["applied_promo"] else None
         ),
+        "delivery_amount": _to_float(result["delivery_price"]),
+        # delivery_price kept as a back-compat alias of delivery_amount.
         "delivery_price": _to_float(result["delivery_price"]),
         "free_delivery": bool(result["free_delivery"]),
         "fulfillment_method": result["fulfillment_method"],
         "total": _to_float(result["total"]),
-    })
+    }
+
+    if matched_zone is not None:
+        response["location_id"] = matched_zone.location_id
+        response["delivery_zone_id"] = matched_zone.id
+        response["delivery_zone_name"] = matched_zone.name or ""
+        response["estimated_delivery_time"] = matched_zone.estimated_time or ""
+        if matched_distance_km is not None:
+            response["distance_km"] = round(matched_distance_km, 3)
+
+    return api_success(response)
 
 
 # =============================================================================
@@ -1990,6 +2266,18 @@ def order_create(request):
     For everything else (status_label, fulfillment, payment_method,
     payment_status, subtotal / discount / delivery breakdown, items snapshot)
     use GET /api/public/orders/<public_order_number>/.
+
+    Coordinate auto-resolution (delivery only):
+      - When latitude+longitude are present and fulfillment is delivery,
+        the server picks the serving branch from the matching DeliveryZone
+        and IGNORES location_id / delivery_zone_id from the payload.
+      - If no zone matches → 400 OUT_OF_DELIVERY_ZONE.
+      - When coordinates are absent, location_id is required and the
+        previous behavior is preserved (back-compat with older clients).
+
+    For pickup orders the resolver accepts both `pickup_point_id`
+    (preferred) and `location_id`, and enforces the spec's filters:
+    is_active + is_visible_on_site + supports_pickup.
     """
     payload, err = _parse_json_body(request)
     if err:
@@ -2000,25 +2288,6 @@ def order_create(request):
         return err
 
     fulfillment_method = _resolve_fulfillment_method(payload)
-
-    # location_id is required for any order — pickup_point for pickup orders,
-    # the serving branch for delivery orders.
-    location, err = _require_location_from_payload(country, payload, required=True)
-    if err:
-        return err
-
-    # For pickup orders we also require that this location actually allows
-    # pickup. Operators may temporarily disable pickup on a specific branch.
-    if (
-        fulfillment_method == Order.FULFILLMENT_PICKUP
-        and not getattr(location, "supports_pickup", True)
-    ):
-        return api_error(
-            "LOCATION_NOT_FOUND",
-            "Selected pickup point does not support pickup",
-            details={"location_id": location.id},
-            status=400,
-        )
 
     customer_name = str(payload.get("customer_name") or "").strip()
     customer_phone = str(payload.get("customer_phone") or "").strip()
@@ -2032,7 +2301,6 @@ def order_create(request):
             status=400,
         )
 
-    # Delivery address only required for delivery orders.
     if fulfillment_method == Order.FULFILLMENT_DELIVERY and not delivery_address:
         return api_error(
             "INVALID_JSON",
@@ -2040,16 +2308,49 @@ def order_create(request):
             status=400,
         )
 
-    delivery_zone, err = _resolve_delivery_zone(country, location, payload)
+    # ---- Coordinates / location resolution ----
+    lat, lng, err = _parse_coordinates(payload)
     if err:
         return err
 
-    # Pickup orders ignore delivery fees entirely — drop any zone.
+    matched_zone = None
+    location = None
+    delivery_zone = None
+
+    if fulfillment_method == Order.FULFILLMENT_DELIVERY and lat is not None:
+        # Coordinates dictate the branch + zone. Frontend location_id and
+        # delivery_zone_id are intentionally ignored.
+        matched_zone, _distance = _find_delivery_zone(country, lat, lng)
+        if matched_zone is None:
+            return api_error(
+                "OUT_OF_DELIVERY_ZONE",
+                "Пока не доставляем по этому адресу",
+                details={"latitude": lat, "longitude": lng},
+                status=400,
+            )
+        location = matched_zone.location
+        delivery_zone = matched_zone
+    else:
+        # No coordinates → require location_id (or pickup_point_id) and
+        # enforce per-mode filters at the resolver.
+        location, err = _require_location_from_payload(
+            country,
+            payload,
+            required=True,
+            fulfillment_method=fulfillment_method,
+        )
+        if err:
+            return err
+
+        delivery_zone, err = _resolve_delivery_zone(country, location, payload)
+        if err:
+            return err
+
+    # Pickup orders never charge delivery, even if a zone leaked in.
     if fulfillment_method == Order.FULFILLMENT_PICKUP:
         delivery_zone = None
-        # The order's stored delivery_address column is a TextField (NOT NULL).
-        # Keep an explicit, non-empty marker so cashier UI shows the right
-        # context without confusing the address field.
+        # The Order.delivery_address column is NOT NULL TextField; keep an
+        # explicit marker so cashier UI shows the right context.
         delivery_address = "Самовывоз"
 
     promo, err = _resolve_promo_code(country, payload, required=False)
@@ -2414,3 +2715,103 @@ def customers_lookup(request):
         },
         "addresses": [_serialize_customer_address(a) for a in addresses_qs],
     })
+
+# =============================================================================
+# 🗺  ENDPOINT: POST /api/public/delivery/check
+# =============================================================================
+
+@csrf_exempt
+@require_POST
+def delivery_check(request):
+    """
+    Tell the website whether we can deliver to a set of coordinates, and
+    which branch + price would serve them.
+
+    Body:
+        {
+          "country_slug": "uzbekistan",
+          "latitude":     41.3111,
+          "longitude":    69.2797,
+          "address":      "ул. Амир Темур, 101"  # echoed back, optional
+        }
+
+    Coordinates can also be sent nested under "delivery": { ... }.
+
+    Success — inside a zone:
+        {
+          "success": true,
+          "data": {
+            "is_deliverable": true,
+            "location":    { "id", "name", "public_name" },
+            "delivery_zone": { "id", "name" },
+            "delivery_price":           15000.0,
+            "free_delivery_threshold":  150000.0,
+            "estimated_delivery_time":  "35–45 мин",
+            "distance_km":              2.4,
+            "address":                  "ул. Амир Темур, 101"   # if sent
+          }
+        }
+
+    Success — outside all zones:
+        {
+          "success": true,
+          "data": {
+            "is_deliverable": false,
+            "reason":  "OUT_OF_DELIVERY_ZONE",
+            "message": "Пока не доставляем по этому адресу"
+          }
+        }
+
+    A missing / malformed coordinates payload returns 400 INVALID_COORDINATES.
+    """
+    payload, err = _parse_json_body(request)
+    if err:
+        return err
+
+    country, err = _get_country_from_payload(payload)
+    if err:
+        return err
+
+    lat, lng, err = _parse_coordinates(payload)
+    if err:
+        return err
+    if lat is None or lng is None:
+        return api_error(
+            "INVALID_COORDINATES",
+            "latitude and longitude are required",
+            status=400,
+        )
+
+    zone, distance = _find_delivery_zone(country, lat, lng)
+    address_echo = str(payload.get("address") or "").strip()
+
+    if zone is None:
+        response = {
+            "is_deliverable": False,
+            "reason": "OUT_OF_DELIVERY_ZONE",
+            "message": "Пока не доставляем по этому адресу",
+        }
+        if address_echo:
+            response["address"] = address_echo
+        return api_success(response)
+
+    location = zone.location
+    response = {
+        "is_deliverable": True,
+        "location": {
+            "id": location.id,
+            "name": location.name,
+            "public_name": _display_name(location),
+        },
+        "delivery_zone": {
+            "id": zone.id,
+            "name": zone.name or "",
+        },
+        "delivery_price": _to_float(zone.delivery_price),
+        "free_delivery_threshold": _to_float(zone.free_delivery_threshold),
+        "estimated_delivery_time": zone.estimated_time or "",
+        "distance_km": round(distance, 3) if distance is not None else None,
+    }
+    if address_echo:
+        response["address"] = address_echo
+    return api_success(response)

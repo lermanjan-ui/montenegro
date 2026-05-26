@@ -2172,7 +2172,30 @@ class DeliveryZone(models.Model):
         blank=True
     )
 
+    # 📍 Centre of the circular delivery zone (for the haversine match).
+    # Nullable so the existing rows migrate cleanly; a zone without a centre
+    # is simply skipped by the matcher.
+    center_latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
+    center_longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True
+    )
+
     is_active = models.BooleanField(default=True)
+
+    # Lower value = higher priority when several zones overlap.
+    site_sort_order = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         ordering = ["location__name", "name"]
