@@ -234,7 +234,98 @@ admin.site.register(CustomerAddress)
 admin.site.register(OrderSource)
 admin.site.register(DeliveryProvider)
 admin.site.register(PromoCode)
-admin.site.register(Order)
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    """
+    Custom admin so courier-facing fields (Part 9) are visible at a glance.
+    Kept compact — full editing still happens in the dedicated ERP order
+    detail page.
+    """
+    list_display = (
+        "id",
+        "public_order_number",
+        "customer_name",
+        "customer_phone",
+        "fulfillment_method",
+        "leave_at_door",
+        "status",
+        "total_amount",
+        "created_at",
+    )
+    list_filter = (
+        "country",
+        "status",
+        "fulfillment_method",
+        "payment_status",
+        "leave_at_door",
+    )
+    search_fields = (
+        "id",
+        "public_order_number",
+        "customer_name",
+        "customer_phone",
+        "delivery_address",
+        "delivery_landmark",
+        "courier_comment",
+    )
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Базовое", {
+            "fields": (
+                "country", "location", "customer", "source",
+                "public_order_number", "status",
+                "fulfillment_method", "payment_method", "payment_status",
+                "promo_code",
+            ),
+        }),
+        ("Клиент", {
+            "fields": (
+                "customer_name", "customer_phone",
+                "customer_comment",
+            ),
+        }),
+        ("Доставка / адрес", {
+            "fields": (
+                "delivery_address", "address_comment",
+                "delivery_apartment", "delivery_entrance",
+                "delivery_floor", "delivery_intercom",
+                "delivery_latitude", "delivery_longitude",
+            ),
+        }),
+        ("Курьер", {
+            "fields": (
+                "delivery_landmark",
+                "courier_comment",
+                "leave_at_door",
+            ),
+            "description": (
+                "Ориентир и комментарий передаются курьеру. "
+                "«Оставить у двери» — пометка для бесконтактной доставки."
+            ),
+        }),
+        ("Суммы", {
+            "fields": (
+                "subtotal_amount", "discount_amount",
+                "delivery_amount", "customer_delivery_amount",
+                "free_customer_delivery",
+                "commission_amount", "net_revenue",
+                "total_amount",
+            ),
+        }),
+        ("Кассир / служебное", {
+            "fields": (
+                "cashier_comment",
+                "is_cancelled", "cancel_reason",
+                "order_date", "created_at", "updated_at",
+                "created_by",
+            ),
+            "classes": ("collapse",),
+        }),
+    )
+
+
 admin.site.register(OrderItem)
 admin.site.register(FinancialExpense)
 admin.site.register(EmployeeShift)

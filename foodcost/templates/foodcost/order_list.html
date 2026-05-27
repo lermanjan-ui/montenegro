@@ -245,6 +245,36 @@ h1{
     margin-top:6px;
 }
 
+/* Compact indicator on order-row for leave_at_door=True. Warm orange so
+   it reads as a courier instruction, not an error. */
+.door-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:4px 9px;
+    border-radius:999px;
+    background:#fff7ed;
+    color:#c2410c;
+    font-size:11.5px;
+    font-weight:900;
+    line-height:1;
+    margin-top:6px;
+    white-space:nowrap;
+}
+
+/* Tiny landmark line under client name. Truncates so the row keeps its
+   shape on long values. */
+.client-landmark{
+    color:#6b7280;
+    font-size:12px;
+    font-weight:700;
+    margin-top:4px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:100%;
+}
+
 .order-time{
     color:#6b7280;
     font-size:14px;
@@ -583,6 +613,19 @@ h1{
                                 <div class="client-phone">
                                     {{ order.customer_phone }}
                                 </div>
+
+                                {% if order.delivery_landmark %}
+                                    <div class="client-landmark"
+                                         title="{{ order.delivery_landmark }}">
+                                        Ориентир: {{ order.delivery_landmark }}
+                                    </div>
+                                {% endif %}
+
+                                {% if order.leave_at_door %}
+                                    <div class="door-badge">
+                                        🚪 Оставить у двери
+                                    </div>
+                                {% endif %}
 
                             </div>
 

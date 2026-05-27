@@ -2294,6 +2294,34 @@ def order_create(request):
     delivery_address = str(payload.get("delivery_address") or "").strip()
     customer_comment = str(payload.get("comment") or "").strip()
 
+    # ---- Courier-facing extras (Part 9 — delivery checkout fields) ----
+    # The website sends courier_landmark / courier_comment / leave_at_door
+    # at the top level. We also accept legacy alias keys so partial
+    # rollouts (Tilda, mobile app, older client) don't lose data.
+    #
+    # Storage:
+    #   courier_landmark → Order.delivery_landmark  (existing column with
+    #                       the same semantic; renaming would require a
+    #                       data migration and break ERP screens already
+    #                       reading that field).
+    #   courier_comment  → Order.courier_comment
+    #   leave_at_door    → Order.leave_at_door
+    courier_landmark_value = str(
+        payload.get("courier_landmark")
+        or payload.get("landmark")
+        or payload.get("address_landmark")
+        or ""
+    ).strip()
+
+    courier_comment_value = str(
+        payload.get("courier_comment")
+        or payload.get("comment_for_courier")
+        or payload.get("delivery_comment")
+        or ""
+    ).strip()
+
+    leave_at_door_value = bool(payload.get("leave_at_door"))
+
     if not customer_name or not customer_phone:
         return api_error(
             "INVALID_JSON",
@@ -2384,7 +2412,10 @@ def order_create(request):
     else:
         payment_status_value = Order.PAYMENT_STATUS_PENDING
 
-    # Assemble the cashier-facing summary: addon details + payment + promo.
+    # Assemble the cashier-facing summary: addon details + payment + promo
+    # + courier block. The new courier block ensures ERP staff can see the
+    # courier info even if the order detail template doesn't render the
+    # dedicated fields yet (Part 9).
     addon_summary = _build_cashier_addon_summary(result["line_objects"])
     extra_lines = []
     if payment_key:
@@ -2398,8 +2429,29 @@ def order_create(request):
             f"Промокод {promo.code}: −{result['discount_percent']}% "
             f"(−{result['discount_amount']})"
         )
+
+    # Courier block — only rendered when at least one field is filled,
+    # otherwise we'd accumulate empty headers in every website order.
+    courier_block_lines = []
+    if courier_landmark_value:
+        courier_block_lines.append(f"- Ориентир: {courier_landmark_value}")
+    if courier_comment_value:
+        courier_block_lines.append(
+            f"- Комментарий курьеру: {courier_comment_value}"
+        )
+    if leave_at_door_value:
+        courier_block_lines.append("- Оставить у двери: Да")
+    if courier_block_lines:
+        courier_block = "Данные для курьера:\n" + "\n".join(courier_block_lines)
+    else:
+        courier_block = ""
+
     cashier_comment = "\n\n".join(
-        part for part in (addon_summary, "\n".join(extra_lines)) if part
+        part for part in (
+            addon_summary,
+            "\n".join(extra_lines),
+            courier_block,
+        ) if part
     )
 
     with transaction.atomic():
@@ -2423,6 +2475,11 @@ def order_create(request):
             status=Order.STATUS_NEW,
             fulfillment_method=fulfillment_method,
             payment_status=payment_status_value,
+            # Courier-facing fields stored on dedicated columns so ERP screens
+            # and admin can show them as soon as templates are updated.
+            delivery_landmark=courier_landmark_value,
+            courier_comment=courier_comment_value,
+            leave_at_door=leave_at_door_value,
         )
 
         # Now we have order.id → generate public_order_number deterministically.

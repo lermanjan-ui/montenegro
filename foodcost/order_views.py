@@ -358,6 +358,13 @@ def order_create(request, country_slug):
 
             cashier_comment=request.POST.get("cashier_comment", "").strip(),
 
+            # Courier-facing fields (Part 9/10). Optional — empty if the
+            # cashier didn't fill them. Public website orders fill them via
+            # the order_create API and they appear here on edit.
+            delivery_landmark=request.POST.get("delivery_landmark", "").strip(),
+            courier_comment=request.POST.get("courier_comment", "").strip(),
+            leave_at_door=bool(request.POST.get("leave_at_door")),
+
             subtotal_amount=0,
             discount_amount=0,
             delivery_amount=delivery_amount,
@@ -662,6 +669,19 @@ def order_detail(request, country_slug, order_id):
             "cashier_comment",
             ""
         ).strip()
+
+        # Courier-facing fields (Part 9/10) — also editable from this page.
+        order.delivery_landmark = request.POST.get(
+            "delivery_landmark",
+            ""
+        ).strip()
+
+        order.courier_comment = request.POST.get(
+            "courier_comment",
+            ""
+        ).strip()
+
+        order.leave_at_door = bool(request.POST.get("leave_at_door"))
 
         delivery_amount = clean_decimal(
             request.POST.get("delivery_amount")
