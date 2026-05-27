@@ -764,8 +764,12 @@
 			            {% endif %}
 
 			            {% if can_menu_settings %}
-			            <a class="side-link {% if '/settings/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/">
+			            <a class="side-link {% if '/settings/' in request.path and '/settings/homepage/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/">
 			                Настройки
+			            </a>
+
+			            <a class="side-link {% if '/settings/homepage/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/homepage/">
+			                Главная сайта
 			            </a>
 			            {% endif %}
 

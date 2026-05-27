@@ -43,6 +43,10 @@ from .models import (
     # 🌐 Website content models (Part 4)
     DishGalleryImage,
     DishAddon,
+    # 🏠 Homepage CMS (Part 11)
+    HomepageBanner,
+    HomepageProductBlock,
+    HomepageProductBlockItem,
 )
 
 
@@ -449,3 +453,89 @@ class DishAddonAdmin(admin.ModelAdmin):
     search_fields = ("dish__name", "addon_dish__name", "group_name")
     autocomplete_fields = ("dish", "addon_dish")
     list_editable = ("group_name", "is_active", "sort_order")
+
+
+# =========================
+# 🏠 HOMEPAGE CMS (Part 11)
+# =========================
+
+@admin.register(HomepageBanner)
+class HomepageBannerAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "country",
+        "action_type",
+        "sort_order",
+        "is_active",
+        "start_at",
+        "end_at",
+    )
+    list_filter = ("country", "is_active", "action_type")
+    search_fields = ("title", "subtitle", "action_value")
+    list_editable = ("sort_order", "is_active")
+    fieldsets = (
+        ("Содержимое", {
+            "fields": ("country", "title", "subtitle"),
+        }),
+        ("Изображения", {
+            "fields": ("desktop_image", "mobile_image"),
+            "description": (
+                "URL-адреса картинок. Загрузка файла на сервер не "
+                "используется — сюда вставляется готовая ссылка."
+            ),
+        }),
+        ("Действие при клике", {
+            "fields": ("action_type", "action_value"),
+            "description": (
+                "Для «Категория» / «Товар» в action_value — slug. "
+                "Для «Внешняя ссылка» — полный URL. "
+                "Для «Без действия» — оставьте пустым."
+            ),
+        }),
+        ("Показ и расписание", {
+            "fields": (
+                "sort_order", "is_active",
+                "start_at", "end_at",
+            ),
+            "description": (
+                "Если start_at / end_at не заполнены — баннер "
+                "показывается всегда (пока is_active=True)."
+            ),
+        }),
+    )
+
+
+class HomepageProductBlockItemInline(admin.TabularInline):
+    model = HomepageProductBlockItem
+    extra = 1
+    fields = ("dish", "sort_order", "is_active")
+    autocomplete_fields = ("dish",)
+    ordering = ("sort_order", "id")
+
+
+@admin.register(HomepageProductBlock)
+class HomepageProductBlockAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "country",
+        "sort_order",
+        "is_active",
+    )
+    list_filter = ("country", "is_active")
+    search_fields = ("title",)
+    list_editable = ("sort_order", "is_active")
+    inlines = [HomepageProductBlockItemInline]
+
+
+@admin.register(HomepageProductBlockItem)
+class HomepageProductBlockItemAdmin(admin.ModelAdmin):
+    """
+    Standalone admin in addition to the inline — useful when you want to
+    move an item between blocks or filter all dishes that appear in any
+    homepage block.
+    """
+    list_display = ("block", "dish", "sort_order", "is_active")
+    list_filter = ("block__country", "is_active", "block")
+    search_fields = ("block__title", "dish__name")
+    autocomplete_fields = ("dish",)
+    list_editable = ("sort_order", "is_active")

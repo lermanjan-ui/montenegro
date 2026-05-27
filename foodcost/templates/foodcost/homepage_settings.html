@@ -1,0 +1,900 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Главная сайта{% endblock %}
+
+{% block content %}
+
+<style>
+.page{
+    max-width:1280px;
+    margin:0 auto;
+}
+
+h1{
+    margin:0;
+    font-size:30px;
+    color:#111827;
+    letter-spacing:-0.03em;
+}
+
+.muted{
+    color:#6b7280;
+    margin-top:6px;
+    font-size:14px;
+}
+
+.section{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:20px;
+    padding:22px 22px 20px;
+    box-shadow:0 8px 24px rgba(15,23,42,0.045);
+    margin-top:20px;
+}
+
+.section-title{
+    font-size:20px;
+    font-weight:950;
+    color:#111827;
+    margin-bottom:6px;
+}
+
+.section-sub{
+    color:#6b7280;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:18px;
+}
+
+.error-box{
+    background:#fef2f2;
+    border:1px solid #fecaca;
+    color:#b91c1c;
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:14px;
+    font-weight:800;
+    font-size:14px;
+}
+
+/* Forms */
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0,1fr));
+    gap:14px;
+}
+
+.form-grid label{
+    display:block;
+    font-weight:900;
+    font-size:12.5px;
+    color:#374151;
+    margin-bottom:6px;
+}
+
+input, textarea, select{
+    width:100%;
+    box-sizing:border-box;
+    padding:10px 12px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:800;
+    color:#111827;
+    background:white;
+    font-family:inherit;
+}
+
+textarea{
+    min-height:54px;
+    resize:vertical;
+}
+
+.checkbox-panel{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    background:white;
+    cursor:pointer;
+    font-weight:900;
+    font-size:13.5px;
+    color:#111827;
+}
+
+.checkbox-panel input{
+    width:18px;
+    height:18px;
+    margin:0;
+    padding:0;
+}
+
+button[type=submit]{
+    padding:11px 18px;
+    background:#111827;
+    color:white;
+    border:none;
+    border-radius:12px;
+    font-weight:950;
+    font-size:14px;
+    cursor:pointer;
+}
+
+button[type=submit]:hover{
+    background:#000;
+}
+
+.edit-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:14px;
+}
+
+.delete-btn{
+    background:#fff;
+    color:#b91c1c;
+    border:1px solid #fecaca;
+    padding:10px 14px;
+    border-radius:12px;
+    font-weight:900;
+    font-size:13.5px;
+    cursor:pointer;
+}
+
+.delete-btn:hover{
+    background:#fef2f2;
+}
+
+/* Banner rows */
+.banner-row{
+    border:1px solid #eef2f7;
+    background:#fbfcfd;
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:12px;
+}
+
+.banner-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.banner-left{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    flex:1;
+    min-width:0;
+}
+
+.banner-thumb{
+    width:96px;
+    height:64px;
+    border-radius:10px;
+    object-fit:cover;
+    background:#f3f4f6;
+    flex:0 0 auto;
+    border:1px solid #e5e7eb;
+}
+
+.banner-thumb-empty{
+    width:96px;
+    height:64px;
+    border-radius:10px;
+    background:#f3f4f6;
+    border:1px dashed #d1d5db;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#9ca3af;
+    font-size:11px;
+    font-weight:900;
+    text-align:center;
+    padding:4px;
+    box-sizing:border-box;
+}
+
+.banner-meta{
+    min-width:0;
+}
+
+.banner-title{
+    font-weight:950;
+    font-size:16px;
+    color:#111827;
+    word-break:break-word;
+}
+
+.banner-sub{
+    color:#6b7280;
+    font-size:12.5px;
+    font-weight:700;
+    margin-top:4px;
+    word-break:break-word;
+}
+
+.banner-action-info{
+    color:#374151;
+    font-size:12px;
+    font-weight:800;
+    margin-top:5px;
+}
+
+.status-badges{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    flex-shrink:0;
+}
+
+.status-badge{
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11.5px;
+    font-weight:900;
+    line-height:1;
+    white-space:nowrap;
+}
+
+.status-active{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.status-off{
+    background:#f1f5f9;
+    color:#64748b;
+}
+
+.status-scheduled{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.status-expired{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.banner-edit{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px dashed #e5e7eb;
+}
+
+.banner-row details > summary{
+    cursor:pointer;
+    font-weight:900;
+    color:#2563ff;
+    font-size:13px;
+    user-select:none;
+    list-style:none;
+}
+
+.banner-row details > summary::-webkit-details-marker{
+    display:none;
+}
+
+.banner-row details > summary::before{
+    content:"▸ ";
+    color:#2563ff;
+}
+
+.banner-row details[open] > summary::before{
+    content:"▾ ";
+}
+
+.empty{
+    padding:18px 0;
+    color:#6b7280;
+    font-weight:800;
+}
+
+.full-row{
+    grid-column:1 / -1;
+}
+
+.col-2{
+    grid-column:span 2;
+}
+
+@media (max-width:1000px){
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+    .col-2, .full-row{
+        grid-column:1 / -1;
+    }
+    .banner-thumb, .banner-thumb-empty{
+        width:72px;
+        height:48px;
+    }
+}
+</style>
+
+<div class="page">
+
+    <div>
+        <h1>Главная сайта</h1>
+        <div class="muted">
+            Управление контентом главной страницы публичного сайта. Все
+            изменения автоматически отображаются в API
+            <code>/api/public/home/banners</code>.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Баннеры главной</div>
+        <div class="section-sub">
+            Баннеры показываются в порядке по полю «Сортировка». Если задано
+            расписание (начало/конец), баннер виден только в этом окне.
+        </div>
+
+        {% if error %}
+            <div class="error-box">{{ error }}</div>
+        {% endif %}
+
+        <details style="margin-bottom:18px;">
+            <summary style="cursor:pointer;font-weight:900;color:#2563ff;font-size:14px;user-select:none;">
+                + Создать баннер
+            </summary>
+
+            <form method="post" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_homepage_banner">
+
+                <div class="form-grid">
+                    <div class="col-2">
+                        <label>Заголовок *</label>
+                        <input name="title" placeholder="2+1 на пиццу" required>
+                    </div>
+                    <div class="col-2">
+                        <label>Подзаголовок</label>
+                        <input name="subtitle" placeholder="Только до конца недели">
+                    </div>
+
+                    <div class="col-2">
+                        <label>Картинка для десктопа (URL)</label>
+                        <input name="desktop_image" placeholder="https://...">
+                    </div>
+                    <div class="col-2">
+                        <label>Картинка для мобильного (URL)</label>
+                        <input name="mobile_image" placeholder="https://...">
+                    </div>
+
+                    <div>
+                        <label>Действие при клике</label>
+                        <select name="action_type">
+                            {% for key, label in action_choices %}
+                                <option value="{{ key }}" {% if key == ACTION_NONE %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Значение действия</label>
+                        <input name="action_value" placeholder="pizza / pepperoni / https://...">
+                    </div>
+                    <div>
+                        <label>Сортировка</label>
+                        <input name="sort_order" type="number" min="0" step="1" value="0">
+                    </div>
+                    <div>
+                        <label>Активен</label>
+                        <label class="checkbox-panel">
+                            <input type="checkbox" name="is_active" checked>
+                            <span>Показывать на сайте</span>
+                        </label>
+                    </div>
+
+                    <div class="col-2">
+                        <label>Показ с</label>
+                        <input name="start_at" type="datetime-local">
+                    </div>
+                    <div class="col-2">
+                        <label>Показ до</label>
+                        <input name="end_at" type="datetime-local">
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <button type="submit">Создать баннер</button>
+                </div>
+            </form>
+        </details>
+
+        {% for banner in banners %}
+            <div class="banner-row">
+                <div class="banner-head">
+
+                    <div class="banner-left">
+                        {% if banner.desktop_image %}
+                            <img class="banner-thumb" src="{{ banner.desktop_image }}" alt="">
+                        {% elif banner.mobile_image %}
+                            <img class="banner-thumb" src="{{ banner.mobile_image }}" alt="">
+                        {% else %}
+                            <div class="banner-thumb-empty">нет фото</div>
+                        {% endif %}
+
+                        <div class="banner-meta">
+                            <div class="banner-title">{{ banner.title }}</div>
+                            {% if banner.subtitle %}
+                                <div class="banner-sub">{{ banner.subtitle }}</div>
+                            {% endif %}
+
+                            <div class="banner-action-info">
+                                {% if banner.action_type == 'category' %}
+                                    Категория:
+                                    {% if banner.action_value %}<code>{{ banner.action_value }}</code>{% else %}—{% endif %}
+                                {% elif banner.action_type == 'product' %}
+                                    Товар:
+                                    {% if banner.action_value %}<code>{{ banner.action_value }}</code>{% else %}—{% endif %}
+                                {% elif banner.action_type == 'external_url' %}
+                                    Внешняя ссылка:
+                                    {% if banner.action_value %}<code>{{ banner.action_value }}</code>{% else %}—{% endif %}
+                                {% else %}
+                                    Без действия
+                                {% endif %}
+                                · Сортировка: {{ banner.sort_order }}
+                            </div>
+
+                            {% if banner.start_at or banner.end_at %}
+                                <div class="banner-action-info" style="color:#6b7280;font-weight:700;">
+                                    {% if banner.start_at %}С: {{ banner.start_at|date:"d.m.Y H:i" }}{% endif %}
+                                    {% if banner.start_at and banner.end_at %} · {% endif %}
+                                    {% if banner.end_at %}До: {{ banner.end_at|date:"d.m.Y H:i" }}{% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="status-badges">
+                        {% if banner.status == 'active' %}
+                            <span class="status-badge status-active">Активен</span>
+                        {% elif banner.status == 'off' %}
+                            <span class="status-badge status-off">Отключён</span>
+                        {% elif banner.status == 'scheduled' %}
+                            <span class="status-badge status-scheduled">Запланирован</span>
+                        {% elif banner.status == 'expired' %}
+                            <span class="status-badge status-expired">Истёк</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <details class="banner-edit">
+                    <summary>Редактировать</summary>
+
+                    <form method="post" style="margin-top:14px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_homepage_banner">
+                        <input type="hidden" name="banner_id" value="{{ banner.id }}">
+
+                        <div class="form-grid">
+                            <div class="col-2">
+                                <label>Заголовок *</label>
+                                <input name="title" value="{{ banner.title }}" required>
+                            </div>
+                            <div class="col-2">
+                                <label>Подзаголовок</label>
+                                <input name="subtitle" value="{{ banner.subtitle }}">
+                            </div>
+
+                            <div class="col-2">
+                                <label>Картинка для десктопа (URL)</label>
+                                <input name="desktop_image" value="{{ banner.desktop_image }}">
+                            </div>
+                            <div class="col-2">
+                                <label>Картинка для мобильного (URL)</label>
+                                <input name="mobile_image" value="{{ banner.mobile_image }}">
+                            </div>
+
+                            <div>
+                                <label>Действие при клике</label>
+                                <select name="action_type">
+                                    {% for key, label in action_choices %}
+                                        <option value="{{ key }}" {% if key == banner.action_type %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Значение действия</label>
+                                <input name="action_value" value="{{ banner.action_value }}">
+                            </div>
+                            <div>
+                                <label>Сортировка</label>
+                                <input name="sort_order" type="number" min="0" step="1" value="{{ banner.sort_order }}">
+                            </div>
+                            <div>
+                                <label>Активен</label>
+                                <label class="checkbox-panel">
+                                    <input type="checkbox" name="is_active" {% if banner.is_active %}checked{% endif %}>
+                                    <span>Показывать на сайте</span>
+                                </label>
+                            </div>
+
+                            <div class="col-2">
+                                <label>Показ с</label>
+                                <input name="start_at" type="datetime-local" value="{{ banner.start_at_input }}">
+                            </div>
+                            <div class="col-2">
+                                <label>Показ до</label>
+                                <input name="end_at" type="datetime-local" value="{{ banner.end_at_input }}">
+                            </div>
+                        </div>
+
+                        <div class="edit-actions">
+                            <button type="submit">Сохранить</button>
+                        </div>
+                    </form>
+
+                    <form method="post" style="margin-top:10px;text-align:right;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_homepage_banner">
+                        <input type="hidden" name="banner_id" value="{{ banner.id }}">
+                        <button type="submit" class="delete-btn"
+                                onclick="return confirm('Удалить баннер «{{ banner.title|escapejs }}»? Это действие необратимо.')">
+                            Удалить баннер
+                        </button>
+                    </form>
+                </details>
+            </div>
+        {% empty %}
+            <div class="empty">Баннеров пока нет. Создайте первый через форму выше.</div>
+        {% endfor %}
+    </div>
+
+    {# =========================================================== #}
+    {#  Part 12 (2/3) — Хиты продаж                                 #}
+    {#  Toggles Dish.is_featured + lets the operator order them via #}
+    {#  Dish.site_sort_order. Reflected in                          #}
+    {#  GET /api/public/home/bestsellers immediately.               #}
+    {# =========================================================== #}
+    <div class="section">
+        <div class="section-title">Хиты продаж</div>
+        <div class="section-sub">
+            Блюда с пометкой «Хит» появляются на главной сайта в виде
+            подборки «Хиты продаж». Порядок в подборке задаёт поле
+            «Сортировка» (меньше — раньше). Скрытые или стоп-листовые
+            блюда здесь подсвечиваются, но из публичного API их всё равно
+            прячет фильтр <code>/api/public/home/bestsellers</code>.
+        </div>
+
+        <details style="margin-bottom:18px;">
+            <summary style="cursor:pointer;font-weight:900;color:#2563ff;font-size:14px;user-select:none;">
+                + Добавить блюдо в хиты
+            </summary>
+
+            <form method="post" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_bestseller">
+
+                <div class="form-grid">
+                    <div class="col-2">
+                        <label>Блюдо</label>
+                        <select name="dish_id" required>
+                            <option value="">— выбери блюдо —</option>
+                            {% for dish in available_dishes %}
+                                <option value="{{ dish.id }}">
+                                    {{ dish.name }}{% if dish.selling_price %} — {{ dish.selling_price|floatformat:0 }}{% endif %}{% if not dish.is_visible_on_site %} · скрыто{% endif %}{% if dish.is_stop_list %} · стоп-лист{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-2" style="display:flex;align-items:flex-end;">
+                        <button type="submit">Добавить в хиты</button>
+                    </div>
+                </div>
+            </form>
+        </details>
+
+        {% for dish in featured_dishes %}
+            <div class="banner-row">
+                <div class="banner-head">
+
+                    <div class="banner-left">
+                        <div class="banner-meta" style="flex:1;">
+                            <div class="banner-title">
+                                {% if dish.public_name %}{{ dish.public_name }}{% else %}{{ dish.name }}{% endif %}
+                            </div>
+
+                            <div class="banner-sub">
+                                {% if dish.selling_price %}{{ dish.selling_price|floatformat:0 }}{% endif %}
+                                {% if dish.slug %} · <code>{{ dish.slug }}</code>{% endif %}
+                                · Сортировка: {{ dish.site_sort_order }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-badges">
+                        {% if dish.is_visible_on_site %}
+                            <span class="status-badge status-active">На сайте</span>
+                        {% else %}
+                            <span class="status-badge status-expired">Скрыто</span>
+                        {% endif %}
+
+                        {% if dish.is_stop_list %}
+                            <span class="status-badge status-expired">В стоп-листе</span>
+                        {% else %}
+                            <span class="status-badge status-active">Доступно</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="banner-edit">
+                    <form method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_bestseller">
+                        <input type="hidden" name="dish_id" value="{{ dish.id }}">
+
+                        <div style="flex:0 0 180px;">
+                            <label>Сортировка</label>
+                            <input name="site_sort_order" type="number" min="0" step="1" value="{{ dish.site_sort_order }}">
+                        </div>
+
+                        <button type="submit">Сохранить</button>
+                    </form>
+
+                    <form method="post" style="margin-top:10px;text-align:right;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="remove_bestseller">
+                        <input type="hidden" name="dish_id" value="{{ dish.id }}">
+                        <button type="submit" class="delete-btn"
+                                onclick="return confirm('Убрать «{{ dish.name|escapejs }}» из хитов продаж? Блюдо останется в каталоге.')">
+                            Убрать из хитов
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty">В хитах пока ничего нет. Добавьте блюдо через форму выше.</div>
+        {% endfor %}
+    </div>
+
+    {# =========================================================== #}
+    {#  Part 12 (3/3) — Часто заказывают вместе                     #}
+    {#  HomepageProductBlock + HomepageProductBlockItem CRUD.       #}
+    {#  Reflected in GET /api/public/home/frequently-bought.        #}
+    {# =========================================================== #}
+    <div class="section">
+        <div class="section-title">Часто заказывают вместе</div>
+        <div class="section-sub">
+            Подборки товаров, которые рекомендуются вместе на главной
+            сайта. Внутри блока — список конкретных блюд с собственной
+            сортировкой. Скрытые и стоп-листовые блюда тут видны для
+            наглядности, но из публичного API
+            <code>/api/public/home/frequently-bought</code> они отфильтровываются.
+        </div>
+
+        <details style="margin-bottom:18px;">
+            <summary style="cursor:pointer;font-weight:900;color:#2563ff;font-size:14px;user-select:none;">
+                + Создать блок
+            </summary>
+
+            <form method="post" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_homepage_product_block">
+
+                <div class="form-grid">
+                    <div class="col-2">
+                        <label>Название блока *</label>
+                        <input name="title" value="Часто заказывают вместе" required>
+                    </div>
+                    <div>
+                        <label>Сортировка</label>
+                        <input name="sort_order" type="number" min="0" step="1" value="0">
+                    </div>
+                    <div>
+                        <label>Активен</label>
+                        <label class="checkbox-panel">
+                            <input type="checkbox" name="is_active" checked>
+                            <span>Показывать на сайте</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <button type="submit">Создать блок</button>
+                </div>
+            </form>
+        </details>
+
+        {% for block in homepage_blocks %}
+            <div class="banner-row">
+                <div class="banner-head">
+
+                    <div class="banner-left">
+                        <div class="banner-meta" style="flex:1;">
+                            <div class="banner-title">{{ block.title }}</div>
+                            <div class="banner-sub">
+                                Сортировка: {{ block.sort_order }}
+                                · Товаров: {{ block.items.all|length }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-badges">
+                        {% if block.is_active %}
+                            <span class="status-badge status-active">Активен</span>
+                        {% else %}
+                            <span class="status-badge status-off">Отключён</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <details class="banner-edit">
+                    <summary>Редактировать блок и товары</summary>
+
+                    {# ---- Block edit form ---- #}
+                    <form method="post" style="margin-top:14px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_homepage_product_block">
+                        <input type="hidden" name="block_id" value="{{ block.id }}">
+
+                        <div class="form-grid">
+                            <div class="col-2">
+                                <label>Название блока *</label>
+                                <input name="title" value="{{ block.title }}" required>
+                            </div>
+                            <div>
+                                <label>Сортировка</label>
+                                <input name="sort_order" type="number" min="0" step="1" value="{{ block.sort_order }}">
+                            </div>
+                            <div>
+                                <label>Активен</label>
+                                <label class="checkbox-panel">
+                                    <input type="checkbox" name="is_active" {% if block.is_active %}checked{% endif %}>
+                                    <span>Показывать на сайте</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="edit-actions">
+                            <button type="submit">Сохранить блок</button>
+                        </div>
+                    </form>
+
+                    {# ---- Items list ---- #}
+                    <div style="margin-top:18px;padding-top:14px;border-top:1px dashed #e5e7eb;">
+                        <div style="font-weight:900;color:#111827;margin-bottom:10px;">
+                            Товары в блоке
+                        </div>
+
+                        {% for item in block.items.all %}
+                            <div style="border:1px solid #eef2f7;background:white;border-radius:12px;padding:12px 14px;margin-bottom:10px;">
+                                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                                    <div style="min-width:0;flex:1;">
+                                        <div style="font-weight:900;color:#111827;font-size:14px;">
+                                            {% if item.dish.public_name %}{{ item.dish.public_name }}{% else %}{{ item.dish.name }}{% endif %}
+                                        </div>
+                                        <div style="color:#6b7280;font-size:12px;font-weight:700;margin-top:3px;">
+                                            {% if item.dish.selling_price %}{{ item.dish.selling_price|floatformat:0 }}{% endif %}
+                                            {% if item.dish.slug %} · <code>{{ item.dish.slug }}</code>{% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="status-badges">
+                                        {% if item.is_active %}
+                                            <span class="status-badge status-active">Активен</span>
+                                        {% else %}
+                                            <span class="status-badge status-off">Отключён</span>
+                                        {% endif %}
+
+                                        {% if item.dish.is_visible_on_site %}
+                                            <span class="status-badge status-active">На сайте</span>
+                                        {% else %}
+                                            <span class="status-badge status-expired">Скрыто</span>
+                                        {% endif %}
+
+                                        {% if item.dish.is_stop_list %}
+                                            <span class="status-badge status-expired">В стоп-листе</span>
+                                        {% else %}
+                                            <span class="status-badge status-active">Доступно</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <form method="post" style="margin-top:10px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_homepage_product_block_item">
+                                    <input type="hidden" name="block_id" value="{{ block.id }}">
+                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                                    <div style="flex:0 0 160px;">
+                                        <label>Сортировка</label>
+                                        <input name="sort_order" type="number" min="0" step="1" value="{{ item.sort_order }}">
+                                    </div>
+
+                                    <label class="checkbox-panel">
+                                        <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}>
+                                        <span>Активен</span>
+                                    </label>
+
+                                    <button type="submit">Сохранить</button>
+                                </form>
+
+                                <form method="post" style="margin-top:8px;text-align:right;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_homepage_product_block_item">
+                                    <input type="hidden" name="block_id" value="{{ block.id }}">
+                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                    <button type="submit" class="delete-btn"
+                                            onclick="return confirm('Убрать «{{ item.dish.name|escapejs }}» из блока? Блюдо останется в каталоге.')">
+                                        Убрать из блока
+                                    </button>
+                                </form>
+                            </div>
+                        {% empty %}
+                            <div class="empty" style="padding:10px 0;">
+                                В блоке пока нет товаров.
+                            </div>
+                        {% endfor %}
+
+                        {# ---- Add item form ---- #}
+                        <details style="margin-top:14px;">
+                            <summary style="cursor:pointer;font-weight:900;color:#2563ff;font-size:13px;user-select:none;">
+                                + Добавить товар в блок
+                            </summary>
+
+                            <form method="post" style="margin-top:10px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add_homepage_product_block_item">
+                                <input type="hidden" name="block_id" value="{{ block.id }}">
+
+                                <div class="form-grid">
+                                    <div class="col-2">
+                                        <label>Блюдо</label>
+                                        <select name="dish_id" required>
+                                            <option value="">— выбери блюдо —</option>
+                                            {% for d in available_block_dishes %}
+                                                <option value="{{ d.id }}">
+                                                    {{ d.name }}{% if d.selling_price %} — {{ d.selling_price|floatformat:0 }}{% endif %}{% if not d.is_visible_on_site %} · скрыто{% endif %}{% if d.is_stop_list %} · стоп-лист{% endif %}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label>Сортировка</label>
+                                        <input name="sort_order" type="number" min="0" step="1" value="0">
+                                    </div>
+                                    <div>
+                                        <label>Активен</label>
+                                        <label class="checkbox-panel">
+                                            <input type="checkbox" name="is_active" checked>
+                                            <span>Показывать</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="edit-actions">
+                                    <button type="submit">Добавить в блок</button>
+                                </div>
+                            </form>
+                        </details>
+                    </div>
+
+                    {# ---- Block delete ---- #}
+                    <form method="post" style="margin-top:10px;text-align:right;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_homepage_product_block">
+                        <input type="hidden" name="block_id" value="{{ block.id }}">
+                        <button type="submit" class="delete-btn"
+                                onclick="return confirm('Удалить блок «{{ block.title|escapejs }}»? Все товары блока удалятся, сами блюда останутся в каталоге.')">
+                            Удалить блок
+                        </button>
+                    </form>
+                </details>
+            </div>
+        {% empty %}
+            <div class="empty">Блоков пока нет. Создайте первый блок через форму выше.</div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

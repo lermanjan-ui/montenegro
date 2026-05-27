@@ -3,6 +3,7 @@ from . import views
 from . import views_employees
 from . import order_views
 from . import views_settings
+from . import views_homepage
 from . import writeoff_views
 from . import shift_views
 from . import public_api
@@ -130,6 +131,12 @@ urlpatterns = [
         views_settings.settings_page,
         name="settings_page"
     ),
+
+    path(
+        "c/<slug:country_slug>/settings/homepage/",
+        views_homepage.homepage_settings_page,
+        name="homepage_settings",
+    ),
     
     
 
@@ -218,5 +225,24 @@ urlpatterns = [
         "api/public/delivery/check/",
         public_api.delivery_check,
         name="public_delivery_check_slash",
+    ),
+
+    # =========================================================================
+    # 🏠 PUBLIC API (Part 11) — homepage CMS: banners, bestsellers, blocks
+    # =========================================================================
+    path(
+        "api/public/home/banners",
+        public_api.home_banners,
+        name="public_home_banners",
+    ),
+    path(
+        "api/public/home/bestsellers",
+        public_api.home_bestsellers,
+        name="public_home_bestsellers",
+    ),
+    path(
+        "api/public/home/frequently-bought",
+        public_api.home_frequently_bought,
+        name="public_home_frequently_bought",
     ),
 ]

@@ -85,6 +85,10 @@ from .models import (
     # Part 5 — checkout support
     PromoCode,
     PaymentMethod,
+    # Part 11 — homepage CMS
+    HomepageBanner,
+    HomepageProductBlock,
+    HomepageProductBlockItem,
 )
 
 
@@ -2872,3 +2876,238 @@ def delivery_check(request):
     if address_echo:
         response["address"] = address_echo
     return api_success(response)
+
+
+# =============================================================================
+# 🏠 PUBLIC HOMEPAGE API (Part 11 — banners / bestsellers / frequently bought)
+# =============================================================================
+#
+# All three endpoints share the same shape:
+#   - GET only, no auth, no side effects
+#   - country_slug is required
+#   - Empty result is a success with an empty list (never 404)
+#
+# A short Cache-Control header is set so a CDN / reverse proxy can cache
+# the response for a minute, since the homepage is read by every visitor.
+# No Redis / Django cache framework is involved — we just hint to clients.
+
+
+HOMEPAGE_CACHE_CONTROL = "public, max-age=60"
+
+
+def _apply_homepage_cache_headers(response):
+    """Attach a short Cache-Control header so CDNs / browsers can cache."""
+    response["Cache-Control"] = HOMEPAGE_CACHE_CONTROL
+    return response
+
+
+# -----------------------------------------------------------------------------
+# 🖼  ENDPOINT: GET /api/public/home/banners
+# -----------------------------------------------------------------------------
+
+def _serialize_homepage_banner(banner):
+    return {
+        "id": banner.id,
+        "title": banner.title or "",
+        "subtitle": banner.subtitle or "",
+        "desktop_image": banner.desktop_image or "",
+        "mobile_image": banner.mobile_image or "",
+        "action_type": banner.action_type,
+        "action_value": banner.action_value or "",
+        "sort_order": int(banner.sort_order or 0),
+    }
+
+
+@csrf_exempt
+@require_GET
+def home_banners(request):
+    """
+    Active, currently-scheduled homepage banners for a country.
+
+    A banner is returned only when:
+      - country matches the resolved country
+      - is_active = True
+      - start_at is null OR start_at <= now
+      - end_at   is null OR end_at   >= now
+
+    Sorted by (sort_order, id).
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    now = timezone.now()
+    qs = HomepageBanner.objects.filter(
+        country=country,
+        is_active=True,
+    ).filter(
+        Q(start_at__isnull=True) | Q(start_at__lte=now),
+    ).filter(
+        Q(end_at__isnull=True) | Q(end_at__gte=now),
+    ).order_by("sort_order", "id")
+
+    response = api_success({
+        "banners": [_serialize_homepage_banner(b) for b in qs],
+    })
+    return _apply_homepage_cache_headers(response)
+
+
+# -----------------------------------------------------------------------------
+# ⭐  ENDPOINT: GET /api/public/home/bestsellers
+# -----------------------------------------------------------------------------
+
+def _serialize_bestseller(request, dish):
+    """
+    Bestseller payload — we reuse the standard product card and overlay
+    `is_featured: True` so the website can tag the card visually without
+    a second lookup.
+    """
+    card = serialize_product_card(request, dish)
+    card["is_featured"] = True
+    return card
+
+
+@csrf_exempt
+@require_GET
+def home_bestsellers(request):
+    """
+    Featured ("bestseller") dishes for the country homepage.
+
+    Filters:
+      - country matches
+      - is_visible_on_site = True
+      - is_stop_list       = False
+      - is_featured        = True
+
+    Sort: (site_sort_order, name).
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    dishes = (
+        Dish.objects
+        .filter(
+            country=country,
+            is_visible_on_site=True,
+            is_stop_list=False,
+            is_featured=True,
+        )
+        .order_by("site_sort_order", "name")
+    )
+
+    response = api_success({
+        "products": [_serialize_bestseller(request, d) for d in dishes],
+    })
+    return _apply_homepage_cache_headers(response)
+
+
+# -----------------------------------------------------------------------------
+# 🧺  ENDPOINT: GET /api/public/home/frequently-bought
+# -----------------------------------------------------------------------------
+
+def _serialize_homepage_block(request, block, dishes_by_id, item_pairs):
+    """
+    Build one block payload.
+
+    Args:
+        block:          HomepageProductBlock instance.
+        dishes_by_id:   {dish_id: Dish} prefetched in bulk.
+        item_pairs:     ordered list of (item, dish_id) for THIS block,
+                        in the desired display order.
+    """
+    products = []
+    for _item, dish_id in item_pairs:
+        dish = dishes_by_id.get(dish_id)
+        if dish is None:
+            # Dish became hidden / stopped / deleted between our query and now.
+            continue
+        products.append(serialize_product_card(request, dish))
+
+    return {
+        "id": block.id,
+        "title": block.title or "",
+        "products": products,
+    }
+
+
+@csrf_exempt
+@require_GET
+def home_frequently_bought(request):
+    """
+    Manually curated "frequently bought together" blocks.
+
+    Filters:
+      - block.country  = requested country
+      - block.is_active = True
+      - item.is_active  = True
+      - item.dish.is_visible_on_site = True
+      - item.dish.is_stop_list       = False
+
+    Sorted by (block.sort_order, block.id, item.sort_order, item.id).
+
+    To stay efficient on the homepage we run only THREE queries regardless
+    of how many blocks/items there are:
+      1) all eligible blocks for the country
+      2) all eligible items for those blocks (ordered)
+      3) all dishes for those items (one IN-query)
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    blocks = list(
+        HomepageProductBlock.objects
+        .filter(country=country, is_active=True)
+        .order_by("sort_order", "id")
+    )
+
+    if not blocks:
+        response = api_success({"blocks": []})
+        return _apply_homepage_cache_headers(response)
+
+    block_ids = [b.id for b in blocks]
+
+    # Pull every active item across all blocks in display order, so we can
+    # bucket them per block in Python below.
+    items = list(
+        HomepageProductBlockItem.objects
+        .filter(block_id__in=block_ids, is_active=True)
+        .order_by("block_id", "sort_order", "id")
+    )
+
+    # Collect dish ids and pull dishes that are visible & not stopped.
+    dish_ids = {it.dish_id for it in items}
+    if dish_ids:
+        visible_dishes = list(
+            Dish.objects.filter(
+                id__in=dish_ids,
+                country=country,
+                is_visible_on_site=True,
+                is_stop_list=False,
+            )
+        )
+    else:
+        visible_dishes = []
+    dishes_by_id = {d.id: d for d in visible_dishes}
+
+    # Bucket items per block, keeping the ORDER BY from the query.
+    items_by_block = {}
+    for it in items:
+        items_by_block.setdefault(it.block_id, []).append((it, it.dish_id))
+
+    out = []
+    for block in blocks:
+        item_pairs = items_by_block.get(block.id, [])
+        block_payload = _serialize_homepage_block(
+            request, block, dishes_by_id, item_pairs
+        )
+        # A block with zero rendered products is still returned — operators
+        # might intentionally show an empty "loading" block. If you'd rather
+        # hide them, uncomment:
+        # if not block_payload["products"]:
+        #     continue
+        out.append(block_payload)
+
+    response = api_success({"blocks": out})
+    return _apply_homepage_cache_headers(response)

@@ -2312,3 +2312,145 @@ class DishAddon(models.Model):
 
     def __str__(self):
         return f"{self.dish} ← {self.addon_dish}"
+
+
+# =============================================================================
+# 🏠 HOMEPAGE CMS MODELS (Part 11 — ERP-driven homepage management)
+# =============================================================================
+#
+# Three small models that drive the website homepage from the ERP:
+#   - HomepageBanner            — hero/promo banners (CRUD in Django admin)
+#   - HomepageProductBlock      — manually curated "frequently bought" blocks
+#   - HomepageProductBlockItem  — dishes inside one block
+#
+# Bestsellers don't need their own model — they reuse Dish.is_featured.
+#
+# All public homepage endpoints filter by country, so adding a banner or
+# a block in Uzbekistan doesn't leak into Montenegro and vice versa.
+
+
+class HomepageBanner(models.Model):
+    """
+    ERP-managed homepage banner.
+
+    The action_type/action_value pair tells the website what to do when
+    a customer taps the banner:
+      - "category"    → open the category whose slug matches action_value
+      - "product"     → open the product (Dish) whose slug matches action_value
+      - "external_url"→ open action_value as a full URL in a new tab
+      - "none"        → display only; no action
+    """
+
+    ACTION_CATEGORY = "category"
+    ACTION_PRODUCT = "product"
+    ACTION_EXTERNAL_URL = "external_url"
+    ACTION_NONE = "none"
+
+    ACTION_TYPE_CHOICES = [
+        (ACTION_CATEGORY,     "Категория"),
+        (ACTION_PRODUCT,      "Товар"),
+        (ACTION_EXTERNAL_URL, "Внешняя ссылка"),
+        (ACTION_NONE,         "Без действия"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="homepage_banners",
+    )
+
+    title = models.CharField(max_length=255)
+    subtitle = models.CharField(max_length=500, blank=True, default="")
+
+    desktop_image = models.URLField(max_length=1000, blank=True, default="")
+    mobile_image = models.URLField(max_length=1000, blank=True, default="")
+
+    action_type = models.CharField(
+        max_length=20,
+        choices=ACTION_TYPE_CHOICES,
+        default=ACTION_NONE,
+    )
+    action_value = models.CharField(max_length=500, blank=True, default="")
+
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    # Optional scheduled window. Both nullable so banners can be "always on".
+    start_at = models.DateTimeField(null=True, blank=True)
+    end_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "Баннер на главной"
+        verbose_name_plural = "Баннеры на главной"
+
+    def __str__(self):
+        return f"{self.title} ({self.country.slug})"
+
+
+class HomepageProductBlock(models.Model):
+    """
+    Manually curated homepage block (e.g. "Часто заказывают вместе").
+
+    There is no ML, no auto-recommendation. Operators add concrete dishes
+    via HomepageProductBlockItem inlines.
+    """
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="homepage_product_blocks",
+    )
+
+    title = models.CharField(
+        max_length=255,
+        default="Часто заказывают вместе",
+    )
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "Блок на главной"
+        verbose_name_plural = "Блоки на главной"
+
+    def __str__(self):
+        return f"{self.title} ({self.country.slug})"
+
+
+class HomepageProductBlockItem(models.Model):
+    """One dish inside a HomepageProductBlock, with its own sort order."""
+
+    block = models.ForeignKey(
+        HomepageProductBlock,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="homepage_block_items",
+    )
+
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "Товар в блоке"
+        verbose_name_plural = "Товары в блоке"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["block", "dish"],
+                name="uniq_homepage_block_dish",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.block.title} → {self.dish}"
