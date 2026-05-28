@@ -8,11 +8,23 @@ class PublicCorsMiddleware:
     def __call__(self, request):
         origin = request.headers.get("Origin")
 
+        # Browser origins allowed to call /api/public/*.
+        # Add a new entry here when a new frontend / preview host appears.
+        # NB: scheme + host + port matter exactly — "https://example.com" is
+        # NOT the same origin as "https://www.example.com".
         allowed_origins = {
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "https://raccoon.uz",
             "https://www.raccoon.uz",
+            # Production frontend on Render — was missing, which broke the
+            # Yandex Maps address picker (preflight to /api/public/delivery/
+            # check was returning without Access-Control-Allow-Origin and
+            # the browser blocked the response).
+            "https://raccoon-frontend.onrender.com",
+            # Backend host itself — covers admin-side widgets / previews that
+            # ping /api/public/* from the same Render service.
+            "https://montenegro-8y6i.onrender.com",
         }
 
         is_public_api = request.path.startswith("/api/public/")
