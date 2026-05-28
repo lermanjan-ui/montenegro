@@ -127,6 +127,7 @@ def homepage_settings_page(request, country_slug):
                     country=country,
                     title=title,
                     subtitle=(request.POST.get("subtitle") or "").strip(),
+                    show_text=bool(request.POST.get("show_text")),
                     desktop_image=(request.POST.get("desktop_image") or "").strip(),
                     mobile_image=(request.POST.get("mobile_image") or "").strip(),
                     action_type=action_type,
@@ -163,6 +164,7 @@ def homepage_settings_page(request, country_slug):
 
                 banner.title = new_title
                 banner.subtitle = (request.POST.get("subtitle") or "").strip()
+                banner.show_text = bool(request.POST.get("show_text"))
                 banner.desktop_image = (
                     request.POST.get("desktop_image") or ""
                 ).strip()

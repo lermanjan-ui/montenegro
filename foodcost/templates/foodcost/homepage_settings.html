@@ -394,6 +394,14 @@ button[type=submit]:hover{
                     </div>
 
                     <div class="col-2">
+                        <label>Текст на баннере</label>
+                        <label class="checkbox-panel">
+                            <input type="checkbox" name="show_text" checked>
+                            <span>Показывать текст на баннере</span>
+                        </label>
+                    </div>
+
+                    <div class="col-2">
                         <label>Показ с</label>
                         <input name="start_at" type="datetime-local">
                     </div>
@@ -464,6 +472,10 @@ button[type=submit]:hover{
                         {% elif banner.status == 'expired' %}
                             <span class="status-badge status-expired">Истёк</span>
                         {% endif %}
+
+                        {% if not banner.show_text %}
+                            <span class="status-badge status-off">Только фото</span>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -515,6 +527,14 @@ button[type=submit]:hover{
                                 <label class="checkbox-panel">
                                     <input type="checkbox" name="is_active" {% if banner.is_active %}checked{% endif %}>
                                     <span>Показывать на сайте</span>
+                                </label>
+                            </div>
+
+                            <div class="col-2">
+                                <label>Текст на баннере</label>
+                                <label class="checkbox-panel">
+                                    <input type="checkbox" name="show_text" {% if banner.show_text %}checked{% endif %}>
+                                    <span>Показывать текст на баннере</span>
                                 </label>
                             </div>
 

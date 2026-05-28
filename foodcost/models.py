@@ -186,7 +186,8 @@ class DishCategory(models.Model):
     slug = models.SlugField(
         max_length=255,
         blank=True,
-        default=""
+        default="",
+        allow_unicode=True
     )
 
     photo = models.ImageField(
@@ -221,8 +222,10 @@ class DishCategory(models.Model):
 
     def save(self, *args, **kwargs):
         # Safe slug auto-generation: only fill if blank, never overwrite.
+        # allow_unicode=True keeps Cyrillic names readable in the URL
+        # ("Пицца" -> "пицца") instead of being stripped to empty.
         if not self.slug:
-            base = slugify(self.public_name or self.name or "")
+            base = slugify(self.public_name or self.name or "", allow_unicode=True)
             if base:
                 self.slug = base[:255]
         super().save(*args, **kwargs)
@@ -296,7 +299,8 @@ class Dish(models.Model):
     slug = models.SlugField(
         max_length=255,
         blank=True,
-        default=""
+        default="",
+        allow_unicode=True
     )
 
     public_description = models.TextField(
@@ -390,12 +394,67 @@ class Dish(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        # Safe slug auto-generation: only fill if blank, never overwrite.
-        if not self.slug:
-            base = slugify(self.public_name or self.name or "")
-            if base:
-                self.slug = base[:255]
+        # Safe slug auto-generation: only fill if blank, never overwrite an
+        # existing or manually-entered slug. Whitespace-only counts as blank.
+        if self._slug_is_blank():
+            self.slug = self._generate_unique_slug()
         super().save(*args, **kwargs)
+
+    # 🔗 Public slug used by the website for product detail pages, banner
+    # product action_value and homepage product cards. If it's missing the
+    # frontend routing breaks, so save() guarantees a non-empty, per-country
+    # unique slug whenever the field is left blank.
+    SLUG_FALLBACK = "dish"
+
+    def _slug_is_blank(self):
+        """
+        True when the slug must be (re)generated.
+
+        Covers all three "empty" cases from the spec:
+          - empty string ""
+          - NULL / None
+          - a string containing only whitespace ("   ")
+        """
+        if self.slug is None:
+            return True
+        return self.slug.strip() == ""
+
+    def _generate_unique_slug(self):
+        """
+        Build a slug that is unique WITHIN THE SAME COUNTRY.
+
+        Source priority:
+          1. public_name
+          2. name
+          3. "dish" — ONLY when slugify() yields an empty string (e.g. a name
+             made only of emoji or punctuation). Cyrillic and other Unicode
+             names are preserved via allow_unicode=True, so "Пепперони"
+             becomes "пепперони", NOT the "dish" fallback.
+
+        Collisions get a numeric suffix: pepperoni, pepperoni-2, pepperoni-3…
+        Uniqueness is scoped to self.country, never global, so the same slug
+        can exist in different countries.
+        """
+        base = slugify(self.public_name or self.name or "", allow_unicode=True)
+        if not base:
+            base = self.SLUG_FALLBACK
+        base = base[:255]
+
+        candidate = base
+        suffix = 2
+        while (
+            Dish.objects
+            .filter(country=self.country, slug=candidate)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            # Keep the whole thing within the 255-char SlugField limit even
+            # after appending "-<n>".
+            tail = f"-{suffix}"
+            candidate = f"{base[:255 - len(tail)]}{tail}"
+            suffix += 1
+
+        return candidate
 
     def ingredient_cost(self):
         return (
@@ -2361,6 +2420,11 @@ class HomepageBanner(models.Model):
 
     title = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=500, blank=True, default="")
+
+    # When False, the website must render the banner image ONLY — no title /
+    # subtitle overlay. Click behaviour (action_type/action_value) is unaffected.
+    # Default True keeps every existing banner behaving exactly as before.
+    show_text = models.BooleanField(default=True)
 
     desktop_image = models.URLField(max_length=1000, blank=True, default="")
     mobile_image = models.URLField(max_length=1000, blank=True, default="")

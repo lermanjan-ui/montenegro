@@ -2910,6 +2910,7 @@ def _serialize_homepage_banner(banner):
         "id": banner.id,
         "title": banner.title or "",
         "subtitle": banner.subtitle or "",
+        "show_text": bool(banner.show_text),
         "desktop_image": banner.desktop_image or "",
         "mobile_image": banner.mobile_image or "",
         "action_type": banner.action_type,
