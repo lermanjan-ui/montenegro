@@ -1432,6 +1432,7 @@ class OrderCancelReason(models.Model):
 class Order(models.Model):
 
     STATUS_NEW = "new"
+    STATUS_AWAITING_PAYMENT = "awaiting_payment"
     STATUS_COOKING = "cooking"
     STATUS_DELIVERY = "delivery"
     STATUS_DONE = "done"
@@ -1439,6 +1440,7 @@ class Order(models.Model):
 
     STATUS_CHOICES = [
         (STATUS_NEW, "Новый"),
+        (STATUS_AWAITING_PAYMENT, "Ожидает оплаты"),
         (STATUS_COOKING, "Готовится"),
         (STATUS_DELIVERY, "Доставка"),
         (STATUS_DONE, "Завершен"),
@@ -1624,6 +1626,23 @@ class Order(models.Model):
     payment_status = models.CharField(
         max_length=30,
         default=PAYMENT_STATUS_PENDING
+    )
+
+    # External gateway reference (Click / Payme / etc.). Empty for cash orders
+    # and for online orders that have not yet been confirmed by the gateway.
+    # Part 1 leaves this empty on order creation; Part 2 (callback) writes
+    # the provider's transaction id here when payment is confirmed.
+    payment_transaction_id = models.CharField(
+        max_length=128,
+        blank=True,
+        default=""
+    )
+
+    # When the gateway confirmed payment. Null for cash and for awaiting
+    # online orders. Filled by the Part 2 callback handler.
+    payment_paid_at = models.DateTimeField(
+        null=True,
+        blank=True
     )
 
     public_order_number = models.CharField(

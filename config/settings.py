@@ -103,3 +103,38 @@ import os
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+
+
+# =============================================================================
+# 💳 CLICK PAYMENT INTEGRATION
+# =============================================================================
+# Credentials are read from environment variables ONLY — never hardcode the
+# secret key in code or commit it to the repo. If CLICK_SECRET_KEY was ever
+# exposed (logs, screenshots, frontend bundles, public commits), rotate it
+# in the Click merchant cabinet BEFORE deploying to production.
+#
+# Required for Part 1 (URL build):
+#   CLICK_SERVICE_ID       — Click service ID (numeric, public, used in URL)
+#   CLICK_MERCHANT_ID      — Click merchant ID (numeric, public, used in URL)
+#   CLICK_MERCHANT_USER_ID — used by Click API; not part of the checkout URL
+#   CLICK_SUCCESS_URL      — where Click redirects after successful payment
+#   CLICK_FAIL_URL         — where Click redirects after failed payment
+#
+# Required for Part 2 (callback verification — NOT in URLs):
+#   CLICK_SECRET_KEY       — server-only; used to compute/verify md5 sign_string
+#
+# All values default to empty string so missing env doesn't crash boot; the
+# build_click_payment_url() helper validates them at call time and surfaces
+# a clear error if anything is missing.
+CLICK_SERVICE_ID = os.environ.get("CLICK_SERVICE_ID", "")
+CLICK_MERCHANT_ID = os.environ.get("CLICK_MERCHANT_ID", "")
+CLICK_MERCHANT_USER_ID = os.environ.get("CLICK_MERCHANT_USER_ID", "")
+CLICK_SECRET_KEY = os.environ.get("CLICK_SECRET_KEY", "")
+CLICK_SUCCESS_URL = os.environ.get(
+    "CLICK_SUCCESS_URL",
+    "https://raccoon-frontend.onrender.com/order-success",
+)
+CLICK_FAIL_URL = os.environ.get(
+    "CLICK_FAIL_URL",
+    "https://raccoon-frontend.onrender.com/checkout?payment_failed=1",
+)

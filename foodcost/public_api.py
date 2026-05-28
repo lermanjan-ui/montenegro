@@ -94,6 +94,11 @@ from .models import (
     HomepageCompactUpsellItem,
 )
 
+# 💳 Click payment integration (Part 1) — URL builder only; callback comes
+# in Part 2. Import isolated in a sub-package so future providers (Payme,
+# online_card, ...) can sit next to it without bloating public_api.
+from .payments.click import build_click_payment_url, ClickConfigError
+
 
 # =============================================================================
 # 🔧 RESPONSE HELPERS
@@ -392,6 +397,11 @@ def serialize_location(request, location):
         "working_hours": location.working_hours or "",
         "supports_delivery": bool(location.supports_delivery),
         "supports_pickup": bool(location.supports_pickup),
+        # Exposed for the pickup map (Yandex markers). The pickup_points
+        # queryset already filters is_active=True, so this is always True
+        # there; included explicitly because the pickup-points contract lists
+        # it per-point, and it's harmless for other consumers of this shape.
+        "is_active": bool(location.is_active),
         # Schedule-based open/closed logic comes in a later part.
         "is_open": True,
     }
@@ -2419,6 +2429,34 @@ def order_create(request):
     else:
         payment_status_value = Order.PAYMENT_STATUS_PENDING
 
+    # Decide initial order.status:
+    #   - online gateway (click / payme / online_card) → AWAITING_PAYMENT
+    #     until the callback confirms payment. Kitchen MUST NOT start
+    #     cooking until the gateway confirms — that's the whole point of
+    #     this status. The Part 2 callback transitions awaiting_payment →
+    #     new (or cancelled, on failure).
+    #   - everything else (cash, missing) → NEW as before.
+    ONLINE_GATEWAY_KEYS = ("click", "payme", "online_card")
+    if payment_key in ONLINE_GATEWAY_KEYS:
+        initial_status = Order.STATUS_AWAITING_PAYMENT
+    else:
+        initial_status = Order.STATUS_NEW
+
+    # Pre-flight check for Click — surface config errors BEFORE we create
+    # an order row, so a misconfigured deploy doesn't leave orphaned
+    # awaiting_payment rows in the DB. The actual URL is built after the
+    # order is saved (it uses order.public_order_number as the merchant
+    # transaction id).
+    if payment_key == "click":
+        from django.conf import settings as dj_settings
+        if not (getattr(dj_settings, "CLICK_SERVICE_ID", "") and
+                getattr(dj_settings, "CLICK_MERCHANT_ID", "")):
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                "Click payment is not configured on the server",
+                status=503,
+            )
+
     # Assemble the cashier-facing summary: addon details + payment + promo
     # + courier block. The new courier block ensures ERP staff can see the
     # courier info even if the order detail template doesn't render the
@@ -2479,7 +2517,7 @@ def order_create(request):
             discount_amount=result["discount_amount"],
             delivery_amount=result["delivery_price"],
             total_amount=result["total"],
-            status=Order.STATUS_NEW,
+            status=initial_status,
             fulfillment_method=fulfillment_method,
             payment_status=payment_status_value,
             # Courier-facing fields stored on dedicated columns so ERP screens
@@ -2508,18 +2546,47 @@ def order_create(request):
                 total_price=line["total_price"],
             )
 
-    # Frontend contract: data.order = { id, order_number, status, total }.
-    # Anything else the website needs after order creation (status_label,
-    # fulfillment, payment, breakdown of subtotal/discount/delivery, etc.)
-    # is available via GET /api/public/orders/<public_order_number>/.
-    # Keeping this minimal makes the contract easy to stabilise.
+    # Build the payment block. For cash (and any order without an online
+    # gateway) it's null, matching the spec example. For Click we generate
+    # the hosted-checkout URL using order.public_order_number — that's why
+    # the URL is built AFTER the order is committed.
+    payment_block = None
+    if payment_key == "click":
+        try:
+            payment_url = build_click_payment_url(order)
+        except ClickConfigError as exc:
+            # The pre-flight already caught the common case, but if config
+            # changed mid-request or amount is zero, fall back to a clean
+            # error. The order exists with awaiting_payment — operator can
+            # cancel it manually from ERP if Click can never be reached.
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                str(exc),
+                status=503,
+            )
+        payment_block = {
+            "provider": "click",
+            "payment_url": payment_url,
+        }
+
+    # Frontend contract: data.order = { id, order_number, status,
+    # payment_status, payment_method, total } and data.payment is either
+    # null (cash / no online gateway) or { provider, payment_url } (click).
+    # Anything else the website needs after order creation is available via
+    # GET /api/public/orders/<public_order_number>/.
     return api_success({
         "order": {
             "id": order.id,
             "order_number": order.public_order_number or "",
             "status": order.status,
+            "payment_status": order.payment_status,
+            # Echo the canonical key the website sent ("cash" / "click" /
+            # "payme" / "online_card"), not the human-readable label, so
+            # the frontend can branch on a stable value.
+            "payment_method": payment_key or "",
             "total": _to_float(order.total_amount),
         },
+        "payment": payment_block,
     })
 
 
