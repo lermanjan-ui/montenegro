@@ -2518,3 +2518,78 @@ class HomepageProductBlockItem(models.Model):
 
     def __str__(self):
         return f"{self.block.title} → {self.dish}"
+
+# =========================================================================
+# 🏠 HOMEPAGE COMPACT UPSELL (Part 1)
+# =========================================================================
+# A SEPARATE feature from HomepageProductBlock / "frequently-bought".
+# This powers a compact horizontal upsell strip ("Часто заказывают вместе")
+# with quick add-to-cart on the website homepage. It is intentionally its
+# own pair of models so it can evolve without touching the existing
+# frequently-bought blocks or their public API.
+
+class HomepageCompactUpsellBlock(models.Model):
+    """
+    Compact homepage upsell block — a single horizontal strip of dishes the
+    operator curates for quick add-to-cart on the website homepage.
+
+    Distinct from HomepageProductBlock: that one drives
+    /api/public/home/frequently-bought; this one drives
+    /api/public/home/compact-upsell.
+    """
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="homepage_compact_upsell_blocks",
+    )
+
+    title = models.CharField(
+        max_length=255,
+        default="Часто заказывают вместе",
+    )
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "Компактный блок допродаж"
+        verbose_name_plural = "Компактные блоки допродаж"
+
+    def __str__(self):
+        return f"{self.title} ({self.country.slug})"
+
+
+class HomepageCompactUpsellItem(models.Model):
+    """One dish inside a HomepageCompactUpsellBlock, with its own sort order."""
+
+    block = models.ForeignKey(
+        HomepageCompactUpsellBlock,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name="homepage_compact_upsell_items",
+    )
+
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "Товар в компактном блоке"
+        verbose_name_plural = "Товары в компактном блоке"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["block", "dish"],
+                name="uniq_compact_upsell_block_dish",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.block.title} → {self.dish}"

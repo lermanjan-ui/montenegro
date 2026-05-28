@@ -47,6 +47,9 @@ from .models import (
     HomepageBanner,
     HomepageProductBlock,
     HomepageProductBlockItem,
+    # 🏠 Homepage compact upsell (Part 1 — separate from frequently-bought)
+    HomepageCompactUpsellBlock,
+    HomepageCompactUpsellItem,
 )
 
 
@@ -533,6 +536,47 @@ class HomepageProductBlockItemAdmin(admin.ModelAdmin):
     Standalone admin in addition to the inline — useful when you want to
     move an item between blocks or filter all dishes that appear in any
     homepage block.
+    """
+    list_display = ("block", "dish", "sort_order", "is_active")
+    list_filter = ("block__country", "is_active", "block")
+    search_fields = ("block__title", "dish__name")
+    autocomplete_fields = ("dish",)
+    list_editable = ("sort_order", "is_active")
+
+
+# =========================
+# 🏠 HOMEPAGE COMPACT UPSELL (Part 1)
+# =========================
+# Same admin pattern as HomepageProductBlock above: an inline for items plus
+# a standalone item admin for cross-block moves and filtering.
+
+class HomepageCompactUpsellItemInline(admin.TabularInline):
+    model = HomepageCompactUpsellItem
+    extra = 1
+    fields = ("dish", "sort_order", "is_active")
+    autocomplete_fields = ("dish",)
+    ordering = ("sort_order", "id")
+
+
+@admin.register(HomepageCompactUpsellBlock)
+class HomepageCompactUpsellBlockAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "country",
+        "sort_order",
+        "is_active",
+    )
+    list_filter = ("country", "is_active")
+    search_fields = ("title",)
+    list_editable = ("sort_order", "is_active")
+    inlines = [HomepageCompactUpsellItemInline]
+
+
+@admin.register(HomepageCompactUpsellItem)
+class HomepageCompactUpsellItemAdmin(admin.ModelAdmin):
+    """
+    Standalone admin in addition to the inline — useful to move an item
+    between compact blocks or to filter all dishes used in any compact block.
     """
     list_display = ("block", "dish", "sort_order", "is_active")
     list_filter = ("block__country", "is_active", "block")

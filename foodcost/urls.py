@@ -245,4 +245,9 @@ urlpatterns = [
         public_api.home_frequently_bought,
         name="public_home_frequently_bought",
     ),
+    path(
+        "api/public/home/compact-upsell",
+        public_api.home_compact_upsell,
+        name="public_home_compact_upsell",
+    ),
 ]

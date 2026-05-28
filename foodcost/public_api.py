@@ -89,6 +89,9 @@ from .models import (
     HomepageBanner,
     HomepageProductBlock,
     HomepageProductBlockItem,
+    # Part 1 — homepage compact upsell (separate from frequently-bought)
+    HomepageCompactUpsellBlock,
+    HomepageCompactUpsellItem,
 )
 
 
@@ -3111,4 +3114,123 @@ def home_frequently_bought(request):
         out.append(block_payload)
 
     response = api_success({"blocks": out})
+    return _apply_homepage_cache_headers(response)
+
+
+# -----------------------------------------------------------------------------
+# 🛒 ENDPOINT: GET /api/public/home/compact-upsell
+# -----------------------------------------------------------------------------
+# Compact horizontal upsell strip ("Часто заказывают вместе") for the website
+# homepage. SEPARATE from /home/frequently-bought — different models, different
+# (flat) response shape with quick-add product cards.
+#
+# Response shape:
+#   {
+#     "success": true,
+#     "data": {
+#       "enabled": <bool>,        # is there an active block at all
+#       "title":   <str>,         # block title, or the default if no block
+#       "products": [ {id, name, slug, image, price, weight, sort_order}, ... ]
+#     }
+#   }
+#
+# Product filtering (all must hold):
+#   - item.is_active = True
+#   - dish.country   = current country
+#   - dish.is_visible_on_site = True
+#   - dish.is_stop_list       = False
+# Sorted by (item.sort_order, item.id).
+
+COMPACT_UPSELL_DEFAULT_TITLE = "Часто заказывают вместе"
+
+
+def _serialize_compact_upsell_product(request, dish, sort_order):
+    """
+    Build one compact-upsell product card.
+
+    Reuses serialize_product_card() for the shared fields (id/name/slug/
+    image/price/weight) and trims to the compact contract, then adds the
+    per-item sort_order.
+
+    NB: `id` is the ERP Dish id — the frontend checkout sends it back as
+    dish_id. Slug is passed through untouched (Cyrillic-safe); never a
+    synthesized "product-<id>" — empty stays empty.
+    """
+    card = serialize_product_card(request, dish)
+    return {
+        "id": card["id"],
+        "name": card["name"],
+        "slug": card["slug"],          # may be "" — we never fake it
+        "image": card["image"],
+        "price": card["price"],
+        "weight": card["weight"],
+        "sort_order": sort_order,
+    }
+
+
+@csrf_exempt
+@require_GET
+def home_compact_upsell(request):
+    """
+    Compact homepage upsell strip. Returns the FIRST active block for the
+    country (by sort_order, id) plus its eligible products.
+
+    Empty states:
+      - no active block      -> enabled=false, default title, products=[]
+      - active block, 0 items -> enabled=true,  block title,   products=[]
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    block = (
+        HomepageCompactUpsellBlock.objects
+        .filter(country=country, is_active=True)
+        .order_by("sort_order", "id")
+        .first()
+    )
+
+    # No active block at all → disabled, default title.
+    if block is None:
+        response = api_success({
+            "enabled": False,
+            "title": COMPACT_UPSELL_DEFAULT_TITLE,
+            "products": [],
+        })
+        return _apply_homepage_cache_headers(response)
+
+    title = block.title or COMPACT_UPSELL_DEFAULT_TITLE
+
+    # Active items for this block, in display order.
+    items = list(
+        HomepageCompactUpsellItem.objects
+        .filter(block=block, is_active=True)
+        .order_by("sort_order", "id")
+    )
+
+    products = []
+    if items:
+        dish_ids = {it.dish_id for it in items}
+        visible_dishes = Dish.objects.filter(
+            id__in=dish_ids,
+            country=country,
+            is_visible_on_site=True,
+            is_stop_list=False,
+        )
+        dishes_by_id = {d.id: d for d in visible_dishes}
+
+        for it in items:
+            dish = dishes_by_id.get(it.dish_id)
+            if dish is None:
+                # Hidden / stop-listed / wrong-country dish — filtered out.
+                continue
+            products.append(
+                _serialize_compact_upsell_product(request, dish, it.sort_order)
+            )
+
+    response = api_success({
+        "enabled": True,
+        "title": title,
+        "products": products,
+    })
     return _apply_homepage_cache_headers(response)

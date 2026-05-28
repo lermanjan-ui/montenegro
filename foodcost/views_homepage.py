@@ -29,6 +29,8 @@ from .models import (
     Dish,
     HomepageProductBlock,
     HomepageProductBlockItem,
+    HomepageCompactUpsellBlock,
+    HomepageCompactUpsellItem,
 )
 from .views import get_country, require_section_access
 
@@ -365,6 +367,60 @@ def homepage_settings_page(request, country_slug):
             item.delete()
             return redirect(f"/c/{country.slug}/settings/homepage/")
 
+        # ---- Compact upsell blocks (Part 2.1 — Компактный блок допродаж) ----
+        # SEPARATE feature from "Часто заказывают вместе" above. These actions
+        # manage HomepageCompactUpsellBlock only (block-level CRUD). Product /
+        # item management lives in Part 2.2.
+        #
+        # Country ownership is enforced on every action via
+        # get_object_or_404(..., country=country). Deleting a block cascades
+        # to its HomepageCompactUpsellItem rows (on_delete=CASCADE) but never
+        # touches the Dish records themselves.
+
+        if action == "create_compact_upsell_block":
+            title = (request.POST.get("title") or "").strip()
+            if not title:
+                error = "Укажи название компактного блока"
+            else:
+                HomepageCompactUpsellBlock.objects.create(
+                    country=country,
+                    title=title,
+                    sort_order=_parse_int_or_zero(
+                        request.POST.get("sort_order")
+                    ),
+                    is_active=bool(request.POST.get("is_active")),
+                )
+                return redirect(f"/c/{country.slug}/settings/homepage/")
+
+        if action == "update_compact_upsell_block":
+            block = get_object_or_404(
+                HomepageCompactUpsellBlock,
+                id=request.POST.get("block_id"),
+                country=country,
+            )
+            new_title = (request.POST.get("title") or "").strip()
+            if not new_title:
+                error = "Название компактного блока не может быть пустым"
+            else:
+                block.title = new_title
+                block.sort_order = _parse_int_or_zero(
+                    request.POST.get("sort_order")
+                )
+                block.is_active = bool(request.POST.get("is_active"))
+                block.save()
+                return redirect(f"/c/{country.slug}/settings/homepage/")
+
+        if action == "delete_compact_upsell_block":
+            block = get_object_or_404(
+                HomepageCompactUpsellBlock,
+                id=request.POST.get("block_id"),
+                country=country,
+            )
+            # Cascade-deletes HomepageCompactUpsellItem rows automatically.
+            # Dishes are NOT affected — the item→dish FK doesn't propagate.
+            block.delete()
+            return redirect(f"/c/{country.slug}/settings/homepage/")
+
     # ---- GET render ----
     now = timezone.now()
 
@@ -434,6 +490,26 @@ def homepage_settings_page(request, country_slug):
         .order_by("name")
     )
 
+    # ---- Compact upsell blocks (Part 2.1 — Компактный блок допродаж) ----
+    # Current country only, ordered by (sort_order, id). Items are prefetched
+    # with their dish so the template can show a per-block product count
+    # (and, in Part 2.2, the item list) without N+1 queries.
+    compact_upsell_blocks = (
+        HomepageCompactUpsellBlock.objects
+        .filter(country=country)
+        .order_by("sort_order", "id")
+        .prefetch_related(
+            Prefetch(
+                "items",
+                queryset=(
+                    HomepageCompactUpsellItem.objects
+                    .select_related("dish")
+                    .order_by("sort_order", "id")
+                ),
+            ),
+        )
+    )
+
     return render(request, "foodcost/homepage_settings.html", {
         "country": country,
         "banners": banners,
@@ -447,4 +523,6 @@ def homepage_settings_page(request, country_slug):
         # Frequently bought blocks (Part 12)
         "homepage_blocks": homepage_blocks,
         "available_block_dishes": available_block_dishes,
+        # Compact upsell blocks (Part 2.1)
+        "compact_upsell_blocks": compact_upsell_blocks,
     })
