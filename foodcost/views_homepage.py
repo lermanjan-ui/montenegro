@@ -421,6 +421,81 @@ def homepage_settings_page(request, country_slug):
             block.delete()
             return redirect(f"/c/{country.slug}/settings/homepage/")
 
+        # ---- Compact upsell items (Part 2.2 — товары внутри блока) ----
+        # Manage HomepageCompactUpsellItem rows inside a compact block.
+        #
+        # Country ownership: the block is fetched with country=country, and
+        # items are always looked up via that block, so a forged item_id from
+        # another country can't be touched. The dish is also fetched with
+        # country=country when adding, so cross-country dishes are rejected.
+        #
+        # The (block, dish) pair has a DB-level UniqueConstraint, so adding
+        # uses get_or_create — duplicate submissions are ignored safely
+        # instead of raising IntegrityError. No action here ever modifies the
+        # Dish itself; only the item rows change.
+
+        if action == "add_compact_upsell_item":
+            block = get_object_or_404(
+                HomepageCompactUpsellBlock,
+                id=request.POST.get("block_id"),
+                country=country,
+            )
+            dish = get_object_or_404(
+                Dish,
+                id=request.POST.get("dish_id"),
+                country=country,
+            )
+            # get_or_create gracefully handles the unique (block, dish)
+            # constraint. If the dish is already in the block we leave the
+            # existing row untouched — the operator edits it from its row.
+            HomepageCompactUpsellItem.objects.get_or_create(
+                block=block,
+                dish=dish,
+                defaults={
+                    "sort_order": _parse_int_or_zero(
+                        request.POST.get("sort_order")
+                    ),
+                    "is_active": bool(request.POST.get("is_active")),
+                },
+            )
+            return redirect(f"/c/{country.slug}/settings/homepage/")
+
+        if action == "update_compact_upsell_item":
+            # Look up the item via its block to enforce country ownership
+            # without trusting the bare item_id.
+            block = get_object_or_404(
+                HomepageCompactUpsellBlock,
+                id=request.POST.get("block_id"),
+                country=country,
+            )
+            item = get_object_or_404(
+                HomepageCompactUpsellItem,
+                id=request.POST.get("item_id"),
+                block=block,
+            )
+            item.sort_order = _parse_int_or_zero(
+                request.POST.get("sort_order")
+            )
+            item.is_active = bool(request.POST.get("is_active"))
+            # Only item fields change — never the Dish.
+            item.save(update_fields=["sort_order", "is_active"])
+            return redirect(f"/c/{country.slug}/settings/homepage/")
+
+        if action == "delete_compact_upsell_item":
+            block = get_object_or_404(
+                HomepageCompactUpsellBlock,
+                id=request.POST.get("block_id"),
+                country=country,
+            )
+            item = get_object_or_404(
+                HomepageCompactUpsellItem,
+                id=request.POST.get("item_id"),
+                block=block,
+            )
+            # Only the item row is removed — Dish stays in the catalog.
+            item.delete()
+            return redirect(f"/c/{country.slug}/settings/homepage/")
+
     # ---- GET render ----
     now = timezone.now()
 
@@ -510,6 +585,15 @@ def homepage_settings_page(request, country_slug):
         )
     )
 
+    # Dropdown source for adding a dish to a compact block — every dish in the
+    # current country, by name. Per-block dedup is handled by get_or_create on
+    # the add action, so showing the full list here is safe.
+    available_compact_upsell_dishes = (
+        Dish.objects
+        .filter(country=country)
+        .order_by("name")
+    )
+
     return render(request, "foodcost/homepage_settings.html", {
         "country": country,
         "banners": banners,
@@ -525,4 +609,6 @@ def homepage_settings_page(request, country_slug):
         "available_block_dishes": available_block_dishes,
         # Compact upsell blocks (Part 2.1)
         "compact_upsell_blocks": compact_upsell_blocks,
+        # Compact upsell dish dropdown (Part 2.2)
+        "available_compact_upsell_dishes": available_compact_upsell_dishes,
     })
