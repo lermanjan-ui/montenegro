@@ -164,6 +164,18 @@ def dish_create(request, country_slug):
         category_id = request.POST.get("category_id")
         new_category_name = request.POST.get("new_category_name")
 
+        # Visibility on the public website. The model default is False (so
+        # programmatic / imported / addon-only dishes stay hidden unless
+        # explicitly published), but a human creating a dish through this
+        # form almost always wants it live, so the form checkbox defaults
+        # to ON. We still honour an explicitly-unchecked box.
+        #
+        # NB: the public API (_visible_dishes_qs) filters is_visible_on_site
+        # = True. Before this, dish_create never set the flag, so every new
+        # dish was born hidden and never showed up in /api/public/products
+        # until someone opened its website tab and ticked the box manually.
+        is_visible_on_site = bool(request.POST.get("is_visible_on_site"))
+
         category = None
 
         if new_category_name:
@@ -186,6 +198,7 @@ def dish_create(request, country_slug):
             final_weight=final_weight,
             selling_price=selling_price,
             cooking_minutes=cooking_minutes,
+            is_visible_on_site=is_visible_on_site,
         )
 
         return redirect(f"/c/{country.slug}/dish/{dish.id}/")
