@@ -124,11 +124,34 @@ def build_click_payment_url(order) -> str:
     # return_url is optional in Click — include it only when the operator
     # has configured one, so we don't send an empty string and confuse the
     # gateway.
+    #
+    # Click does NOT echo merchant_trans_id back into return_url for us, so
+    # we have to bake order_number into the URL ourselves. Without it the
+    # frontend lands on /order-success with no idea WHICH order — every
+    # success-page lookup would fail.
     success_url = (getattr(settings, "CLICK_SUCCESS_URL", "") or "").strip()
     if success_url:
-        params["return_url"] = success_url
+        params["return_url"] = _append_order_number(success_url, order)
 
     return f"{CLICK_CHECKOUT_URL}?{urlencode(params)}"
+
+
+def _append_order_number(base_url: str, order) -> str:
+    """
+    Append ?order_number=... (or &order_number=... if the URL already has
+    a query string) to a return URL. Idempotent — if order_number is
+    already present (e.g. operator pre-baked it into env), don't duplicate.
+    """
+    order_number = (order.public_order_number or "").strip()
+    if not order_number:
+        # Fallback to numeric id so the frontend at least gets SOMETHING.
+        order_number = str(order.id) if order.id else ""
+    if not order_number:
+        return base_url
+    if "order_number=" in base_url:
+        return base_url
+    sep = "&" if "?" in base_url else "?"
+    return f"{base_url}{sep}order_number={order_number}"
 
 
 # =============================================================================

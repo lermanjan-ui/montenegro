@@ -1458,6 +1458,15 @@ class Order(models.Model):
     PAYMENT_STATUS_CASH = "cash"
     PAYMENT_STATUS_FAILED = "failed"
     PAYMENT_STATUS_CANCELLED = "cancelled"
+    # Refunded — payment succeeded and was later reversed (Payme state=-2).
+    # Distinct from "cancelled" (= never paid) so support / UI can tell
+    # "money was here and went back" from "money never arrived".
+    PAYMENT_STATUS_REFUNDED = "refunded"
+    # Expired — order sat in awaiting_payment past the TTL (24h from
+    # created_at) and the cleanup task / lazy-expire path declared it
+    # dead. Distinct from "failed" (= gateway said no) and "cancelled"
+    # (= user said no). Late callbacks for expired orders are refused.
+    PAYMENT_STATUS_EXPIRED = "expired"
 
     country = models.ForeignKey(
         Country,
@@ -1646,6 +1655,23 @@ class Order(models.Model):
     payment_paid_at = models.DateTimeField(
         null=True,
         blank=True
+    )
+
+    # Marks orders that timed out in awaiting_payment past PAYMENT_TTL
+    # (24h from created_at). Set by lazy expire (on GET tracking) and by
+    # the cancel_stale_awaiting_payment management command.
+    #
+    # Once True, all payment callbacks refuse to mutate the order:
+    #  - Click action=Complete  → reply error -9 (transaction cancelled)
+    #  - Payme PerformTransaction → reply error -31008 (invalid state)
+    # This prevents zombie revival when a user finally clicks "Pay" hours
+    # after the order timed out and the gateway delivers a late callback.
+    #
+    # Indexed because the cleanup command queries `auto_expired=False AND
+    # status=awaiting_payment AND created_at < now-24h` regularly.
+    auto_expired = models.BooleanField(
+        default=False,
+        db_index=True,
     )
 
     public_order_number = models.CharField(
@@ -2615,97 +2641,3 @@ class HomepageCompactUpsellItem(models.Model):
 
     def __str__(self):
         return f"{self.block.title} → {self.dish}"
-
-
-# =========================================================================
-# 💳 PAYME (PAYCOM) TRANSACTION — JSON-RPC Merchant API state tracking
-# =========================================================================
-# Click uses ONE merchant_trans_id per order and embeds it in the URL, so we
-# can store everything on Order.payment_transaction_id directly.
-#
-# Payme is fundamentally different:
-#   - Payme generates its OWN transaction id (24-char hex) inside
-#     CreateTransaction and sends it as `params.id`. We must remember it
-#     to answer CheckTransaction / CancelTransaction by that id later.
-#   - The Sandbox test suite explicitly requires idempotency on repeated
-#     CreateTransaction calls — the second call must return the SAME
-#     create_time and state as the first. We need a row to remember that.
-#   - An Order can go through multiple Payme transactions (failed, then
-#     retried) — a single column on Order can't model "list of attempts".
-#   - We need to map Payme state (1/2/-1/-2) back to our payment_status,
-#     and keep an audit trail.
-#
-# So PaymeTransaction is a dedicated row keyed on payme_transaction_id
-# (unique). Order.payment_transaction_id still holds the LATEST id for
-# convenience (so existing ERP/order views don't need to join).
-
-class PaymeTransaction(models.Model):
-    """One Payme JSON-RPC transaction. Multiple attempts per Order allowed."""
-
-    # Payme state codes — see docs:
-    # https://developer.help.paycom.uz/metody-merchant-api/tipy-dannykh
-    STATE_CREATED = 1            # awaiting payment confirmation
-    STATE_COMPLETED = 2          # payment confirmed
-    STATE_CANCELLED = -1         # cancelled from STATE_CREATED
-    STATE_CANCELLED_AFTER = -2   # cancelled from STATE_COMPLETED (refund)
-
-    # Payme cancellation reason codes
-    REASON_RECEIVERS_INACTIVE = 1
-    REASON_DEBIT_OPERATION_FAILED = 2
-    REASON_TRANSACTION_FAILED = 3
-    REASON_TIMEOUT = 4
-    REASON_REFUND = 5
-    REASON_UNKNOWN = 10
-
-    # Payme's transaction id, sent as params.id in every callback. 24 chars
-    # by the spec, but we accept up to 64 in case Payme changes it. Unique
-    # so duplicate CreateTransaction calls land on the same row.
-    payme_transaction_id = models.CharField(
-        max_length=64,
-        unique=True,
-        db_index=True,
-    )
-
-    order = models.ForeignKey(
-        Order,
-        on_delete=models.PROTECT,
-        related_name="payme_transactions",
-    )
-
-    # Amount Payme sent in CreateTransaction (in TIYIN, integer). We compare
-    # this to order.total_amount * 100; mismatch → error -31001.
-    amount_tiyin = models.BigIntegerField()
-
-    # Lifecycle. STATE_CREATED on create; STATE_COMPLETED after Perform;
-    # STATE_CANCELLED / STATE_CANCELLED_AFTER after Cancel.
-    state = models.IntegerField(default=STATE_CREATED)
-
-    # Set on Cancel — null otherwise.
-    reason = models.IntegerField(null=True, blank=True)
-
-    # `time` Payme sends in CreateTransaction — 13-digit millisecond
-    # timestamp from epoch. Stored as bigint so we don't lose precision
-    # round-tripping through Python int.
-    payme_time_ms = models.BigIntegerField()
-
-    # Our own timestamps for the state transitions. Returned to Payme as
-    # create_time / perform_time / cancel_time in callback responses.
-    # Stored as 13-digit ms timestamps so the wire format is exact.
-    create_time_ms = models.BigIntegerField()
-    perform_time_ms = models.BigIntegerField(default=0)
-    cancel_time_ms = models.BigIntegerField(default=0)
-
-    # Whole inbound payload of the latest callback — handy for support /
-    # debugging. We DO NOT store sign keys or HTTP Basic Auth headers here.
-    raw_last_params = models.JSONField(null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Транзакция Payme"
-        verbose_name_plural = "Транзакции Payme"
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"Payme {self.payme_transaction_id} → order #{self.order_id} (state={self.state})"

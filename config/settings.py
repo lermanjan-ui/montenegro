@@ -144,26 +144,18 @@ CLICK_FAIL_URL = os.environ.get(
 # 💳 PAYME (PAYCOM) PAYMENT INTEGRATION
 # =============================================================================
 # Payme is a separate provider from Click — uses JSON-RPC 2.0 Merchant API
-# and Basic Auth (NOT a signature). Credentials are server-only; never put
-# the secret in the URL or expose to the frontend.
+# and Basic Auth (NOT a signature). Credentials are server-only.
 #
 # Required:
-#   PAYME_MERCHANT_ID   — cashbox ID (24-char hex from merchant cabinet),
-#                         public, goes into checkout URL.
-#   PAYME_SECRET_KEY    — server-only; used in HTTP Basic Auth on the
-#                         callback ("Paycom:<KEY>" base64-encoded).
-#                         Live and test keys are different — use the right
-#                         one for the environment.
-#   PAYME_CHECKOUT_URL  — https://checkout.paycom.uz (live) or
-#                         https://test.paycom.uz (sandbox).
-#   PAYME_ACCOUNT_FIELD — name of the account sub-field that holds the
-#                         order id (configured in Payme cabinet). Default
-#                         "order_id"; we send it as ac.<PAYME_ACCOUNT_FIELD>.
-#   PAYME_SUCCESS_URL   — where Payme redirects after a successful payment.
-#   PAYME_FAIL_URL      — where Payme redirects after a failed payment.
-#
-# Empty defaults so missing env doesn't crash boot — the URL builder and
-# callback raise clean errors when called without config.
+#   PAYME_MERCHANT_ID    — cashbox id (24-char hex from cabinet); public
+#   PAYME_SECRET_KEY     — server-only; used in HTTP Basic on callback
+#   PAYME_CHECKOUT_URL   — https://checkout.paycom.uz (live)
+#                          or https://test.paycom.uz (sandbox)
+#   PAYME_ACCOUNT_FIELD  — name of the account sub-field that holds the
+#                          order id (configured in Payme cabinet). Default
+#                          "order_id"; sent as ac.<PAYME_ACCOUNT_FIELD>.
+#   PAYME_SUCCESS_URL    — where Payme redirects after a successful payment
+#   PAYME_FAIL_URL       — where Payme redirects after a failed payment
 PAYME_MERCHANT_ID = os.environ.get("PAYME_MERCHANT_ID", "")
 PAYME_SECRET_KEY = os.environ.get("PAYME_SECRET_KEY", "")
 PAYME_CHECKOUT_URL = os.environ.get(
@@ -178,4 +170,15 @@ PAYME_SUCCESS_URL = os.environ.get(
 PAYME_FAIL_URL = os.environ.get(
     "PAYME_FAIL_URL",
     "https://raccoon-frontend.onrender.com/checkout?payment_failed=1",
+)
+
+
+# =============================================================================
+# Online-payment TTL
+# =============================================================================
+# How long an online-payment order can sit in awaiting_payment before our
+# cron / lazy-expire path declares it dead. Default 24h. Set via env if
+# operations want a different window.
+ORDER_AWAITING_PAYMENT_TTL_HOURS = int(
+    os.environ.get("ORDER_AWAITING_PAYMENT_TTL_HOURS", "24")
 )

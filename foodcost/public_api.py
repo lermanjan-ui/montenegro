@@ -1177,6 +1177,97 @@ PAYMENT_METHOD_LABELS = {
     "online_card": "Карта онлайн",
 }
 
+# Online-payment orders that sit in awaiting_payment longer than this are
+# considered abandoned. We mark them auto_expired and refuse late callbacks
+# from the gateway — so a user who clicks "Pay" 25 hours after creating the
+# order can't suddenly revive it (Payme's own timeout is 12h, but it counts
+# from CreateTransaction, not from our Order.created_at, so the two timers
+# are NOT synchronized — see PaymentTransaction model docstring).
+#
+# 24h is a conservative window: long enough for a real user to come back
+# the next day, short enough to keep the awaiting_payment list manageable.
+# Set ORDER_AWAITING_PAYMENT_TTL_HOURS env to override.
+import os as _os
+try:
+    PAYMENT_AWAITING_TTL_HOURS = int(
+        _os.environ.get("ORDER_AWAITING_PAYMENT_TTL_HOURS", "24")
+    )
+    if PAYMENT_AWAITING_TTL_HOURS <= 0:
+        PAYMENT_AWAITING_TTL_HOURS = 24
+except (TypeError, ValueError):
+    PAYMENT_AWAITING_TTL_HOURS = 24
+
+
+def _payment_ttl_delta():
+    """Return the TTL as a timedelta — used by expire / tracking views."""
+    from datetime import timedelta
+    return timedelta(hours=PAYMENT_AWAITING_TTL_HOURS)
+
+
+def _order_expires_at(order):
+    """
+    When does this order's awaiting_payment window close?
+    Returns a tz-aware datetime, or None if the order is not on the online
+    payment timer (cash, paid, cancelled, etc.).
+    """
+    if order is None or order.created_at is None:
+        return None
+    if order.payment_status == Order.PAYMENT_STATUS_PAID:
+        return None
+    if order.payment_status == Order.PAYMENT_STATUS_CASH:
+        return None
+    if order.status not in (Order.STATUS_AWAITING_PAYMENT,
+                            Order.STATUS_PAYMENT_FAILED):
+        return None
+    return order.created_at + _payment_ttl_delta()
+
+
+def _maybe_lazy_expire(order):
+    """
+    Lazy auto-expire: if an awaiting_payment order is older than TTL, mark
+    it expired in a single atomic+select_for_update transaction. Idempotent
+    — already-expired or non-eligible orders are returned unchanged.
+
+    Returns the (possibly mutated) order. Safe to call from any read path;
+    the row is only locked when we ACTUALLY need to write.
+    """
+    if order is None or order.auto_expired:
+        return order
+    if order.status != Order.STATUS_AWAITING_PAYMENT:
+        return order
+    if order.payment_status == Order.PAYMENT_STATUS_PAID:
+        return order
+    if order.created_at is None:
+        return order
+    if (timezone.now() - order.created_at) < _payment_ttl_delta():
+        return order
+
+    # Time to expire. Lock the row to serialize with any in-flight callback
+    # that might be promoting it to paid.
+    with transaction.atomic():
+        try:
+            locked = Order.objects.select_for_update().get(pk=order.pk)
+        except Order.DoesNotExist:
+            return order
+        # Re-check under the lock — a callback might have just confirmed
+        # payment while we were waiting for the row.
+        if locked.auto_expired:
+            return locked
+        if locked.payment_status == Order.PAYMENT_STATUS_PAID:
+            return locked
+        if locked.status != Order.STATUS_AWAITING_PAYMENT:
+            return locked
+        if (timezone.now() - locked.created_at) < _payment_ttl_delta():
+            return locked
+
+        locked.auto_expired = True
+        locked.payment_status = Order.PAYMENT_STATUS_EXPIRED
+        locked.status = Order.STATUS_PAYMENT_FAILED
+        locked.save(update_fields=[
+            "auto_expired", "payment_status", "status",
+        ])
+        return locked
+
 
 # -----------------------------------------------------------------------------
 # Request parsing helpers
@@ -2118,6 +2209,7 @@ def _serialize_order_for_tracking(order):
         if not payment_method_key and label.lower() in PAYMENT_METHOD_KEYS:
             payment_method_key = label.lower()
 
+    expires_at = _order_expires_at(order)
     return {
         "order_id": order.id,
         "public_order_number": order.public_order_number or "",
@@ -2137,6 +2229,11 @@ def _serialize_order_for_tracking(order):
         "total": _to_float(order.total_amount),
         "payment_status": order.payment_status or "",
         "payment_method": payment_method_key,
+        # Payment TTL surface — only meaningful for awaiting_payment orders.
+        # null for cash / paid / cancelled / done. Frontend can show a
+        # countdown "Оплатите за 23:45" and disable retry once expired.
+        "expires_at": expires_at.isoformat() if expires_at else None,
+        "auto_expired": bool(order.auto_expired),
         "items": items_payload,
     }
 
@@ -2622,11 +2719,8 @@ def order_create(request):
             "payment_url": payment_url,
         }
     elif payment_key == "payme":
-        # Same fallback as Click: pre-flight should have caught config
-        # issues, but defend against env changing mid-request or zero total.
         from .payments.payme import (
-            build_payme_payment_url,
-            PaymeConfigError,
+            build_payme_payment_url, PaymeConfigError,
         )
         try:
             payment_url = build_payme_payment_url(order)
@@ -2697,6 +2791,12 @@ def order_tracking(request, public_order_number):
             details={"public_order_number": number},
             status=404,
         )
+
+    # Lazy expire on read: if the awaiting_payment window has closed,
+    # flip the order to expired NOW. Keeps the surface consistent — the
+    # frontend always sees the latest state, even if the cron task hasn't
+    # run yet. Safe under concurrent callbacks (atomic + select_for_update).
+    order = _maybe_lazy_expire(order)
 
     return api_success({
         "order": _serialize_order_for_tracking(order),
@@ -3550,6 +3650,15 @@ def click_callback(request):
                     click_trans_id=click_trans_id,
                     merchant_trans_id=merchant_trans_id,
                 )
+            # Expired by our TTL — refuse. Click will mark the transaction
+            # cancelled and won't actually debit the card. The user sees
+            # an error and has to create a new order from scratch.
+            if locked.auto_expired:
+                return _click_reply(
+                    ERROR_TRANSACTION_CANCELLED, "Order expired",
+                    click_trans_id=click_trans_id,
+                    merchant_trans_id=merchant_trans_id,
+                )
             # merchant_prepare_id = our order pk (stable, unique).
             return _click_reply(
                 ERROR_OK, "Success",
@@ -3569,6 +3678,19 @@ def click_callback(request):
                 merchant_trans_id=merchant_trans_id,
                 merchant_prepare_id=str(locked.pk),
                 merchant_confirm_id=str(locked.pk),
+            )
+
+        # Expired by our TTL — refuse Complete too. This is the zombie-
+        # revival guard: a late callback after auto-expire MUST NOT promote
+        # the order to paid. We reply with -9 so Click rolls back its side.
+        # Note this is checked AFTER the idempotent already-paid branch:
+        # if somehow auto_expired got set AFTER a legit paid callback (race
+        # window), we still let the success ack through.
+        if locked.auto_expired:
+            return _click_reply(
+                ERROR_TRANSACTION_CANCELLED, "Order expired",
+                click_trans_id=click_trans_id,
+                merchant_trans_id=merchant_trans_id,
             )
 
         # Branch by Click's error code in the Complete request:
@@ -3683,11 +3805,29 @@ def order_pay_retry(request, public_order_number):
             status=404,
         )
 
+    # Lazy expire BEFORE the paid / retryable checks so an aged-out order
+    # rejects retry with a clean 410 instead of letting the user retry into
+    # a payment that would then bounce.
+    order = _maybe_lazy_expire(order)
+
     if order.payment_status == Order.PAYMENT_STATUS_PAID:
         return api_error(
             "ORDER_ALREADY_PAID",
             "Order is already paid",
             status=409,
+        )
+
+    # Expired orders cannot be retried. The order is dead — user has to
+    # create a fresh one (we keep the row for audit / support).
+    if order.auto_expired:
+        return api_error(
+            "ORDER_EXPIRED",
+            "Order has expired — create a new order instead",
+            details={
+                "public_order_number": number,
+                "expired_at_status": order.payment_status,
+            },
+            status=410,
         )
 
     # Only awaiting_payment and payment_failed are retryable. Cash, cancelled,
@@ -3726,8 +3866,8 @@ def order_pay_retry(request, public_order_number):
     # Reset to a clean awaiting-payment state for the retry. We don't touch
     # payment_transaction_id / payment_paid_at — those will be filled by
     # the next successful callback. If the previous attempt left
-    # payment_status=failed/cancelled, flip it back to pending so the
-    # frontend / ERP sees the order is in flight again.
+    # payment_status=failed/cancelled/refunded, flip it back to pending so
+    # the frontend / ERP sees the order is in flight again.
     #
     # NOTE: for Payme this means the order keeps its OLD failed/cancelled
     # PaymeTransaction rows on file (we never delete them) — they're
@@ -3735,6 +3875,14 @@ def order_pay_retry(request, public_order_number):
     # fresh CreateTransaction with a brand-new payme transaction id.
     with transaction.atomic():
         locked = Order.objects.select_for_update().get(pk=order.pk)
+        # Re-check auto_expired under the lock — another request might have
+        # expired the order between our outer lazy check and now.
+        if locked.auto_expired:
+            return api_error(
+                "ORDER_EXPIRED",
+                "Order has expired — create a new order instead",
+                status=410,
+            )
         locked.payment_status = Order.PAYMENT_STATUS_PENDING
         locked.status = Order.STATUS_AWAITING_PAYMENT
         locked.save(update_fields=["payment_status", "status"])
@@ -3751,7 +3899,9 @@ def order_pay_retry(request, public_order_number):
             )
         provider_key = "click"
     else:  # payme
-        from .payments.payme import build_payme_payment_url, PaymeConfigError
+        from .payments.payme import (
+            build_payme_payment_url, PaymeConfigError,
+        )
         try:
             payment_url = build_payme_payment_url(order)
         except PaymeConfigError as exc:
@@ -3789,25 +3939,20 @@ def order_pay_retry(request, public_order_number):
 #   CheckTransaction         — Payme asks "what's the status of tx X?"
 #   GetStatement             — reconciliation (list transactions in a range)
 #
-# Critical invariants (these break if violated and Payme support gets
-# involved):
+# Critical invariants (these break if violated and Payme support gets involved):
 #   1. Repeated CreateTransaction with the SAME id must return the SAME
 #      create_time and state (Sandbox enforces this).
 #   2. Repeated PerformTransaction on an already-completed tx must return
 #      the SAME perform_time and state.
 #   3. CancelTransaction sets state=-1 if was CREATED, state=-2 if was
-#      COMPLETED. Trying to cancel a COMPLETED tx that delivered goods is
-#      error -31007 (we don't enforce "delivered" — we let everything cancel
-#      and reverse the order, since this kitchen workflow can absorb that).
+#      COMPLETED.
 #   4. Account validation (-31050..-31099) uses `data` = account sub-field
 #      name (we always send "order_id" since that's our PAYME_ACCOUNT_FIELD).
-#   5. Amount mismatch is -31001 — and amount in `params.amount` is TIYIN,
-#      so we compare against int(order.total_amount * 100).
+#   5. Amount in `params.amount` is TIYIN — compare against int(total * 100).
 #   6. Reply HTTP status is ALWAYS 200, even for errors — the error code
 #      goes in the JSON body. Returning 4xx confuses Payme's parser.
-#
-# We never log Authorization headers, secret keys, or full request bodies
-# containing card data (Payme doesn't send card data, but defensive habit).
+#   7. Late callbacks for auto_expired orders are REFUSED with -31008 to
+#      prevent zombie revival.
 
 
 def _payme_now_ms():
@@ -3831,11 +3976,7 @@ def _payme_rpc_response(request_id, *, result=None, error=None):
 
 
 def _payme_error_body(exc):
-    """
-    Convert a PaymeError exception into Payme's JSON-RPC error object. The
-    `data` field is only included when set — for account errors it MUST be
-    the account sub-field name (e.g. "order_id").
-    """
+    """Convert a PaymeError exception into Payme's JSON-RPC error object."""
     body = {
         "code": exc.code,
         "message": exc.message,
@@ -3847,17 +3988,10 @@ def _payme_error_body(exc):
 
 def _payme_locate_order(account):
     """
-    Resolve the account sub-field (configured as settings.PAYME_ACCOUNT_FIELD,
-    default "order_id") to an Order. Raises PaymeError(-31050) if not found
-    or not in a state that allows payment.
-
-    `account` is whatever Payme sent in params.account (a dict). We accept
-    BOTH order.public_order_number (preferred — what we put in the URL) and
-    numeric order.id (defensive — some integrations send the raw pk).
+    Resolve params.account → Order. Raises PaymeError(-31050) if not found
+    or if the order is in a state that doesn't accept payment.
     """
-    from .payments.payme import (
-        PaymeError, ERROR_ACCOUNT_NOT_FOUND,
-    )
+    from .payments.payme import PaymeError, ERROR_ACCOUNT_NOT_FOUND
     from django.conf import settings as dj_settings
 
     account_field = (
@@ -3887,7 +4021,6 @@ def _payme_locate_order(account):
         raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
 
     # If an operator already cancelled the order in ERP, refuse payment.
-    # Payme will show the customer "order cancelled" and not debit.
     if order.status == Order.STATUS_CANCELLED:
         raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
 
@@ -3895,46 +4028,45 @@ def _payme_locate_order(account):
 
 
 def _payme_handle_check_perform(params):
-    """
-    CheckPerformTransaction — "can this order be paid?"
-    Validates account and amount; does NOT touch the DB.
-    """
+    """CheckPerformTransaction — "can this order be paid?" """
     from .payments.payme import (
         PaymeError, amount_matches_order,
-        ERROR_INVALID_AMOUNT,
+        ERROR_INVALID_AMOUNT, ERROR_INVALID_STATE,
     )
     order = _payme_locate_order(params.get("account"))
+
+    # Auto-expired orders are dead — refuse before checking amount.
+    # This is the FIRST line of zombie-revival defense (the second is in
+    # CreateTransaction and PerformTransaction under select_for_update).
+    order = _maybe_lazy_expire(order)
+    if order.auto_expired:
+        raise PaymeError(ERROR_INVALID_STATE)
+
     amount = params.get("amount")
     if not isinstance(amount, int) or not amount_matches_order(order, amount):
         raise PaymeError(ERROR_INVALID_AMOUNT)
-    # Already paid? Tell Payme — Sandbox second-call test relies on this.
+
     if order.payment_status == Order.PAYMENT_STATUS_PAID:
-        from .payments.payme import ERROR_INVALID_STATE
         raise PaymeError(ERROR_INVALID_STATE)
+
     return {"allow": True}
 
 
 def _payme_handle_create_transaction(params):
     """
-    CreateTransaction — Payme is about to ask the user to confirm payment.
-    We must:
-      - Validate amount + account (same checks as CheckPerformTransaction)
-      - Look up our PaymeTransaction by params.id (Payme's transaction id):
-          * If exists → return its existing create_time/state (idempotency)
-          * If not    → check the order has no OTHER active payme tx
-                        (state=1). If it does → -31008 (can't have two
-                        concurrent reservations on one order). Else create
-                        a fresh row.
-      - Move our Order into AWAITING_PAYMENT (defensive — it should already
-        be there from order_create, but a retry that flipped to PENDING
-        might have hit a race).
+    CreateTransaction — Payme is about to charge the user. We:
+      - validate amount + account
+      - idempotently create / return PaymeTransaction by payme tx id
+      - refuse if order has another active payme tx (state=1) → -31008
+      - refuse if order is auto_expired → -31008 (zombie guard)
     """
     from .payments.payme import (
         PaymeError, amount_matches_order,
-        ERROR_INVALID_AMOUNT, ERROR_INVALID_STATE,
+        ERROR_INVALID_AMOUNT, ERROR_INVALID_STATE, ERROR_ACCOUNT_NOT_FOUND,
         STATE_CREATED,
     )
     from .models import PaymeTransaction
+    from django.conf import settings as dj_settings
 
     payme_tx_id = str(params.get("id") or "").strip()
     if not payme_tx_id:
@@ -3951,54 +4083,47 @@ def _payme_handle_create_transaction(params):
         raise PaymeError(ERROR_INVALID_STATE)
 
     with transaction.atomic():
-        # Lock the order row so concurrent CreateTransactions on the same
-        # order serialize. Sandbox doesn't parallel-fire but production
-        # might (retry on flaky network).
         try:
             locked_order = Order.objects.select_for_update().get(pk=order.pk)
         except Order.DoesNotExist:
-            from .payments.payme import ERROR_ACCOUNT_NOT_FOUND
-            from django.conf import settings as dj_settings
             raise PaymeError(
                 ERROR_ACCOUNT_NOT_FOUND,
                 data=(getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"),
             )
 
-        # IDEMPOTENCY: repeated CreateTransaction with the same payme id.
+        # IDEMPOTENCY: repeated CreateTransaction with the same id.
         existing = PaymeTransaction.objects.filter(
             payme_transaction_id=payme_tx_id
         ).first()
         if existing is not None:
-            # Must match the same order — if Payme sends us the same tx id
-            # for a different account, that's a server-side anomaly worth
-            # surfacing.
             if existing.order_id != locked_order.id:
                 raise PaymeError(ERROR_INVALID_STATE)
-            # Repeat: same response as first time. Sandbox checks this.
             return {
                 "create_time": existing.create_time_ms,
                 "transaction": str(existing.id),
                 "state": existing.state,
             }
 
-        # No row for this payme id. But maybe another payme tx already holds
-        # this order in STATE_CREATED — Payme rules say at most one active
-        # reservation per order. -31008.
+        # ZOMBIE GUARD: auto-expired order refuses fresh transactions.
+        # Checked AFTER idempotency so a duplicate Create that happened to
+        # land on an expired order returns the original Create's answer,
+        # not a fresh error (Sandbox might expect that).
+        if locked_order.auto_expired:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        # At most one active reservation per order.
         active = PaymeTransaction.objects.filter(
             order=locked_order, state=STATE_CREATED,
         ).first()
         if active is not None:
             raise PaymeError(ERROR_INVALID_STATE)
 
-        # Already-paid order should never see a fresh CreateTransaction.
         if locked_order.payment_status == Order.PAYMENT_STATUS_PAID:
             raise PaymeError(ERROR_INVALID_STATE)
 
-        # Cancelled-by-operator order: same.
         if locked_order.status == Order.STATUS_CANCELLED:
             raise PaymeError(ERROR_INVALID_STATE)
 
-        # Fresh row + reservation.
         now_ms = _payme_now_ms()
         ptx = PaymeTransaction.objects.create(
             payme_transaction_id=payme_tx_id,
@@ -4009,8 +4134,6 @@ def _payme_handle_create_transaction(params):
             create_time_ms=now_ms,
             raw_last_params=params,
         )
-        # Mirror onto Order so admin views see the in-flight attempt.
-        # We DON'T set payment_paid_at here — only on Perform.
         if locked_order.status != Order.STATUS_AWAITING_PAYMENT:
             locked_order.status = Order.STATUS_AWAITING_PAYMENT
         if locked_order.payment_status != Order.PAYMENT_STATUS_PENDING:
@@ -4029,9 +4152,15 @@ def _payme_handle_create_transaction(params):
 
 def _payme_handle_perform_transaction(params):
     """
-    PerformTransaction — payment is confirmed by the user. Mark our
-    PaymeTransaction as STATE_COMPLETED and flip the Order into NEW (so
-    the kitchen sees it as a fresh order to cook).
+    PerformTransaction — final confirmation. Mark PaymeTransaction COMPLETED
+    and flip Order to NEW (kitchen starts cooking).
+
+    Late-callback zombie guard: if order.auto_expired is True, REFUSE with
+    -31008. Payme's own 12h timeout starts from CreateTransaction, but our
+    TTL is 24h from Order.created_at — they're not synchronized. A user who
+    started CreateTransaction at T=11h still has until T=23h on Payme's side,
+    but our cron / lazy-expire kills the order at T=24h. Without this guard,
+    a late Perform would revive the order and trap funds.
     """
     from .payments.payme import (
         PaymeError,
@@ -4055,8 +4184,8 @@ def _payme_handle_perform_transaction(params):
         except PaymeTransaction.DoesNotExist:
             raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
 
+        # IDEMPOTENCY: repeated Perform — same response.
         if ptx.state == STATE_COMPLETED:
-            # IDEMPOTENCY: repeat call — same response.
             return {
                 "transaction": str(ptx.id),
                 "perform_time": ptx.perform_time_ms,
@@ -4064,10 +4193,13 @@ def _payme_handle_perform_transaction(params):
             }
 
         if ptx.state != STATE_CREATED:
-            # Cancelled / cancelled-after — can't perform.
             raise PaymeError(ERROR_INVALID_STATE)
 
         order = Order.objects.select_for_update().get(pk=ptx.order_id)
+
+        # ZOMBIE GUARD: refuse to revive an auto-expired order.
+        if order.auto_expired:
+            raise PaymeError(ERROR_INVALID_STATE)
 
         now_ms = _payme_now_ms()
         ptx.state = STATE_COMPLETED
@@ -4080,9 +4212,6 @@ def _payme_handle_perform_transaction(params):
         order.payment_status = Order.PAYMENT_STATUS_PAID
         order.payment_transaction_id = payme_tx_id
         order.payment_paid_at = timezone.now()
-        # Kitchen flow: AWAITING_PAYMENT → NEW. If operator already moved
-        # the order to COOKING/DELIVERY (shouldn't happen pre-payment, but
-        # defensive), don't override.
         if order.status == Order.STATUS_AWAITING_PAYMENT:
             order.status = Order.STATUS_NEW
         order.save(update_fields=[
@@ -4099,17 +4228,14 @@ def _payme_handle_perform_transaction(params):
 
 def _payme_handle_cancel_transaction(params):
     """
-    CancelTransaction — either the user / Payme cancelled before payment
-    (STATE_CREATED → -1) or this is a refund of an already-completed tx
-    (STATE_COMPLETED → -2). reason is stored as-is for audit.
-
-    Our policy: always allow cancel (we never return -31007). The kitchen
-    is small enough that a refund is acceptable for any state; if business
-    later wants to refuse refunds after DELIVERY/DONE, change here.
+    CancelTransaction — STATE_CREATED → -1 (cancel before pay), or
+    STATE_COMPLETED → -2 (refund). The latter sets payment_status=refunded
+    so support / UI distinguish "money was here and went back" from
+    "money never arrived".
     """
     from .payments.payme import (
         PaymeError,
-        ERROR_TRANSACTION_NOT_FOUND,
+        ERROR_TRANSACTION_NOT_FOUND, ERROR_INVALID_STATE,
         STATE_CREATED, STATE_COMPLETED,
         STATE_CANCELLED, STATE_CANCELLED_AFTER,
     )
@@ -4150,7 +4276,6 @@ def _payme_handle_cancel_transaction(params):
         elif ptx.state == STATE_COMPLETED:
             new_state = STATE_CANCELLED_AFTER
         else:
-            from .payments.payme import ERROR_INVALID_STATE
             raise PaymeError(ERROR_INVALID_STATE)
 
         ptx.state = new_state
@@ -4163,20 +4288,21 @@ def _payme_handle_cancel_transaction(params):
         ])
 
         # Order side-effects:
-        #  - STATE_CANCELLED (before pay): order had AWAITING_PAYMENT →
-        #    move to PAYMENT_FAILED so the customer can retry. Don't touch
-        #    payment_paid_at (it was never set).
-        #  - STATE_CANCELLED_AFTER (refund): order had STATUS_NEW/COOKING/...
-        #    Money is going back to the customer. Mark payment_status as
-        #    CANCELLED, but leave order.status untouched — operator decides
-        #    whether to cancel the actual order from ERP.
+        #  - STATE_CANCELLED (before pay): user gave up or Payme timed out.
+        #    payment_status=failed (or expired if our TTL hit first), order
+        #    moves to PAYMENT_FAILED so the customer can retry. Do NOT
+        #    overwrite payment_status if it's already EXPIRED — that's a
+        #    stronger signal and we want to preserve it.
+        #  - STATE_CANCELLED_AFTER (refund): money is going back. Use the
+        #    REFUNDED status — distinct from CANCELLED to make audit clear.
         if new_state == STATE_CANCELLED:
-            order.payment_status = Order.PAYMENT_STATUS_FAILED
+            if order.payment_status != Order.PAYMENT_STATUS_EXPIRED:
+                order.payment_status = Order.PAYMENT_STATUS_FAILED
             if order.status == Order.STATUS_AWAITING_PAYMENT:
                 order.status = Order.STATUS_PAYMENT_FAILED
             order.save(update_fields=["payment_status", "status"])
-        else:  # STATE_CANCELLED_AFTER
-            order.payment_status = Order.PAYMENT_STATUS_CANCELLED
+        else:  # STATE_CANCELLED_AFTER → refund of a previously paid order
+            order.payment_status = Order.PAYMENT_STATUS_REFUNDED
             order.save(update_fields=["payment_status"])
 
     return {
@@ -4187,9 +4313,7 @@ def _payme_handle_cancel_transaction(params):
 
 
 def _payme_handle_check_transaction(params):
-    """
-    CheckTransaction — Payme reconciles its state with ours. Read-only.
-    """
+    """CheckTransaction — read-only. Payme reconciles state with ours."""
     from .payments.payme import (
         PaymeError, ERROR_TRANSACTION_NOT_FOUND,
     )
@@ -4211,35 +4335,30 @@ def _payme_handle_check_transaction(params):
         "cancel_time": ptx.cancel_time_ms,
         "transaction": str(ptx.id),
         "state": ptx.state,
-        "reason": ptx.reason,  # null if never cancelled, per docs
+        "reason": ptx.reason,
     }
 
 
 def _payme_handle_get_statement(params):
-    """
-    GetStatement — Payme polls a time range for reconciliation. Spec:
-    return all transactions whose `time` (the original payme_time_ms) falls
-    inside [from, to]. Empty list is a perfectly valid answer.
-    """
+    """GetStatement — Payme polls a time range for reconciliation."""
     from .models import PaymeTransaction
+    from django.conf import settings as dj_settings
 
     frm = params.get("from")
     to = params.get("to")
     if not isinstance(frm, int) or not isinstance(to, int):
-        # Per spec these MUST be 13-digit ms timestamps. Bad input → empty.
         return {"transactions": []}
 
     qs = PaymeTransaction.objects.filter(
         payme_time_ms__gte=frm, payme_time_ms__lte=to,
     ).select_related("order").order_by("payme_time_ms")
 
-    from django.conf import settings as dj_settings
     account_field = (
         getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"
     ).strip()
 
     out = []
-    for ptx in qs[:10000]:  # safety cap
+    for ptx in qs[:10000]:
         order = ptx.order
         out.append({
             "id": ptx.payme_transaction_id,
@@ -4270,10 +4389,7 @@ _PAYME_HANDLERS = {
 
 @csrf_exempt
 def payme_callback(request):
-    """
-    Single JSON-RPC entry point for all 6 Merchant API methods. Payme docs
-    require us to accept POST only — anything else → -32300.
-    """
+    """Single JSON-RPC entry point for all 6 Merchant API methods."""
     from .payments.payme import (
         PaymeError, verify_payme_basic_auth,
         ERROR_METHOD_NOT_POST, ERROR_PARSE, ERROR_INVALID_REQUEST,
@@ -4281,8 +4397,6 @@ def payme_callback(request):
         ERROR_SYSTEM,
     )
 
-    # request id is needed in the reply even for early errors — try to peek
-    # at the body, default to None if we can't yet. JSON-RPC permits null id.
     request_id = None
 
     if request.method != "POST":
@@ -4291,15 +4405,14 @@ def payme_callback(request):
             error=_payme_error_body(PaymeError(ERROR_METHOD_NOT_POST)),
         )
 
-    # 1) Auth FIRST. Wrong creds → -32504. We don't even parse the body —
-    # an attacker shouldn't learn which JSON shapes our parser likes.
+    # 1) Auth FIRST. Wrong creds → -32504, no body parsing.
     if not verify_payme_basic_auth(request):
         return _payme_rpc_response(
             request_id,
             error=_payme_error_body(PaymeError(ERROR_INSUFFICIENT_PRIVILEGE)),
         )
 
-    # 2) Parse JSON body.
+    # 2) Parse JSON.
     try:
         body = request.body.decode("utf-8") if request.body else ""
         payload = json.loads(body) if body else {}
@@ -4315,7 +4428,7 @@ def payme_callback(request):
             error=_payme_error_body(PaymeError(ERROR_INVALID_REQUEST)),
         )
 
-    request_id = payload.get("id")  # JSON-RPC request id, NOT params.id
+    request_id = payload.get("id")
     method = payload.get("method")
     params = payload.get("params") or {}
 
@@ -4339,9 +4452,7 @@ def payme_callback(request):
             ),
         )
 
-    # 3) Dispatch. Translate domain errors into JSON-RPC errors; let unknown
-    # exceptions become -32400 so Payme retries (and we'll see them in
-    # Sentry / logs) instead of getting confused by a 500.
+    # 3) Dispatch with error normalization.
     try:
         result = handler(params)
     except PaymeError as exc:
