@@ -264,8 +264,20 @@ def dish_list(request, country_slug):
 
         return redirect(f"/c/{country.slug}/")
 
-    dishes = list(Dish.objects.filter(country=country))
+    # Archived dishes default to hidden. Operators see them only when they
+    # explicitly switch to ?show_archived=1 (which is what the "Архив" link
+    # in the page header sends). The archive list is read-only — most
+    # actions on archived dishes are intentionally absent from the UI.
+    show_archived = request.GET.get("show_archived") == "1"
+    base_dish_qs = Dish.objects.filter(country=country)
+    if show_archived:
+        dish_qs = base_dish_qs.filter(is_archived=True)
+    else:
+        dish_qs = base_dish_qs.filter(is_archived=False)
+
+    dishes = list(dish_qs)
     categories = DishCategory.objects.filter(country=country)
+    archived_count = base_dish_qs.filter(is_archived=True).count()
 
     filter_type = request.GET.get("filter", "all")
     sort_type = request.GET.get("sort", "name")
@@ -306,7 +318,91 @@ def dish_list(request, country_slug):
         "filter_type": filter_type,
         "sort_type": sort_type,
         "can_edit": user_can_edit(request.user),
+        "show_archived": show_archived,
+        "archived_count": archived_count,
     })
+
+@login_required(login_url="/login/")
+def dish_archive(request, country_slug, dish_id):
+    """
+    Soft-archive a dish. POST-only. Sets is_archived=True + audit fields,
+    and additionally flips is_visible_on_site=False / is_stop_list=True
+    as defense-in-depth so a future code path that forgot to filter
+    on is_archived can't accidentally show the dish to customers.
+
+    Reversible via dish_unarchive — fields stored separately so we can
+    distinguish "was never archived" from "was archived and brought back".
+    """
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(request.user, UserProfile.SECTION_DISHES)
+    if access_error:
+        return access_error
+
+    if not user_can_edit(request.user):
+        return HttpResponseForbidden("Нет прав на архивирование блюд")
+
+    if request.method != "POST":
+        # GET on this URL just bounces back to the dish detail page so a
+        # stray browser visit doesn't accidentally archive anything.
+        return redirect(f"/c/{country.slug}/dish/{dish_id}/")
+
+    dish = get_object_or_404(Dish, id=dish_id, country=country)
+
+    if not dish.is_archived:
+        dish.is_archived = True
+        dish.archived_at = timezone.now()
+        dish.archived_by = request.user if request.user.is_authenticated else None
+        # Belt-and-suspenders: hide from site + stop-list. Any code path
+        # that filters on either of these will also exclude the dish.
+        dish.is_visible_on_site = False
+        dish.is_stop_list = True
+        dish.save(update_fields=[
+            "is_archived", "archived_at", "archived_by",
+            "is_visible_on_site", "is_stop_list",
+        ])
+
+    # Redirect to dish list — the dish has just disappeared from there
+    # (filtered out by is_archived=False), giving the operator immediate
+    # visual confirmation.
+    return redirect(f"/c/{country.slug}/")
+
+
+@login_required(login_url="/login/")
+def dish_unarchive(request, country_slug, dish_id):
+    """
+    Bring an archived dish back into rotation. POST-only. Clears the
+    archive flag and audit fields. Does NOT auto-restore is_visible_on_site
+    or is_stop_list — operator decides whether the dish should be on the
+    site / available right now; the dish is brought back to the same
+    "hidden but editable" state a fresh dish has.
+    """
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(request.user, UserProfile.SECTION_DISHES)
+    if access_error:
+        return access_error
+
+    if not user_can_edit(request.user):
+        return HttpResponseForbidden("Нет прав на возврат блюд из архива")
+
+    if request.method != "POST":
+        return redirect(f"/c/{country.slug}/dish/{dish_id}/")
+
+    dish = get_object_or_404(Dish, id=dish_id, country=country)
+
+    if dish.is_archived:
+        dish.is_archived = False
+        dish.archived_at = None
+        dish.archived_by = None
+        # Leave is_visible_on_site / is_stop_list as they are. Operator
+        # opens the dish in the editor and decides those manually — this
+        # avoids accidentally republishing a dish that was archived for
+        # legitimate menu-cleanup reasons.
+        dish.save(update_fields=["is_archived", "archived_at", "archived_by"])
+
+    return redirect(f"/c/{country.slug}/dish/{dish_id}/")
+
 
 @login_required(login_url="/login/")
 def live_calculate(request, country_slug):

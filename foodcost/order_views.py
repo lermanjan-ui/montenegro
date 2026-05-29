@@ -491,8 +491,12 @@ def order_create(request, country_slug):
             f"/c/{country.slug}/orders/"
         )
 
+    # Cashier picker MUST exclude archived dishes — they should never be
+    # added to new orders. Old orders that already contain an archived dish
+    # render via OrderItem.dish FK and remain unaffected.
     dishes = Dish.objects.filter(
-        country=country
+        country=country,
+        is_archived=False,
     ).order_by("name")
 
     locations = Location.objects.filter(
@@ -851,8 +855,12 @@ def order_detail(request, country_slug, order_id):
             f"/c/{country.slug}/orders/{order.id}/"
         )
 
+    # Cashier picker MUST exclude archived dishes — they should never be
+    # added to new orders. Old orders that already contain an archived dish
+    # render via OrderItem.dish FK and remain unaffected.
     dishes = Dish.objects.filter(
-        country=country
+        country=country,
+        is_archived=False,
     ).order_by("name")
 
     locations = Location.objects.filter(

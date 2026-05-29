@@ -240,6 +240,27 @@
         font-weight: 900;
     }
 
+    /* Archive view: visually de-emphasize rows so it's obvious these are
+       not active dishes. The list is otherwise identical to the live
+       list — same columns, same sort. */
+    .dish-row.is-archived {
+        opacity: 0.55;
+    }
+
+    .archive-badge {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        vertical-align: middle;
+    }
+
     @media (max-width: 950px) {
         .page-head,
         .sort-panel,
@@ -273,13 +294,32 @@
 
     <div class="card page-head">
         <div>
-            <h1>Блюда</h1>
-            <p class="muted">Список блюд, себестоимость, фудкост, маржа и категории.</p>
+            {% if show_archived %}
+                <h1>Архив блюд</h1>
+                <p class="muted">
+                    Блюда, выведенные из меню. Они скрыты с сайта и из новых
+                    заказов, но остаются в истории старых заказов и отчётах.
+                </p>
+            {% else %}
+                <h1>Блюда</h1>
+                <p class="muted">Список блюд, себестоимость, фудкост, маржа и категории.</p>
+            {% endif %}
         </div>
 
-        {% if can_edit %}
-            <a class="button" href="/c/{{ country.slug }}/dish/create/">+ Добавить блюдо</a>
-        {% endif %}
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            {% if show_archived %}
+                <a class="secondary-button" href="/c/{{ country.slug }}/">← К активным блюдам</a>
+            {% else %}
+                {% if archived_count %}
+                    <a class="secondary-button" href="/c/{{ country.slug }}/?show_archived=1">
+                        Архив ({{ archived_count }})
+                    </a>
+                {% endif %}
+                {% if can_edit %}
+                    <a class="button" href="/c/{{ country.slug }}/dish/create/">+ Добавить блюдо</a>
+                {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     <div class="card">
@@ -362,9 +402,12 @@
             </div>
 
             {% for dish in dishes %}
-                <div class="dish-row">
+                <div class="dish-row{% if dish.is_archived %} is-archived{% endif %}">
                     <div>
-                        <div class="dish-name">{{ dish.name }}</div>
+                        <div class="dish-name">
+                            {{ dish.name }}
+                            {% if dish.is_archived %}<span class="archive-badge">архив</span>{% endif %}
+                        </div>
                         <div class="dish-meta">
                             {% if dish.category %}
                                 <span class="dish-category">{{ dish.category.name }}</span> ·
@@ -398,7 +441,11 @@
                     <a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">Открыть →</a>
                 </div>
             {% empty %}
-                <div class="empty">Блюд по выбранному фильтру пока нет</div>
+                {% if show_archived %}
+                    <div class="empty">В архиве пока нет блюд</div>
+                {% else %}
+                    <div class="empty">Блюд по выбранному фильтру пока нет</div>
+                {% endif %}
             {% endfor %}
         </div>
     </div>

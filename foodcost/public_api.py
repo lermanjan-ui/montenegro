@@ -92,6 +92,8 @@ from .models import (
     # Part 1 — homepage compact upsell (separate from frequently-bought)
     HomepageCompactUpsellBlock,
     HomepageCompactUpsellItem,
+    # Combo banner pair for the "Комбо и акции" section of the homepage.
+    HomeComboBanner,
 )
 
 # 💳 Click payment integration — URL builder (Part 1) + callback (Part 2).
@@ -815,12 +817,15 @@ def serialize_product_detail(request, dish, location=None):
 def _visible_dishes_qs(country, location=None):
     """
     Base queryset for dishes that should be shown publicly.
-    Excludes dishes blocked per-location via DishAvailability.
+    Excludes dishes blocked per-location via DishAvailability, and dishes
+    that have been archived (is_archived=True — permanently removed from
+    the menu while preserved in old-order history).
     """
     qs = Dish.objects.filter(
         country=country,
         is_visible_on_site=True,
         is_stop_list=False,
+        is_archived=False,
     ).select_related("category")
 
     excluded = _availability_subquery_excluded_dish_ids(country, location)
@@ -1008,6 +1013,7 @@ def product_detail(request, slug):
             country=country,
             slug=slug,
             is_visible_on_site=True,
+            is_archived=False,
         )
         .select_related("category", "country")
         .prefetch_related(
@@ -3356,7 +3362,11 @@ def home_compact_upsell(request):
 
     block = (
         HomepageCompactUpsellBlock.objects
-        .filter(country=country, is_active=True)
+        .filter(
+            country=country,
+            is_active=True,
+            placement=HomepageCompactUpsellBlock.PLACEMENT_HOME,
+        )
         .order_by("sort_order", "id")
         .first()
     )
@@ -3776,3 +3786,154 @@ def order_pay_retry(request, public_order_number):
             "payment_url": payment_url,
         },
     })
+
+
+# =============================================================================
+# 🪧 ENDPOINT: GET /api/public/home/combo-banners
+# =============================================================================
+# Pair of CTA banners shown in the homepage "Комбо и акции" section.
+# Distinct from /home/banners (hero, single, full-width) — these are two
+# narrower side-by-side cards with promo-code / category / external-link
+# actions.
+#
+# Returns at most 2 banners — that's the visual format. If only one is
+# active the frontend renders it full-width; if zero, the whole section
+# is hidden.
+
+
+COMBO_BANNER_LIMIT = 2
+
+
+def _serialize_combo_banner(request, banner):
+    """Public payload for one HomeComboBanner."""
+    return {
+        "id": banner.id,
+        "title": banner.title or "",
+        "subtitle": banner.subtitle or "",
+        # _resolve_image: priority external_url → uploaded file → None.
+        "background_image": _resolve_image(
+            request, banner.background_image, banner.background_image_url,
+        ),
+        "background_color": banner.background_color or "#181818",
+        "text_color": banner.text_color or "white",
+        "cta_label": banner.cta_label or "",
+        "cta_action_type": banner.cta_action_type or "none",
+        "cta_action_value": banner.cta_action_value or "",
+        "sort_order": int(banner.sort_order or 0),
+        "is_active": bool(banner.is_active),
+    }
+
+
+@csrf_exempt
+@require_GET
+def home_combo_banners(request):
+    """
+    Two-banner CTA strip ("Комбо и акции"). Filters by country + is_active,
+    orders by sort_order then id, caps at 2 results.
+
+    Empty case: an empty banners list. The frontend hides the section in
+    that case — there is no fallback to a hardcoded pair anymore, by spec.
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    banners = (
+        HomeComboBanner.objects
+        .filter(country=country, is_active=True)
+        .order_by("sort_order", "id")[:COMBO_BANNER_LIMIT]
+    )
+
+    response = api_success({
+        "banners": [_serialize_combo_banner(request, b) for b in banners],
+    })
+    return _apply_homepage_cache_headers(response)
+
+
+# =============================================================================
+# 🛒 ENDPOINT: GET /api/public/cart/upsell
+# =============================================================================
+# "Добавить к заказу" — dish upsell strip on the /cart page. Reuses the
+# HomepageCompactUpsellBlock model with placement="cart" so the same admin
+# UI / serializer / item-management code services both placements.
+#
+# Behavior matches /home/compact-upsell exactly, with two differences:
+#   - filtered by placement=PLACEMENT_CART
+#   - capped at CART_UPSELL_LIMIT (10) products
+
+
+CART_UPSELL_LIMIT = 10
+CART_UPSELL_DEFAULT_TITLE = "Добавить к заказу"
+
+
+@csrf_exempt
+@require_GET
+def cart_upsell(request):
+    """
+    Cart-page upsell strip. Reuses HomepageCompactUpsellBlock with
+    placement="cart" — same admin/data, different surface on the website.
+
+    Empty states:
+      - no active block          -> enabled=false, default title, products=[]
+      - active block, 0 products -> enabled=true,  block title,   products=[]
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    block = (
+        HomepageCompactUpsellBlock.objects
+        .filter(
+            country=country,
+            is_active=True,
+            placement=HomepageCompactUpsellBlock.PLACEMENT_CART,
+        )
+        .order_by("sort_order", "id")
+        .first()
+    )
+
+    if block is None:
+        response = api_success({
+            "enabled": False,
+            "title": CART_UPSELL_DEFAULT_TITLE,
+            "products": [],
+        })
+        return _apply_homepage_cache_headers(response)
+
+    title = block.title or CART_UPSELL_DEFAULT_TITLE
+
+    items = list(
+        HomepageCompactUpsellItem.objects
+        .filter(block=block, is_active=True)
+        .order_by("sort_order", "id")[:CART_UPSELL_LIMIT]
+    )
+
+    products = []
+    if items:
+        dish_ids = {it.dish_id for it in items}
+        # Same visibility rules as the public catalog: visible on site,
+        # not in stop-list, not archived. If a dish was archived after
+        # being added to the upsell list, it silently disappears here.
+        visible_dishes = Dish.objects.filter(
+            id__in=dish_ids,
+            country=country,
+            is_visible_on_site=True,
+            is_stop_list=False,
+            is_archived=False,
+        )
+        dishes_by_id = {d.id: d for d in visible_dishes}
+
+        for it in items:
+            dish = dishes_by_id.get(it.dish_id)
+            if dish is None:
+                continue
+            products.append(
+                _serialize_compact_upsell_product(request, dish, it.sort_order)
+            )
+
+    response = api_success({
+        "enabled": True,
+        "title": title,
+        "products": products,
+    })
+    return _apply_homepage_cache_headers(response)

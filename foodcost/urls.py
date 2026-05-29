@@ -29,6 +29,18 @@ urlpatterns = [
     path("c/<slug:country_slug>/", views.dish_list, name="dish_list"),
     path("c/<slug:country_slug>/dish/create/", views.dish_create, name="dish_create"),
     path("c/<slug:country_slug>/dish/<int:dish_id>/", views.dish_detail, name="dish_detail"),
+    # Soft-archive a dish: hides it from menu / cart / new orders, keeps it
+    # visible in OLD orders. POST-only. Operator must have can_edit.
+    path(
+        "c/<slug:country_slug>/dish/<int:dish_id>/archive/",
+        views.dish_archive,
+        name="dish_archive",
+    ),
+    path(
+        "c/<slug:country_slug>/dish/<int:dish_id>/unarchive/",
+        views.dish_unarchive,
+        name="dish_unarchive",
+    ),
 
     # продукты
     path("c/<slug:country_slug>/products/", views.product_list, name="product_list"),
@@ -258,6 +270,35 @@ urlpatterns = [
         "api/public/home/compact-upsell",
         public_api.home_compact_upsell,
         name="public_home_compact_upsell",
+    ),
+
+    # Two-banner CTA strip in the homepage "Комбо и акции" section.
+    # Separate from /home/banners (hero) — narrower, paired, promo-code-aware.
+    # Trailing slash variant included because Django's APPEND_SLASH redirects
+    # POST callers; better to register both up front.
+    path(
+        "api/public/home/combo-banners",
+        public_api.home_combo_banners,
+        name="public_home_combo_banners",
+    ),
+    path(
+        "api/public/home/combo-banners/",
+        public_api.home_combo_banners,
+        name="public_home_combo_banners_slash",
+    ),
+
+    # Cart-page upsell strip ("Добавить к заказу"). Reuses the
+    # HomepageCompactUpsellBlock model with placement="cart"; the cabinet
+    # has separate sections for home / cart placements.
+    path(
+        "api/public/cart/upsell",
+        public_api.cart_upsell,
+        name="public_cart_upsell",
+    ),
+    path(
+        "api/public/cart/upsell/",
+        public_api.cart_upsell,
+        name="public_cart_upsell_slash",
     ),
 
     # =========================================================================

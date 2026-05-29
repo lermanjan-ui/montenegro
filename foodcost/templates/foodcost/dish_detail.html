@@ -1324,8 +1324,40 @@
 
 <a class="back" href="/c/{{ country.slug }}/">← Назад к блюдам</a>
 
+{% if dish.is_archived %}
+    {# Yellow banner: this dish is archived and won't appear in any new
+       order flow. Operator can either bring it back (POST unarchive)
+       or just navigate away. #}
+    <div style="margin: 12px 0; padding: 16px 18px; background: #fef3c7;
+                border: 1px solid #fde68a; border-radius: 14px;
+                color: #92400e; font-weight: 700; line-height: 1.5;">
+        <strong style="display:block; margin-bottom:6px;">Блюдо в архиве</strong>
+        <span style="font-weight:500;">
+            Скрыто с сайта, из новых заказов и из списка кассира. В старых
+            заказах остаётся видимым.
+            {% if dish.archived_at %}
+                Архивировано {{ dish.archived_at|date:"d.m.Y H:i" }}{% if dish.archived_by %} ({{ dish.archived_by.username }}){% endif %}.
+            {% endif %}
+        </span>
+        {% if can_edit %}
+            <form method="post"
+                  action="/c/{{ country.slug }}/dish/{{ dish.id }}/unarchive/"
+                  style="display:inline-block; margin-top:10px;"
+                  onsubmit="return confirm('Вернуть блюдо из архива? Оно появится в списке активных, но останется скрытым с сайта пока вы не включите его вручную.');">
+                {% csrf_token %}
+                <button type="submit"
+                        style="background:#92400e; color:white; border:0;
+                               border-radius:10px; padding:10px 16px;
+                               cursor:pointer; font-weight:900;">
+                    Вернуть из архива
+                </button>
+            </form>
+        {% endif %}
+    </div>
+{% endif %}
+
 <div class="card">
-    <h1>Блюдо: {{ dish.name }}</h1>
+    <h1>Блюдо: {{ dish.name }}{% if dish.is_archived %} <span style="font-size: 0.5em; color:#92400e; background:#fef3c7; padding:4px 10px; border-radius:999px; vertical-align: middle;">архив</span>{% endif %}</h1>
     <p class="hero-text">Полная экономика блюда: ингредиенты, упаковка, ФОТ, коммуналка, доп расходы и техкарта.</p>
 
     {% if not can_edit %}
@@ -2408,6 +2440,33 @@
         <p class="ws-empty">В этой стране нет активных филиалов.</p>
     {% endif %}
 </div>
+{% endif %}
+
+{% if can_edit and not dish.is_archived %}
+    {# Archive control. Intentionally separated from everyday edit
+       actions so it's not clicked by accident. Confirm dialog spells
+       out the full consequence. #}
+    <div class="card" style="margin-top: 24px; border-color:#fde68a;">
+        <h2 style="margin:0 0 8px; font-size:20px; color:#92400e;">Архивирование</h2>
+        <p style="margin:0 0 14px; color:#6b7280; font-size:14px; line-height:1.5;">
+            Перенос блюда в архив. Оно исчезнет с сайта, из корзины, из
+            новых заказов и из списка кассира. Старые заказы, где блюдо
+            уже было использовано, останутся без изменений и продолжат
+            корректно отображаться в истории и отчётах. Действие
+            обратимо: блюдо можно вернуть из архива позже.
+        </p>
+        <form method="post"
+              action="/c/{{ country.slug }}/dish/{{ dish.id }}/archive/"
+              onsubmit="return confirm('Архивировать блюдо «{{ dish.name|escapejs }}»?\n\nОно будет скрыто из меню, сайта и новых заказов. В старых заказах останется.');">
+            {% csrf_token %}
+            <button type="submit"
+                    style="background:#fef3c7; color:#92400e;
+                           border:1px solid #fde68a; border-radius:12px;
+                           padding:12px 18px; cursor:pointer; font-weight:900;">
+                Архивировать блюдо
+            </button>
+        </form>
+    </div>
 {% endif %}
 
 </div>

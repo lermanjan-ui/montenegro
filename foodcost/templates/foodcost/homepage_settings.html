@@ -938,6 +938,7 @@ button[type=submit]:hover{
             <form method="post" style="margin-top:14px;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_compact_upsell_block">
+                <input type="hidden" name="placement" value="{{ PLACEMENT_HOME }}">
 
                 <div class="form-grid">
                     <div class="col-2">
@@ -1151,6 +1152,382 @@ button[type=submit]:hover{
             </div>
         {% empty %}
             <div class="empty">Компактных блоков пока нет. Создайте первый блок через форму выше.</div>
+        {% endfor %}
+    </div>
+
+    {# =====================================================================
+       🛒 Cart upsell — same model as compact upsell, placement="cart".
+       The whole CRUD is identical; we point the create form's placement
+       hidden field at PLACEMENT_CART and list cart_upsell_blocks instead.
+       Item-level add/update/delete reuses the same actions because the
+       block FK is unambiguous.
+       ===================================================================== #}
+    <div class="block">
+        <h2>Блок «Добавить к заказу» (страница корзины)</h2>
+        <p class="muted" style="margin-top:-6px;">
+            Управляйте блоком допродаж, который показывается на странице
+            корзины под прогрессом доставки. Структура та же что у блока
+            на главной — здесь это отдельный набор товаров.
+        </p>
+
+        <details style="margin-top:10px;">
+            <summary class="add-summary">
+                + Создать блок для корзины
+            </summary>
+
+            <form method="post" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_compact_upsell_block">
+                <input type="hidden" name="placement" value="{{ PLACEMENT_CART }}">
+
+                <div class="form-grid">
+                    <div class="col-2">
+                        <label>Название блока *</label>
+                        <input name="title" value="Добавить к заказу" required>
+                    </div>
+                    <div>
+                        <label>Сортировка</label>
+                        <input name="sort_order" type="number" min="0" step="1" value="0">
+                    </div>
+                    <div>
+                        <label>Активен</label>
+                        <label class="checkbox-panel">
+                            <input type="checkbox" name="is_active" checked>
+                            <span>Показывать в корзине</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <button type="submit">Создать блок</button>
+                </div>
+            </form>
+        </details>
+
+        {% for block in cart_upsell_blocks %}
+            <div class="card-row" style="margin-top:14px;">
+                <details>
+                    <summary>
+                        <strong>{{ block.title }}</strong>
+                        {% if block.is_active %}<span class="badge ok">Активен</span>{% else %}<span class="badge muted">Отключён</span>{% endif %}
+                        <span class="badge muted">Товаров: {{ block.items.all|length }}</span>
+                    </summary>
+
+                    <form method="post" style="margin-top:14px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_compact_upsell_block">
+                        <input type="hidden" name="block_id" value="{{ block.id }}">
+
+                        <div class="form-grid">
+                            <div class="col-2">
+                                <label>Название блока *</label>
+                                <input name="title" value="{{ block.title }}" required>
+                            </div>
+                            <div>
+                                <label>Сортировка</label>
+                                <input name="sort_order" type="number" min="0" step="1" value="{{ block.sort_order }}">
+                            </div>
+                            <div>
+                                <label>Активен</label>
+                                <label class="checkbox-panel">
+                                    <input type="checkbox" name="is_active" {% if block.is_active %}checked{% endif %}>
+                                    <span>Показывать в корзине</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="edit-actions">
+                            <button type="submit">Сохранить</button>
+                        </div>
+                    </form>
+
+                    {# ---- Items list (reuses compact upsell item actions) ---- #}
+                    <div style="margin-top:18px;">
+                        <h3 style="font-size:15px;">Товары в блоке</h3>
+
+                        {% for item in block.items.all %}
+                            <form method="post" class="card-row" style="margin-top:8px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_compact_upsell_item">
+                                <input type="hidden" name="block_id" value="{{ block.id }}">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                                <div class="form-grid">
+                                    <div class="col-2">
+                                        <label>Блюдо</label>
+                                        <div style="padding:10px 0;font-weight:900;">
+                                            {{ item.dish.name }}
+                                            {% if not item.dish.is_visible_on_site %}<span class="badge muted">Скрыто с сайта</span>{% endif %}
+                                            {% if item.dish.is_stop_list %}<span class="badge muted">Стоп-лист</span>{% endif %}
+                                            {% if item.dish.is_archived %}<span class="badge muted">Архив</span>{% endif %}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label>Сортировка</label>
+                                        <input name="sort_order" type="number" min="0" step="1" value="{{ item.sort_order }}">
+                                    </div>
+                                    <div>
+                                        <label>Активен</label>
+                                        <label class="checkbox-panel">
+                                            <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}>
+                                            <span>Показывать</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="edit-actions">
+                                    <button type="submit">Сохранить</button>
+                                    <button type="submit" name="action" value="delete_compact_upsell_item"
+                                            class="delete-btn"
+                                            onclick="return confirm('Убрать товар «{{ item.dish.name|escapejs }}» из блока?')">
+                                        Убрать
+                                    </button>
+                                </div>
+                            </form>
+                        {% empty %}
+                            <p class="muted" style="margin-top:8px;">В блоке пока нет товаров.</p>
+                        {% endfor %}
+
+                        <form method="post" style="margin-top:10px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_compact_upsell_item">
+                            <input type="hidden" name="block_id" value="{{ block.id }}">
+
+                            <div class="form-grid">
+                                <div class="col-2">
+                                    <label>Добавить блюдо</label>
+                                    <select name="dish_id" required>
+                                        <option value="">— выбрать блюдо —</option>
+                                        {% for dish in available_compact_upsell_dishes %}
+                                            <option value="{{ dish.id }}">{{ dish.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>Сортировка</label>
+                                    <input name="sort_order" type="number" min="0" step="1" value="0">
+                                </div>
+                                <div>
+                                    <label>Активен</label>
+                                    <label class="checkbox-panel">
+                                        <input type="checkbox" name="is_active" checked>
+                                        <span>Показывать</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="edit-actions">
+                                <button type="submit">Добавить блюдо</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <form method="post" style="margin-top:10px;text-align:right;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_compact_upsell_block">
+                        <input type="hidden" name="block_id" value="{{ block.id }}">
+                        <button type="submit" class="delete-btn"
+                                onclick="return confirm('Удалить блок «{{ block.title|escapejs }}»? Товары блока удалятся, сами блюда останутся в каталоге.')">
+                            Удалить блок
+                        </button>
+                    </form>
+                </details>
+            </div>
+        {% empty %}
+            <div class="empty">Блоков для корзины пока нет. Создайте первый блок через форму выше.</div>
+        {% endfor %}
+    </div>
+
+    {# =====================================================================
+       🪧 Combo banners — paired CTA cards in the "Комбо и акции" section.
+       Distinct from the hero banners section above. Each banner is
+       independent (no pairing concept on the backend); the website renders
+       at most the first 2 active sorted by sort_order.
+       ===================================================================== #}
+    <div class="block">
+        <h2>Combo-баннеры («Комбо и акции»)</h2>
+        <p class="muted" style="margin-top:-6px;">
+            Два узких баннера в секции «Комбо и акции» на главной. Активных
+            одновременно — максимум два; если активен только один, фронт
+            растягивает его на всю ширину секции.
+        </p>
+
+        <details style="margin-top:10px;">
+            <summary class="add-summary">+ Создать combo-баннер</summary>
+
+            <form method="post" enctype="multipart/form-data" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_combo_banner">
+
+                <div class="form-grid">
+                    <div class="col-2">
+                        <label>Заголовок * <span class="muted">(до 30 символов)</span></label>
+                        <input name="title" maxlength="30" required>
+                    </div>
+                    <div class="col-2">
+                        <label>Подзаголовок <span class="muted">(до 100, \n для переноса строки)</span></label>
+                        <input name="subtitle" maxlength="100">
+                    </div>
+
+                    <div>
+                        <label>Текст кнопки * <span class="muted">(до 20)</span></label>
+                        <input name="cta_label" maxlength="20" required>
+                    </div>
+                    <div>
+                        <label>Действие кнопки</label>
+                        <select name="cta_action_type">
+                            {% for value, label in combo_action_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Значение действия</label>
+                        <input name="cta_action_value" placeholder="slug категории / товара / промокод / URL">
+                    </div>
+
+                    <div>
+                        <label>Цвет фона (HEX)</label>
+                        <input name="background_color" value="#181818" pattern="^#[0-9a-fA-F]{3,8}$">
+                    </div>
+                    <div>
+                        <label>Цвет текста</label>
+                        <select name="text_color">
+                            {% for value, label in combo_text_color_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-2">
+                        <label>Картинка фона (файл)</label>
+                        <input name="background_image" type="file" accept="image/*">
+                    </div>
+                    <div class="col-2">
+                        <label>… или URL картинки <span class="muted">(приоритет над файлом)</span></label>
+                        <input name="background_image_url" placeholder="https://...">
+                    </div>
+
+                    <div>
+                        <label>Сортировка</label>
+                        <input name="sort_order" type="number" min="0" step="1" value="0">
+                    </div>
+                    <div>
+                        <label>Активен</label>
+                        <label class="checkbox-panel">
+                            <input type="checkbox" name="is_active" checked>
+                            <span>Показывать на сайте</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <button type="submit">Создать баннер</button>
+                </div>
+            </form>
+        </details>
+
+        {% for banner in combo_banners %}
+            <div class="card-row" style="margin-top:14px;">
+                <details>
+                    <summary>
+                        <strong>{{ banner.title }}</strong>
+                        {% if banner.is_active %}<span class="badge ok">Активен</span>{% else %}<span class="badge muted">Отключён</span>{% endif %}
+                        <span class="badge muted">sort: {{ banner.sort_order }}</span>
+                    </summary>
+
+                    <form method="post" enctype="multipart/form-data" style="margin-top:14px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_combo_banner">
+                        <input type="hidden" name="banner_id" value="{{ banner.id }}">
+
+                        <div class="form-grid">
+                            <div class="col-2">
+                                <label>Заголовок *</label>
+                                <input name="title" maxlength="30" value="{{ banner.title }}" required>
+                            </div>
+                            <div class="col-2">
+                                <label>Подзаголовок</label>
+                                <input name="subtitle" maxlength="100" value="{{ banner.subtitle }}">
+                            </div>
+                            <div>
+                                <label>Текст кнопки *</label>
+                                <input name="cta_label" maxlength="20" value="{{ banner.cta_label }}" required>
+                            </div>
+                            <div>
+                                <label>Действие кнопки</label>
+                                <select name="cta_action_type">
+                                    {% for value, label in combo_action_choices %}
+                                        <option value="{{ value }}" {% if banner.cta_action_type == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Значение действия</label>
+                                <input name="cta_action_value" value="{{ banner.cta_action_value }}">
+                            </div>
+                            <div>
+                                <label>Цвет фона</label>
+                                <input name="background_color" value="{{ banner.background_color }}">
+                            </div>
+                            <div>
+                                <label>Цвет текста</label>
+                                <select name="text_color">
+                                    {% for value, label in combo_text_color_choices %}
+                                        <option value="{{ value }}" {% if banner.text_color == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-2">
+                                <label>Картинка фона</label>
+                                {% if banner.background_image %}
+                                    <div style="margin-bottom:6px;">
+                                        <img src="{{ banner.background_image.url }}" alt="" style="max-width:200px;border-radius:8px;">
+                                        <label style="display:block;margin-top:4px;">
+                                            <input type="checkbox" name="background_image_clear">
+                                            <span>Удалить текущую картинку</span>
+                                        </label>
+                                    </div>
+                                {% endif %}
+                                <input name="background_image" type="file" accept="image/*">
+                            </div>
+                            <div class="col-2">
+                                <label>… или URL картинки <span class="muted">(приоритет над файлом)</span></label>
+                                <input name="background_image_url" value="{{ banner.background_image_url }}">
+                            </div>
+
+                            <div>
+                                <label>Сортировка</label>
+                                <input name="sort_order" type="number" min="0" step="1" value="{{ banner.sort_order }}">
+                            </div>
+                            <div>
+                                <label>Активен</label>
+                                <label class="checkbox-panel">
+                                    <input type="checkbox" name="is_active" {% if banner.is_active %}checked{% endif %}>
+                                    <span>Показывать на сайте</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="edit-actions">
+                            <button type="submit">Сохранить</button>
+                        </div>
+                    </form>
+
+                    <form method="post" style="margin-top:10px;text-align:right;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_combo_banner">
+                        <input type="hidden" name="banner_id" value="{{ banner.id }}">
+                        <button type="submit" class="delete-btn"
+                                onclick="return confirm('Удалить баннер «{{ banner.title|escapejs }}»?')">
+                            Удалить баннер
+                        </button>
+                    </form>
+                </details>
+            </div>
+        {% empty %}
+            <div class="empty">Combo-баннеров пока нет. Создайте первый через форму выше.</div>
         {% endfor %}
     </div>
 

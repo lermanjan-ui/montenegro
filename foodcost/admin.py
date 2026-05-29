@@ -45,6 +45,7 @@ from .models import (
     DishAddon,
     # 🏠 Homepage CMS (Part 11)
     HomepageBanner,
+    HomeComboBanner,
     HomepageProductBlock,
     HomepageProductBlockItem,
     # 🏠 Homepage compact upsell (Part 1 — separate from frequently-bought)
@@ -583,3 +584,40 @@ class HomepageCompactUpsellItemAdmin(admin.ModelAdmin):
     search_fields = ("block__title", "dish__name")
     autocomplete_fields = ("dish",)
     list_editable = ("sort_order", "is_active")
+
+
+@admin.register(HomeComboBanner)
+class HomeComboBannerAdmin(admin.ModelAdmin):
+    """
+    Combo banners for the "Комбо и акции" homepage section. Most editing
+    happens in the ERP settings page (homepage_settings_page), but the
+    Django admin is handy for bulk toggles / cross-country views.
+    """
+    list_display = (
+        "title", "country", "cta_action_type", "cta_action_value",
+        "sort_order", "is_active",
+    )
+    list_filter = ("country", "is_active", "cta_action_type", "text_color")
+    search_fields = ("title", "subtitle", "cta_label", "cta_action_value")
+    list_editable = ("sort_order", "is_active")
+    fieldsets = (
+        ("Привязка", {
+            "fields": ("country",),
+        }),
+        ("Текст", {
+            "fields": ("title", "subtitle", "cta_label"),
+        }),
+        ("Действие кнопки", {
+            "fields": ("cta_action_type", "cta_action_value"),
+        }),
+        ("Внешний вид", {
+            "fields": (
+                "background_image", "background_image_url",
+                "background_color", "text_color",
+            ),
+        }),
+        ("Порядок и статус", {
+            "fields": ("sort_order", "is_active"),
+        }),
+    )
+    readonly_fields = ("created_at", "updated_at") if False else ()

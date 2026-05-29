@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
 from django.utils.text import slugify
 
 
@@ -368,6 +369,36 @@ class Dish(models.Model):
 
     is_stop_list = models.BooleanField(
         default=False
+    )
+
+    # Soft-archive flag. When True, the dish is hidden from:
+    #   - public website (cart, checkout, /products listing)
+    #   - ERP dish list (default view; toggle to see archive)
+    #   - cashier "add dish to order" search
+    #   - all new-order code paths
+    # It stays visible in OLD orders that already include this dish — the
+    # OrderItem.dish FK still resolves, so historical receipts / reports
+    # render unchanged. Distinct from is_visible_on_site (site-only) and
+    # is_stop_list (temporary "out of stock"); archive is a permanent
+    # "this dish is no longer offered" signal. Indexed because every
+    # active-dish query now filters on it.
+    is_archived = models.BooleanField(
+        default=False,
+        db_index=True,
+    )
+    # When the archive flag flipped to True. Null on live dishes.
+    archived_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+    # Who archived it (audit trail). SET_NULL so deleting the user account
+    # later doesn't cascade-delete the archive record.
+    archived_by = models.ForeignKey(
+        "auth.User",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="archived_dishes",
     )
 
     is_featured = models.BooleanField(
@@ -1458,15 +1489,6 @@ class Order(models.Model):
     PAYMENT_STATUS_CASH = "cash"
     PAYMENT_STATUS_FAILED = "failed"
     PAYMENT_STATUS_CANCELLED = "cancelled"
-    # Refunded — payment succeeded and was later reversed (Payme state=-2).
-    # Distinct from "cancelled" (= never paid) so support / UI can tell
-    # "money was here and went back" from "money never arrived".
-    PAYMENT_STATUS_REFUNDED = "refunded"
-    # Expired — order sat in awaiting_payment past the TTL (24h from
-    # created_at) and the cleanup task / lazy-expire path declared it
-    # dead. Distinct from "failed" (= gateway said no) and "cancelled"
-    # (= user said no). Late callbacks for expired orders are refused.
-    PAYMENT_STATUS_EXPIRED = "expired"
 
     country = models.ForeignKey(
         Country,
@@ -1655,23 +1677,6 @@ class Order(models.Model):
     payment_paid_at = models.DateTimeField(
         null=True,
         blank=True
-    )
-
-    # Marks orders that timed out in awaiting_payment past PAYMENT_TTL
-    # (24h from created_at). Set by lazy expire (on GET tracking) and by
-    # the cancel_stale_awaiting_payment management command.
-    #
-    # Once True, all payment callbacks refuse to mutate the order:
-    #  - Click action=Complete  → reply error -9 (transaction cancelled)
-    #  - Payme PerformTransaction → reply error -31008 (invalid state)
-    # This prevents zombie revival when a user finally clicks "Pay" hours
-    # after the order timed out and the gateway delivers a late callback.
-    #
-    # Indexed because the cleanup command queries `auto_expired=False AND
-    # status=awaiting_payment AND created_at < now-24h` regularly.
-    auto_expired = models.BooleanField(
-        default=False,
-        db_index=True,
     )
 
     public_order_number = models.CharField(
@@ -2599,6 +2604,25 @@ class HomepageCompactUpsellBlock(models.Model):
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0)
 
+    # Where this block is shown on the website. Distinct placements give
+    # different endpoints (home_compact_upsell vs cart_upsell), so the
+    # same model serves both pages without duplication.
+    #
+    # Existing rows get "home" by default during migration — that matches
+    # the only place this block was used before.
+    PLACEMENT_HOME = "home"
+    PLACEMENT_CART = "cart"
+    PLACEMENT_CHOICES = [
+        (PLACEMENT_HOME, "Главная страница"),
+        (PLACEMENT_CART, "Корзина"),
+    ]
+    placement = models.CharField(
+        max_length=16,
+        choices=PLACEMENT_CHOICES,
+        default=PLACEMENT_HOME,
+        db_index=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
@@ -2641,3 +2665,108 @@ class HomepageCompactUpsellItem(models.Model):
 
     def __str__(self):
         return f"{self.block.title} → {self.dish}"
+
+
+# =========================================================================
+# 🪧 HOME COMBO BANNERS — paired CTA banners in the "Комбо и акции" block
+# =========================================================================
+# These are DIFFERENT from HomepageBanner (hero, full-width, single):
+#   - Combo banners always show in pairs (left + right) on the homepage
+#   - Narrower format, different visual style
+#   - Used for "Комбо и акции" section: combo offers, promo codes, etc.
+#
+# API returns at most 2 active banners per country (the section shows two
+# side-by-side; if only one is active, frontend renders it full-width).
+# Hard limit of 2 lives in the endpoint, not the model — we let operators
+# stage more than 2 in the cabinet, then activate the pair they want live.
+
+class HomeComboBanner(models.Model):
+    """ERP-managed banner pair for the homepage "Комбо и акции" section."""
+
+    ACTION_CATEGORY = "category"
+    ACTION_PRODUCT = "product"
+    ACTION_PROMO_CODE = "promo_code"
+    ACTION_EXTERNAL_URL = "external_url"
+    ACTION_NONE = "none"
+    ACTION_TYPE_CHOICES = [
+        (ACTION_CATEGORY,     "Категория"),
+        (ACTION_PRODUCT,      "Товар"),
+        (ACTION_PROMO_CODE,   "Промокод (копирование)"),
+        (ACTION_EXTERNAL_URL, "Внешняя ссылка"),
+        (ACTION_NONE,         "Без действия"),
+    ]
+
+    TEXT_WHITE = "white"
+    TEXT_DARK = "dark"
+    TEXT_COLOR_CHOICES = [
+        (TEXT_WHITE, "Белый"),
+        (TEXT_DARK,  "Тёмный"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="home_combo_banners",
+    )
+
+    # Display text. Lengths match the spec; validated on save() so a
+    # rogue admin POST that bypasses form-level checks still gets caught.
+    title = models.CharField(max_length=30)
+    subtitle = models.CharField(max_length=100, blank=True, default="")
+    cta_label = models.CharField(max_length=20)
+
+    # Background — either uploaded image or external URL (DishCategory uses
+    # the same pattern). _resolve_image() in public_api gives external_url
+    # priority over the uploaded file, so admins can override quickly.
+    background_image = models.ImageField(
+        upload_to="combo_banners/",
+        blank=True,
+        null=True,
+    )
+    background_image_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        default="",
+    )
+
+    # Fallback / overlay color. Validated by the HEX regex below — accepts
+    # "#RGB", "#RRGGBB", "#RRGGBBAA". Default matches the frontend mock.
+    background_color = models.CharField(
+        max_length=9,
+        default="#181818",
+        validators=[
+            RegexValidator(
+                regex=r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
+                message="background_color must be a HEX color (e.g. #181818).",
+            ),
+        ],
+    )
+    text_color = models.CharField(
+        max_length=8,
+        choices=TEXT_COLOR_CHOICES,
+        default=TEXT_WHITE,
+    )
+
+    cta_action_type = models.CharField(
+        max_length=20,
+        choices=ACTION_TYPE_CHOICES,
+        default=ACTION_NONE,
+    )
+    # Required for every type except ACTION_NONE. We don't enforce that at
+    # the DB level (different rules per action_type would need clean()),
+    # but the create / update views in views_homepage do.
+    cta_action_value = models.CharField(max_length=500, blank=True, default="")
+
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "Combo-баннер на главной"
+        verbose_name_plural = "Combo-баннеры на главной"
+
+    def __str__(self):
+        return f"{self.title} ({self.country.slug})"

@@ -31,6 +31,7 @@ from .models import (
     HomepageProductBlockItem,
     HomepageCompactUpsellBlock,
     HomepageCompactUpsellItem,
+    HomeComboBanner,
 )
 from .views import get_country, require_section_access
 
@@ -69,6 +70,77 @@ def _parse_int_or_zero(value):
     except (TypeError, ValueError):
         return 0
     return n if n > 0 else 0
+
+
+# -----------------------------------------------------------------------------
+# Combo-banner form helpers
+# -----------------------------------------------------------------------------
+# Pulled out so create / update share validation. We catch:
+#   - missing required title / cta_label
+#   - cta_action_value required when type != "none"
+#   - bad HEX in background_color
+#   - unknown choices (defensive — the form sends a <select>)
+#
+# Length caps are enforced by the CharField max_length on the model; this
+# function only checks soft business rules. Errors are returned as a string
+# (matching the existing single-`error` slot on the page); if you want per-
+# field rendering, swap to a dict.
+
+import re as _re
+
+_HEX_COLOR_RE = _re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+
+
+def _clean_hex(value, *, default="#181818"):
+    """Normalize a HEX string; fall back to the default on bad input."""
+    raw = (value or "").strip()
+    if not raw:
+        return default
+    return raw if _HEX_COLOR_RE.match(raw) else default
+
+
+def _clean_combo_text_color(value):
+    raw = (value or "").strip().lower()
+    if raw in {"white", "dark"}:
+        return raw
+    return "white"
+
+
+def _clean_combo_action_type(value):
+    raw = (value or "").strip().lower()
+    allowed = {"category", "product", "promo_code", "external_url", "none"}
+    return raw if raw in allowed else "none"
+
+
+def _validate_combo_banner_form(post):
+    """
+    Return an error string (Russian) if the form is invalid, else None.
+    Single-string contract because the existing template surfaces one
+    error banner at the top of the page.
+    """
+    title = (post.get("title") or "").strip()
+    cta_label = (post.get("cta_label") or "").strip()
+    if not title:
+        return "Заголовок обязателен"
+    if len(title) > 30:
+        return "Заголовок не длиннее 30 символов"
+    if len((post.get("subtitle") or "").strip()) > 100:
+        return "Подзаголовок не длиннее 100 символов"
+    if not cta_label:
+        return "Текст кнопки обязателен"
+    if len(cta_label) > 20:
+        return "Текст кнопки не длиннее 20 символов"
+
+    raw_hex = (post.get("background_color") or "").strip()
+    if raw_hex and not _HEX_COLOR_RE.match(raw_hex):
+        return "Цвет фона должен быть HEX (например, #181818)"
+
+    action_type = (post.get("cta_action_type") or "").strip().lower()
+    action_value = (post.get("cta_action_value") or "").strip()
+    if action_type != "none" and not action_value:
+        return "Для выбранного действия нужно указать значение"
+
+    return None
 
 
 # -----------------------------------------------------------------------------
@@ -382,9 +454,20 @@ def homepage_settings_page(request, country_slug):
             if not title:
                 error = "Укажи название компактного блока"
             else:
+                # placement: "home" (default — backwards compat) or "cart".
+                # The form posts it as a hidden field on each section's
+                # create form, so accidentally creating a "home" block from
+                # the cart section UI is impossible.
+                placement = (request.POST.get("placement") or "").strip()
+                if placement not in (
+                    HomepageCompactUpsellBlock.PLACEMENT_HOME,
+                    HomepageCompactUpsellBlock.PLACEMENT_CART,
+                ):
+                    placement = HomepageCompactUpsellBlock.PLACEMENT_HOME
                 HomepageCompactUpsellBlock.objects.create(
                     country=country,
                     title=title,
+                    placement=placement,
                     sort_order=_parse_int_or_zero(
                         request.POST.get("sort_order")
                     ),
@@ -496,6 +579,109 @@ def homepage_settings_page(request, country_slug):
             item.delete()
             return redirect(f"/c/{country.slug}/settings/homepage/")
 
+        # ----- Combo banners ("Комбо и акции" section) -----
+        # Validation lives here rather than in the model because we want
+        # the operator to see "Неверный HEX" on the form, not a 500 from
+        # full_clean() bubbling up. Length limits are enforced by the
+        # CharField max_length and silently truncated on the input side
+        # (browsers already enforce maxlength) — anything else we catch
+        # with explicit checks below.
+
+        if action == "create_combo_banner":
+            errs = _validate_combo_banner_form(request.POST)
+            if errs:
+                error = errs
+            else:
+                banner = HomeComboBanner(
+                    country=country,
+                    title=(request.POST.get("title") or "").strip(),
+                    subtitle=(request.POST.get("subtitle") or "").strip(),
+                    cta_label=(request.POST.get("cta_label") or "").strip(),
+                    background_color=_clean_hex(
+                        request.POST.get("background_color"), default="#181818",
+                    ),
+                    text_color=_clean_combo_text_color(
+                        request.POST.get("text_color"),
+                    ),
+                    cta_action_type=_clean_combo_action_type(
+                        request.POST.get("cta_action_type"),
+                    ),
+                    cta_action_value=(
+                        request.POST.get("cta_action_value") or ""
+                    ).strip(),
+                    background_image_url=(
+                        request.POST.get("background_image_url") or ""
+                    ).strip(),
+                    sort_order=_parse_int_or_zero(
+                        request.POST.get("sort_order")
+                    ),
+                    is_active=bool(request.POST.get("is_active")),
+                )
+                uploaded = request.FILES.get("background_image")
+                if uploaded:
+                    banner.background_image = uploaded
+                banner.save()
+                return redirect(f"/c/{country.slug}/settings/homepage/")
+
+        if action == "update_combo_banner":
+            banner = get_object_or_404(
+                HomeComboBanner,
+                id=request.POST.get("banner_id"),
+                country=country,
+            )
+            errs = _validate_combo_banner_form(request.POST)
+            if errs:
+                error = errs
+            else:
+                banner.title = (request.POST.get("title") or "").strip()
+                banner.subtitle = (request.POST.get("subtitle") or "").strip()
+                banner.cta_label = (request.POST.get("cta_label") or "").strip()
+                banner.background_color = _clean_hex(
+                    request.POST.get("background_color"), default="#181818",
+                )
+                banner.text_color = _clean_combo_text_color(
+                    request.POST.get("text_color"),
+                )
+                banner.cta_action_type = _clean_combo_action_type(
+                    request.POST.get("cta_action_type"),
+                )
+                banner.cta_action_value = (
+                    request.POST.get("cta_action_value") or ""
+                ).strip()
+                banner.background_image_url = (
+                    request.POST.get("background_image_url") or ""
+                ).strip()
+                banner.sort_order = _parse_int_or_zero(
+                    request.POST.get("sort_order")
+                )
+                banner.is_active = bool(request.POST.get("is_active"))
+
+                # Image handling — same precedence rules used elsewhere:
+                # new upload wins, then "clear" detaches, else preserve.
+                uploaded = request.FILES.get("background_image")
+                if uploaded:
+                    if banner.background_image:
+                        banner.background_image.delete(save=False)
+                    banner.background_image = uploaded
+                elif request.POST.get("background_image_clear"):
+                    if banner.background_image:
+                        banner.background_image.delete(save=False)
+                    banner.background_image = None
+
+                banner.save()
+                return redirect(f"/c/{country.slug}/settings/homepage/")
+
+        if action == "delete_combo_banner":
+            banner = get_object_or_404(
+                HomeComboBanner,
+                id=request.POST.get("banner_id"),
+                country=country,
+            )
+            if banner.background_image:
+                banner.background_image.delete(save=False)
+            banner.delete()
+            return redirect(f"/c/{country.slug}/settings/homepage/")
+
     # ---- GET render ----
     now = timezone.now()
 
@@ -565,11 +751,11 @@ def homepage_settings_page(request, country_slug):
         .order_by("name")
     )
 
-    # ---- Compact upsell blocks (Part 2.1 — Компактный блок допродаж) ----
-    # Current country only, ordered by (sort_order, id). Items are prefetched
-    # with their dish so the template can show a per-block product count
-    # (and, in Part 2.2, the item list) without N+1 queries.
-    compact_upsell_blocks = (
+    # ---- Compact upsell blocks ----
+    # Split by placement so the template can render two separate sections:
+    # one for the homepage, one for the cart page. They share the model
+    # and all CRUD code paths; only the placement filter differs.
+    compact_upsell_qs = (
         HomepageCompactUpsellBlock.objects
         .filter(country=country)
         .order_by("sort_order", "id")
@@ -584,6 +770,12 @@ def homepage_settings_page(request, country_slug):
             ),
         )
     )
+    compact_upsell_blocks = compact_upsell_qs.filter(
+        placement=HomepageCompactUpsellBlock.PLACEMENT_HOME,
+    )
+    cart_upsell_blocks = compact_upsell_qs.filter(
+        placement=HomepageCompactUpsellBlock.PLACEMENT_CART,
+    )
 
     # Dropdown source for adding a dish to a compact block — every dish in the
     # current country, by name. Per-block dedup is handled by get_or_create on
@@ -592,6 +784,13 @@ def homepage_settings_page(request, country_slug):
         Dish.objects
         .filter(country=country)
         .order_by("name")
+    )
+
+    # ---- Combo banners (paired CTA cards in "Комбо и акции" section) ----
+    combo_banners = (
+        HomeComboBanner.objects
+        .filter(country=country)
+        .order_by("sort_order", "id")
     )
 
     return render(request, "foodcost/homepage_settings.html", {
@@ -607,8 +806,18 @@ def homepage_settings_page(request, country_slug):
         # Frequently bought blocks (Part 12)
         "homepage_blocks": homepage_blocks,
         "available_block_dishes": available_block_dishes,
-        # Compact upsell blocks (Part 2.1)
+        # Compact upsell — homepage placement
         "compact_upsell_blocks": compact_upsell_blocks,
-        # Compact upsell dish dropdown (Part 2.2)
+        # Compact upsell — cart placement (same model, different placement)
+        "cart_upsell_blocks": cart_upsell_blocks,
+        # Compact upsell dish dropdown (shared between home + cart placements)
         "available_compact_upsell_dishes": available_compact_upsell_dishes,
+        # Combo banners — "Комбо и акции" pair on the homepage
+        "combo_banners": combo_banners,
+        "combo_action_choices": HomeComboBanner.ACTION_TYPE_CHOICES,
+        "combo_text_color_choices": HomeComboBanner.TEXT_COLOR_CHOICES,
+        "COMBO_ACTION_NONE": HomeComboBanner.ACTION_NONE,
+        # Placement constants for hidden form fields
+        "PLACEMENT_HOME": HomepageCompactUpsellBlock.PLACEMENT_HOME,
+        "PLACEMENT_CART": HomepageCompactUpsellBlock.PLACEMENT_CART,
     })
