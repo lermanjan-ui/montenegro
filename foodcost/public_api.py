@@ -94,10 +94,25 @@ from .models import (
     HomepageCompactUpsellItem,
 )
 
-# 💳 Click payment integration (Part 1) — URL builder only; callback comes
-# in Part 2. Import isolated in a sub-package so future providers (Payme,
-# online_card, ...) can sit next to it without bloating public_api.
-from .payments.click import build_click_payment_url, ClickConfigError
+# 💳 Click payment integration — URL builder (Part 1) + callback (Part 2).
+# Sub-package so future providers (Payme, online_card, ...) can sit next to
+# it without bloating public_api.
+from .payments.click import (
+    build_click_payment_url,
+    ClickConfigError,
+    verify_click_signature,
+    amounts_match,
+    ACTION_PREPARE,
+    ACTION_COMPLETE,
+    ERROR_OK,
+    ERROR_SIGN_CHECK_FAILED,
+    ERROR_INCORRECT_AMOUNT,
+    ERROR_ACTION_NOT_FOUND,
+    ERROR_ALREADY_PAID,
+    ERROR_USER_DOES_NOT_EXIST,
+    ERROR_BAD_REQUEST,
+    ERROR_TRANSACTION_CANCELLED,
+)
 
 
 # =============================================================================
@@ -2085,18 +2100,43 @@ def _serialize_order_for_tracking(order):
         _serialize_order_item_for_tracking(it)
         for it in order.items.select_related("dish").all()
     ]
+    # payment_method is a FK to PaymentMethod; we surface it as the canonical
+    # short string (cash / click / payme / online_card) so the frontend can
+    # branch on a stable value. _resolve_payment_method names rows by the
+    # human label (e.g. "Click"), so we map back by label.
+    pm_obj = order.payment_method
+    payment_method_key = ""
+    if pm_obj is not None:
+        # Reverse the PAYMENT_METHOD_LABELS dict — small, runs O(1) in
+        # practice and never raises.
+        label = pm_obj.name or ""
+        for k, v in PAYMENT_METHOD_LABELS.items():
+            if v == label:
+                payment_method_key = k
+                break
+        # Fallback: if the label is one of the known keys directly.
+        if not payment_method_key and label.lower() in PAYMENT_METHOD_KEYS:
+            payment_method_key = label.lower()
+
     return {
         "order_id": order.id,
         "public_order_number": order.public_order_number or "",
+        "order_number": order.public_order_number or "",
         "status": order.status,
         "status_label": _status_label(order.status),
         "created_at": order.created_at.isoformat() if order.created_at else None,
         "fulfillment_method": order.fulfillment_method or "",
         "customer_name": order.customer_name or "",
+        "customer_phone": order.customer_phone or "",
         "delivery_address": order.delivery_address or "",
         "subtotal": _to_float(order.subtotal_amount),
+        "subtotal_amount": _to_float(order.subtotal_amount),
+        "discount_amount": _to_float(order.discount_amount),
         "delivery_price": _to_float(order.delivery_amount),
+        "delivery_amount": _to_float(order.delivery_amount),
         "total": _to_float(order.total_amount),
+        "payment_status": order.payment_status or "",
+        "payment_method": payment_method_key,
         "items": items_payload,
     }
 
@@ -2442,11 +2482,11 @@ def order_create(request):
     else:
         initial_status = Order.STATUS_NEW
 
-    # Pre-flight check for Click — surface config errors BEFORE we create
-    # an order row, so a misconfigured deploy doesn't leave orphaned
-    # awaiting_payment rows in the DB. The actual URL is built after the
-    # order is saved (it uses order.public_order_number as the merchant
-    # transaction id).
+    # Pre-flight check for online providers — surface config errors BEFORE
+    # we create an order row, so a misconfigured deploy doesn't leave
+    # orphaned awaiting_payment rows in the DB. The actual URL is built
+    # after the order is saved (it uses order.public_order_number as the
+    # merchant transaction id).
     if payment_key == "click":
         from django.conf import settings as dj_settings
         if not (getattr(dj_settings, "CLICK_SERVICE_ID", "") and
@@ -2454,6 +2494,19 @@ def order_create(request):
             return api_error(
                 "PAYMENT_PROVIDER_UNAVAILABLE",
                 "Click payment is not configured on the server",
+                status=503,
+            )
+    elif payment_key == "payme":
+        from django.conf import settings as dj_settings
+        # PAYME_SECRET_KEY isn't strictly needed to BUILD the URL (it only
+        # gates the callback), but a deploy with no secret will fail every
+        # callback and trap the customer's money on Payme's side. Refuse
+        # earlier so support sees the error in the order-create response.
+        if not (getattr(dj_settings, "PAYME_MERCHANT_ID", "") and
+                getattr(dj_settings, "PAYME_SECRET_KEY", "")):
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                "Payme payment is not configured on the server",
                 status=503,
             )
 
@@ -2547,9 +2600,9 @@ def order_create(request):
             )
 
     # Build the payment block. For cash (and any order without an online
-    # gateway) it's null, matching the spec example. For Click we generate
-    # the hosted-checkout URL using order.public_order_number — that's why
-    # the URL is built AFTER the order is committed.
+    # gateway) it's null, matching the spec example. For Click / Payme we
+    # generate the hosted-checkout URL using order.public_order_number —
+    # that's why the URL is built AFTER the order is committed.
     payment_block = None
     if payment_key == "click":
         try:
@@ -2566,6 +2619,25 @@ def order_create(request):
             )
         payment_block = {
             "provider": "click",
+            "payment_url": payment_url,
+        }
+    elif payment_key == "payme":
+        # Same fallback as Click: pre-flight should have caught config
+        # issues, but defend against env changing mid-request or zero total.
+        from .payments.payme import (
+            build_payme_payment_url,
+            PaymeConfigError,
+        )
+        try:
+            payment_url = build_payme_payment_url(order)
+        except PaymeConfigError as exc:
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                str(exc),
+                status=503,
+            )
+        payment_block = {
+            "provider": "payme",
             "payment_url": payment_url,
         }
 
@@ -2613,7 +2685,7 @@ def order_tracking(request, public_order_number):
 
     order = (
         Order.objects.filter(public_order_number=number)
-        .select_related("country", "location")
+        .select_related("country", "location", "payment_method")
         .first()
     )
 
@@ -3301,3 +3373,984 @@ def home_compact_upsell(request):
         "products": products,
     })
     return _apply_homepage_cache_headers(response)
+
+# =============================================================================
+# 💳 ENDPOINT: POST /api/payments/click/callback/   (Part 2)
+# =============================================================================
+# Receives Click's server-to-server callback. Click POSTs form-encoded data
+# to ONE URL twice:
+#
+#   action=0 (Prepare)  → "can this order be paid?" → reply with merchant_
+#                          prepare_id (we use order.id) + error=0.
+#   action=1 (Complete) → final outcome. If error >= 0 → mark paid. If
+#                          error < 0 (e.g. -9 = user cancelled) → mark
+#                          failed/cancelled and put the order into
+#                          payment_failed so the customer can retry.
+#
+# Security:
+#   - Signature is checked FIRST. Wrong sign → error -1 immediately. We
+#     don't even reveal whether the order exists.
+#   - select_for_update inside an atomic block prevents races between
+#     duplicate Click callbacks (Click retries on network errors).
+#   - Idempotent: a second Complete with the same payment_transaction_id
+#     returns error=0 without re-writing fields.
+#   - No logging of secret_key, sign_string, or full payload — only the
+#     two transaction ids and the error code.
+#
+# Replies are JSON (Click also accepts JSON callbacks per current docs).
+
+
+def _click_reply(error, error_note, *, click_trans_id=None, merchant_trans_id=None,
+                 merchant_prepare_id=None, merchant_confirm_id=None):
+    """
+    Build the JSON envelope Click expects in callback replies. Includes only
+    fields relevant to the current stage — unused ones are omitted so we
+    don't echo back nulls that could confuse Click's parser.
+    """
+    body = {
+        "error": int(error),
+        "error_note": str(error_note or ""),
+    }
+    if click_trans_id is not None:
+        body["click_trans_id"] = click_trans_id
+    if merchant_trans_id is not None:
+        body["merchant_trans_id"] = merchant_trans_id
+    if merchant_prepare_id is not None:
+        body["merchant_prepare_id"] = merchant_prepare_id
+    if merchant_confirm_id is not None:
+        body["merchant_confirm_id"] = merchant_confirm_id
+    return JsonResponse(body)
+
+
+def _read_click_callback_params(request):
+    """
+    Click sends form-encoded data by default but the docs also mention JSON.
+    We accept both. Returns a plain dict of strings (we never trust types
+    from the wire — signature is computed on the raw string concatenation).
+    """
+    if request.POST:
+        return {k: request.POST.get(k, "") for k in request.POST}
+    # Fallback to JSON body.
+    try:
+        import json
+        return json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return {}
+
+
+@csrf_exempt
+@require_POST
+def click_callback(request):
+    """
+    Click Prepare + Complete callback. ONE URL handles both actions.
+    """
+    params = _read_click_callback_params(request)
+
+    # Fields Click documents for the callback.
+    click_trans_id = str(params.get("click_trans_id") or "").strip()
+    service_id = str(params.get("service_id") or "").strip()
+    merchant_trans_id = str(params.get("merchant_trans_id") or "").strip()
+    merchant_prepare_id = str(params.get("merchant_prepare_id") or "").strip()
+    amount = str(params.get("amount") or "").strip()
+    action_raw = str(params.get("action") or "").strip()
+    sign_time = str(params.get("sign_time") or "").strip()
+    sign_string = str(params.get("sign_string") or "").strip()
+    # Click error code in the COMPLETE request — < 0 means the user cancelled
+    # or the gateway itself failed. We don't trust this field for security
+    # (signature is what matters), only for branching paid vs failed.
+    click_error_raw = str(params.get("error") or "0").strip()
+
+    # 1) Action must be parseable. Anything else → -3.
+    try:
+        action = int(action_raw)
+    except (TypeError, ValueError):
+        return _click_reply(
+            ERROR_ACTION_NOT_FOUND, "Action not found",
+            click_trans_id=click_trans_id,
+            merchant_trans_id=merchant_trans_id,
+        )
+
+    if action not in (ACTION_PREPARE, ACTION_COMPLETE):
+        return _click_reply(
+            ERROR_ACTION_NOT_FOUND, "Action not found",
+            click_trans_id=click_trans_id,
+            merchant_trans_id=merchant_trans_id,
+        )
+
+    # 2) Signature check — BEFORE we hit the DB. Use the raw strings from
+    # the wire; never re-format amount or sign_time. For PREPARE,
+    # merchant_prepare_id is empty.
+    sig_ok = verify_click_signature(
+        sign_string=sign_string,
+        click_trans_id=click_trans_id,
+        service_id=service_id,
+        merchant_trans_id=merchant_trans_id,
+        merchant_prepare_id=merchant_prepare_id if action == ACTION_COMPLETE else "",
+        amount=amount,
+        action=action_raw,
+        sign_time=sign_time,
+    )
+    if not sig_ok:
+        return _click_reply(
+            ERROR_SIGN_CHECK_FAILED, "Sign check failed",
+            click_trans_id=click_trans_id,
+            merchant_trans_id=merchant_trans_id,
+        )
+
+    if not merchant_trans_id:
+        return _click_reply(
+            ERROR_USER_DOES_NOT_EXIST, "Order not found",
+            click_trans_id=click_trans_id,
+            merchant_trans_id=merchant_trans_id,
+        )
+
+    # 3) Locate the order. Try by public_order_number first (what we put in
+    # the URL as transaction_param); fall back to numeric pk for older
+    # orders that may have used the raw id.
+    order = Order.objects.filter(public_order_number=merchant_trans_id).first()
+    if order is None and merchant_trans_id.isdigit():
+        order = Order.objects.filter(pk=int(merchant_trans_id)).first()
+
+    if order is None:
+        return _click_reply(
+            ERROR_USER_DOES_NOT_EXIST, "Order not found",
+            click_trans_id=click_trans_id,
+            merchant_trans_id=merchant_trans_id,
+        )
+
+    # 4) Amount must match the SERVER-CALCULATED total. Click can never make
+    # us accept a different amount, even with a valid signature for one.
+    if not amounts_match(order.total_amount, amount):
+        return _click_reply(
+            ERROR_INCORRECT_AMOUNT, "Incorrect amount",
+            click_trans_id=click_trans_id,
+            merchant_trans_id=merchant_trans_id,
+        )
+
+    # 5) Mutate inside an atomic block with row lock so duplicate callbacks
+    # serialize safely. Re-fetch with select_for_update — the existence
+    # check above was just to short-circuit not-found without locking.
+    with transaction.atomic():
+        try:
+            locked = Order.objects.select_for_update().get(pk=order.pk)
+        except Order.DoesNotExist:
+            return _click_reply(
+                ERROR_USER_DOES_NOT_EXIST, "Order not found",
+                click_trans_id=click_trans_id,
+                merchant_trans_id=merchant_trans_id,
+            )
+
+        if action == ACTION_PREPARE:
+            # Prepare: don't change state yet (just confirm we can accept).
+            # If already paid — Click should not be calling Prepare; reply
+            # with -4.
+            if locked.payment_status == Order.PAYMENT_STATUS_PAID:
+                return _click_reply(
+                    ERROR_ALREADY_PAID, "Already paid",
+                    click_trans_id=click_trans_id,
+                    merchant_trans_id=merchant_trans_id,
+                )
+            # merchant_prepare_id = our order pk (stable, unique).
+            return _click_reply(
+                ERROR_OK, "Success",
+                click_trans_id=click_trans_id,
+                merchant_trans_id=merchant_trans_id,
+                merchant_prepare_id=str(locked.pk),
+            )
+
+        # action == ACTION_COMPLETE
+        # Idempotency: if we already recorded this click_trans_id, just say
+        # OK without rewriting. Click retries on network errors.
+        if (locked.payment_status == Order.PAYMENT_STATUS_PAID and
+                locked.payment_transaction_id == click_trans_id):
+            return _click_reply(
+                ERROR_OK, "Success",
+                click_trans_id=click_trans_id,
+                merchant_trans_id=merchant_trans_id,
+                merchant_prepare_id=str(locked.pk),
+                merchant_confirm_id=str(locked.pk),
+            )
+
+        # Branch by Click's error code in the Complete request:
+        #   error >= 0 → payment succeeded.
+        #   error  < 0 → user cancelled / gateway failed.
+        try:
+            click_error = int(click_error_raw)
+        except (TypeError, ValueError):
+            click_error = 0
+
+        if click_error >= 0:
+            locked.payment_status = Order.PAYMENT_STATUS_PAID
+            locked.payment_transaction_id = click_trans_id
+            locked.payment_paid_at = timezone.now()
+            # Kitchen can start cooking now — flip the order status from
+            # AWAITING_PAYMENT back to NEW so the existing cashier flow
+            # picks it up like any other fresh order.
+            if locked.status == Order.STATUS_AWAITING_PAYMENT:
+                locked.status = Order.STATUS_NEW
+            locked.save(update_fields=[
+                "payment_status",
+                "payment_transaction_id",
+                "payment_paid_at",
+                "status",
+                "updated_at",
+            ] if hasattr(locked, "updated_at") else [
+                "payment_status",
+                "payment_transaction_id",
+                "payment_paid_at",
+                "status",
+            ])
+            return _click_reply(
+                ERROR_OK, "Success",
+                click_trans_id=click_trans_id,
+                merchant_trans_id=merchant_trans_id,
+                merchant_prepare_id=str(locked.pk),
+                merchant_confirm_id=str(locked.pk),
+            )
+
+        # Click reported failure / cancellation. -9 specifically means
+        # transaction cancelled; everything else negative → generic failed.
+        if click_error == ERROR_TRANSACTION_CANCELLED:
+            locked.payment_status = Order.PAYMENT_STATUS_CANCELLED
+        else:
+            locked.payment_status = Order.PAYMENT_STATUS_FAILED
+        # Move the order out of AWAITING_PAYMENT so the customer can retry
+        # via /pay/. Already-paid orders are never reverted here (guarded
+        # by the idempotency check above).
+        locked.status = Order.STATUS_PAYMENT_FAILED
+        locked.save(update_fields=["payment_status", "status"])
+
+        return _click_reply(
+            ERROR_OK, "Success",
+            click_trans_id=click_trans_id,
+            merchant_trans_id=merchant_trans_id,
+            merchant_prepare_id=str(locked.pk),
+        )
+
+
+# =============================================================================
+# 💳 ENDPOINT: POST /api/public/orders/<public_order_number>/pay/   (Part 2)
+# =============================================================================
+# Lets the frontend re-request a payment URL for an unpaid order. Use case:
+# the customer's first attempt was cancelled or failed and they want to try
+# again from the order-tracking page (or a "checkout?payment_failed=1"
+# redirect from the gateway).
+#
+# Rules:
+#   - Only orders in awaiting_payment OR payment_failed can retry.
+#   - Already-paid orders → 409 (can't retry, no double-charging).
+#   - Cash / cancelled orders → 409 (different flow).
+#   - We do NOT create a new Order, do NOT change the public_order_number,
+#     do NOT change total_amount.
+
+@csrf_exempt
+@require_POST
+def order_pay_retry(request, public_order_number):
+    number = (public_order_number or "").strip()
+    if not number:
+        return api_error(
+            "INVALID_JSON",
+            "public_order_number is required",
+            status=400,
+        )
+
+    payload, err = _parse_json_body(request)
+    if err:
+        return err
+
+    requested_method = str(payload.get("payment_method") or "").strip().lower()
+    if requested_method not in ("click", "payme"):
+        return api_error(
+            "PAYMENT_METHOD_INVALID",
+            "Only 'click' and 'payme' retry are supported",
+            details={
+                "payment_method": requested_method,
+                "allowed": ["click", "payme"],
+            },
+            status=400,
+        )
+
+    order = (
+        Order.objects.filter(public_order_number=number)
+        .select_related("country", "location", "payment_method")
+        .first()
+    )
+    if order is None:
+        return api_error(
+            "DISH_NOT_FOUND",
+            "Order not found",
+            details={"public_order_number": number},
+            status=404,
+        )
+
+    if order.payment_status == Order.PAYMENT_STATUS_PAID:
+        return api_error(
+            "ORDER_ALREADY_PAID",
+            "Order is already paid",
+            status=409,
+        )
+
+    # Only awaiting_payment and payment_failed are retryable. Cash, cancelled,
+    # done, etc. are not. This also blocks retrying an order that an operator
+    # cancelled in ERP.
+    if order.status not in (Order.STATUS_AWAITING_PAYMENT,
+                            Order.STATUS_PAYMENT_FAILED):
+        return api_error(
+            "ORDER_NOT_RETRYABLE",
+            "Order is not in a retryable state",
+            details={"status": order.status},
+            status=409,
+        )
+
+    # Pre-flight config check — same as in order_create — so a misconfigured
+    # deploy returns a clean 503 instead of a broken URL. Different envs
+    # per provider; check only the one being retried.
+    from django.conf import settings as dj_settings
+    if requested_method == "click":
+        if not (getattr(dj_settings, "CLICK_SERVICE_ID", "") and
+                getattr(dj_settings, "CLICK_MERCHANT_ID", "")):
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                "Click payment is not configured on the server",
+                status=503,
+            )
+    else:  # payme
+        if not (getattr(dj_settings, "PAYME_MERCHANT_ID", "") and
+                getattr(dj_settings, "PAYME_SECRET_KEY", "")):
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                "Payme payment is not configured on the server",
+                status=503,
+            )
+
+    # Reset to a clean awaiting-payment state for the retry. We don't touch
+    # payment_transaction_id / payment_paid_at — those will be filled by
+    # the next successful callback. If the previous attempt left
+    # payment_status=failed/cancelled, flip it back to pending so the
+    # frontend / ERP sees the order is in flight again.
+    #
+    # NOTE: for Payme this means the order keeps its OLD failed/cancelled
+    # PaymeTransaction rows on file (we never delete them) — they're
+    # state=-1 or -2 and Payme won't reuse them. The retry will trigger a
+    # fresh CreateTransaction with a brand-new payme transaction id.
+    with transaction.atomic():
+        locked = Order.objects.select_for_update().get(pk=order.pk)
+        locked.payment_status = Order.PAYMENT_STATUS_PENDING
+        locked.status = Order.STATUS_AWAITING_PAYMENT
+        locked.save(update_fields=["payment_status", "status"])
+        order = locked
+
+    if requested_method == "click":
+        try:
+            payment_url = build_click_payment_url(order)
+        except ClickConfigError as exc:
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                str(exc),
+                status=503,
+            )
+        provider_key = "click"
+    else:  # payme
+        from .payments.payme import build_payme_payment_url, PaymeConfigError
+        try:
+            payment_url = build_payme_payment_url(order)
+        except PaymeConfigError as exc:
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                str(exc),
+                status=503,
+            )
+        provider_key = "payme"
+
+    return api_success({
+        "order": {
+            "order_number": order.public_order_number or "",
+            "payment_status": order.payment_status,
+            "status": order.status,
+        },
+        "payment": {
+            "provider": provider_key,
+            "payment_url": payment_url,
+        },
+    })
+
+
+# =============================================================================
+# 💳 ENDPOINT: POST /api/payments/payme/callback/   (Part 3 — Payme JSON-RPC)
+# =============================================================================
+# Payme uses a JSON-RPC 2.0 envelope (no signature in the URL). Auth is HTTP
+# Basic: Authorization: Basic base64("Paycom:" + SECRET_KEY).
+#
+# Six methods land on ONE endpoint, differentiated by params.method:
+#   CheckPerformTransaction  — can we accept payment for this order?
+#   CreateTransaction        — Payme reserves the order
+#   PerformTransaction       — payment confirmed; mark order paid
+#   CancelTransaction        — payment cancelled or refunded
+#   CheckTransaction         — Payme asks "what's the status of tx X?"
+#   GetStatement             — reconciliation (list transactions in a range)
+#
+# Critical invariants (these break if violated and Payme support gets
+# involved):
+#   1. Repeated CreateTransaction with the SAME id must return the SAME
+#      create_time and state (Sandbox enforces this).
+#   2. Repeated PerformTransaction on an already-completed tx must return
+#      the SAME perform_time and state.
+#   3. CancelTransaction sets state=-1 if was CREATED, state=-2 if was
+#      COMPLETED. Trying to cancel a COMPLETED tx that delivered goods is
+#      error -31007 (we don't enforce "delivered" — we let everything cancel
+#      and reverse the order, since this kitchen workflow can absorb that).
+#   4. Account validation (-31050..-31099) uses `data` = account sub-field
+#      name (we always send "order_id" since that's our PAYME_ACCOUNT_FIELD).
+#   5. Amount mismatch is -31001 — and amount in `params.amount` is TIYIN,
+#      so we compare against int(order.total_amount * 100).
+#   6. Reply HTTP status is ALWAYS 200, even for errors — the error code
+#      goes in the JSON body. Returning 4xx confuses Payme's parser.
+#
+# We never log Authorization headers, secret keys, or full request bodies
+# containing card data (Payme doesn't send card data, but defensive habit).
+
+
+def _payme_now_ms():
+    """Current time as 13-digit ms-epoch (Payme's Timestamp type)."""
+    import time
+    return int(time.time() * 1000)
+
+
+def _payme_rpc_response(request_id, *, result=None, error=None):
+    """
+    Build a JSON-RPC 2.0 reply envelope. Either result OR error, not both.
+    HTTP status is always 200 — Payme treats non-200 as transport failure
+    and keeps retrying, which double-debits if our handler was mid-write.
+    """
+    body = {"jsonrpc": "2.0", "id": request_id}
+    if error is not None:
+        body["error"] = error
+    else:
+        body["result"] = result
+    return JsonResponse(body, status=200)
+
+
+def _payme_error_body(exc):
+    """
+    Convert a PaymeError exception into Payme's JSON-RPC error object. The
+    `data` field is only included when set — for account errors it MUST be
+    the account sub-field name (e.g. "order_id").
+    """
+    body = {
+        "code": exc.code,
+        "message": exc.message,
+    }
+    if exc.data is not None:
+        body["data"] = exc.data
+    return body
+
+
+def _payme_locate_order(account):
+    """
+    Resolve the account sub-field (configured as settings.PAYME_ACCOUNT_FIELD,
+    default "order_id") to an Order. Raises PaymeError(-31050) if not found
+    or not in a state that allows payment.
+
+    `account` is whatever Payme sent in params.account (a dict). We accept
+    BOTH order.public_order_number (preferred — what we put in the URL) and
+    numeric order.id (defensive — some integrations send the raw pk).
+    """
+    from .payments.payme import (
+        PaymeError, ERROR_ACCOUNT_NOT_FOUND,
+    )
+    from django.conf import settings as dj_settings
+
+    account_field = (
+        getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"
+    ).strip()
+    if not isinstance(account, dict):
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    raw_value = account.get(account_field)
+    if raw_value is None or str(raw_value).strip() == "":
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    raw_value = str(raw_value).strip()
+    order = (
+        Order.objects.filter(public_order_number=raw_value)
+        .select_related("country", "location", "payment_method")
+        .first()
+    )
+    if order is None and raw_value.isdigit():
+        order = (
+            Order.objects.filter(pk=int(raw_value))
+            .select_related("country", "location", "payment_method")
+            .first()
+        )
+
+    if order is None:
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    # If an operator already cancelled the order in ERP, refuse payment.
+    # Payme will show the customer "order cancelled" and not debit.
+    if order.status == Order.STATUS_CANCELLED:
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    return order
+
+
+def _payme_handle_check_perform(params):
+    """
+    CheckPerformTransaction — "can this order be paid?"
+    Validates account and amount; does NOT touch the DB.
+    """
+    from .payments.payme import (
+        PaymeError, amount_matches_order,
+        ERROR_INVALID_AMOUNT,
+    )
+    order = _payme_locate_order(params.get("account"))
+    amount = params.get("amount")
+    if not isinstance(amount, int) or not amount_matches_order(order, amount):
+        raise PaymeError(ERROR_INVALID_AMOUNT)
+    # Already paid? Tell Payme — Sandbox second-call test relies on this.
+    if order.payment_status == Order.PAYMENT_STATUS_PAID:
+        from .payments.payme import ERROR_INVALID_STATE
+        raise PaymeError(ERROR_INVALID_STATE)
+    return {"allow": True}
+
+
+def _payme_handle_create_transaction(params):
+    """
+    CreateTransaction — Payme is about to ask the user to confirm payment.
+    We must:
+      - Validate amount + account (same checks as CheckPerformTransaction)
+      - Look up our PaymeTransaction by params.id (Payme's transaction id):
+          * If exists → return its existing create_time/state (idempotency)
+          * If not    → check the order has no OTHER active payme tx
+                        (state=1). If it does → -31008 (can't have two
+                        concurrent reservations on one order). Else create
+                        a fresh row.
+      - Move our Order into AWAITING_PAYMENT (defensive — it should already
+        be there from order_create, but a retry that flipped to PENDING
+        might have hit a race).
+    """
+    from .payments.payme import (
+        PaymeError, amount_matches_order,
+        ERROR_INVALID_AMOUNT, ERROR_INVALID_STATE,
+        STATE_CREATED,
+    )
+    from .models import PaymeTransaction
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_INVALID_STATE)
+
+    order = _payme_locate_order(params.get("account"))
+
+    amount = params.get("amount")
+    if not isinstance(amount, int) or not amount_matches_order(order, amount):
+        raise PaymeError(ERROR_INVALID_AMOUNT)
+
+    payme_time_ms = params.get("time")
+    if not isinstance(payme_time_ms, int):
+        raise PaymeError(ERROR_INVALID_STATE)
+
+    with transaction.atomic():
+        # Lock the order row so concurrent CreateTransactions on the same
+        # order serialize. Sandbox doesn't parallel-fire but production
+        # might (retry on flaky network).
+        try:
+            locked_order = Order.objects.select_for_update().get(pk=order.pk)
+        except Order.DoesNotExist:
+            from .payments.payme import ERROR_ACCOUNT_NOT_FOUND
+            from django.conf import settings as dj_settings
+            raise PaymeError(
+                ERROR_ACCOUNT_NOT_FOUND,
+                data=(getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"),
+            )
+
+        # IDEMPOTENCY: repeated CreateTransaction with the same payme id.
+        existing = PaymeTransaction.objects.filter(
+            payme_transaction_id=payme_tx_id
+        ).first()
+        if existing is not None:
+            # Must match the same order — if Payme sends us the same tx id
+            # for a different account, that's a server-side anomaly worth
+            # surfacing.
+            if existing.order_id != locked_order.id:
+                raise PaymeError(ERROR_INVALID_STATE)
+            # Repeat: same response as first time. Sandbox checks this.
+            return {
+                "create_time": existing.create_time_ms,
+                "transaction": str(existing.id),
+                "state": existing.state,
+            }
+
+        # No row for this payme id. But maybe another payme tx already holds
+        # this order in STATE_CREATED — Payme rules say at most one active
+        # reservation per order. -31008.
+        active = PaymeTransaction.objects.filter(
+            order=locked_order, state=STATE_CREATED,
+        ).first()
+        if active is not None:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        # Already-paid order should never see a fresh CreateTransaction.
+        if locked_order.payment_status == Order.PAYMENT_STATUS_PAID:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        # Cancelled-by-operator order: same.
+        if locked_order.status == Order.STATUS_CANCELLED:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        # Fresh row + reservation.
+        now_ms = _payme_now_ms()
+        ptx = PaymeTransaction.objects.create(
+            payme_transaction_id=payme_tx_id,
+            order=locked_order,
+            amount_tiyin=amount,
+            state=STATE_CREATED,
+            payme_time_ms=payme_time_ms,
+            create_time_ms=now_ms,
+            raw_last_params=params,
+        )
+        # Mirror onto Order so admin views see the in-flight attempt.
+        # We DON'T set payment_paid_at here — only on Perform.
+        if locked_order.status != Order.STATUS_AWAITING_PAYMENT:
+            locked_order.status = Order.STATUS_AWAITING_PAYMENT
+        if locked_order.payment_status != Order.PAYMENT_STATUS_PENDING:
+            locked_order.payment_status = Order.PAYMENT_STATUS_PENDING
+        locked_order.payment_transaction_id = payme_tx_id
+        locked_order.save(update_fields=[
+            "status", "payment_status", "payment_transaction_id",
+        ])
+
+    return {
+        "create_time": ptx.create_time_ms,
+        "transaction": str(ptx.id),
+        "state": ptx.state,
+    }
+
+
+def _payme_handle_perform_transaction(params):
+    """
+    PerformTransaction — payment is confirmed by the user. Mark our
+    PaymeTransaction as STATE_COMPLETED and flip the Order into NEW (so
+    the kitchen sees it as a fresh order to cook).
+    """
+    from .payments.payme import (
+        PaymeError,
+        ERROR_TRANSACTION_NOT_FOUND, ERROR_INVALID_STATE,
+        STATE_CREATED, STATE_COMPLETED,
+    )
+    from .models import PaymeTransaction
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    with transaction.atomic():
+        try:
+            ptx = (
+                PaymeTransaction.objects
+                .select_for_update()
+                .select_related("order")
+                .get(payme_transaction_id=payme_tx_id)
+            )
+        except PaymeTransaction.DoesNotExist:
+            raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+        if ptx.state == STATE_COMPLETED:
+            # IDEMPOTENCY: repeat call — same response.
+            return {
+                "transaction": str(ptx.id),
+                "perform_time": ptx.perform_time_ms,
+                "state": ptx.state,
+            }
+
+        if ptx.state != STATE_CREATED:
+            # Cancelled / cancelled-after — can't perform.
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        order = Order.objects.select_for_update().get(pk=ptx.order_id)
+
+        now_ms = _payme_now_ms()
+        ptx.state = STATE_COMPLETED
+        ptx.perform_time_ms = now_ms
+        ptx.raw_last_params = params
+        ptx.save(update_fields=[
+            "state", "perform_time_ms", "raw_last_params", "updated_at",
+        ])
+
+        order.payment_status = Order.PAYMENT_STATUS_PAID
+        order.payment_transaction_id = payme_tx_id
+        order.payment_paid_at = timezone.now()
+        # Kitchen flow: AWAITING_PAYMENT → NEW. If operator already moved
+        # the order to COOKING/DELIVERY (shouldn't happen pre-payment, but
+        # defensive), don't override.
+        if order.status == Order.STATUS_AWAITING_PAYMENT:
+            order.status = Order.STATUS_NEW
+        order.save(update_fields=[
+            "payment_status", "payment_transaction_id",
+            "payment_paid_at", "status",
+        ])
+
+    return {
+        "transaction": str(ptx.id),
+        "perform_time": ptx.perform_time_ms,
+        "state": ptx.state,
+    }
+
+
+def _payme_handle_cancel_transaction(params):
+    """
+    CancelTransaction — either the user / Payme cancelled before payment
+    (STATE_CREATED → -1) or this is a refund of an already-completed tx
+    (STATE_COMPLETED → -2). reason is stored as-is for audit.
+
+    Our policy: always allow cancel (we never return -31007). The kitchen
+    is small enough that a refund is acceptable for any state; if business
+    later wants to refuse refunds after DELIVERY/DONE, change here.
+    """
+    from .payments.payme import (
+        PaymeError,
+        ERROR_TRANSACTION_NOT_FOUND,
+        STATE_CREATED, STATE_COMPLETED,
+        STATE_CANCELLED, STATE_CANCELLED_AFTER,
+    )
+    from .models import PaymeTransaction
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    reason = params.get("reason")
+    if reason is not None and not isinstance(reason, int):
+        reason = None
+
+    with transaction.atomic():
+        try:
+            ptx = (
+                PaymeTransaction.objects
+                .select_for_update()
+                .select_related("order")
+                .get(payme_transaction_id=payme_tx_id)
+            )
+        except PaymeTransaction.DoesNotExist:
+            raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+        # IDEMPOTENCY: already cancelled — same response.
+        if ptx.state in (STATE_CANCELLED, STATE_CANCELLED_AFTER):
+            return {
+                "transaction": str(ptx.id),
+                "cancel_time": ptx.cancel_time_ms,
+                "state": ptx.state,
+            }
+
+        order = Order.objects.select_for_update().get(pk=ptx.order_id)
+        now_ms = _payme_now_ms()
+
+        if ptx.state == STATE_CREATED:
+            new_state = STATE_CANCELLED
+        elif ptx.state == STATE_COMPLETED:
+            new_state = STATE_CANCELLED_AFTER
+        else:
+            from .payments.payme import ERROR_INVALID_STATE
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        ptx.state = new_state
+        ptx.cancel_time_ms = now_ms
+        ptx.reason = reason
+        ptx.raw_last_params = params
+        ptx.save(update_fields=[
+            "state", "cancel_time_ms", "reason",
+            "raw_last_params", "updated_at",
+        ])
+
+        # Order side-effects:
+        #  - STATE_CANCELLED (before pay): order had AWAITING_PAYMENT →
+        #    move to PAYMENT_FAILED so the customer can retry. Don't touch
+        #    payment_paid_at (it was never set).
+        #  - STATE_CANCELLED_AFTER (refund): order had STATUS_NEW/COOKING/...
+        #    Money is going back to the customer. Mark payment_status as
+        #    CANCELLED, but leave order.status untouched — operator decides
+        #    whether to cancel the actual order from ERP.
+        if new_state == STATE_CANCELLED:
+            order.payment_status = Order.PAYMENT_STATUS_FAILED
+            if order.status == Order.STATUS_AWAITING_PAYMENT:
+                order.status = Order.STATUS_PAYMENT_FAILED
+            order.save(update_fields=["payment_status", "status"])
+        else:  # STATE_CANCELLED_AFTER
+            order.payment_status = Order.PAYMENT_STATUS_CANCELLED
+            order.save(update_fields=["payment_status"])
+
+    return {
+        "transaction": str(ptx.id),
+        "cancel_time": ptx.cancel_time_ms,
+        "state": ptx.state,
+    }
+
+
+def _payme_handle_check_transaction(params):
+    """
+    CheckTransaction — Payme reconciles its state with ours. Read-only.
+    """
+    from .payments.payme import (
+        PaymeError, ERROR_TRANSACTION_NOT_FOUND,
+    )
+    from .models import PaymeTransaction
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    ptx = PaymeTransaction.objects.filter(
+        payme_transaction_id=payme_tx_id
+    ).first()
+    if ptx is None:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    return {
+        "create_time": ptx.create_time_ms,
+        "perform_time": ptx.perform_time_ms,
+        "cancel_time": ptx.cancel_time_ms,
+        "transaction": str(ptx.id),
+        "state": ptx.state,
+        "reason": ptx.reason,  # null if never cancelled, per docs
+    }
+
+
+def _payme_handle_get_statement(params):
+    """
+    GetStatement — Payme polls a time range for reconciliation. Spec:
+    return all transactions whose `time` (the original payme_time_ms) falls
+    inside [from, to]. Empty list is a perfectly valid answer.
+    """
+    from .models import PaymeTransaction
+
+    frm = params.get("from")
+    to = params.get("to")
+    if not isinstance(frm, int) or not isinstance(to, int):
+        # Per spec these MUST be 13-digit ms timestamps. Bad input → empty.
+        return {"transactions": []}
+
+    qs = PaymeTransaction.objects.filter(
+        payme_time_ms__gte=frm, payme_time_ms__lte=to,
+    ).select_related("order").order_by("payme_time_ms")
+
+    from django.conf import settings as dj_settings
+    account_field = (
+        getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"
+    ).strip()
+
+    out = []
+    for ptx in qs[:10000]:  # safety cap
+        order = ptx.order
+        out.append({
+            "id": ptx.payme_transaction_id,
+            "time": ptx.payme_time_ms,
+            "amount": ptx.amount_tiyin,
+            "account": {
+                account_field: order.public_order_number or str(order.id),
+            },
+            "create_time": ptx.create_time_ms,
+            "perform_time": ptx.perform_time_ms,
+            "cancel_time": ptx.cancel_time_ms,
+            "transaction": str(ptx.id),
+            "state": ptx.state,
+            "reason": ptx.reason,
+        })
+    return {"transactions": out}
+
+
+_PAYME_HANDLERS = {
+    "CheckPerformTransaction": _payme_handle_check_perform,
+    "CreateTransaction":       _payme_handle_create_transaction,
+    "PerformTransaction":      _payme_handle_perform_transaction,
+    "CancelTransaction":       _payme_handle_cancel_transaction,
+    "CheckTransaction":        _payme_handle_check_transaction,
+    "GetStatement":            _payme_handle_get_statement,
+}
+
+
+@csrf_exempt
+def payme_callback(request):
+    """
+    Single JSON-RPC entry point for all 6 Merchant API methods. Payme docs
+    require us to accept POST only — anything else → -32300.
+    """
+    from .payments.payme import (
+        PaymeError, verify_payme_basic_auth,
+        ERROR_METHOD_NOT_POST, ERROR_PARSE, ERROR_INVALID_REQUEST,
+        ERROR_METHOD_NOT_FOUND, ERROR_INSUFFICIENT_PRIVILEGE,
+        ERROR_SYSTEM,
+    )
+
+    # request id is needed in the reply even for early errors — try to peek
+    # at the body, default to None if we can't yet. JSON-RPC permits null id.
+    request_id = None
+
+    if request.method != "POST":
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_METHOD_NOT_POST)),
+        )
+
+    # 1) Auth FIRST. Wrong creds → -32504. We don't even parse the body —
+    # an attacker shouldn't learn which JSON shapes our parser likes.
+    if not verify_payme_basic_auth(request):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INSUFFICIENT_PRIVILEGE)),
+        )
+
+    # 2) Parse JSON body.
+    try:
+        body = request.body.decode("utf-8") if request.body else ""
+        payload = json.loads(body) if body else {}
+    except (ValueError, UnicodeDecodeError):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_PARSE)),
+        )
+
+    if not isinstance(payload, dict):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INVALID_REQUEST)),
+        )
+
+    request_id = payload.get("id")  # JSON-RPC request id, NOT params.id
+    method = payload.get("method")
+    params = payload.get("params") or {}
+
+    if not isinstance(method, str) or not method:
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INVALID_REQUEST)),
+        )
+    if not isinstance(params, dict):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INVALID_REQUEST)),
+        )
+
+    handler = _PAYME_HANDLERS.get(method)
+    if handler is None:
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(
+                PaymeError(ERROR_METHOD_NOT_FOUND, data=method)
+            ),
+        )
+
+    # 3) Dispatch. Translate domain errors into JSON-RPC errors; let unknown
+    # exceptions become -32400 so Payme retries (and we'll see them in
+    # Sentry / logs) instead of getting confused by a 500.
+    try:
+        result = handler(params)
+    except PaymeError as exc:
+        return _payme_rpc_response(request_id, error=_payme_error_body(exc))
+    except Exception:
+        # Don't leak internal error messages to Payme.
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_SYSTEM)),
+        )
+
+    return _payme_rpc_response(request_id, result=result)

@@ -194,6 +194,15 @@ urlpatterns = [
         name="public_order_tracking",
     ),
 
+    # Click payment retry — generates a fresh payment_url for an unpaid order.
+    # Trailing slash is required by csrf-exempt + require_POST in Django's
+    # default APPEND_SLASH config; we keep it consistent with /orders/create/.
+    path(
+        "api/public/orders/<str:public_order_number>/pay/",
+        public_api.order_pay_retry,
+        name="public_order_pay_retry",
+    ),
+
     # =========================================================================
     # 🧾 PUBLIC API (Part 5) — checkout support: pickup points, promo, lookup
     # =========================================================================
@@ -249,5 +258,46 @@ urlpatterns = [
         "api/public/home/compact-upsell",
         public_api.home_compact_upsell,
         name="public_home_compact_upsell",
+    ),
+
+    # =========================================================================
+    # 💳 PAYMENTS (Part 2) — Click callback
+    # =========================================================================
+    # Click pings ONE URL twice per order: action=0 (Prepare) and action=1
+    # (Complete). Signature is verified server-side; secret_key never leaves
+    # the backend. Configure this URL in the Click merchant cabinet:
+    #
+    #   https://<your-backend-host>/api/payments/click/callback/
+    #
+    path(
+        "api/payments/click/callback/",
+        public_api.click_callback,
+        name="payments_click_callback",
+    ),
+    path(
+        "api/payments/click/callback",
+        public_api.click_callback,
+        name="payments_click_callback_noslash",
+    ),
+
+    # =========================================================================
+    # 💳 PAYMENTS (Part 3) — Payme (Paycom) JSON-RPC callback
+    # =========================================================================
+    # ONE endpoint receives all 6 Merchant API methods (CheckPerformTransaction,
+    # CreateTransaction, PerformTransaction, CancelTransaction, CheckTransaction,
+    # GetStatement). Auth is HTTP Basic ("Paycom:<SECRET_KEY>") — verified
+    # server-side. Configure this URL in the Payme merchant cabinet:
+    #
+    #   https://<your-backend-host>/api/payments/payme/callback/
+    #
+    path(
+        "api/payments/payme/callback/",
+        public_api.payme_callback,
+        name="payments_payme_callback",
+    ),
+    path(
+        "api/payments/payme/callback",
+        public_api.payme_callback,
+        name="payments_payme_callback_noslash",
     ),
 ]

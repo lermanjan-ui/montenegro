@@ -138,3 +138,44 @@ CLICK_FAIL_URL = os.environ.get(
     "CLICK_FAIL_URL",
     "https://raccoon-frontend.onrender.com/checkout?payment_failed=1",
 )
+
+
+# =============================================================================
+# 💳 PAYME (PAYCOM) PAYMENT INTEGRATION
+# =============================================================================
+# Payme is a separate provider from Click — uses JSON-RPC 2.0 Merchant API
+# and Basic Auth (NOT a signature). Credentials are server-only; never put
+# the secret in the URL or expose to the frontend.
+#
+# Required:
+#   PAYME_MERCHANT_ID   — cashbox ID (24-char hex from merchant cabinet),
+#                         public, goes into checkout URL.
+#   PAYME_SECRET_KEY    — server-only; used in HTTP Basic Auth on the
+#                         callback ("Paycom:<KEY>" base64-encoded).
+#                         Live and test keys are different — use the right
+#                         one for the environment.
+#   PAYME_CHECKOUT_URL  — https://checkout.paycom.uz (live) or
+#                         https://test.paycom.uz (sandbox).
+#   PAYME_ACCOUNT_FIELD — name of the account sub-field that holds the
+#                         order id (configured in Payme cabinet). Default
+#                         "order_id"; we send it as ac.<PAYME_ACCOUNT_FIELD>.
+#   PAYME_SUCCESS_URL   — where Payme redirects after a successful payment.
+#   PAYME_FAIL_URL      — where Payme redirects after a failed payment.
+#
+# Empty defaults so missing env doesn't crash boot — the URL builder and
+# callback raise clean errors when called without config.
+PAYME_MERCHANT_ID = os.environ.get("PAYME_MERCHANT_ID", "")
+PAYME_SECRET_KEY = os.environ.get("PAYME_SECRET_KEY", "")
+PAYME_CHECKOUT_URL = os.environ.get(
+    "PAYME_CHECKOUT_URL",
+    "https://checkout.paycom.uz",
+)
+PAYME_ACCOUNT_FIELD = os.environ.get("PAYME_ACCOUNT_FIELD", "order_id")
+PAYME_SUCCESS_URL = os.environ.get(
+    "PAYME_SUCCESS_URL",
+    "https://raccoon-frontend.onrender.com/order-success",
+)
+PAYME_FAIL_URL = os.environ.get(
+    "PAYME_FAIL_URL",
+    "https://raccoon-frontend.onrender.com/checkout?payment_failed=1",
+)
