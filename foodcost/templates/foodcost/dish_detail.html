@@ -1362,7 +1362,9 @@
     background: var(--fc-bg);
     color: var(--fc-text);
     font-family: var(--fc-font);
-    min-height: 100vh;
+    /* No min-height — .fc-scope is used multiple times on dish_detail
+       (one per migrated section); stretching each to 100vh creates huge
+       empty gaps. The page background comes from the outer .page wrapper. */
 }
 
 .fc-scope * { box-sizing: border-box; }
