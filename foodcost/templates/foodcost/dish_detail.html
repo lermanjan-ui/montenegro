@@ -2221,12 +2221,7 @@
 
 </div>{# end .fc-scope for the hero+tabs block. Tab content scopes itself again below. #}
 
-{# ============================================================================
-   Tab content begins below. Each top-level tab wraps the legacy sections in
-   {% if active_tab == "..." %} ... {% endif %} so the wrong tab's HTML
-   is simply not rendered. The old hash-based #tab-X anchors inside the
-   legacy markup keep working as plain anchors within the active tab.
-   ============================================================================ #}
+{# Tab content below. Each tab wraps legacy sections so other tab's HTML is not rendered. Old #tab-X anchors keep working within the active tab. #}
 
 <!-- ============================================================================
    TAB "Основное" — Part 1: ERP sections (general, cost, ingredients,

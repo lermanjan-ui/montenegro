@@ -572,6 +572,27 @@ def dish_detail(request, country_slug, dish_id):
     packagings = Packaging.objects.filter(country=country)
     tech_steps = DishTechStep.objects.filter(dish=dish)
 
+    # Build a redirect URL that preserves the active top-level tab.
+    # Three sources for the tab name, in priority order:
+    #   1. POST["_tab"] — set by the page's submit listener (most reliable)
+    #   2. GET["tab"]   — works if the form action included the query string
+    #   3. referer URL  — last-resort fallback when JS was disabled
+    # Optional `anchor` scrolls to a specific section within that tab.
+    def _back_to_dish(anchor=""):
+        tab = (request.POST.get("_tab") or request.GET.get("tab") or "").strip().lower()
+        if not tab:
+            # Fall back to the Referer header. Forms submit to the current
+            # URL which keeps the ?tab= part, so the Referer often has it.
+            referer = request.META.get("HTTP_REFERER", "")
+            if "tab=site" in referer:
+                tab = "site"
+            else:
+                tab = "main"
+        if tab not in ("main", "site"):
+            tab = "main"
+        qs = "" if tab == "main" else "?tab=site"
+        return redirect(f"/c/{country.slug}/dish/{dish.id}/{qs}{anchor}")
+
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -609,7 +630,7 @@ def dish_detail(request, country_slug, dish_id):
 
             dish.save()
 
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-website")
+            return _back_to_dish("#tab-website")
 
         # =====================================================================
         # 🏷 Public categories — add / remove (Part 5)
@@ -630,7 +651,7 @@ def dish_detail(request, country_slug, dish_id):
                 if cat is not None:
                     dish.public_categories.add(cat)
 
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-website")
+            return _back_to_dish("#tab-website")
 
         if action == "remove_public_category":
             if not perms["can_edit_dish_site"]:
@@ -648,7 +669,7 @@ def dish_detail(request, country_slug, dish_id):
                     # Only remove the relation; never delete the DishCategory itself.
                     dish.public_categories.remove(cat)
 
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-website")
+            return _back_to_dish("#tab-website")
 
         # =====================================================================
         # 🖼 Main photo (Dish.photo) — separate small form
@@ -667,7 +688,7 @@ def dish_detail(request, country_slug, dish_id):
                 dish.photo = None
                 dish.save()
 
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+            return _back_to_dish("#tab-gallery")
 
         # =====================================================================
         # 🖼 Gallery — add / update / delete
@@ -691,7 +712,7 @@ def dish_detail(request, country_slug, dish_id):
                     is_active=True,
                 )
 
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+            return _back_to_dish("#tab-gallery")
 
         if action == "update_gallery_image":
             if not perms["can_edit_dish_gallery"]:
@@ -722,7 +743,7 @@ def dish_detail(request, country_slug, dish_id):
                     pass
 
             image_obj.save()
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+            return _back_to_dish("#tab-gallery")
 
         if action == "delete_gallery_image":
             if not perms["can_edit_dish_gallery"]:
@@ -736,7 +757,7 @@ def dish_detail(request, country_slug, dish_id):
             if image_obj.image:
                 image_obj.image.delete(save=False)
             image_obj.delete()
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-gallery")
+            return _back_to_dish("#tab-gallery")
 
         # =====================================================================
         # ➕ Dish-as-addon — attach / detach
@@ -761,7 +782,7 @@ def dish_detail(request, country_slug, dish_id):
                         },
                     )
 
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-addons")
+            return _back_to_dish("#tab-addons")
 
         if action == "delete_dish_addon":
             if not perms["can_edit_dish_addons"]:
@@ -771,7 +792,7 @@ def dish_detail(request, country_slug, dish_id):
                 id=request.POST.get("addon_id"),
                 dish=dish,
             ).delete()
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-addons")
+            return _back_to_dish("#tab-addons")
 
         # ---- Manual upsell links: "Часто заказывают вместе" on dish page ----
         # Permission piggy-backs on dish-addons: both are "what to suggest
@@ -802,7 +823,7 @@ def dish_detail(request, country_slug, dish_id):
                             "is_active": True,
                         },
                     )
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-upsell")
+            return _back_to_dish("#tab-upsell")
 
         if action == "update_dish_upsell":
             if not perms["can_edit_dish_addons"]:
@@ -818,7 +839,7 @@ def dish_detail(request, country_slug, dish_id):
                 )
                 link.is_active = bool(request.POST.get("is_active"))
                 link.save(update_fields=["sort_order", "is_active", "updated_at"])
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-upsell")
+            return _back_to_dish("#tab-upsell")
 
         if action == "delete_dish_upsell":
             if not perms["can_edit_dish_addons"]:
@@ -828,7 +849,7 @@ def dish_detail(request, country_slug, dish_id):
                 id=request.POST.get("link_id"),
                 from_dish=dish,
             ).delete()
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-upsell")
+            return _back_to_dish("#tab-upsell")
 
         # =====================================================================
         # 🚦 Per-branch availability — cashier-friendly, single toggle + comment
@@ -859,7 +880,7 @@ def dish_detail(request, country_slug, dish_id):
             availability.comment = (request.POST.get("comment") or "").strip()
             availability.save()
 
-            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-availability")
+            return _back_to_dish("#tab-availability")
 
         # =====================================================================
         # ⚙ Legacy ERP actions — preserved exactly as before
@@ -978,7 +999,7 @@ def dish_detail(request, country_slug, dish_id):
             preparation_id = request.POST.get("preparation_id")
 
             if not preparation_id:
-                return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+                return _back_to_dish()
 
             preparation = get_object_or_404(
                 Preparation,
@@ -1158,7 +1179,7 @@ def dish_detail(request, country_slug, dish_id):
                 "margin": round(dish.cached_margin, 2),
             })
 
-        return redirect(f"/c/{country.slug}/dish/{dish.id}/")
+        return _back_to_dish()
 
     # =========================================================================
     # GET — build display context
