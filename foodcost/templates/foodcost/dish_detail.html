@@ -2228,12 +2228,12 @@
    legacy markup keep working as plain anchors within the active tab.
    ============================================================================ #}
 
-{# ============================================================================
+<!-- ============================================================================
    TAB "Основное" — Part 1: ERP sections (general, cost, ingredients,
    packaging, labor, extras). Availability is also "Основное" but it sits
    visually after the website sections in the legacy markup, so its
    wrapper opens again further down.
-   ============================================================================ #}
+   ============================================================================ -->
 {% if active_tab == "main" %}
 
 {% if can_edit_dish_base or can_view_dish_finance %}
@@ -2810,9 +2810,9 @@
 
 {% endif %}{# end active_tab == "main" — Part 1 (ERP) #}
 
-{# ============================================================================
+<!-- ============================================================================
    TAB "Сайт" — public-facing fields, photos, addons, upsell.
-   ============================================================================ #}
+   ============================================================================ -->
 {% if active_tab == "site" %}
 
 {# =============================================================== #}
@@ -3369,17 +3369,13 @@
 </div>
 {% endif %}
 
-{% endif %}{# end active_tab == "site" #}
+<!-- ============================================================================
+     "Доступность по филиалам" — moved into the Сайт tab per request.
+     Logically it controls where on the website the dish is visible, so
+     keeping it next to the website settings makes more sense to operators.
+     ============================================================================ -->
 
-{# ============================================================================
-   TAB "Основное" — Part 2: Availability (legacy layout puts it after
-   the website sections; logically it belongs to main).
-   ============================================================================ #}
-{% if active_tab == "main" %}
-
-{# =============================================================== #}
-{# 🚦 ДОСТУПНОСТЬ ПО ФИЛИАЛАМ                                       #}
-{# =============================================================== #}
+{# 🚦 ДОСТУПНОСТЬ ПО ФИЛИАЛАМ #}
 {% if can_edit_dish_availability %}
 <div class="ws card" id="tab-availability">
     <h2 class="ws-section-head">Доступность по филиалам</h2>
@@ -3449,7 +3445,7 @@
 </div>
 {% endif %}
 
-{% endif %}{# end active_tab == "main" — Part 2 (availability) #}
+{% endif %}{# end active_tab == "site" — includes availability #}
 
 </div>
 
@@ -3652,6 +3648,30 @@ setupLiveCalculation();
             card.classList.toggle("ws-toggle-card-active", cb.checked);
         });
     });
+})();
+
+// ===== Tab persistence — auto-inject _tab into every form submit =====
+// The view's `_back_to_dish()` helper reads `_tab` to decide whether to
+// redirect to ?tab=main or ?tab=site after a save. Without this every
+// save on the Сайт tab would bounce the operator back to Основное.
+//
+// We do this on the submit event (capture phase) instead of pre-stamping
+// every form on page load, so multi-tab browsing stays correct.
+(function setupTabPersistence() {
+    function currentTab() {
+        var m = window.location.search.match(/[?&]tab=([^&]+)/);
+        return m ? decodeURIComponent(m[1]) : "main";
+    }
+    document.addEventListener("submit", function (e) {
+        var form = e.target;
+        if (!form || form.tagName !== "FORM") return;
+        if (form.querySelector('input[name="_tab"]')) return;
+        var inp = document.createElement("input");
+        inp.type = "hidden";
+        inp.name = "_tab";
+        inp.value = currentTab();
+        form.appendChild(inp);
+    }, true);
 })();
 </script>
 
