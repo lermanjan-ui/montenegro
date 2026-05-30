@@ -23,6 +23,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+import json
+
 from .models import (
     UserProfile,
     HomepageBanner,
@@ -181,6 +183,42 @@ def homepage_settings_page(request, country_slug):
 
     error = None
 
+    # Helper: build the canonical settings URL preserving the active tab.
+    # Forms submit `_tab=<name>` in a hidden field so the redirect after
+    # save lands the operator back where they were. Without this every
+    # save (add bestseller, update banner, etc.) silently throws the user
+    # back to the "banners" default tab.
+    _VALID_TABS = {
+        "banners", "combo", "compact_upsell",
+        "product_blocks", "bestsellers",
+    }
+    def _redirect_to_tab():
+        # Priority: explicit form field > query string > default
+        tab = (
+            request.POST.get("_tab")
+            or request.GET.get("tab")
+            or ""
+        ).strip()
+        # Same for placement (used by the compact-upsell tab's segmented
+        # switch). Has no effect on other tabs.
+        placement = (
+            request.POST.get("_placement")
+            or request.GET.get("placement")
+            or ""
+        ).strip()
+        if placement not in ("home", "cart"):
+            placement = ""
+
+        base = f"/c/{country.slug}/settings/homepage/"
+        qs = []
+        if tab and tab in _VALID_TABS and tab != "banners":
+            qs.append(f"tab={tab}")
+        if placement and tab == "compact_upsell" and placement != "home":
+            qs.append(f"placement={placement}")
+        if qs:
+            return redirect(f"{base}?{'&'.join(qs)}")
+        return redirect(base)
+
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -215,7 +253,7 @@ def homepage_settings_page(request, country_slug):
                         request.POST.get("end_at")
                     ),
                 )
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "update_homepage_banner":
             banner = get_object_or_404(
@@ -260,7 +298,7 @@ def homepage_settings_page(request, country_slug):
                     request.POST.get("end_at")
                 )
                 banner.save()
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "delete_homepage_banner":
             banner = get_object_or_404(
@@ -269,7 +307,7 @@ def homepage_settings_page(request, country_slug):
                 country=country,
             )
             banner.delete()
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         # ---- Bestsellers (Part 12 — Хиты продаж) ----
         # Bestsellers reuse the existing Dish.is_featured flag. There is
@@ -290,7 +328,7 @@ def homepage_settings_page(request, country_slug):
             if not dish.is_featured:
                 dish.is_featured = True
                 dish.save(update_fields=["is_featured"])
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         if action == "update_bestseller":
             dish = get_object_or_404(
@@ -306,7 +344,7 @@ def homepage_settings_page(request, country_slug):
                 request.POST.get("site_sort_order")
             )
             dish.save(update_fields=["is_featured", "site_sort_order"])
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         if action == "remove_bestseller":
             dish = get_object_or_404(
@@ -318,7 +356,7 @@ def homepage_settings_page(request, country_slug):
                 dish.is_featured = False
                 dish.save(update_fields=["is_featured"])
             # NB: we never delete the Dish itself — only flip the flag.
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         # ---- Frequently bought blocks (Part 12 — Часто заказывают вместе) ----
         # Two related models:
@@ -346,7 +384,7 @@ def homepage_settings_page(request, country_slug):
                     ),
                     is_active=bool(request.POST.get("is_active")),
                 )
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "update_homepage_product_block":
             block = get_object_or_404(
@@ -364,7 +402,7 @@ def homepage_settings_page(request, country_slug):
                 )
                 block.is_active = bool(request.POST.get("is_active"))
                 block.save()
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "delete_homepage_product_block":
             block = get_object_or_404(
@@ -376,7 +414,7 @@ def homepage_settings_page(request, country_slug):
             # (on_delete=CASCADE in the model). Dishes themselves are NOT
             # affected — the FK from item to dish doesn't propagate.
             block.delete()
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         if action == "add_homepage_product_block_item":
             block = get_object_or_404(
@@ -402,7 +440,7 @@ def homepage_settings_page(request, country_slug):
                     "is_active": bool(request.POST.get("is_active")),
                 },
             )
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         if action == "update_homepage_product_block_item":
             # Look up the item via the block to enforce country ownership
@@ -422,7 +460,7 @@ def homepage_settings_page(request, country_slug):
             )
             item.is_active = bool(request.POST.get("is_active"))
             item.save(update_fields=["sort_order", "is_active"])
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         if action == "delete_homepage_product_block_item":
             block = get_object_or_404(
@@ -437,7 +475,7 @@ def homepage_settings_page(request, country_slug):
             )
             # Only the item row is removed — Dish stays intact.
             item.delete()
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         # ---- Compact upsell blocks (Part 2.1 — Компактный блок допродаж) ----
         # SEPARATE feature from "Часто заказывают вместе" above. These actions
@@ -473,7 +511,7 @@ def homepage_settings_page(request, country_slug):
                     ),
                     is_active=bool(request.POST.get("is_active")),
                 )
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "update_compact_upsell_block":
             block = get_object_or_404(
@@ -491,7 +529,7 @@ def homepage_settings_page(request, country_slug):
                 )
                 block.is_active = bool(request.POST.get("is_active"))
                 block.save()
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "delete_compact_upsell_block":
             block = get_object_or_404(
@@ -502,7 +540,7 @@ def homepage_settings_page(request, country_slug):
             # Cascade-deletes HomepageCompactUpsellItem rows automatically.
             # Dishes are NOT affected — the item→dish FK doesn't propagate.
             block.delete()
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         # ---- Compact upsell items (Part 2.2 — товары внутри блока) ----
         # Manage HomepageCompactUpsellItem rows inside a compact block.
@@ -541,7 +579,7 @@ def homepage_settings_page(request, country_slug):
                     "is_active": bool(request.POST.get("is_active")),
                 },
             )
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         if action == "update_compact_upsell_item":
             # Look up the item via its block to enforce country ownership
@@ -562,7 +600,7 @@ def homepage_settings_page(request, country_slug):
             item.is_active = bool(request.POST.get("is_active"))
             # Only item fields change — never the Dish.
             item.save(update_fields=["sort_order", "is_active"])
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         if action == "delete_compact_upsell_item":
             block = get_object_or_404(
@@ -577,7 +615,7 @@ def homepage_settings_page(request, country_slug):
             )
             # Only the item row is removed — Dish stays in the catalog.
             item.delete()
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
 
         # ----- Combo banners ("Комбо и акции" section) -----
         # Validation lives here rather than in the model because we want
@@ -621,7 +659,7 @@ def homepage_settings_page(request, country_slug):
                 if uploaded:
                     banner.background_image = uploaded
                 banner.save()
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "update_combo_banner":
             banner = get_object_or_404(
@@ -669,7 +707,7 @@ def homepage_settings_page(request, country_slug):
                     banner.background_image = None
 
                 banner.save()
-                return redirect(f"/c/{country.slug}/settings/homepage/")
+                return _redirect_to_tab()
 
         if action == "delete_combo_banner":
             banner = get_object_or_404(
@@ -680,7 +718,121 @@ def homepage_settings_page(request, country_slug):
             if banner.background_image:
                 banner.background_image.delete(save=False)
             banner.delete()
-            return redirect(f"/c/{country.slug}/settings/homepage/")
+            return _redirect_to_tab()
+
+        # ---------------------------------------------------------------
+        # Reorder action — fires when an operator drags a row in any of
+        # the page's tabs. Body is JSON-encoded form data, payload:
+        #
+        #   action       = "reorder"
+        #   entity       = "homepage_banner" | "combo_banner"
+        #                 | "compact_upsell_block" | "compact_upsell_item"
+        #                 | "homepage_product_block" | "product_block_item"
+        #                 | "bestseller"
+        #   ids          = JSON array of ids in the new order
+        #   parent_id    = optional, used for nested items (e.g. items
+        #                  inside a compact_upsell_block need the block id
+        #                  so we don't mutate sort_order on items from
+        #                  another block).
+        #
+        # We answer with HTTP 204 on success — front-end keeps the order
+        # the user already sees, no full reload needed. On error we return
+        # 400 with a short reason; the front-end shows a toast.
+        if action == "reorder":
+            from django.http import JsonResponse, HttpResponseBadRequest
+
+            entity = (request.POST.get("entity") or "").strip()
+            try:
+                ids = json.loads(request.POST.get("ids") or "[]")
+            except (ValueError, TypeError):
+                return HttpResponseBadRequest("bad ids")
+            if not isinstance(ids, list):
+                return HttpResponseBadRequest("ids must be a list")
+            try:
+                ids = [int(i) for i in ids]
+            except (TypeError, ValueError):
+                return HttpResponseBadRequest("ids must be integers")
+
+            parent_id = request.POST.get("parent_id")
+            try:
+                parent_id = int(parent_id) if parent_id else None
+            except (TypeError, ValueError):
+                parent_id = None
+
+            # Whitelist of entity → (Model, parent FK kwarg or None).
+            # The parent kwarg scopes the update to one container so a
+            # malicious payload can't touch sibling collections.
+            ENTITY_MAP = {
+                "homepage_banner": (HomepageBanner, "country"),
+                "combo_banner": (HomeComboBanner, "country"),
+                "compact_upsell_block": (HomepageCompactUpsellBlock, "country"),
+                "compact_upsell_item": (HomepageCompactUpsellItem, "block_id"),
+                "homepage_product_block": (HomepageProductBlock, "country"),
+                "product_block_item": (HomepageProductBlockItem, "block_id"),
+            }
+            mapping = ENTITY_MAP.get(entity)
+            if mapping is None:
+                return HttpResponseBadRequest("unknown entity")
+            Model, parent_kw = mapping
+
+            if parent_kw == "country":
+                qs = Model.objects.filter(country=country, id__in=ids)
+            elif parent_kw == "block_id":
+                if parent_id is None:
+                    return HttpResponseBadRequest("parent_id required")
+                # Verify the parent block belongs to this country before
+                # touching items.
+                if entity == "compact_upsell_item":
+                    parent = HomepageCompactUpsellBlock.objects.filter(
+                        id=parent_id, country=country,
+                    ).first()
+                else:  # product_block_item
+                    parent = HomepageProductBlock.objects.filter(
+                        id=parent_id, country=country,
+                    ).first()
+                if parent is None:
+                    return HttpResponseBadRequest("parent not found")
+                qs = Model.objects.filter(block_id=parent_id, id__in=ids)
+            else:
+                qs = Model.objects.none()
+
+            by_id = {obj.id: obj for obj in qs}
+            for position, obj_id in enumerate(ids):
+                obj = by_id.get(obj_id)
+                if obj is None:
+                    continue
+                if obj.sort_order != position:
+                    obj.sort_order = position
+                    obj.save(update_fields=["sort_order"])
+
+            return JsonResponse({"ok": True})
+
+        # ---------------------------------------------------------------
+        # Bestseller reorder — Dish.site_sort_order, not a dedicated table.
+        # Kept separate from the generic reorder above because the field
+        # lives on Dish itself and we filter by is_featured=True instead.
+        if action == "reorder_bestsellers":
+            from django.http import JsonResponse, HttpResponseBadRequest
+
+            try:
+                ids = json.loads(request.POST.get("ids") or "[]")
+                ids = [int(i) for i in ids]
+            except (ValueError, TypeError):
+                return HttpResponseBadRequest("bad ids")
+
+            qs = Dish.objects.filter(
+                country=country, is_featured=True, id__in=ids,
+            )
+            by_id = {d.id: d for d in qs}
+            for position, dish_id in enumerate(ids):
+                d = by_id.get(dish_id)
+                if d is None:
+                    continue
+                if d.site_sort_order != position:
+                    d.site_sort_order = position
+                    d.save(update_fields=["site_sort_order"])
+
+            return JsonResponse({"ok": True})
 
     # ---- GET render ----
     now = timezone.now()
@@ -793,6 +945,45 @@ def homepage_settings_page(request, country_slug):
         .order_by("sort_order", "id")
     )
 
+    # Active tab — picked from ?tab= query string, defaults to "banners".
+    # The template uses this to highlight the right pill and to swap which
+    # section is rendered. Keeping it URL-driven means the operator can
+    # reload / share / back-button between tabs.
+    VALID_TABS = {
+        "banners", "combo", "compact_upsell",
+        "product_blocks", "bestsellers",
+    }
+    active_tab = request.GET.get("tab") or "banners"
+    if active_tab not in VALID_TABS:
+        active_tab = "banners"
+
+    # Sub-tab for the compact upsell tab — picks home or cart placement.
+    # Same URL-driven pattern as the main tabs. Ignored on other tabs.
+    active_placement = (request.GET.get("placement") or "home").strip()
+    if active_placement not in ("home", "cart"):
+        active_placement = "home"
+
+    # Pick which list + labels to expose to the template under the
+    # `current_*` names. We do this here (not via {% with %} in the
+    # template) because Django parses templates synchronously — it
+    # can't tolerate a {% with %} opened inside one {% if %} branch
+    # and closed in another. Doing it in Python is cleaner and the
+    # template just uses `current_blocks` etc.
+    if active_placement == "cart":
+        current_blocks = cart_upsell_blocks
+        current_placement_label = "корзине"
+        current_placement_default_title = "Добавить к заказу"
+        current_placement_surface_hint = (
+            "На странице корзины под прогрессом доставки."
+        )
+    else:
+        current_blocks = compact_upsell_blocks
+        current_placement_label = "главной"
+        current_placement_default_title = "Часто заказывают вместе"
+        current_placement_surface_hint = (
+            "На главной странице сайта в виде горизонтальной ленты."
+        )
+
     return render(request, "foodcost/homepage_settings.html", {
         "country": country,
         "banners": banners,
@@ -800,6 +991,8 @@ def homepage_settings_page(request, country_slug):
         "ACTION_NONE": HomepageBanner.ACTION_NONE,
         "now": now,
         "error": error,
+        "active_tab": active_tab,
+        "active_placement": active_placement,
         # Bestsellers (Part 12)
         "featured_dishes": featured_dishes,
         "available_dishes": available_dishes,
@@ -812,6 +1005,12 @@ def homepage_settings_page(request, country_slug):
         "cart_upsell_blocks": cart_upsell_blocks,
         # Compact upsell dish dropdown (shared between home + cart placements)
         "available_compact_upsell_dishes": available_compact_upsell_dishes,
+        # Compact upsell — selected placement view (aliased above so the
+        # template doesn't have to choose between *_blocks lists itself)
+        "current_blocks": current_blocks,
+        "current_placement_label": current_placement_label,
+        "current_placement_default_title": current_placement_default_title,
+        "current_placement_surface_hint": current_placement_surface_hint,
         # Combo banners — "Комбо и акции" pair on the homepage
         "combo_banners": combo_banners,
         "combo_action_choices": HomeComboBanner.ACTION_TYPE_CHOICES,

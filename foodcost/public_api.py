@@ -678,27 +678,86 @@ DEFAULT_UPSELL_LIMIT = 4
 
 def _build_upsell_products(request, dish, location=None, limit=DEFAULT_UPSELL_LIMIT):
     """
-    Build "upsell_products" — other visible, available dishes from the same
-    public categories as `dish` (or from the legacy single `category` if
-    public_categories is empty). Self is excluded.
+    Build "upsell_products" for a dish detail page. Two sources, in order:
 
-    Output shape matches the spec:
-        [
-          {"id": 52, "name": "Cola", "slug": "cola",
-           "image": "https://...", "price": 12000, "is_available": true},
-          ...
-        ]
+      1. MANUAL — DishUpsellLink rows curated by the operator. If at least
+         one ACTIVE link exists, we use that list (regardless of how many
+         of those targets are actually visible/available — see filtering
+         below). The operator's choice wins.
 
-    Image priority: photo_url → uploaded photo absolute URL → null,
-    same as elsewhere in this module.
+      2. AUTO — same-category dishes, exactly like before. Used only when
+         the dish has zero curated links, so existing dishes that nobody
+         touched keep showing recommendations.
 
-    No new DB tables / no manual relations — the picks are derived from
-    the existing category links, so this works for any project without
-    extra setup.
+    The shape of each item is the SAME for both sources — the frontend
+    can't tell which mode is active and doesn't need to.
+
+    Filtering rules (same in both modes):
+      - excluded: the dish itself
+      - excluded: dishes not visible on site / in stop-list / archived
+      - excluded: dishes blocked by per-location DishAvailability
+      - sorted by manual sort_order (manual mode) or site_sort_order (auto)
+      - capped at `limit` items
     """
     if limit <= 0:
         return []
 
+    # ---- 1. Manual links first ----
+    # Defensive import to avoid circular reference at module load.
+    from .models import DishUpsellLink
+
+    manual_links = list(
+        DishUpsellLink.objects
+        .filter(from_dish=dish, is_active=True)
+        .select_related("to_dish")
+        .order_by("sort_order", "id")
+    )
+
+    if manual_links:
+        # We HAVE manual curation — use it. Even if every target turns out
+        # to be hidden/archived, we return an empty list rather than
+        # falling back to auto — the operator's explicit choice is "show
+        # these items" and an empty result is still that choice.
+        target_ids = [link.to_dish_id for link in manual_links]
+        visible_qs = (
+            _visible_dishes_qs(dish.country, location=location)
+            .filter(id__in=target_ids)
+            .exclude(id=dish.id)
+        )
+        visible_by_id = {d.id: d for d in visible_qs}
+
+        items = []
+        for link in manual_links:
+            target = visible_by_id.get(link.to_dish_id)
+            if target is None:
+                # Dish was archived / hidden / stop-listed after being
+                # added to the upsell list — silently skip it. We DO NOT
+                # raise; the link row stays in admin so the operator can
+                # see what's broken and re-enable the dish if intended.
+                continue
+            items.append({
+                "id": target.id,
+                "name": _display_name(target),
+                "slug": target.slug or "",
+                "image": _resolve_image(
+                    request,
+                    target.photo,
+                    getattr(target, "photo_url", "") or "",
+                ),
+                "price": _to_float(target.selling_price),
+                # New field per the upsell-link spec: human-readable weight.
+                # Same formatter used in compact-upsell, so the cart and
+                # product-detail strips look consistent.
+                "weight": _format_weight(target),
+                "is_available": is_dish_available(target, location=location),
+            })
+            if len(items) >= limit:
+                break
+
+        return items
+
+    # ---- 2. Auto fallback (legacy behavior — keep stable for dishes
+    # without any manual curation) ----
     category_ids = _dish_public_category_ids(dish)
     if not category_ids:
         return []
@@ -735,6 +794,8 @@ def _build_upsell_products(request, dish, location=None, limit=DEFAULT_UPSELL_LI
                 getattr(candidate, "photo_url", "") or "",
             ),
             "price": _to_float(candidate.selling_price),
+            # Match the manual-mode payload shape exactly.
+            "weight": _format_weight(candidate),
             "is_available": is_dish_available(candidate, location=location),
         })
         if len(items) >= limit:
@@ -1182,6 +1243,101 @@ PAYMENT_METHOD_LABELS = {
     "payme":       "Payme",
     "online_card": "Карта онлайн",
 }
+
+
+# -----------------------------------------------------------------------------
+# Online-payment TTL — kill orders that sat unpaid past the window
+# -----------------------------------------------------------------------------
+# Online-payment orders that sit in awaiting_payment longer than this are
+# considered abandoned. We mark them auto_expired and refuse late callbacks
+# from the gateway — so a user who clicks "Pay" 25 hours after creating the
+# order can't suddenly revive it. Payme's own timeout is 12h, but it counts
+# from CreateTransaction, not from our Order.created_at, so the two timers
+# are NOT synchronized — see PaymeTransaction model docstring.
+#
+# 24h is a conservative window: long enough for a real user to come back
+# the next day, short enough to keep the awaiting_payment list manageable.
+# Set ORDER_AWAITING_PAYMENT_TTL_HOURS env to override.
+import os as _os
+try:
+    PAYMENT_AWAITING_TTL_HOURS = int(
+        _os.environ.get("ORDER_AWAITING_PAYMENT_TTL_HOURS", "24")
+    )
+    if PAYMENT_AWAITING_TTL_HOURS <= 0:
+        PAYMENT_AWAITING_TTL_HOURS = 24
+except (TypeError, ValueError):
+    PAYMENT_AWAITING_TTL_HOURS = 24
+
+
+def _payment_ttl_delta():
+    """Return the TTL as a timedelta — used by expire / tracking views."""
+    from datetime import timedelta
+    return timedelta(hours=PAYMENT_AWAITING_TTL_HOURS)
+
+
+def _order_expires_at(order):
+    """
+    When does this order's awaiting_payment window close?
+    Returns a tz-aware datetime, or None if the order is not on the online
+    payment timer (cash, paid, cancelled, etc.).
+    """
+    if order is None or order.created_at is None:
+        return None
+    if order.payment_status == Order.PAYMENT_STATUS_PAID:
+        return None
+    if order.payment_status == Order.PAYMENT_STATUS_CASH:
+        return None
+    if order.status not in (Order.STATUS_AWAITING_PAYMENT,
+                            Order.STATUS_PAYMENT_FAILED):
+        return None
+    return order.created_at + _payment_ttl_delta()
+
+
+def _maybe_lazy_expire(order):
+    """
+    Lazy auto-expire: if an awaiting_payment order is older than TTL, mark
+    it expired in a single atomic+select_for_update transaction. Idempotent
+    — already-expired or non-eligible orders are returned unchanged.
+
+    Returns the (possibly mutated) order. Safe to call from any read path;
+    the row is only locked when we ACTUALLY need to write.
+    """
+    if order is None or order.auto_expired:
+        return order
+    if order.status != Order.STATUS_AWAITING_PAYMENT:
+        return order
+    if order.payment_status == Order.PAYMENT_STATUS_PAID:
+        return order
+    if order.created_at is None:
+        return order
+    if (timezone.now() - order.created_at) < _payment_ttl_delta():
+        return order
+
+    # Time to expire. Lock the row to serialize with any in-flight callback
+    # that might be promoting it to paid.
+    with transaction.atomic():
+        try:
+            locked = Order.objects.select_for_update().get(pk=order.pk)
+        except Order.DoesNotExist:
+            return order
+        # Re-check under the lock — a callback might have just confirmed
+        # payment while we were waiting for the row.
+        if locked.auto_expired:
+            return locked
+        if locked.payment_status == Order.PAYMENT_STATUS_PAID:
+            return locked
+        if locked.status != Order.STATUS_AWAITING_PAYMENT:
+            return locked
+        if (timezone.now() - locked.created_at) < _payment_ttl_delta():
+            return locked
+
+        locked.auto_expired = True
+        locked.payment_status = Order.PAYMENT_STATUS_EXPIRED
+        locked.status = Order.STATUS_PAYMENT_FAILED
+        locked.save(update_fields=[
+            "auto_expired", "payment_status", "status",
+        ])
+        return locked
 
 
 # -----------------------------------------------------------------------------
@@ -3592,6 +3748,14 @@ def click_callback(request):
                     click_trans_id=click_trans_id,
                     merchant_trans_id=merchant_trans_id,
                 )
+            # Expired by our TTL — refuse. Click will mark the transaction
+            # cancelled and won't actually debit the card.
+            if locked.auto_expired:
+                return _click_reply(
+                    ERROR_TRANSACTION_CANCELLED, "Order expired",
+                    click_trans_id=click_trans_id,
+                    merchant_trans_id=merchant_trans_id,
+                )
             # merchant_prepare_id = our order pk (stable, unique).
             return _click_reply(
                 ERROR_OK, "Success",
@@ -3611,6 +3775,17 @@ def click_callback(request):
                 merchant_trans_id=merchant_trans_id,
                 merchant_prepare_id=str(locked.pk),
                 merchant_confirm_id=str(locked.pk),
+            )
+
+        # Zombie-revival guard: a late callback after auto-expire MUST NOT
+        # promote the order to paid. Reply -9 so Click rolls back its side.
+        # Checked AFTER the idempotent already-paid branch so a legit
+        # already-paid order can't be retroactively expired.
+        if locked.auto_expired:
+            return _click_reply(
+                ERROR_TRANSACTION_CANCELLED, "Order expired",
+                click_trans_id=click_trans_id,
+                merchant_trans_id=merchant_trans_id,
             )
 
         # Branch by Click's error code in the Complete request:
@@ -3795,11 +3970,6 @@ def order_pay_retry(request, public_order_number):
 # Distinct from /home/banners (hero, single, full-width) — these are two
 # narrower side-by-side cards with promo-code / category / external-link
 # actions.
-#
-# Returns at most 2 banners — that's the visual format. If only one is
-# active the frontend renders it full-width; if zero, the whole section
-# is hidden.
-
 
 COMBO_BANNER_LIMIT = 2
 
@@ -3810,7 +3980,6 @@ def _serialize_combo_banner(request, banner):
         "id": banner.id,
         "title": banner.title or "",
         "subtitle": banner.subtitle or "",
-        # _resolve_image: priority external_url → uploaded file → None.
         "background_image": _resolve_image(
             request, banner.background_image, banner.background_image_url,
         ),
@@ -3832,7 +4001,7 @@ def home_combo_banners(request):
     orders by sort_order then id, caps at 2 results.
 
     Empty case: an empty banners list. The frontend hides the section in
-    that case — there is no fallback to a hardcoded pair anymore, by spec.
+    that case — there is no fallback to a hardcoded pair anymore.
     """
     country, err = get_public_country(request)
     if err:
@@ -3856,11 +4025,6 @@ def home_combo_banners(request):
 # "Добавить к заказу" — dish upsell strip on the /cart page. Reuses the
 # HomepageCompactUpsellBlock model with placement="cart" so the same admin
 # UI / serializer / item-management code services both placements.
-#
-# Behavior matches /home/compact-upsell exactly, with two differences:
-#   - filtered by placement=PLACEMENT_CART
-#   - capped at CART_UPSELL_LIMIT (10) products
-
 
 CART_UPSELL_LIMIT = 10
 CART_UPSELL_DEFAULT_TITLE = "Добавить к заказу"
@@ -3872,10 +4036,6 @@ def cart_upsell(request):
     """
     Cart-page upsell strip. Reuses HomepageCompactUpsellBlock with
     placement="cart" — same admin/data, different surface on the website.
-
-    Empty states:
-      - no active block          -> enabled=false, default title, products=[]
-      - active block, 0 products -> enabled=true,  block title,   products=[]
     """
     country, err = get_public_country(request)
     if err:
@@ -3937,3 +4097,503 @@ def cart_upsell(request):
         "products": products,
     })
     return _apply_homepage_cache_headers(response)
+
+
+# =============================================================================
+# 💳 ENDPOINT: POST /api/payments/payme/callback/   (Payme JSON-RPC)
+# =============================================================================
+# Payme uses a JSON-RPC 2.0 envelope (no signature in the URL). Auth is HTTP
+# Basic: Authorization: Basic base64("Paycom:" + SECRET_KEY).
+#
+# Six methods land on ONE endpoint, differentiated by params.method:
+#   CheckPerformTransaction  — can we accept payment for this order?
+#   CreateTransaction        — Payme reserves the order
+#   PerformTransaction       — payment confirmed; mark order paid
+#   CancelTransaction        — payment cancelled or refunded
+#   CheckTransaction         — Payme asks "what's the status of tx X?"
+#   GetStatement             — reconciliation (list transactions in a range)
+#
+# Critical invariants:
+#   1. Repeated CreateTransaction with the SAME id must return the SAME
+#      create_time and state (Sandbox enforces this).
+#   2. Repeated PerformTransaction on an already-completed tx must return
+#      the SAME perform_time and state.
+#   3. CancelTransaction sets state=-1 if was CREATED, state=-2 if was
+#      COMPLETED.
+#   4. Amount in params.amount is TIYIN — compare against int(total * 100).
+#   5. Reply HTTP status is ALWAYS 200 — error code goes in the JSON body.
+#   6. Late callbacks for auto_expired orders are REFUSED with -31008.
+
+
+def _payme_now_ms():
+    """Current time as 13-digit ms-epoch (Payme's Timestamp type)."""
+    import time
+    return int(time.time() * 1000)
+
+
+def _payme_rpc_response(request_id, *, result=None, error=None):
+    """JSON-RPC 2.0 reply envelope. HTTP status is always 200."""
+    body = {"jsonrpc": "2.0", "id": request_id}
+    if error is not None:
+        body["error"] = error
+    else:
+        body["result"] = result
+    return JsonResponse(body, status=200)
+
+
+def _payme_error_body(exc):
+    """Convert a PaymeError exception into Payme's JSON-RPC error object."""
+    body = {
+        "code": exc.code,
+        "message": exc.message,
+    }
+    if exc.data is not None:
+        body["data"] = exc.data
+    return body
+
+
+def _payme_locate_order(account):
+    """Resolve params.account → Order. Raises PaymeError(-31050) if not found."""
+    from .payments.payme import PaymeError, ERROR_ACCOUNT_NOT_FOUND
+    from django.conf import settings as dj_settings
+
+    account_field = (
+        getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"
+    ).strip()
+    if not isinstance(account, dict):
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    raw_value = account.get(account_field)
+    if raw_value is None or str(raw_value).strip() == "":
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    raw_value = str(raw_value).strip()
+    order = (
+        Order.objects.filter(public_order_number=raw_value)
+        .select_related("country", "location", "payment_method")
+        .first()
+    )
+    if order is None and raw_value.isdigit():
+        order = (
+            Order.objects.filter(pk=int(raw_value))
+            .select_related("country", "location", "payment_method")
+            .first()
+        )
+
+    if order is None:
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    if order.status == Order.STATUS_CANCELLED:
+        raise PaymeError(ERROR_ACCOUNT_NOT_FOUND, data=account_field)
+
+    return order
+
+
+def _payme_handle_check_perform(params):
+    """CheckPerformTransaction — "can this order be paid?" """
+    from .payments.payme import (
+        PaymeError, amount_matches_order,
+        ERROR_INVALID_AMOUNT, ERROR_INVALID_STATE,
+    )
+    order = _payme_locate_order(params.get("account"))
+
+    # Auto-expired guard — first line of zombie defense.
+    order = _maybe_lazy_expire(order)
+    if order.auto_expired:
+        raise PaymeError(ERROR_INVALID_STATE)
+
+    amount = params.get("amount")
+    if not isinstance(amount, int) or not amount_matches_order(order, amount):
+        raise PaymeError(ERROR_INVALID_AMOUNT)
+
+    if order.payment_status == Order.PAYMENT_STATUS_PAID:
+        raise PaymeError(ERROR_INVALID_STATE)
+
+    return {"allow": True}
+
+
+def _payme_handle_create_transaction(params):
+    """CreateTransaction with idempotency + zombie guard."""
+    from .payments.payme import (
+        PaymeError, amount_matches_order,
+        ERROR_INVALID_AMOUNT, ERROR_INVALID_STATE, ERROR_ACCOUNT_NOT_FOUND,
+        STATE_CREATED,
+    )
+    from .models import PaymeTransaction
+    from django.conf import settings as dj_settings
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_INVALID_STATE)
+
+    order = _payme_locate_order(params.get("account"))
+
+    amount = params.get("amount")
+    if not isinstance(amount, int) or not amount_matches_order(order, amount):
+        raise PaymeError(ERROR_INVALID_AMOUNT)
+
+    payme_time_ms = params.get("time")
+    if not isinstance(payme_time_ms, int):
+        raise PaymeError(ERROR_INVALID_STATE)
+
+    with transaction.atomic():
+        try:
+            locked_order = Order.objects.select_for_update().get(pk=order.pk)
+        except Order.DoesNotExist:
+            raise PaymeError(
+                ERROR_ACCOUNT_NOT_FOUND,
+                data=(getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"),
+            )
+
+        # IDEMPOTENCY first.
+        existing = PaymeTransaction.objects.filter(
+            payme_transaction_id=payme_tx_id
+        ).first()
+        if existing is not None:
+            if existing.order_id != locked_order.id:
+                raise PaymeError(ERROR_INVALID_STATE)
+            return {
+                "create_time": existing.create_time_ms,
+                "transaction": str(existing.id),
+                "state": existing.state,
+            }
+
+        # ZOMBIE GUARD: auto-expired refuses fresh transactions.
+        if locked_order.auto_expired:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        # At most one active reservation per order.
+        active = PaymeTransaction.objects.filter(
+            order=locked_order, state=STATE_CREATED,
+        ).first()
+        if active is not None:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        if locked_order.payment_status == Order.PAYMENT_STATUS_PAID:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        if locked_order.status == Order.STATUS_CANCELLED:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        now_ms = _payme_now_ms()
+        ptx = PaymeTransaction.objects.create(
+            payme_transaction_id=payme_tx_id,
+            order=locked_order,
+            amount_tiyin=amount,
+            state=STATE_CREATED,
+            payme_time_ms=payme_time_ms,
+            create_time_ms=now_ms,
+            raw_last_params=params,
+        )
+        if locked_order.status != Order.STATUS_AWAITING_PAYMENT:
+            locked_order.status = Order.STATUS_AWAITING_PAYMENT
+        if locked_order.payment_status != Order.PAYMENT_STATUS_PENDING:
+            locked_order.payment_status = Order.PAYMENT_STATUS_PENDING
+        locked_order.payment_transaction_id = payme_tx_id
+        locked_order.save(update_fields=[
+            "status", "payment_status", "payment_transaction_id",
+        ])
+
+    return {
+        "create_time": ptx.create_time_ms,
+        "transaction": str(ptx.id),
+        "state": ptx.state,
+    }
+
+
+def _payme_handle_perform_transaction(params):
+    """PerformTransaction — final confirmation. Zombie guard inside lock."""
+    from .payments.payme import (
+        PaymeError,
+        ERROR_TRANSACTION_NOT_FOUND, ERROR_INVALID_STATE,
+        STATE_CREATED, STATE_COMPLETED,
+    )
+    from .models import PaymeTransaction
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    with transaction.atomic():
+        try:
+            ptx = (
+                PaymeTransaction.objects
+                .select_for_update()
+                .select_related("order")
+                .get(payme_transaction_id=payme_tx_id)
+            )
+        except PaymeTransaction.DoesNotExist:
+            raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+        # IDEMPOTENCY: repeated Perform — same response.
+        if ptx.state == STATE_COMPLETED:
+            return {
+                "transaction": str(ptx.id),
+                "perform_time": ptx.perform_time_ms,
+                "state": ptx.state,
+            }
+
+        if ptx.state != STATE_CREATED:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        order = Order.objects.select_for_update().get(pk=ptx.order_id)
+
+        # ZOMBIE GUARD inside lock.
+        if order.auto_expired:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        now_ms = _payme_now_ms()
+        ptx.state = STATE_COMPLETED
+        ptx.perform_time_ms = now_ms
+        ptx.raw_last_params = params
+        ptx.save(update_fields=[
+            "state", "perform_time_ms", "raw_last_params", "updated_at",
+        ])
+
+        order.payment_status = Order.PAYMENT_STATUS_PAID
+        order.payment_transaction_id = payme_tx_id
+        order.payment_paid_at = timezone.now()
+        if order.status == Order.STATUS_AWAITING_PAYMENT:
+            order.status = Order.STATUS_NEW
+        order.save(update_fields=[
+            "payment_status", "payment_transaction_id",
+            "payment_paid_at", "status",
+        ])
+
+    return {
+        "transaction": str(ptx.id),
+        "perform_time": ptx.perform_time_ms,
+        "state": ptx.state,
+    }
+
+
+def _payme_handle_cancel_transaction(params):
+    """
+    CancelTransaction — STATE_CREATED → -1, STATE_COMPLETED → -2 (refund).
+    Refund sets payment_status=REFUNDED (distinct from CANCELLED).
+    """
+    from .payments.payme import (
+        PaymeError,
+        ERROR_TRANSACTION_NOT_FOUND, ERROR_INVALID_STATE,
+        STATE_CREATED, STATE_COMPLETED,
+        STATE_CANCELLED, STATE_CANCELLED_AFTER,
+    )
+    from .models import PaymeTransaction
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    reason = params.get("reason")
+    if reason is not None and not isinstance(reason, int):
+        reason = None
+
+    with transaction.atomic():
+        try:
+            ptx = (
+                PaymeTransaction.objects
+                .select_for_update()
+                .select_related("order")
+                .get(payme_transaction_id=payme_tx_id)
+            )
+        except PaymeTransaction.DoesNotExist:
+            raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+        # IDEMPOTENCY: already cancelled — same response.
+        if ptx.state in (STATE_CANCELLED, STATE_CANCELLED_AFTER):
+            return {
+                "transaction": str(ptx.id),
+                "cancel_time": ptx.cancel_time_ms,
+                "state": ptx.state,
+            }
+
+        order = Order.objects.select_for_update().get(pk=ptx.order_id)
+        now_ms = _payme_now_ms()
+
+        if ptx.state == STATE_CREATED:
+            new_state = STATE_CANCELLED
+        elif ptx.state == STATE_COMPLETED:
+            new_state = STATE_CANCELLED_AFTER
+        else:
+            raise PaymeError(ERROR_INVALID_STATE)
+
+        ptx.state = new_state
+        ptx.cancel_time_ms = now_ms
+        ptx.reason = reason
+        ptx.raw_last_params = params
+        ptx.save(update_fields=[
+            "state", "cancel_time_ms", "reason",
+            "raw_last_params", "updated_at",
+        ])
+
+        if new_state == STATE_CANCELLED:
+            # Before-pay cancel. Preserve EXPIRED if it's stronger.
+            if order.payment_status != Order.PAYMENT_STATUS_EXPIRED:
+                order.payment_status = Order.PAYMENT_STATUS_FAILED
+            if order.status == Order.STATUS_AWAITING_PAYMENT:
+                order.status = Order.STATUS_PAYMENT_FAILED
+            order.save(update_fields=["payment_status", "status"])
+        else:  # STATE_CANCELLED_AFTER → refund
+            order.payment_status = Order.PAYMENT_STATUS_REFUNDED
+            order.save(update_fields=["payment_status"])
+
+    return {
+        "transaction": str(ptx.id),
+        "cancel_time": ptx.cancel_time_ms,
+        "state": ptx.state,
+    }
+
+
+def _payme_handle_check_transaction(params):
+    """CheckTransaction — read-only."""
+    from .payments.payme import (
+        PaymeError, ERROR_TRANSACTION_NOT_FOUND,
+    )
+    from .models import PaymeTransaction
+
+    payme_tx_id = str(params.get("id") or "").strip()
+    if not payme_tx_id:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    ptx = PaymeTransaction.objects.filter(
+        payme_transaction_id=payme_tx_id
+    ).first()
+    if ptx is None:
+        raise PaymeError(ERROR_TRANSACTION_NOT_FOUND)
+
+    return {
+        "create_time": ptx.create_time_ms,
+        "perform_time": ptx.perform_time_ms,
+        "cancel_time": ptx.cancel_time_ms,
+        "transaction": str(ptx.id),
+        "state": ptx.state,
+        "reason": ptx.reason,
+    }
+
+
+def _payme_handle_get_statement(params):
+    """GetStatement — Payme polls a time range for reconciliation."""
+    from .models import PaymeTransaction
+    from django.conf import settings as dj_settings
+
+    frm = params.get("from")
+    to = params.get("to")
+    if not isinstance(frm, int) or not isinstance(to, int):
+        return {"transactions": []}
+
+    qs = PaymeTransaction.objects.filter(
+        payme_time_ms__gte=frm, payme_time_ms__lte=to,
+    ).select_related("order").order_by("payme_time_ms")
+
+    account_field = (
+        getattr(dj_settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"
+    ).strip()
+
+    out = []
+    for ptx in qs[:10000]:
+        order = ptx.order
+        out.append({
+            "id": ptx.payme_transaction_id,
+            "time": ptx.payme_time_ms,
+            "amount": ptx.amount_tiyin,
+            "account": {
+                account_field: order.public_order_number or str(order.id),
+            },
+            "create_time": ptx.create_time_ms,
+            "perform_time": ptx.perform_time_ms,
+            "cancel_time": ptx.cancel_time_ms,
+            "transaction": str(ptx.id),
+            "state": ptx.state,
+            "reason": ptx.reason,
+        })
+    return {"transactions": out}
+
+
+_PAYME_HANDLERS = {
+    "CheckPerformTransaction": _payme_handle_check_perform,
+    "CreateTransaction":       _payme_handle_create_transaction,
+    "PerformTransaction":      _payme_handle_perform_transaction,
+    "CancelTransaction":       _payme_handle_cancel_transaction,
+    "CheckTransaction":        _payme_handle_check_transaction,
+    "GetStatement":            _payme_handle_get_statement,
+}
+
+
+@csrf_exempt
+def payme_callback(request):
+    """Single JSON-RPC entry point for all 6 Merchant API methods."""
+    from .payments.payme import (
+        PaymeError, verify_payme_basic_auth,
+        ERROR_METHOD_NOT_POST, ERROR_PARSE, ERROR_INVALID_REQUEST,
+        ERROR_METHOD_NOT_FOUND, ERROR_INSUFFICIENT_PRIVILEGE,
+        ERROR_SYSTEM,
+    )
+
+    request_id = None
+
+    if request.method != "POST":
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_METHOD_NOT_POST)),
+        )
+
+    # 1) Auth FIRST. Wrong creds → -32504, no body parsing.
+    if not verify_payme_basic_auth(request):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INSUFFICIENT_PRIVILEGE)),
+        )
+
+    # 2) Parse JSON.
+    try:
+        body = request.body.decode("utf-8") if request.body else ""
+        payload = json.loads(body) if body else {}
+    except (ValueError, UnicodeDecodeError):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_PARSE)),
+        )
+
+    if not isinstance(payload, dict):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INVALID_REQUEST)),
+        )
+
+    request_id = payload.get("id")
+    method = payload.get("method")
+    params = payload.get("params") or {}
+
+    if not isinstance(method, str) or not method:
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INVALID_REQUEST)),
+        )
+    if not isinstance(params, dict):
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_INVALID_REQUEST)),
+        )
+
+    handler = _PAYME_HANDLERS.get(method)
+    if handler is None:
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(
+                PaymeError(ERROR_METHOD_NOT_FOUND, data=method)
+            ),
+        )
+
+    # 3) Dispatch with error normalization.
+    try:
+        result = handler(params)
+    except PaymeError as exc:
+        return _payme_rpc_response(request_id, error=_payme_error_body(exc))
+    except Exception:
+        # Don't leak internal error messages to Payme.
+        return _payme_rpc_response(
+            request_id,
+            error=_payme_error_body(PaymeError(ERROR_SYSTEM)),
+        )
+
+    return _payme_rpc_response(request_id, result=result)

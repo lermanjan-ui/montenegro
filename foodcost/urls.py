@@ -320,4 +320,25 @@ urlpatterns = [
         public_api.click_callback,
         name="payments_click_callback_noslash",
     ),
+
+    # =========================================================================
+    # 💳 PAYMENTS (Part 3) — Payme (Paycom) JSON-RPC callback
+    # =========================================================================
+    # ONE endpoint receives all 6 Merchant API methods (CheckPerformTransaction,
+    # CreateTransaction, PerformTransaction, CancelTransaction, CheckTransaction,
+    # GetStatement). Auth is HTTP Basic ("Paycom:<SECRET_KEY>") — verified
+    # server-side. Configure this URL in the Payme merchant cabinet:
+    #
+    #   https://<your-backend-host>/api/payments/payme/callback/
+    #
+    path(
+        "api/payments/payme/callback/",
+        public_api.payme_callback,
+        name="payments_payme_callback",
+    ),
+    path(
+        "api/payments/payme/callback",
+        public_api.payme_callback,
+        name="payments_payme_callback_noslash",
+    ),
 ]

@@ -10,6 +10,7 @@ from .models import (
     PreparationItem,
     DishCategory,
     Dish,
+    DishUpsellLink,
     DishProductItem,
     DishPreparationItem,
     Employee,
@@ -45,12 +46,15 @@ from .models import (
     DishAddon,
     # 🏠 Homepage CMS (Part 11)
     HomepageBanner,
-    HomeComboBanner,
     HomepageProductBlock,
     HomepageProductBlockItem,
     # 🏠 Homepage compact upsell (Part 1 — separate from frequently-bought)
     HomepageCompactUpsellBlock,
     HomepageCompactUpsellItem,
+    # 🪧 Homepage "Комбо и акции" paired CTA banners
+    HomeComboBanner,
+    # 💳 Payme transaction log
+    PaymeTransaction,
 )
 
 
@@ -142,6 +146,10 @@ class DishAdmin(admin.ModelAdmin):
     list_filter = ("country",)
     search_fields = ("name",)
 
+    # Manual upsell links — manage from the parent dish's edit page so
+    # the operator picks "what to recommend WITH this dish" in context.
+    inlines = ()  # set after DishUpsellLinkInline is defined below
+
     def cost(self, obj):
         return round(obj.calculate_cost(), 2)
 
@@ -150,6 +158,33 @@ class DishAdmin(admin.ModelAdmin):
 
     def margin(self, obj):
         return round(obj.margin(), 2)
+
+
+class DishUpsellLinkInline(admin.TabularInline):
+    """
+    Inline on DishAdmin so the upsell list for a dish is edited in context.
+    fk_name="from_dish" — the parent is the curating dish; to_dish is what's
+    recommended.
+    """
+    model = DishUpsellLink
+    fk_name = "from_dish"
+    autocomplete_fields = ("to_dish",)
+    extra = 0
+    fields = ("to_dish", "sort_order", "is_active")
+
+
+# Bind inline to DishAdmin now that both classes exist.
+DishAdmin.inlines = (DishUpsellLinkInline,)
+
+
+@admin.register(DishUpsellLink)
+class DishUpsellLinkAdmin(admin.ModelAdmin):
+    """Standalone admin — useful for bulk views and cross-dish reports."""
+    list_display = ("from_dish", "to_dish", "sort_order", "is_active")
+    list_filter = ("is_active", "from_dish__country")
+    search_fields = ("from_dish__name", "to_dish__name")
+    autocomplete_fields = ("from_dish", "to_dish")
+    list_editable = ("sort_order", "is_active")
 
 
 @admin.register(DishProductItem)
@@ -620,4 +655,32 @@ class HomeComboBannerAdmin(admin.ModelAdmin):
             "fields": ("sort_order", "is_active"),
         }),
     )
-    readonly_fields = ("created_at", "updated_at") if False else ()
+
+
+@admin.register(PaymeTransaction)
+class PaymeTransactionAdmin(admin.ModelAdmin):
+    """
+    Audit / debug view for Payme JSON-RPC transactions. All fields are
+    read-only — the only legitimate writer is the payme_callback endpoint;
+    manual edits in admin would corrupt Sandbox-compliance state.
+    """
+    list_display = (
+        "payme_transaction_id", "order", "state",
+        "amount_tiyin", "created_at",
+    )
+    list_filter = ("state", "created_at")
+    search_fields = (
+        "payme_transaction_id", "order__public_order_number",
+    )
+    readonly_fields = (
+        "payme_transaction_id", "order", "amount_tiyin",
+        "state", "reason", "payme_time_ms",
+        "create_time_ms", "perform_time_ms", "cancel_time_ms",
+        "raw_last_params", "created_at", "updated_at",
+    )
+
+    def has_add_permission(self, request):
+        # Transactions are created exclusively by Payme's CreateTransaction
+        # callback. Manual creation from admin would skip the idempotency
+        # checks and corrupt the audit trail.
+        return False

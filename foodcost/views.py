@@ -49,6 +49,7 @@ from .models import (
     # 🌐 Website content models (Part 4)
     DishGalleryImage,
     DishAddon,
+    DishUpsellLink,
     # 🗺  Website delivery zones (Part 8)
     DeliveryZone,
 )
@@ -125,6 +126,15 @@ def require_section_access(user, section):
         return HttpResponseForbidden("У вас нет доступа к этому разделу")
 
     return None
+
+
+def _parse_int_or_zero(value):
+    """Parse a positive int from a form value; return 0 on failure/negative."""
+    try:
+        n = int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+    return n if n > 0 else 0
 
 
 @login_required(login_url="/login/")
@@ -327,11 +337,8 @@ def dish_archive(request, country_slug, dish_id):
     """
     Soft-archive a dish. POST-only. Sets is_archived=True + audit fields,
     and additionally flips is_visible_on_site=False / is_stop_list=True
-    as defense-in-depth so a future code path that forgot to filter
-    on is_archived can't accidentally show the dish to customers.
-
-    Reversible via dish_unarchive — fields stored separately so we can
-    distinguish "was never archived" from "was archived and brought back".
+    as defense-in-depth so a future code path that forgot to filter on
+    is_archived can't accidentally show the dish to customers.
     """
     country = get_country(country_slug, request.user)
 
@@ -343,8 +350,6 @@ def dish_archive(request, country_slug, dish_id):
         return HttpResponseForbidden("Нет прав на архивирование блюд")
 
     if request.method != "POST":
-        # GET on this URL just bounces back to the dish detail page so a
-        # stray browser visit doesn't accidentally archive anything.
         return redirect(f"/c/{country.slug}/dish/{dish_id}/")
 
     dish = get_object_or_404(Dish, id=dish_id, country=country)
@@ -353,8 +358,6 @@ def dish_archive(request, country_slug, dish_id):
         dish.is_archived = True
         dish.archived_at = timezone.now()
         dish.archived_by = request.user if request.user.is_authenticated else None
-        # Belt-and-suspenders: hide from site + stop-list. Any code path
-        # that filters on either of these will also exclude the dish.
         dish.is_visible_on_site = False
         dish.is_stop_list = True
         dish.save(update_fields=[
@@ -362,20 +365,15 @@ def dish_archive(request, country_slug, dish_id):
             "is_visible_on_site", "is_stop_list",
         ])
 
-    # Redirect to dish list — the dish has just disappeared from there
-    # (filtered out by is_archived=False), giving the operator immediate
-    # visual confirmation.
     return redirect(f"/c/{country.slug}/")
 
 
 @login_required(login_url="/login/")
 def dish_unarchive(request, country_slug, dish_id):
     """
-    Bring an archived dish back into rotation. POST-only. Clears the
-    archive flag and audit fields. Does NOT auto-restore is_visible_on_site
-    or is_stop_list — operator decides whether the dish should be on the
-    site / available right now; the dish is brought back to the same
-    "hidden but editable" state a fresh dish has.
+    Bring an archived dish back. POST-only. Clears the archive flag and
+    audit fields. Does NOT auto-restore is_visible_on_site / is_stop_list
+    — operator decides those manually.
     """
     country = get_country(country_slug, request.user)
 
@@ -395,10 +393,6 @@ def dish_unarchive(request, country_slug, dish_id):
         dish.is_archived = False
         dish.archived_at = None
         dish.archived_by = None
-        # Leave is_visible_on_site / is_stop_list as they are. Operator
-        # opens the dish in the editor and decides those manually — this
-        # avoids accidentally republishing a dish that was archived for
-        # legitimate menu-cleanup reasons.
         dish.save(update_fields=["is_archived", "archived_at", "archived_by"])
 
     return redirect(f"/c/{country.slug}/dish/{dish_id}/")
@@ -778,6 +772,63 @@ def dish_detail(request, country_slug, dish_id):
                 dish=dish,
             ).delete()
             return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-addons")
+
+        # ---- Manual upsell links: "Часто заказывают вместе" on dish page ----
+        # Permission piggy-backs on dish-addons: both are "what to suggest
+        # together with this dish" curation, same role/permission applies.
+        # Each action redirects back to the #tab-upsell anchor so the
+        # operator stays in context after a save.
+
+        if action == "add_dish_upsell":
+            if not perms["can_edit_dish_addons"]:
+                return HttpResponseForbidden("Нет прав на блок допродажи")
+
+            target_id = request.POST.get("target_dish_id")
+            if target_id:
+                # Country check + self-link guard. Same-country enforced
+                # because the public site renders dishes per country —
+                # cross-country upsell would never display.
+                target = Dish.objects.filter(
+                    id=target_id, country=country
+                ).first()
+                if target and target.id != dish.id:
+                    DishUpsellLink.objects.get_or_create(
+                        from_dish=dish,
+                        to_dish=target,
+                        defaults={
+                            "sort_order": _parse_int_or_zero(
+                                request.POST.get("sort_order")
+                            ),
+                            "is_active": True,
+                        },
+                    )
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-upsell")
+
+        if action == "update_dish_upsell":
+            if not perms["can_edit_dish_addons"]:
+                return HttpResponseForbidden("Нет прав на блок допродажи")
+
+            link = DishUpsellLink.objects.filter(
+                id=request.POST.get("link_id"),
+                from_dish=dish,
+            ).first()
+            if link:
+                link.sort_order = _parse_int_or_zero(
+                    request.POST.get("sort_order")
+                )
+                link.is_active = bool(request.POST.get("is_active"))
+                link.save(update_fields=["sort_order", "is_active", "updated_at"])
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-upsell")
+
+        if action == "delete_dish_upsell":
+            if not perms["can_edit_dish_addons"]:
+                return HttpResponseForbidden("Нет прав на блок допродажи")
+
+            DishUpsellLink.objects.filter(
+                id=request.POST.get("link_id"),
+                from_dish=dish,
+            ).delete()
+            return redirect(f"/c/{country.slug}/dish/{dish.id}/#tab-upsell")
 
         # =====================================================================
         # 🚦 Per-branch availability — cashier-friendly, single toggle + comment
@@ -1207,6 +1258,25 @@ def dish_detail(request, country_slug, dish_id):
         "dish_addons": dish_addons,
         "dish_addons_by_group": dish_addons_by_group,
         "available_addon_dishes": available_addon_dishes,
+
+        # Manual "Часто заказывают вместе" links curated on this dish.
+        # Same shape as dish_addons — sorted list + dropdown source.
+        "dish_upsell_links": (
+            DishUpsellLink.objects
+            .filter(from_dish=dish)
+            .select_related("to_dish")
+            .order_by("sort_order", "id")
+        ),
+        "available_upsell_dishes": (
+            # Same country, excluding self, excluding archived (archived
+            # dishes can be in old order history but should not be added
+            # to new upsell lists). Dishes already linked stay in the
+            # dropdown — get_or_create handles dedupe.
+            Dish.objects
+            .filter(country=country, is_archived=False)
+            .exclude(id=dish.id)
+            .order_by("name")
+        ),
 
         # 🏷 Part 5 context — category management
         "attached_public_categories": attached_public_categories,
