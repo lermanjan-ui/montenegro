@@ -1296,6 +1296,776 @@
 
 </style>
 
+<!-- FoodCost UI Kit v2 — встроен inline (как на homepage_settings) -->
+<style>
+/* ============================================================================
+   FoodCost Admin — Design System v2
+   ============================================================================
+   Light theme, green accent. Drop this stylesheet via {% load static %}
+   {% static 'foodcost/admin-style.css' %} on any page that's been migrated
+   to the new design.
+
+   Pages already using this file:
+     - /c/<slug>/settings/homepage/
+*/
+
+:root {
+    /* -- Surface colors -------------------------------------------------- */
+    --fc-bg:           #F5F7FA;   /* page background */
+    --fc-card:         #FFFFFF;   /* card background */
+    --fc-card-soft:    #F9FAFB;   /* subtle hover / table row alt */
+    --fc-border:       #E5E7EB;   /* card / table / input border */
+    --fc-border-soft:  #F3F4F6;   /* internal dividers */
+
+    /* -- Text ------------------------------------------------------------ */
+    --fc-text:         #111827;
+    --fc-muted:        #6B7280;
+    --fc-muted-soft:   #9CA3AF;
+
+    /* -- Brand & semantics ---------------------------------------------- */
+    --fc-green:        #16A34A;
+    --fc-green-hover:  #15803D;
+    --fc-green-soft:   #DCFCE7;
+    --fc-green-text:   #166534;
+
+    --fc-warning:      #F59E0B;
+    --fc-warning-soft: #FEF3C7;
+    --fc-warning-text: #92400E;
+
+    --fc-danger:       #EF4444;
+    --fc-danger-hover: #DC2626;
+    --fc-danger-soft:  #FEE2E2;
+    --fc-danger-text:  #991B1B;
+
+    --fc-info:         #3B82F6;
+    --fc-info-soft:    #DBEAFE;
+    --fc-info-text:    #1E40AF;
+
+    /* -- Geometry -------------------------------------------------------- */
+    --fc-radius-card:  12px;
+    --fc-radius-input: 10px;
+    --fc-radius-pill:  999px;
+
+    --fc-shadow:       0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-shadow-lg:    0 10px 28px rgba(15, 23, 42, 0.08);
+
+    /* -- Typography ----------------------------------------------------- */
+    --fc-font:         "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+                       "Segoe UI", Roboto, sans-serif;
+}
+
+/* ============================================================================
+   Base layout (only applies inside .fc-scope to avoid polluting other pages
+   that still use the old styles).
+   ========================================================================= */
+.fc-scope {
+    background: var(--fc-bg);
+    color: var(--fc-text);
+    font-family: var(--fc-font);
+    min-height: 100vh;
+}
+
+.fc-scope * { box-sizing: border-box; }
+
+.fc-page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* ----- Breadcrumbs ---------------------------------------------------- */
+.fc-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--fc-muted);
+    margin-bottom: 16px;
+}
+.fc-breadcrumbs a {
+    color: var(--fc-muted);
+    text-decoration: none;
+}
+.fc-breadcrumbs a:hover { color: var(--fc-text); }
+.fc-breadcrumbs .sep { opacity: 0.5; }
+.fc-breadcrumbs .current { color: var(--fc-text); font-weight: 600; }
+
+/* ----- Page header ---------------------------------------------------- */
+.fc-page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.fc-page-head h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--fc-text);
+}
+.fc-page-head .muted {
+    margin: 0;
+    color: var(--fc-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+.fc-page-head .actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ============================================================================
+   Tabs (page-level)
+   ========================================================================= */
+.fc-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--fc-border);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.fc-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: 0;
+    background: transparent;
+    color: var(--fc-muted);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color .12s, border-color .12s;
+}
+.fc-tab:hover { color: var(--fc-text); }
+.fc-tab.is-active {
+    color: var(--fc-green-text);
+    border-bottom-color: var(--fc-green);
+    font-weight: 600;
+}
+.fc-tab .fc-tab-icon {
+    width: 16px; height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
+
+/* ============================================================================
+   Segmented control — sub-tab switcher used inside a tab body when there are
+   two parallel placements/variants. Visually lighter than top-level tabs.
+   Mark active item with .is-active.
+   ========================================================================= */
+.fc-segmented {
+    display: inline-flex;
+    gap: 2px;
+    padding: 4px;
+    background: var(--fc-bg);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-pill);
+}
+.fc-segmented-item {
+    padding: 6px 16px;
+    border-radius: var(--fc-radius-pill);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fc-muted);
+    text-decoration: none;
+    transition: background-color .12s, color .12s;
+    white-space: nowrap;
+}
+.fc-segmented-item:hover { color: var(--fc-text); }
+.fc-segmented-item.is-active {
+    background: var(--fc-card);
+    color: var(--fc-green-text);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+
+/* ============================================================================
+   Cards
+   ========================================================================= */
+.fc-card {
+    background: var(--fc-card);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-card);
+    box-shadow: var(--fc-shadow);
+    padding: 24px;
+    margin-bottom: 16px;
+}
+.fc-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.fc-card-head h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--fc-text);
+}
+.fc-card-head .muted {
+    margin: 0;
+    color: var(--fc-muted);
+    font-size: 13px;
+}
+
+.fc-card-sub {
+    color: var(--fc-muted);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 16px;
+}
+
+/* ============================================================================
+   Buttons
+   ========================================================================= */
+.fc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: var(--fc-radius-input);
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color .12s, border-color .12s, color .12s;
+    white-space: nowrap;
+}
+.fc-btn:disabled,
+.fc-btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.fc-btn-primary {
+    background: var(--fc-green);
+    color: #fff;
+}
+.fc-btn-primary:hover:not(:disabled) { background: var(--fc-green-hover); }
+
+.fc-btn-secondary {
+    background: var(--fc-card);
+    color: var(--fc-text);
+    border-color: var(--fc-border);
+}
+.fc-btn-secondary:hover { border-color: var(--fc-text); }
+
+.fc-btn-danger {
+    background: var(--fc-card);
+    color: var(--fc-danger);
+    border-color: var(--fc-danger-soft);
+}
+.fc-btn-danger:hover {
+    background: var(--fc-danger-soft);
+}
+
+.fc-btn-ghost {
+    background: transparent;
+    color: var(--fc-muted);
+    border-color: transparent;
+}
+.fc-btn-ghost:hover { color: var(--fc-text); background: var(--fc-card-soft); }
+
+.fc-btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    color: var(--fc-muted);
+    background: var(--fc-card);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-input);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .12s, border-color .12s;
+}
+.fc-btn-icon:hover { color: var(--fc-text); }
+.fc-btn-icon.is-danger { color: var(--fc-danger); border-color: var(--fc-danger-soft); }
+.fc-btn-icon.is-danger:hover { background: var(--fc-danger-soft); }
+
+.fc-btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+.fc-btn-lg { height: 48px; padding: 0 20px; font-size: 15px; }
+
+/* ============================================================================
+   Inputs / form fields
+   ========================================================================= */
+.fc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.fc-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fc-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.fc-label .required { color: var(--fc-danger); }
+.fc-label .optional { color: var(--fc-muted); font-weight: 400; }
+
+.fc-input,
+.fc-select,
+.fc-textarea {
+    height: 40px;
+    padding: 0 12px;
+    background: var(--fc-card);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-input);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--fc-text);
+    transition: border-color .12s, box-shadow .12s;
+    width: 100%;
+}
+.fc-textarea {
+    height: auto;
+    padding: 10px 12px;
+    min-height: 80px;
+    resize: vertical;
+    line-height: 1.5;
+}
+.fc-input:focus,
+.fc-select:focus,
+.fc-textarea:focus {
+    outline: none;
+    border-color: var(--fc-green);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+.fc-input::placeholder,
+.fc-textarea::placeholder { color: var(--fc-muted-soft); }
+.fc-input:disabled,
+.fc-select:disabled {
+    background: var(--fc-bg);
+    color: var(--fc-muted);
+    cursor: not-allowed;
+}
+
+.fc-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 4.5L6 7.5L9 4.5' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.fc-field-hint {
+    font-size: 12px;
+    color: var(--fc-muted);
+    line-height: 1.4;
+}
+.fc-field-error {
+    font-size: 12px;
+    color: var(--fc-danger);
+    line-height: 1.4;
+}
+.fc-field.has-error .fc-input,
+.fc-field.has-error .fc-select { border-color: var(--fc-danger); }
+
+/* ----- Form grid ----- */
+.fc-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+.fc-form-grid .span-2 { grid-column: span 2; }
+.fc-form-grid .span-full { grid-column: 1 / -1; }
+@media (max-width: 720px) {
+    .fc-form-grid { grid-template-columns: 1fr; }
+    .fc-form-grid .span-2 { grid-column: auto; }
+}
+
+/* ============================================================================
+   Toggle switch (drop-in replacement for checkbox)
+   ========================================================================= */
+.fc-switch {
+    --w: 40px;
+    --h: 22px;
+    --p: 2px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+.fc-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+}
+.fc-switch-track {
+    width: var(--w);
+    height: var(--h);
+    background: #D1D5DB;
+    border-radius: var(--fc-radius-pill);
+    position: relative;
+    transition: background-color .15s;
+    flex-shrink: 0;
+}
+.fc-switch-track::after {
+    content: "";
+    position: absolute;
+    top: var(--p);
+    left: var(--p);
+    width: calc(var(--h) - var(--p) * 2);
+    height: calc(var(--h) - var(--p) * 2);
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform .15s;
+}
+.fc-switch input:checked + .fc-switch-track { background: var(--fc-green); }
+.fc-switch input:checked + .fc-switch-track::after {
+    transform: translateX(calc(var(--w) - var(--h)));
+}
+.fc-switch-label {
+    font-size: 14px;
+    color: var(--fc-text);
+}
+
+/* ============================================================================
+   Badges
+   ========================================================================= */
+.fc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: var(--fc-radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.fc-badge-green   { background: var(--fc-green-soft);   color: var(--fc-green-text); }
+.fc-badge-amber   { background: var(--fc-warning-soft); color: var(--fc-warning-text); }
+.fc-badge-red     { background: var(--fc-danger-soft);  color: var(--fc-danger-text); }
+.fc-badge-blue    { background: var(--fc-info-soft);    color: var(--fc-info-text); }
+.fc-badge-gray    { background: var(--fc-border-soft);  color: var(--fc-muted); }
+
+/* ============================================================================
+   Tables / list rows
+   ========================================================================= */
+.fc-table {
+    width: 100%;
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-card);
+    background: var(--fc-card);
+    /* No overflow:hidden — that would clip the combobox dropdown when it
+       opens inside an expanded row. We accept that border-radius doesn't
+       perfectly mask scrolling content; for non-scrolling tables it
+       doesn't matter visually. */
+}
+.fc-table-head,
+.fc-table-row {
+    display: grid;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 16px;
+}
+.fc-table-head {
+    background: var(--fc-card-soft);
+    border-bottom: 1px solid var(--fc-border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fc-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.fc-table-row {
+    border-bottom: 1px solid var(--fc-border-soft);
+    transition: background-color .1s;
+    min-height: 56px;
+}
+.fc-table-row:last-child { border-bottom: 0; }
+.fc-table-row:hover { background: var(--fc-card-soft); }
+
+.fc-table-empty {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--fc-muted);
+    font-size: 14px;
+}
+
+/* Drag handle */
+.fc-drag-handle {
+    color: var(--fc-muted-soft);
+    cursor: grab;
+    user-select: none;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.fc-drag-handle:hover { color: var(--fc-text); }
+.fc-drag-handle:active { cursor: grabbing; }
+
+.fc-table-row.is-dragging {
+    opacity: 0.5;
+    background: var(--fc-card-soft);
+}
+.fc-table-row.is-drop-target {
+    border-top: 2px solid var(--fc-green);
+}
+
+/* Thumbnail */
+.fc-thumb {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--fc-bg);
+    flex-shrink: 0;
+}
+.fc-thumb-placeholder {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    background: var(--fc-bg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fc-muted-soft);
+    flex-shrink: 0;
+}
+
+/* ============================================================================
+   Combobox (live-search select)
+   ========================================================================= */
+.fc-combo {
+    position: relative;
+    /* Create a fresh stacking context so the absolutely-positioned
+       dropdown below appears above any siblings (status badges, toggle
+       switches, etc.) inside the same row. */
+    isolation: isolate;
+}
+.fc-combo-input {
+    /* uses .fc-input styles */
+    padding-right: 32px;
+}
+.fc-combo-input.is-open {
+    border-color: var(--fc-green);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+.fc-combo-chevron {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--fc-muted);
+}
+.fc-combo-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--fc-card);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-input);
+    box-shadow: var(--fc-shadow-lg);
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+.fc-combo-list.is-open { display: block; }
+.fc-combo-option {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--fc-text);
+    border-bottom: 1px solid var(--fc-border-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.fc-combo-option:last-child { border-bottom: 0; }
+.fc-combo-option:hover,
+.fc-combo-option.is-highlighted {
+    background: var(--fc-green-soft);
+}
+.fc-combo-option .label { flex: 1; }
+.fc-combo-option .meta { color: var(--fc-muted); font-size: 12px; }
+.fc-combo-empty {
+    padding: 16px 12px;
+    text-align: center;
+    color: var(--fc-muted);
+    font-size: 13px;
+}
+
+/* ============================================================================
+   Inline collapsible row (details/summary alternative)
+   ========================================================================= */
+.fc-expandable-content {
+    background: var(--fc-card-soft);
+    border-top: 1px solid var(--fc-border-soft);
+    padding: 20px 16px;
+}
+.fc-expand-toggle {
+    background: none;
+    border: 0;
+    color: var(--fc-muted);
+    cursor: pointer;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    transition: transform .12s, color .12s;
+}
+.fc-expand-toggle:hover { color: var(--fc-text); }
+.fc-expand-toggle.is-open { transform: rotate(180deg); }
+
+/* ============================================================================
+   Toast / inline banner
+   ========================================================================= */
+.fc-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--fc-radius-input);
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+.fc-banner-error { background: var(--fc-danger-soft); color: var(--fc-danger-text); border: 1px solid #FCA5A5; }
+.fc-banner-warning { background: var(--fc-warning-soft); color: var(--fc-warning-text); border: 1px solid #FDE68A; }
+.fc-banner-info { background: var(--fc-info-soft); color: var(--fc-info-text); border: 1px solid #BFDBFE; }
+.fc-banner-success { background: var(--fc-green-soft); color: var(--fc-green-text); border: 1px solid #86EFAC; }
+
+/* Toast (top-right) */
+.fc-toast-stack {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: none;
+}
+.fc-toast {
+    background: var(--fc-card);
+    border: 1px solid var(--fc-border);
+    border-left: 4px solid var(--fc-info);
+    border-radius: var(--fc-radius-input);
+    padding: 12px 16px;
+    box-shadow: var(--fc-shadow-lg);
+    font-size: 14px;
+    color: var(--fc-text);
+    min-width: 240px;
+    pointer-events: auto;
+    animation: fc-toast-in .2s ease-out;
+}
+.fc-toast.is-success { border-left-color: var(--fc-green); }
+.fc-toast.is-error   { border-left-color: var(--fc-danger); }
+.fc-toast.is-warning { border-left-color: var(--fc-warning); }
+@keyframes fc-toast-in {
+    from { transform: translateX(20px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+
+/* ============================================================================
+   Empty state
+   ========================================================================= */
+.fc-empty {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--fc-muted);
+}
+.fc-empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--fc-text);
+    margin-bottom: 6px;
+}
+.fc-empty-sub {
+    font-size: 14px;
+    color: var(--fc-muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+/* ============================================================================
+   Utility
+   ========================================================================= */
+.fc-stack { display: flex; flex-direction: column; gap: 16px; }
+.fc-row   { display: flex; align-items: center; gap: 12px; }
+.fc-row-end { justify-content: flex-end; }
+.fc-row-between { justify-content: space-between; }
+.fc-muted { color: var(--fc-muted); }
+.fc-text-sm { font-size: 13px; }
+.fc-text-xs { font-size: 12px; }
+.fc-mt-16 { margin-top: 16px; }
+.fc-mt-24 { margin-top: 24px; }
+.fc-mb-0 { margin-bottom: 0; }
+.fc-divider {
+    height: 1px;
+    background: var(--fc-border-soft);
+    margin: 16px 0;
+}
+
+/* ============================================================================
+   KPI cards — single-metric blocks shown in dish-page hero strip.
+   Compact card with label + big number. See UI Kit p.14.
+   ========================================================================= */
+.fc-kpi-card {
+    background: var(--fc-card-soft);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-input);
+    padding: 14px 16px;
+    min-height: 84px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.fc-kpi-label {
+    color: var(--fc-muted);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.fc-kpi-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--fc-text);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.fc-kpi-unit {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fc-muted);
+    margin-left: 2px;
+}
+@media (max-width: 900px) {
+    /* On narrow screens stack KPIs in 2 columns to keep numbers readable. */
+    .fc-card > div[style*="grid-template-columns:repeat(5"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+
+</style>
+
 <div class="page">
 
 <datalist id="products-options">
@@ -1322,160 +2092,320 @@
     {% endfor %}
 </datalist>
 
-<a class="back" href="/c/{{ country.slug }}/">← Назад к блюдам</a>
+<!-- ============================================================================
+     New design — Hero block + top-level tabs [Основное] [Сайт]
+     ============================================================================
+     The old `<div class="page">` wrapper still encloses the whole page (its
+     CSS is in the legacy <style> block above), so the new components only
+     need an extra .fc-scope to pick up the FoodCost UI Kit tokens. The
+     legacy classes (.card, .summary, .metric, .dish-tabs, etc.) keep
+     working for sections that haven't been migrated yet.
+     ============================================================================ -->
+<div class="fc-scope">
 
-<div class="card">
-    <h1>Блюдо: {{ dish.name }}</h1>
-    <p class="hero-text">Полная экономика блюда: ингредиенты, упаковка, ФОТ, коммуналка, доп расходы и техкарта.</p>
+    <nav class="fc-breadcrumbs" aria-label="Breadcrumbs">
+        <a href="/c/{{ country.slug }}/">Главная</a>
+        <span class="sep">›</span>
+        <a href="/c/{{ country.slug }}/">Блюда</a>
+        <span class="sep">›</span>
+        <span class="current">{{ dish.name }}</span>
+    </nav>
 
-    {% if not can_edit %}
-        <div class="readonly-note">Режим просмотра: редактирование недоступно.</div>
-    {% endif %}
+    <div class="fc-card" style="margin-bottom: 16px;">
+        {# Title row — name + status badges + back link #}
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+            <div style="min-width:0;flex:1;">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+                    <h1 style="margin:0;font-size:28px;font-weight:600;letter-spacing:-0.02em;color:var(--fc-text);">
+                        {{ dish.name }}
+                    </h1>
 
-    {% if can_view_dish_finance %}
-    <div class="summary">
-        <div class="metric"><span>Себестоимость</span><b id="summary-cost">{{ dish.calculate_cost|floatformat:2 }}</b></div>
-        <div class="metric"><span>Фудкост</span><b id="summary-foodcost">{{ dish.foodcost|floatformat:1 }}</b>%</div>
-        <div class="metric"><span>Маржа</span><b id="summary-margin">{{ dish.margin|floatformat:2 }}</b></div>
-        <div class="metric"><span>Время</span><b>{{ dish.total_cooking_minutes|floatformat:1 }} мин</b></div>
-        <div class="metric"><span>Цена</span><b>{{ dish.selling_price|floatformat:2 }}</b></div>
-    </div>
-    {% else %}
-    <div class="summary">
-        <div class="metric"><span>Цена</span><b>{{ dish.selling_price|floatformat:2 }}</b></div>
-        {% if dish.public_weight %}
-            <div class="metric"><span>Вес</span><b>{{ dish.public_weight }}</b></div>
-        {% endif %}
-        {% if dish.cooking_time %}
-            <div class="metric"><span>Время</span><b>{{ dish.cooking_time }}</b></div>
-        {% endif %}
-    </div>
-    {% endif %}
+                    {# Status badges — visible on every role, read-only here. #}
+                    {# Editing of these toggles lives in the "Сайт" tab.    #}
+                    {% if dish.is_visible_on_site %}
+                        <span class="fc-badge fc-badge-green">На сайте</span>
+                    {% else %}
+                        <span class="fc-badge fc-badge-gray">Скрыто</span>
+                    {% endif %}
+                    {% if dish.is_stop_list %}
+                        <span class="fc-badge fc-badge-red">Стоп-лист</span>
+                    {% endif %}
+                    {% if dish.is_featured %}
+                        <span class="fc-badge fc-badge-green">Хит</span>
+                    {% endif %}
+                    {% if dish.is_new %}
+                        <span class="fc-badge fc-badge-blue">Новинка</span>
+                    {% endif %}
+                    {% if dish.is_archived %}
+                        <span class="fc-badge fc-badge-amber">Архив</span>
+                    {% endif %}
+                </div>
+                {% if dish.category %}
+                    <div class="fc-text-sm fc-muted">
+                        Категория: <strong style="color:var(--fc-text);">{{ dish.category.name }}</strong>
+                    </div>
+                {% endif %}
+                {% if not can_edit %}
+                    <div class="fc-banner fc-banner-info" style="margin-top:12px;margin-bottom:0;">
+                        Режим просмотра: редактирование недоступно.
+                    </div>
+                {% endif %}
+            </div>
 
-    {# 🧭 Tab navigation — sections visible to the current user #}
-    <div class="dish-tabs">
-        {% if can_edit_dish_base or can_view_dish_finance %}
-            <a href="#tab-general" class="dish-tab active" data-tab="tab-general">Общие</a>
-        {% endif %}
+            <a href="/c/{{ country.slug }}/" class="fc-btn fc-btn-secondary fc-btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                К списку блюд
+            </a>
+        </div>
+
+        {# KPI strip — 5 metrics for admin / fewer for cashier-style roles. #}
+        {# id="summary-*" — old per-row recalc JS still updates these.      #}
         {% if can_view_dish_finance %}
-            <a href="#tab-cost" class="dish-tab" data-tab="tab-cost">Себестоимость</a>
-            <a href="#tab-ingredients" class="dish-tab" data-tab="tab-ingredients">Ингредиенты</a>
-        {% endif %}
-        {% if can_edit_dish_site %}
-            <a href="#tab-website" class="dish-tab" data-tab="tab-website">Сайт</a>
-        {% endif %}
-        {% if can_edit_dish_gallery %}
-            <a href="#tab-gallery" class="dish-tab" data-tab="tab-gallery">Галерея</a>
-        {% endif %}
-        {% if can_edit_dish_addons %}
-            <a href="#tab-addons" class="dish-tab" data-tab="tab-addons">Дополнения</a>
-            <a href="#tab-upsell" class="dish-tab" data-tab="tab-upsell">Часто заказывают вместе</a>
-        {% endif %}
-        {% if can_edit_dish_availability %}
-            <a href="#tab-availability" class="dish-tab" data-tab="tab-availability">Доступность</a>
-        {% endif %}
-        {% if can_view_tech_card %}
-            <a href="#tab-techcard" class="dish-tab" data-tab="tab-techcard">Техкарта</a>
+        <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:12px;">
+            <div class="fc-kpi-card">
+                <div class="fc-kpi-label">Себестоимость</div>
+                <div class="fc-kpi-value" id="summary-cost">{{ dish.calculate_cost|floatformat:2 }}</div>
+            </div>
+            <div class="fc-kpi-card">
+                <div class="fc-kpi-label">Фудкост</div>
+                <div class="fc-kpi-value"><span id="summary-foodcost">{{ dish.foodcost|floatformat:1 }}</span>%</div>
+            </div>
+            <div class="fc-kpi-card">
+                <div class="fc-kpi-label">Маржа</div>
+                <div class="fc-kpi-value" id="summary-margin">{{ dish.margin|floatformat:2 }}</div>
+            </div>
+            <div class="fc-kpi-card">
+                <div class="fc-kpi-label">Время</div>
+                <div class="fc-kpi-value">{{ dish.total_cooking_minutes|floatformat:1 }} <span class="fc-kpi-unit">мин</span></div>
+            </div>
+            <div class="fc-kpi-card">
+                <div class="fc-kpi-label">Цена</div>
+                <div class="fc-kpi-value">{{ dish.selling_price|floatformat:2 }}</div>
+            </div>
+        </div>
+        {% else %}
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="fc-kpi-card" style="min-width:160px;">
+                <div class="fc-kpi-label">Цена</div>
+                <div class="fc-kpi-value">{{ dish.selling_price|floatformat:2 }}</div>
+            </div>
+            {% if dish.public_weight %}
+            <div class="fc-kpi-card" style="min-width:160px;">
+                <div class="fc-kpi-label">Вес</div>
+                <div class="fc-kpi-value">{{ dish.public_weight }}</div>
+            </div>
+            {% endif %}
+            {% if dish.cooking_time %}
+            <div class="fc-kpi-card" style="min-width:160px;">
+                <div class="fc-kpi-label">Время</div>
+                <div class="fc-kpi-value">{{ dish.cooking_time }}</div>
+            </div>
+            {% endif %}
+        </div>
         {% endif %}
     </div>
-</div>
+
+    {# Two top-level tabs — URL-driven (?tab=main|site). #}
+    <nav class="fc-tabs" role="tablist">
+        <a href="?tab=main" role="tab"
+           class="fc-tab {% if active_tab == 'main' %}is-active{% endif %}">
+            Основное
+        </a>
+        {% if can_view_site_tab %}
+            <a href="?tab=site" role="tab"
+               class="fc-tab {% if active_tab == 'site' %}is-active{% endif %}">
+                Сайт
+            </a>
+        {% endif %}
+    </nav>
+
+</div>{# end .fc-scope for the hero+tabs block. Tab content scopes itself again below. #}
+
+{# ============================================================================
+   Tab content begins below. Each top-level tab wraps the legacy sections in
+   {% if active_tab == "..." %} ... {% endif %} so the wrong tab's HTML
+   is simply not rendered. The old hash-based #tab-X anchors inside the
+   legacy markup keep working as plain anchors within the active tab.
+   ============================================================================ #}
+
+{# ============================================================================
+   TAB "Основное" — Part 1: ERP sections (general, cost, ingredients,
+   packaging, labor, extras). Availability is also "Основное" but it sits
+   visually after the website sections in the legacy markup, so its
+   wrapper opens again further down.
+   ============================================================================ #}
+{% if active_tab == "main" %}
 
 {% if can_edit_dish_base or can_view_dish_finance %}
-<div class="card" id="tab-general">
-    <h2>Основные данные</h2>
+
+<div class="fc-scope">
+<div class="fc-card" id="tab-general">
+    <div class="fc-card-head">
+        <div>
+            <h2>Основные данные</h2>
+            <p class="fc-card-sub fc-mb-0">
+                Базовые параметры блюда: название, категория, выход, цена и время приготовления.
+            </p>
+        </div>
+    </div>
 
     <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="save">
 
-        <div class="main-grid">
-            <div>
-                <label>Название</label>
-                <input name="name" value="{{ dish.name }}" {% if not can_edit_dish_base %}readonly{% endif %}>
+        <div class="fc-form-grid">
+            <div class="fc-field span-2">
+                <label class="fc-label">Название</label>
+                <input class="fc-input" name="name" value="{{ dish.name }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
             </div>
 
-            <div>
-                <label>Категория</label>
-
+            <div class="fc-field">
+                <label class="fc-label">Категория</label>
                 {% if can_edit_dish_base %}
-                    <select name="category_id">
+                    <select class="fc-select" name="category_id">
                         <option value="">Без категории</option>
                         {% for category in categories %}
-                            <option value="{{ category.id }}" {% if dish.category_id == category.id %}selected{% endif %}>
+                            <option value="{{ category.id }}"
+                                {% if dish.category_id == category.id %}selected{% endif %}>
                                 {{ category.name }}
                             </option>
                         {% endfor %}
                     </select>
                 {% else %}
-                    <input type="text" value="{% if dish.category %}{{ dish.category.name }}{% else %}Без категории{% endif %}" readonly>
+                    <input class="fc-input" type="text"
+                           value="{% if dish.category %}{{ dish.category.name }}{% else %}Без категории{% endif %}"
+                           readonly>
                 {% endif %}
             </div>
 
-            <div>
-                <label>Выход, кг</label>
-                <input type="text" name="final_weight" value="{{ dish.final_weight }}" {% if not can_edit_dish_base %}readonly{% endif %}>
+            <div class="fc-field">
+                <label class="fc-label">Выход, кг</label>
+                <input class="fc-input" type="text" name="final_weight" value="{{ dish.final_weight }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Масса готового блюда</div>
             </div>
 
-            <div>
-                <label>Цена продажи</label>
-                <input type="text" name="selling_price" value="{{ dish.selling_price }}" {% if not can_edit_dish_base %}readonly{% endif %}>
+            <div class="fc-field">
+                <label class="fc-label">Цена продажи</label>
+                <input class="fc-input" type="text" name="selling_price" value="{{ dish.selling_price }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
             </div>
 
-            <div>
-                <label>Время блюда, мин</label>
-                <input type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}" {% if not can_edit_dish_base %}readonly{% endif %}>
+            <div class="fc-field">
+                <label class="fc-label">Время блюда, мин</label>
+                <input class="fc-input" type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Общее время приготовления</div>
             </div>
         </div>
 
         {% if can_edit_dish_base %}
-        <div class="category-row">
-            <div class="category-help">
-                <strong>Создать новую категорию</strong><br>
-                Оставьте пустым, если хотите выбрать из списка выше
+        <div class="fc-divider"></div>
+        <div class="fc-form-grid">
+            <div class="fc-field span-2">
+                <label class="fc-label">
+                    Создать новую категорию <span class="optional">(опционально)</span>
+                </label>
+                <input class="fc-input" name="new_category_name"
+                       placeholder="Например: Горячие блюда">
+                <div class="fc-field-hint">
+                    Если хотите выбрать из списка выше — оставьте поле пустым.
+                </div>
             </div>
-
-            <input
-                name="new_category_name"
-                class="category-create"
-                placeholder="Например: Горячие блюда"
-            >
-
-            <button type="submit">Сохранить</button>
         </div>
         {% endif %}
 
-		        {% if can_view_tech_card %}
-		        <div style="margin-top:16px;" id="tab-techcard">
-		            <label>Общая техкарта / заметки</label>
-		            <textarea name="tech_card" placeholder="Общее описание приготовления, важные заметки, подача..." {% if not can_edit_dish_base %}readonly{% endif %}>{{ dish.tech_card }}</textarea>
-		        </div>
-		        {% endif %}
+        {% if can_view_tech_card %}
+        <div class="fc-divider"></div>
+        <div class="fc-field" id="tab-techcard">
+            <label class="fc-label">Общая техкарта / заметки</label>
+            <textarea class="fc-textarea" name="tech_card"
+                      placeholder="Общее описание приготовления, важные заметки, подача..."
+                      {% if not can_edit_dish_base %}readonly{% endif %}>{{ dish.tech_card }}</textarea>
+        </div>
+        {% endif %}
 
-		        {% if can_edit_dish_base %}
-		            <div class="main-save-bottom">
-		                <button type="submit">Сохранить изменения</button>
-		            </div>
-		        {% endif %}
-		    </form>
-		</div>
-{% endif %}
+        {% if can_edit_dish_base %}
+        <div class="fc-row fc-row-end" style="margin-top:20px;">
+            <button type="submit" class="fc-btn fc-btn-primary">
+                Сохранить изменения
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+</div>{# end .fc-scope (Основные данные) #}
+
+{% endif %}{# end can_edit_dish_base or can_view_dish_finance #}
 
 {% if can_view_dish_finance %}
-<div class="card" id="tab-cost">
-    <h2>Разбор себестоимости</h2>
+<div class="fc-scope">
+<div class="fc-card" id="tab-cost">
+    <div class="fc-card-head">
+        <div>
+            <h2>Разбор себестоимости</h2>
+            <p class="fc-card-sub fc-mb-0">
+                Из чего складывается себестоимость одной порции. Цифры
+                пересчитываются автоматически по техкарте.
+            </p>
+        </div>
+        <div style="text-align:right;">
+            <div class="fc-text-sm fc-muted">Итого</div>
+            <div style="font-size:24px;font-weight:700;color:var(--fc-green-text);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;"
+                 id="summary-total-table">
+                {{ dish.calculate_cost|floatformat:2 }}
+            </div>
+        </div>
+    </div>
 
-    <div class="table-wrap">
-        <table>
-            <tr><th>Статья</th><th>Сумма</th></tr>
-            <tr><td>Продукты и заготовки</td><td class="price">{{ dish.ingredient_cost|floatformat:2 }}</td></tr>
-            <tr><td>Упаковка</td><td class="price">{{ dish.packaging_cost|floatformat:2 }}</td></tr>
-            <tr><td>ФОТ</td><td class="price">{{ dish.labor_cost|floatformat:2 }}</td></tr>
-            <tr><td>Коммунальные</td><td class="price">{{ dish.utilities_cost|floatformat:2 }}</td></tr>
-            <tr><td>Доп расходы</td><td class="price">{{ dish.additional_expenses_cost|floatformat:2 }}</td></tr>
-            <tr><td><strong>Итого</strong></td><td class="price" id="summary-total-table">{{ dish.calculate_cost|floatformat:2 }}</td></tr>
-        </table>
+    {# Cost breakdown — simple read-only table. We use the FC table layout    #}
+    {# but each row is a plain horizontal flex; the legacy IDs `price` and    #}
+    {# `summary-total-table` stay on for the existing per-row recalc JS.    #}
+    <div class="fc-table" style="margin-top:8px;">
+        <div class="fc-table-head" style="grid-template-columns: 1fr 200px;">
+            <div>Статья</div>
+            <div style="text-align:right;">Сумма</div>
+        </div>
+        <div class="fc-table-row" style="grid-template-columns: 1fr 200px;">
+            <div>Продукты и заготовки</div>
+            <div class="price" style="text-align:right;font-variant-numeric:tabular-nums;">
+                {{ dish.ingredient_cost|floatformat:2 }}
+            </div>
+        </div>
+        <div class="fc-table-row" style="grid-template-columns: 1fr 200px;">
+            <div>Упаковка</div>
+            <div class="price" style="text-align:right;font-variant-numeric:tabular-nums;">
+                {{ dish.packaging_cost|floatformat:2 }}
+            </div>
+        </div>
+        <div class="fc-table-row" style="grid-template-columns: 1fr 200px;">
+            <div>ФОТ</div>
+            <div class="price" style="text-align:right;font-variant-numeric:tabular-nums;">
+                {{ dish.labor_cost|floatformat:2 }}
+            </div>
+        </div>
+        <div class="fc-table-row" style="grid-template-columns: 1fr 200px;">
+            <div>Коммунальные</div>
+            <div class="price" style="text-align:right;font-variant-numeric:tabular-nums;">
+                {{ dish.utilities_cost|floatformat:2 }}
+            </div>
+        </div>
+        <div class="fc-table-row" style="grid-template-columns: 1fr 200px;">
+            <div>Доп расходы</div>
+            <div class="price" style="text-align:right;font-variant-numeric:tabular-nums;">
+                {{ dish.additional_expenses_cost|floatformat:2 }}
+            </div>
+        </div>
+        <div class="fc-table-row" style="grid-template-columns: 1fr 200px;background:var(--fc-card-soft);">
+            <div style="font-weight:600;">Итого</div>
+            <div class="price" style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--fc-green-text);">
+                {{ dish.calculate_cost|floatformat:2 }}
+            </div>
+        </div>
     </div>
 </div>
+</div>{# end .fc-scope (Разбор себестоимости) #}
 {% endif %}
 
 {% if can_view_dish_finance %}
@@ -1877,6 +2807,13 @@
     </div>
 </div>
 {% endif %}{# end can_view_dish_finance — covers Cost/Products/Preparations/Packaging/Labor/Extras #}
+
+{% endif %}{# end active_tab == "main" — Part 1 (ERP) #}
+
+{# ============================================================================
+   TAB "Сайт" — public-facing fields, photos, addons, upsell.
+   ============================================================================ #}
+{% if active_tab == "site" %}
 
 {# =============================================================== #}
 {# 🌐 САЙТ — Information for website (redesigned, Part 5)          #}
@@ -2432,6 +3369,14 @@
 </div>
 {% endif %}
 
+{% endif %}{# end active_tab == "site" #}
+
+{# ============================================================================
+   TAB "Основное" — Part 2: Availability (legacy layout puts it after
+   the website sections; logically it belongs to main).
+   ============================================================================ #}
+{% if active_tab == "main" %}
+
 {# =============================================================== #}
 {# 🚦 ДОСТУПНОСТЬ ПО ФИЛИАЛАМ                                       #}
 {# =============================================================== #}
@@ -2503,6 +3448,8 @@
     {% endif %}
 </div>
 {% endif %}
+
+{% endif %}{# end active_tab == "main" — Part 2 (availability) #}
 
 </div>
 

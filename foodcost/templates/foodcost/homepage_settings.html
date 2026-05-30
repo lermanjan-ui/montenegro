@@ -483,7 +483,10 @@
     border: 1px solid var(--fc-border);
     border-radius: var(--fc-radius-card);
     background: var(--fc-card);
-    overflow: hidden;
+    /* No overflow:hidden — that would clip the combobox dropdown when it
+       opens inside an expanded row. We accept that border-radius doesn't
+       perfectly mask scrolling content; for non-scrolling tables it
+       doesn't matter visually. */
 }
 .fc-table-head,
 .fc-table-row {
@@ -563,6 +566,10 @@
    ========================================================================= */
 .fc-combo {
     position: relative;
+    /* Create a fresh stacking context so the absolutely-positioned
+       dropdown below appears above any siblings (status badges, toggle
+       switches, etc.) inside the same row. */
+    isolation: isolate;
 }
 .fc-combo-input {
     /* uses .fc-input styles */
@@ -590,7 +597,7 @@
     box-shadow: var(--fc-shadow-lg);
     max-height: 320px;
     overflow-y: auto;
-    z-index: 50;
+    z-index: 100;
     display: none;
 }
 .fc-combo-list.is-open { display: block; }
@@ -1137,8 +1144,7 @@ button[type=submit]:hover{
                 <div style="text-align:right;">Управление</div>
             </div>
 
-            {% for entry in banners %}
-                {% with banner=entry.banner %}
+            {% for banner in banners %}
                 <div class="fc-table-row" data-id="{{ banner.id }}"
                      style="grid-template-columns: 24px 96px 1fr 140px 120px 96px;">
 
@@ -1342,7 +1348,6 @@ button[type=submit]:hover{
                         </div>
                     </form>
                 </div>
-                {% endwith %}
             {% empty %}
                 <div class="fc-table-empty">
                     <div class="fc-empty-title">Баннеров пока нет</div>

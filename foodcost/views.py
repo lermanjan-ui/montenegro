@@ -1236,6 +1236,24 @@ def dish_detail(request, country_slug, dish_id):
     # Gallery legacy text (back-compat: dish.gallery JSON of URLs).
     gallery_text = "\n".join(dish.gallery or []) if isinstance(dish.gallery, list) else ""
 
+    # Top-level tab on the dish page. Two URL-driven tabs:
+    #   ?tab=main  — ERP (default): basic data, cost breakdown, ingredients,
+    #                packaging, labor, extras, availability.
+    #   ?tab=site  — Website: public info, photo, gallery, addons, upsell.
+    # The site tab is only navigable if the user can edit at least one of
+    # the website-related sections; otherwise the tab is hidden and main
+    # is forced.
+    can_view_site_tab = (
+        perms["can_edit_dish_site"]
+        or perms["can_edit_dish_gallery"]
+        or perms["can_edit_dish_addons"]
+    )
+    active_tab = (request.GET.get("tab") or "main").strip().lower()
+    if active_tab not in ("main", "site"):
+        active_tab = "main"
+    if active_tab == "site" and not can_view_site_tab:
+        active_tab = "main"
+
     context = {
         "country": country,
         "dish": dish,
@@ -1247,6 +1265,8 @@ def dish_detail(request, country_slug, dish_id):
         "packagings": packagings,
         "tech_steps": tech_steps,
         "can_edit": user_can_edit(request.user),
+        "active_tab": active_tab,
+        "can_view_site_tab": can_view_site_tab,
 
         # 🌐 Part 3 context
         "locations": locations_qs,
