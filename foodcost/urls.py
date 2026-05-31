@@ -10,6 +10,9 @@ from . import public_api
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
+# TEMPORARY — one-off merge of duplicate "Payme" PaymentMethod rows (delete
+# this import + the route below once merged). See foodcost/views_payme_merge.py.
+from . import views_payme_merge
 
 
 urlpatterns = [
@@ -21,6 +24,14 @@ urlpatterns = [
         "_admin/tilda-import/",
         views_tilda_import.tilda_import_page,
         name="tilda_import_page",
+    ),
+
+    # TEMPORARY — merge duplicate "Payme" payment methods (superuser-only).
+    # REMOVE this route + views_payme_merge module after the merge is done.
+    path(
+        "_admin/payme-merge/",
+        views_payme_merge.payme_merge_page,
+        name="payme_merge_page",
     ),
 
     path(
