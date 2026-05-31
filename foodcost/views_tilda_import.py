@@ -90,11 +90,37 @@ def tilda_import_page(request):
         "error": None,
         "selected_country_slug": request.POST.get("country_slug") or "",
         "limit_raw": request.POST.get("limit") or "",
+        "dedupe_plan": None,
+        "dedupe_result": None,
     }
 
     if request.method == "POST":
         # Both buttons share the same form; distinguish via 'mode'
         mode = request.POST.get("mode") or ""
+
+        # Dedupe modes have their own flow — they don't need a CSV.
+        if mode in ("dedupe_analyze", "dedupe_execute"):
+            country_slug = (request.POST.get("country_slug") or "").strip()
+            if not country_slug:
+                context["error"] = "Выберите страну."
+                return render(request, "foodcost/tilda_import.html", context)
+            try:
+                country = Country.objects.get(slug=country_slug)
+            except Country.DoesNotExist:
+                context["error"] = f"Страна с slug={country_slug!r} не найдена."
+                return render(request, "foodcost/tilda_import.html", context)
+
+            from foodcost.customer_dedupe import plan_merge, execute_merge
+            if mode == "dedupe_analyze":
+                plan = plan_merge(country)
+                context["dedupe_plan"] = _format_dedupe_plan(plan)
+            else:  # dedupe_execute
+                # Build the plan first (so we can show "before" stats)
+                plan = plan_merge(country)
+                context["dedupe_plan"] = _format_dedupe_plan(plan)
+                stats = execute_merge(country, normalize_phones=True)
+                context["dedupe_result"] = stats
+            return render(request, "foodcost/tilda_import.html", context)
 
         # CSV is required for both modes. We read it once, in memory.
         upload = request.FILES.get("csv_file")
@@ -410,4 +436,46 @@ def _run_import(rows, country):
         "ok": True,
         "error": None,
         "stats": dict(stats),
+    }
+
+
+def _format_dedupe_plan(plan):
+    """Make the plan template-friendly.
+
+    Aggregates totals and serializes the per-group entries into plain
+    dicts (the underlying Customer objects are kept for the duplicate
+    list, but we strip cycles to keep the template simple).
+    """
+    if not plan:
+        return {
+            "groups_count": 0,
+            "duplicates_total": 0,
+            "orders_total": 0,
+            "addresses_total": 0,
+            "top_groups": [],
+        }
+    groups_count = len(plan)
+    duplicates_total = sum(len(p["duplicates"]) for p in plan)
+    orders_total = sum(p["orders_to_move"] for p in plan)
+    addresses_total = sum(p["addresses_to_move"] for p in plan)
+
+    # Show only the top 20 groups in the table (by orders_to_move desc).
+    top_groups = []
+    for p in plan[:20]:
+        top_groups.append({
+            "phone_key": p["phone_key"],
+            "primary_name": p["primary"].name,
+            "primary_phone": p["primary"].phone,
+            "primary_id": p["primary"].id,
+            "duplicate_count": len(p["duplicates"]),
+            "duplicate_phones": [d.phone for d in p["duplicates"]],
+            "orders_to_move": p["orders_to_move"],
+            "addresses_to_move": p["addresses_to_move"],
+        })
+    return {
+        "groups_count": groups_count,
+        "duplicates_total": duplicates_total,
+        "orders_total": orders_total,
+        "addresses_total": addresses_total,
+        "top_groups": top_groups,
     }

@@ -161,7 +161,142 @@
   {% endif %}
 
   <div class="tilda-card">
-    <h2>Параметры импорта</h2>
+    <h2>🔗 Дедуп клиентов по телефону</h2>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 14px;">
+      Сливает Customer-записи у которых одинаковый номер телефона
+      (по digits-only ключу) в одного. Заказы и адреса дубликатов
+      перепривязываются на «главного». «Главный» = с наибольшим числом
+      заказов, иначе самый старый по дате создания. Безопасно
+      запускать повторно — после слияния группа из 1 записи пропускается.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="tilda-form-row">
+        <label>Страна</label>
+        <select name="country_slug" required>
+          <option value="">— выберите страну —</option>
+          {% for country in countries %}
+            <option value="{{ country.slug }}"
+              {% if country.slug == selected_country_slug %}selected{% endif %}>
+              {{ country.name }} ({{ country.slug }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="tilda-btn-row">
+        <button type="submit" name="mode" value="dedupe_analyze"
+                class="tilda-btn tilda-btn-analyze">
+          📊 Анализ дубликатов (без записи)
+        </button>
+        <button type="submit" name="mode" value="dedupe_execute"
+                class="tilda-btn tilda-btn-import"
+                onclick="return confirm('Точно слить дубликатов? Это перепривяжет заказы и удалит дубликаты Customer. Откат — только через restore БД.');">
+          🚨 Слить дубликаты
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if dedupe_result %}
+    <div class="tilda-card">
+      <h2>Результат слияния</h2>
+      <div class="tilda-success">
+        ✓ Слияние завершено. Транзакция закоммичена.
+      </div>
+      <div class="tilda-stat-grid">
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Групп слито</div>
+          <div class="tilda-stat-value">{{ dedupe_result.groups_merged }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Дубликатов удалено</div>
+          <div class="tilda-stat-value">{{ dedupe_result.duplicates_deleted }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Заказов перепривязано</div>
+          <div class="tilda-stat-value">{{ dedupe_result.orders_reattached }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Адресов перепривязано</div>
+          <div class="tilda-stat-value">{{ dedupe_result.addresses_reattached }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Телефонов нормализовано</div>
+          <div class="tilda-stat-value">{{ dedupe_result.phones_normalized }}</div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if dedupe_plan %}
+    <div class="tilda-card">
+      <h2>📊 План слияния</h2>
+      <div class="tilda-stat-grid">
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Групп с дубликатами</div>
+          <div class="tilda-stat-value">{{ dedupe_plan.groups_count }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Дубликатов всего</div>
+          <div class="tilda-stat-value">{{ dedupe_plan.duplicates_total }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Заказов будет перепривязано</div>
+          <div class="tilda-stat-value">{{ dedupe_plan.orders_total }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Адресов будет перепривязано</div>
+          <div class="tilda-stat-value">{{ dedupe_plan.addresses_total }}</div>
+        </div>
+      </div>
+
+      {% if dedupe_plan.top_groups %}
+        <h3 style="font-size:15px;margin:18px 0 8px;">
+          Топ-20 групп (по числу заказов которые перенесутся):
+        </h3>
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f9fafb;">
+              <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Главный</th>
+              <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Телефон</th>
+              <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Дубликатов</th>
+              <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Заказов перенесём</th>
+              <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Адресов</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for g in dedupe_plan.top_groups %}
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid #f3f4f6;">
+                  {{ g.primary_name }} <span style="color:#6b7280;">(id={{ g.primary_id }})</span>
+                </td>
+                <td style="padding:8px;border-bottom:1px solid #f3f4f6;font-family:monospace;font-size:12px;">
+                  {{ g.primary_phone }}
+                  {% if g.duplicate_phones %}
+                    <br><span style="color:#9ca3af;">→ дубликаты: {{ g.duplicate_phones|join:", " }}</span>
+                  {% endif %}
+                </td>
+                <td style="padding:8px;border-bottom:1px solid #f3f4f6;">{{ g.duplicate_count }}</td>
+                <td style="padding:8px;border-bottom:1px solid #f3f4f6;">{{ g.orders_to_move }}</td>
+                <td style="padding:8px;border-bottom:1px solid #f3f4f6;">{{ g.addresses_to_move }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      {% if dedupe_plan.groups_count == 0 %}
+        <div class="tilda-success">
+          ✓ Нечего сливать — все клиенты уже уникальны по digits-only телефону.
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="tilda-card">
+    <h2>📥 Импорт CSV</h2>
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
