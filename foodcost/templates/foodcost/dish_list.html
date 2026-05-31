@@ -431,10 +431,10 @@
                     </div>
 
                     <div>
-                        {% if dish.margin < 0 %}
-                            <span class="value danger-text">{{ dish.margin|floatformat:2 }}</span>
+                        {% if dish.cached_margin < 0 %}
+                            <span class="value danger-text">{{ dish.cached_margin|floatformat:2 }}</span>
                         {% else %}
-                            <span class="value good">{{ dish.margin|floatformat:2 }}</span>
+                            <span class="value good">{{ dish.cached_margin|floatformat:2 }}</span>
                         {% endif %}
                     </div>
 
