@@ -1222,6 +1222,21 @@ class Customer(models.Model):
         default=False
     )
 
+    # ===== "Алярм": отказ в доставке этому клиенту =====
+    # True -> клиенту отказано в доставке (систематические проблемы /
+    # злоупотребления). Отдельный флаг от is_problematic: проблемный = на
+    # заметке, отказ в доставке = жёсткий стоп. Причина — в reason ниже.
+    delivery_blocked = models.BooleanField(
+        default=False,
+        db_index=True,
+    )
+
+    delivery_block_reason = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )
