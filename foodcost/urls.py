@@ -7,10 +7,22 @@ from . import views_homepage
 from . import writeoff_views
 from . import shift_views
 from . import public_api
+# TEMPORARY — one-off Tilda CSV import (delete this import + the route below
+# once the historical data is loaded). See foodcost/views_tilda_import.py.
+from . import views_tilda_import
 
 
 urlpatterns = [
     
+    # TEMPORARY — Tilda CSV import (superuser-only). After the import
+    # is done, REMOVE this route and the views_tilda_import module so
+    # the upload endpoint is no longer reachable.
+    path(
+        "_admin/tilda-import/",
+        views_tilda_import.tilda_import_page,
+        name="tilda_import_page",
+    ),
+
     path(
         "tilda/webhook/",
         views.tilda_webhook,

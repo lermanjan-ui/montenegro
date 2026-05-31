@@ -1,0 +1,358 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Импорт Tilda CSV{% endblock %}
+
+{% block content %}
+<style>
+  .tilda-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .tilda-page h1 {
+    font-size: 28px;
+    margin: 0 0 8px;
+    color: #111827;
+  }
+  .tilda-page .lead {
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 24px;
+  }
+  .tilda-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .tilda-card h2 {
+    font-size: 18px;
+    margin: 0 0 16px;
+    color: #111827;
+  }
+  .tilda-form-row {
+    margin-bottom: 16px;
+  }
+  .tilda-form-row label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+  .tilda-form-row input[type="file"],
+  .tilda-form-row input[type="number"],
+  .tilda-form-row select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+  }
+  .tilda-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .tilda-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 0;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .tilda-btn-analyze {
+    background: #2563eb;
+    color: white;
+  }
+  .tilda-btn-import {
+    background: #dc2626;
+    color: white;
+  }
+  .tilda-btn:hover { opacity: 0.9; }
+  .tilda-error {
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  .tilda-success {
+    padding: 12px 16px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  .tilda-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .tilda-stat {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tilda-stat-label {
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .tilda-stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    font-variant-numeric: tabular-nums;
+  }
+  .tilda-list {
+    font-size: 13px;
+    color: #374151;
+  }
+  .tilda-list li {
+    padding: 4px 0;
+    border-bottom: 1px dashed #f3f4f6;
+  }
+  .tilda-list li:last-child { border-bottom: 0; }
+  .tilda-list-count {
+    font-variant-numeric: tabular-nums;
+    color: #6b7280;
+    margin-right: 8px;
+    display: inline-block;
+    width: 50px;
+    text-align: right;
+  }
+  .tilda-warning {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #78350f;
+  }
+</style>
+
+<div class="tilda-page">
+  <h1>Импорт Tilda CSV</h1>
+  <p class="lead">
+    Одноразовая страница для импорта исторических заказов из Tilda.
+    Алгоритм: загружаешь CSV → нажимаешь <strong>«Анализ»</strong> →
+    смотришь отчёт → если всё ок, нажимаешь <strong>«Импорт»</strong>.
+    Импорт идемпотентен — повторный запуск пропустит уже импортированные.
+  </p>
+
+  {% if error %}
+    <div class="tilda-error">{{ error }}</div>
+  {% endif %}
+
+  <div class="tilda-card">
+    <h2>Параметры импорта</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="tilda-form-row">
+        <label>CSV файл от Tilda</label>
+        <input type="file" name="csv_file" accept=".csv" required>
+      </div>
+
+      <div class="tilda-form-row">
+        <label>Страна</label>
+        <select name="country_slug" required>
+          <option value="">— выберите страну —</option>
+          {% for country in countries %}
+            <option value="{{ country.slug }}"
+              {% if country.slug == selected_country_slug %}selected{% endif %}>
+              {{ country.name }} ({{ country.slug }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="tilda-form-row">
+        <label>Лимит строк (опционально, для теста)</label>
+        <input type="number" name="limit" min="0" value="{{ limit_raw }}"
+               placeholder="Например 10 для теста; пусто — все строки">
+      </div>
+
+      <div class="tilda-btn-row">
+        <button type="submit" name="mode" value="analyze" class="tilda-btn tilda-btn-analyze">
+          📊 Анализ (без записи)
+        </button>
+        <button type="submit" name="mode" value="import" class="tilda-btn tilda-btn-import"
+                onclick="return confirm('Точно запустить импорт? Это запишет заказы в БД. Откат через — Order.objects.filter(is_legacy_import=True).delete()');">
+          🚨 Импорт (запись в БД)
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if import_result %}
+    <div class="tilda-card">
+      <h2>Результат импорта</h2>
+      {% if import_result.ok %}
+        <div class="tilda-success">
+          ✓ Импорт успешно завершён. Транзакция закоммичена.
+        </div>
+      {% else %}
+        <div class="tilda-error">
+          ✗ Импорт упал с ошибкой:<br>
+          <code>{{ import_result.error }}</code><br>
+          <em>Транзакция откатилась — данные не записаны.</em>
+        </div>
+      {% endif %}
+
+      <div class="tilda-stat-grid">
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Заказов создано</div>
+          <div class="tilda-stat-value">{{ import_result.stats.orders|default:0 }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Пропущено (дубль)</div>
+          <div class="tilda-stat-value">{{ import_result.stats.skipped|default:0 }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Позиций создано</div>
+          <div class="tilda-stat-value">{{ import_result.stats.items|default:0 }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">С FK на Dish</div>
+          <div class="tilda-stat-value">{{ import_result.stats.items_matched|default:0 }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Без FK (snapshot)</div>
+          <div class="tilda-stat-value">{{ import_result.stats.items_unmatched|default:0 }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Новых клиентов</div>
+          <div class="tilda-stat-value">{{ import_result.stats.new_customers|default:0 }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Старых клиентов</div>
+          <div class="tilda-stat-value">{{ import_result.stats.reused_customers|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if report %}
+    <div class="tilda-card">
+      <h2>📊 Анализ</h2>
+
+      {% if report.parse_errors_count > 0 %}
+        <div class="tilda-error">
+          Ошибок парсинга: {{ report.parse_errors_count }}
+          <ul>
+            {% for err in report.parse_errors %}<li>{{ err }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <div class="tilda-stat-grid">
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Строк распарсено</div>
+          <div class="tilda-stat-value">{{ report.rows_parsed }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Уникальных клиентов</div>
+          <div class="tilda-stat-value">{{ report.phones_total }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Уже есть в ERP</div>
+          <div class="tilda-stat-value">{{ report.phones_existing }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Новые клиенты</div>
+          <div class="tilda-stat-value">{{ report.phones_new }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Уже импортировано</div>
+          <div class="tilda-stat-value">{{ report.already_imported }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Будут вставлены</div>
+          <div class="tilda-stat-value">{{ report.will_insert }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Блюд в ERP каталоге</div>
+          <div class="tilda-stat-value">{{ report.erp_dishes_total }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Блюд в CSV (уник.)</div>
+          <div class="tilda-stat-value">{{ report.csv_dishes_unique }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Сматчилось</div>
+          <div class="tilda-stat-value">{{ report.matched_count }}</div>
+        </div>
+        <div class="tilda-stat">
+          <div class="tilda-stat-label">Без матча</div>
+          <div class="tilda-stat-value">{{ report.unmatched_count }}</div>
+        </div>
+      </div>
+
+      {% if report.unmatched_top %}
+        <h3 style="font-size:15px;margin:16px 0 8px;">
+          Топ-15 непросопоставленных блюд (по упоминаниям):
+        </h3>
+        <ul class="tilda-list">
+          {% for u in report.unmatched_top %}
+            <li>
+              <span class="tilda-list-count">{{ u.count }}×</span>
+              {{ u.name }}
+            </li>
+          {% endfor %}
+        </ul>
+        <div class="tilda-warning">
+          Эти блюда не нашлись по точному имени в каталоге ERP — позиции
+          сохранятся с <code>dish=NULL</code> и текстом в
+          <code>dish_name_snapshot</code>. Заказ всё равно создастся,
+          сумма правильная.
+        </div>
+      {% endif %}
+
+      {% if report.promos_top %}
+        <h3 style="font-size:15px;margin:16px 0 8px;">
+          Топ-10 промокодов в CSV (не линкуем к ERP PromoCode):
+        </h3>
+        <ul class="tilda-list">
+          {% for p in report.promos_top %}
+            <li>
+              <span class="tilda-list-count">{{ p.count }}×</span>
+              {{ p.code }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if report.top_customers %}
+        <h3 style="font-size:15px;margin:16px 0 8px;">
+          Топ-5 клиентов по числу заказов:
+        </h3>
+        <ul class="tilda-list">
+          {% for c in report.top_customers %}
+            <li>
+              <span class="tilda-list-count">{{ c.count }}×</span>
+              {{ c.phone }} ({{ c.name }})
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

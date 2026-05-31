@@ -36,6 +36,7 @@ from .models import (
     HomeComboBanner,
 )
 from .views import get_country, require_section_access
+from .banner_validation import validate_action_value
 
 
 # -----------------------------------------------------------------------------
@@ -142,6 +143,12 @@ def _validate_combo_banner_form(post):
     if action_type != "none" and not action_value:
         return "Для выбранного действия нужно указать значение"
 
+    # URL / path / promo_code shape check — see banner_validation module.
+    # Catches the localhost-copy-paste bug + wrong prefix paths.
+    av_ok, av_err = validate_action_value(action_type, action_value)
+    if not av_ok:
+        return av_err
+
     return None
 
 
@@ -235,25 +242,33 @@ def homepage_settings_page(request, country_slug):
                 if action_type not in valid_actions:
                     action_type = HomepageBanner.ACTION_NONE
 
-                HomepageBanner.objects.create(
-                    country=country,
-                    title=title,
-                    subtitle=(request.POST.get("subtitle") or "").strip(),
-                    show_text=bool(request.POST.get("show_text")),
-                    desktop_image=(request.POST.get("desktop_image") or "").strip(),
-                    mobile_image=(request.POST.get("mobile_image") or "").strip(),
-                    action_type=action_type,
-                    action_value=(request.POST.get("action_value") or "").strip(),
-                    sort_order=_parse_int_or_zero(request.POST.get("sort_order")),
-                    is_active=bool(request.POST.get("is_active")),
-                    start_at=_parse_optional_datetime(
-                        request.POST.get("start_at")
-                    ),
-                    end_at=_parse_optional_datetime(
-                        request.POST.get("end_at")
-                    ),
-                )
-                return _redirect_to_tab()
+                action_value = (request.POST.get("action_value") or "").strip()
+                # Reject absolute URLs / localhost / wrong-prefix paths so
+                # managers can't accidentally save links that 404 in prod.
+                # See banner_validation.validate_action_value for the rules.
+                av_ok, av_err = validate_action_value(action_type, action_value)
+                if not av_ok:
+                    error = av_err
+                else:
+                    HomepageBanner.objects.create(
+                        country=country,
+                        title=title,
+                        subtitle=(request.POST.get("subtitle") or "").strip(),
+                        show_text=bool(request.POST.get("show_text")),
+                        desktop_image=(request.POST.get("desktop_image") or "").strip(),
+                        mobile_image=(request.POST.get("mobile_image") or "").strip(),
+                        action_type=action_type,
+                        action_value=action_value,
+                        sort_order=_parse_int_or_zero(request.POST.get("sort_order")),
+                        is_active=bool(request.POST.get("is_active")),
+                        start_at=_parse_optional_datetime(
+                            request.POST.get("start_at")
+                        ),
+                        end_at=_parse_optional_datetime(
+                            request.POST.get("end_at")
+                        ),
+                    )
+                    return _redirect_to_tab()
 
         if action == "update_homepage_banner":
             banner = get_object_or_404(
@@ -274,31 +289,37 @@ def homepage_settings_page(request, country_slug):
                 if action_type not in valid_actions:
                     action_type = HomepageBanner.ACTION_NONE
 
-                banner.title = new_title
-                banner.subtitle = (request.POST.get("subtitle") or "").strip()
-                banner.show_text = bool(request.POST.get("show_text"))
-                banner.desktop_image = (
-                    request.POST.get("desktop_image") or ""
-                ).strip()
-                banner.mobile_image = (
-                    request.POST.get("mobile_image") or ""
-                ).strip()
-                banner.action_type = action_type
-                banner.action_value = (
+                action_value = (
                     request.POST.get("action_value") or ""
                 ).strip()
-                banner.sort_order = _parse_int_or_zero(
-                    request.POST.get("sort_order")
-                )
-                banner.is_active = bool(request.POST.get("is_active"))
-                banner.start_at = _parse_optional_datetime(
-                    request.POST.get("start_at")
-                )
-                banner.end_at = _parse_optional_datetime(
-                    request.POST.get("end_at")
-                )
-                banner.save()
-                return _redirect_to_tab()
+                # Same validator as create_homepage_banner — see above.
+                av_ok, av_err = validate_action_value(action_type, action_value)
+                if not av_ok:
+                    error = av_err
+                else:
+                    banner.title = new_title
+                    banner.subtitle = (request.POST.get("subtitle") or "").strip()
+                    banner.show_text = bool(request.POST.get("show_text"))
+                    banner.desktop_image = (
+                        request.POST.get("desktop_image") or ""
+                    ).strip()
+                    banner.mobile_image = (
+                        request.POST.get("mobile_image") or ""
+                    ).strip()
+                    banner.action_type = action_type
+                    banner.action_value = action_value
+                    banner.sort_order = _parse_int_or_zero(
+                        request.POST.get("sort_order")
+                    )
+                    banner.is_active = bool(request.POST.get("is_active"))
+                    banner.start_at = _parse_optional_datetime(
+                        request.POST.get("start_at")
+                    )
+                    banner.end_at = _parse_optional_datetime(
+                        request.POST.get("end_at")
+                    )
+                    banner.save()
+                    return _redirect_to_tab()
 
         if action == "delete_homepage_banner":
             banner = get_object_or_404(

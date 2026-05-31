@@ -96,6 +96,10 @@ from .models import (
     HomeComboBanner,
 )
 
+# Promo code usage-limit validation. Lives in promo_rules so admin
+# screens can reuse the same logic without importing public_api.
+from .promo_rules import check_promo_usage
+
 # 💳 Click payment integration — URL builder (Part 1) + callback (Part 2).
 # Sub-package so future providers (Payme, online_card, ...) can sit next to
 # it without bloating public_api.
@@ -2061,9 +2065,21 @@ def _resolve_fulfillment_method(payload):
     return Order.FULFILLMENT_DELIVERY
 
 
-def _resolve_promo_code(country, payload, *, required=False):
+def _resolve_promo_code(country, payload, *, required=False, customer_phone=None):
     """
-    Resolve an optional PromoCode by string code.
+    Resolve an optional PromoCode by string code, and validate its
+    usage_limit against the requesting customer's phone.
+
+    Args:
+        country: Country instance.
+        payload: request JSON dict.
+        required: if True, missing/empty code returns PROMO_INVALID.
+        customer_phone: phone string from the same payload (already
+            stripped). When given AND the promo has a usage_limit set,
+            we enforce the rule here so cart_calculate and order_create
+            both reject ineligible redemptions at the same checkpoint.
+            Pass None to skip the check (e.g. for cart_calculate calls
+            that don't yet have a phone in the payload).
 
     Returns (promo_or_none, error_response).
 
@@ -2075,6 +2091,7 @@ def _resolve_promo_code(country, payload, *, required=False):
       - empty / missing code → (None, None) when required=False;
         otherwise → (None, PROMO_INVALID error).
       - given code but not found / inactive → (None, PROMO_INVALID error).
+      - found but usage_limit fails for this customer → (None, error).
     """
     raw = (payload.get("promo_code") or "")
     code = str(raw).strip().upper()
@@ -2100,6 +2117,31 @@ def _resolve_promo_code(country, payload, *, required=False):
             details={"promo_code": code},
             status=400,
         )
+
+    # Usage-limit enforcement. We only run the check when the caller
+    # provided a phone — for cart_calculate before the user has typed
+    # their phone we let the code pass and discover the limit later at
+    # order_create. The frontend re-runs cart_calculate after the phone
+    # field is filled, so the error surfaces to the user immediately.
+    if customer_phone:
+        ok, err_code = check_promo_usage(
+            promo, country=country, phone=customer_phone,
+        )
+        if not ok:
+            if err_code == "PROMO_FIRST_ORDER_ONLY":
+                return None, api_error(
+                    "PROMO_FIRST_ORDER_ONLY",
+                    "Промокод действует только для первого заказа",
+                    details={"promo_code": code},
+                    status=400,
+                )
+            # Unknown limit type — generic message, log details for ops.
+            return None, api_error(
+                "PROMO_INVALID",
+                "Промокод не подходит для этого заказа",
+                details={"promo_code": code, "reason": err_code},
+                status=400,
+            )
 
     return promo, None
 
@@ -2386,7 +2428,15 @@ def cart_calculate(request):
         if fulfillment_method == Order.FULFILLMENT_PICKUP:
             delivery_zone = None
 
-    promo, err = _resolve_promo_code(country, payload, required=False)
+    # If the website already has the customer's phone (user typed it
+    # into the checkout form before the final POST), pass it through so
+    # first_order promo limits surface immediately in cart preview.
+    # Missing phone → no enforcement here; order_create will catch it.
+    cart_phone = (payload.get("customer_phone") or "").strip()
+    promo, err = _resolve_promo_code(
+        country, payload, required=False,
+        customer_phone=cart_phone or None,
+    )
     if err:
         return err
 
@@ -2600,7 +2650,13 @@ def order_create(request):
         # explicit marker so cashier UI shows the right context.
         delivery_address = "Самовывоз"
 
-    promo, err = _resolve_promo_code(country, payload, required=False)
+    # Phone is already validated and present here (order_create requires
+    # it). The promo-code usage_limit check uses it to reject first_order
+    # promos for customers who already have prior qualifying orders.
+    promo, err = _resolve_promo_code(
+        country, payload, required=False,
+        customer_phone=customer_phone or None,
+    )
     if err:
         return err
 
@@ -2730,6 +2786,16 @@ def order_create(request):
     )
 
     with transaction.atomic():
+        # Meta CAPI deduplication — the frontend generates a UUID v4 in
+        # CheckoutView, fires the Pixel `Purchase` event with it, and
+        # passes the same value here. We persist it so a cron task can
+        # later send the server-side CAPI Purchase with the same event_id
+        # (15 minutes after payment, see send_pending_meta_purchases).
+        # Missing/empty → "" (deduplication off for this order, which is
+        # fine — the Pixel event still fires, just no server backup).
+        meta_event_id_raw = payload.get("meta_event_id") or ""
+        meta_event_id = str(meta_event_id_raw).strip()[:64]
+
         order = Order.objects.create(
             country=country,
             location=location,
@@ -2755,6 +2821,7 @@ def order_create(request):
             delivery_landmark=courier_landmark_value,
             courier_comment=courier_comment_value,
             leave_at_door=leave_at_door_value,
+            meta_event_id=meta_event_id,
         )
 
         # Now we have order.id → generate public_order_number deterministically.

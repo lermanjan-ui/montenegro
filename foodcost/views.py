@@ -279,7 +279,28 @@ def dish_list(request, country_slug):
     # in the page header sends). The archive list is read-only — most
     # actions on archived dishes are intentionally absent from the UI.
     show_archived = request.GET.get("show_archived") == "1"
-    base_dish_qs = Dish.objects.filter(country=country)
+
+    # Performance: the dish_list template only reads a handful of fields per
+    # row (id, name, category.name, final_weight, selling_price,
+    # cached_total_cost, cached_foodcost, cached_margin, is_archived,
+    # category_id). We fetch ONLY those and pre-join the category via
+    # select_related so the template's `{{ dish.category.name }}` doesn't
+    # trigger N+1.
+    #
+    # Big text fields like `tech_card`, `composition`, `description`,
+    # `meta_title`, etc. are intentionally NOT loaded — for a 100-dish list
+    # they would balloon the response by megabytes for no benefit.
+    base_dish_qs = (
+        Dish.objects
+        .filter(country=country)
+        .select_related("category")
+        .only(
+            "id", "name", "final_weight", "selling_price",
+            "cached_total_cost", "cached_foodcost", "cached_margin",
+            "is_archived", "category_id",
+            "category__id", "category__name",
+        )
+    )
     if show_archived:
         dish_qs = base_dish_qs.filter(is_archived=True)
     else:
@@ -287,7 +308,11 @@ def dish_list(request, country_slug):
 
     dishes = list(dish_qs)
     categories = DishCategory.objects.filter(country=country)
-    archived_count = base_dish_qs.filter(is_archived=True).count()
+    # archived_count uses a separate (cheap) count query so the main qs's
+    # .only() doesn't have to include archived dishes for the badge.
+    archived_count = Dish.objects.filter(
+        country=country, is_archived=True,
+    ).count()
 
     filter_type = request.GET.get("filter", "all")
     sort_type = request.GET.get("sort", "name")
