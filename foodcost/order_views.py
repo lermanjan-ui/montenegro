@@ -10,7 +10,7 @@ from django.db.models import (
     Sum, Count, F, Q, Max, Min, Value,
     Subquery, OuterRef, IntegerField, DecimalField,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, ExtractHour, TruncDate
 from django.shortcuts import get_object_or_404
 
 
@@ -1122,16 +1122,27 @@ def order_analytics(request, country_slug):
     if custom_from:
         try:
             date_from = timezone.datetime.strptime(custom_from, "%Y-%m-%d").date()
-        except:
+        except Exception:
             pass
 
     if custom_to:
         try:
             date_to = timezone.datetime.strptime(custom_to, "%Y-%m-%d").date()
-        except:
+        except Exception:
             pass
 
-    orders = (
+    # =========================================================================
+    #  ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ
+    #  Раньше эта вьюха ходила в БД внутри циклов (по клиентам, филиалам,
+    #  часам, дням, методам оплаты и т.д.) — на длинных периодах это тысячи
+    #  запросов и таймаут. Теперь: заказы периода читаем ОДИН раз в память,
+    #  все сводки считаем по этому единому снимку. Логика и ключи контекста
+    #  сохранены 1:1 — цифры идентичны прежней странице.
+    # =========================================================================
+    ZERO = Decimal("0")
+    HUNDRED = Decimal("100")
+
+    orders_qs = (
         Order.objects
         .filter(
             country=country,
@@ -1148,49 +1159,70 @@ def order_analytics(request, country_slug):
         .order_by("-created_at")
     )
 
-    active_orders = orders.filter(is_cancelled=False)
-    cancelled_orders = orders.filter(is_cancelled=True)
+    # Единственный проход по заказам периода. list() кэширует результат в
+    # самом queryset, поэтому передача orders_qs в шаблон не делает повторных
+    # запросов (и .count в шаблоне берётся из кэша).
+    all_orders = list(orders_qs)
+    active = [o for o in all_orders if not o.is_cancelled]
+    cancelled = [o for o in all_orders if o.is_cancelled]
 
-    total_orders = orders.count()
-    active_orders_count = active_orders.count()
-    cancelled_orders_count = cancelled_orders.count()
+    total_orders = len(all_orders)
+    active_orders_count = len(active)
+    cancelled_orders_count = len(cancelled)
 
-    gross_revenue = sum(order.total_amount for order in active_orders)
-    subtotal_revenue = sum(order.subtotal_amount for order in active_orders)
-    discount_loss = sum(order.discount_amount for order in active_orders)
-
-    commission_total = Decimal("0")
-
-    for order in active_orders:
+    def _commission(order):
         if order.source:
-            commission_total += (
-                order.total_amount
-                * order.source.commission_percent
-                / Decimal("100")
-            )
+            return order.total_amount * order.source.commission_percent / HUNDRED
+        return ZERO
 
+    gross_revenue = sum((o.total_amount for o in active), ZERO)
+    subtotal_revenue = sum((o.subtotal_amount for o in active), ZERO)
+    discount_loss = sum((o.discount_amount for o in active), ZERO)
+
+    commission_total = sum((_commission(o) for o in active), ZERO)
     net_revenue = gross_revenue - commission_total
 
-    customer_delivery_total = sum(
-        order.customer_delivery_amount
-        for order in active_orders
-    )
-
-    delivery_total = sum(
-        order.delivery_amount
-        for order in active_orders
-    )
-
+    customer_delivery_total = sum((o.customer_delivery_amount for o in active), ZERO)
+    delivery_total = sum((o.delivery_amount for o in active), ZERO)
     company_delivery_cost = delivery_total - customer_delivery_total
 
-    total_cost = Decimal("0")
+    # ---- себестоимость проданного: все позиции активных заказов ОДНИМ
+    #      запросом; группируем по заказу/филиалу/блюду в памяти. Используем
+    #      cost_snapshot (себестоимость на момент продажи) — как и раньше. ----
+    active_ids = [o.id for o in active]
+    order_location = {o.id: o.location_id for o in active}
 
-    order_items = OrderItem.objects.filter(
-        order__in=active_orders
-    ).select_related("dish")
+    items = list(
+        OrderItem.objects
+        .filter(order_id__in=active_ids)
+        .values("order_id", "dish__name", "quantity", "cost_snapshot", "total_price")
+    )
 
-    for item in order_items:
-        total_cost += item.cost_snapshot * item.quantity
+    total_cost = ZERO
+    location_cost_map = {}
+    dish_agg = {}
+
+    for it in items:
+        qty = it["quantity"] or ZERO
+        line_cost = (it["cost_snapshot"] or ZERO) * qty
+        total_cost += line_cost
+
+        loc_id = order_location.get(it["order_id"])
+        location_cost_map[loc_id] = location_cost_map.get(loc_id, ZERO) + line_cost
+
+        name = it["dish__name"]
+        d = dish_agg.get(name)
+        if d is None:
+            d = {"dish__name": name, "total_qty": ZERO, "total_sum": ZERO}
+            dish_agg[name] = d
+        d["total_qty"] += qty
+        d["total_sum"] += (it["total_price"] or ZERO)
+
+    top_dishes = sorted(
+        dish_agg.values(),
+        key=lambda d: d["total_qty"],
+        reverse=True,
+    )[:10]
 
     writeoffs_cost = (
         WriteOff.objects
@@ -1200,59 +1232,29 @@ def order_analytics(request, country_slug):
             writeoff_date__lte=date_to,
         )
         .aggregate(total=Sum("cost"))["total"]
-        or Decimal("0")
+        or ZERO
     )
 
-    labor_cost = Decimal("0")
-    tax_cost = Decimal("0")
+    labor_cost = ZERO
+    tax_cost = ZERO
 
-    rent_cost = (
-        FinancialExpense.objects
-        .filter(
-            country=country,
-            expense_type=FinancialExpense.EXPENSE_RENT,
-            expense_date__gte=date_from,
-            expense_date__lte=date_to,
+    def _expense(expense_type):
+        return (
+            FinancialExpense.objects
+            .filter(
+                country=country,
+                expense_type=expense_type,
+                expense_date__gte=date_from,
+                expense_date__lte=date_to,
+            )
+            .aggregate(total=Sum("amount"))["total"]
+            or ZERO
         )
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
 
-    utilities_cost = (
-        FinancialExpense.objects
-        .filter(
-            country=country,
-            expense_type=FinancialExpense.EXPENSE_UTILITIES,
-            expense_date__gte=date_from,
-            expense_date__lte=date_to,
-        )
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    marketing_cost = (
-        FinancialExpense.objects
-        .filter(
-            country=country,
-            expense_type=FinancialExpense.EXPENSE_MARKETING,
-            expense_date__gte=date_from,
-            expense_date__lte=date_to,
-        )
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    other_expenses = (
-        FinancialExpense.objects
-        .filter(
-            country=country,
-            expense_type=FinancialExpense.EXPENSE_OTHER,
-            expense_date__gte=date_from,
-            expense_date__lte=date_to,
-        )
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
+    rent_cost = _expense(FinancialExpense.EXPENSE_RENT)
+    utilities_cost = _expense(FinancialExpense.EXPENSE_UTILITIES)
+    marketing_cost = _expense(FinancialExpense.EXPENSE_MARKETING)
+    other_expenses = _expense(FinancialExpense.EXPENSE_OTHER)
 
     operating_expenses = (
         labor_cost
@@ -1272,132 +1274,86 @@ def order_analytics(request, country_slug):
 
     ebitda = profit_before_fixed - operating_expenses
 
-    average_check = Decimal("0")
-
+    average_check = ZERO
     if active_orders_count > 0:
         average_check = gross_revenue / active_orders_count
 
     cancel_percent = 0
-
     if total_orders > 0:
         cancel_percent = cancelled_orders_count / total_orders * 100
 
-    cash_total = Decimal("0")
-    bank_total = Decimal("0")
+    # ---- касса / банк ----
+    cash_total = ZERO
+    bank_total = ZERO
 
-    for order in active_orders:
+    for o in active:
+        order_food_total = o.subtotal_amount - o.discount_amount
+        order_commission = ZERO
+        if o.source:
+            order_commission = order_food_total * o.source.commission_percent / HUNDRED
 
-        order_food_total = (
-            order.subtotal_amount
-            - order.discount_amount
-        )
-
-        order_commission = Decimal("0")
-
-        if order.source:
-            order_commission = (
-                order_food_total
-                * order.source.commission_percent
-                / Decimal("100")
-            )
-
-        if order.payment_method and order.payment_method.is_cash:
-            cash_total += order.total_amount
+        if o.payment_method and o.payment_method.is_cash:
+            cash_total += o.total_amount
         else:
-            if order.source and order.source.commission_percent > 0:
-                bank_total += order.total_amount - order_commission
+            if o.source and o.source.commission_percent > 0:
+                bank_total += o.total_amount - order_commission
             else:
-                bank_total += order.total_amount
+                bank_total += o.total_amount
 
-    customer_ids = set(
-        active_orders
-        .exclude(customer_id__isnull=True)
-        .values_list("customer_id", flat=True)
-    )
+    # ---- новые / повторные клиенты: ОДИН запрос вместо N+1 ----
+    # "повторный" = у клиента есть НЕотменённый заказ ДО date_from (глобально
+    # по стране — ровно как раньше, не в разрезе филиала).
+    active_customer_ids = {o.customer_id for o in active if o.customer_id is not None}
 
-    new_customers_count = 0
-    returning_customers_count = 0
-
-    for customer_id in customer_ids:
-        previous_orders = Order.objects.filter(
+    prior_customer_ids = set(
+        Order.objects
+        .filter(
             country=country,
-            customer_id=customer_id,
             is_cancelled=False,
             order_date__date__lt=date_from,
-        ).exists()
+            customer_id__in=active_customer_ids,
+        )
+        .values_list("customer_id", flat=True)
+        .distinct()
+    )
 
-        if previous_orders:
-            returning_customers_count += 1
-        else:
-            new_customers_count += 1
+    returning_customers_count = len(active_customer_ids & prior_customer_ids)
+    new_customers_count = len(active_customer_ids) - returning_customers_count
 
-    latest_orders = orders[:10]
+    latest_orders = all_orders[:10]
 
+    # ---- сводка по филиалам (в памяти) ----
     locations_summary = []
 
-    locations = Location.objects.filter(
-        country=country,
-        is_active=True
-    ).order_by("name")
+    locations = (
+        Location.objects
+        .filter(country=country, is_active=True)
+        .order_by("name")
+    )
 
     for location in locations:
+        loc_all = [o for o in all_orders if o.location_id == location.id]
+        loc_active = [o for o in active if o.location_id == location.id]
+        loc_cancelled = [o for o in cancelled if o.location_id == location.id]
 
-        location_orders = orders.filter(location=location)
-        location_active_orders = location_orders.filter(is_cancelled=False)
-        location_cancelled_orders = location_orders.filter(is_cancelled=True)
-
-        location_revenue = sum(order.total_amount for order in location_active_orders)
-        location_commission = Decimal("0")
-
-        for order in location_active_orders:
-            if order.source:
-                location_commission += (
-                    order.total_amount
-                    * order.source.commission_percent
-                    / Decimal("100")
-                )
-
+        location_revenue = sum((o.total_amount for o in loc_active), ZERO)
+        location_commission = sum((_commission(o) for o in loc_active), ZERO)
         location_net_revenue = location_revenue - location_commission
 
         location_customer_delivery = sum(
-            order.customer_delivery_amount
-            for order in location_active_orders
+            (o.customer_delivery_amount for o in loc_active), ZERO
         )
+        location_delivery_total = sum((o.delivery_amount for o in loc_active), ZERO)
+        location_company_delivery = location_delivery_total - location_customer_delivery
+        location_discount_loss = sum((o.discount_amount for o in loc_active), ZERO)
 
-        location_delivery_total = sum(
-            order.delivery_amount
-            for order in location_active_orders
-        )
+        location_cost = location_cost_map.get(location.id, ZERO)
 
-        location_company_delivery = (
-            location_delivery_total
-            - location_customer_delivery
-        )
-
-        location_discount_loss = sum(
-            order.discount_amount
-            for order in location_active_orders
-        )
-
-        location_cost = Decimal("0")
-
-        location_items = OrderItem.objects.filter(
-            order__in=location_active_orders
-        )
-
-        for item in location_items:
-            location_cost += item.cost_snapshot * item.quantity
-
-        location_writeoffs = (
-            WriteOff.objects
-            .filter(
-                country=country,
-                writeoff_date__gte=date_from,
-                writeoff_date__lte=date_to,
-            )
-            .aggregate(total=Sum("cost"))["total"]
-            or Decimal("0")
-        )
+        # NB: списания берём ОБЩИЕ по стране и подставляем на каждый филиал —
+        # поведение сохранено 1:1 со старой версией (в исходном коде запрос
+        # WriteOff не фильтровался по локации). Похоже на баг в разрезе
+        # филиала — кандидат на отдельный фикс, не трогаем без ТЗ.
+        location_writeoffs = writeoffs_cost
 
         location_profit_before_fixed = (
             location_net_revenue
@@ -1406,68 +1362,40 @@ def order_analytics(request, country_slug):
             - location_writeoffs
         )
 
-        location_average_check = Decimal("0")
+        location_active_count = len(loc_active)
+        location_average_check = ZERO
+        if location_active_count > 0:
+            location_average_check = location_revenue / location_active_count
 
-        if location_active_orders.count() > 0:
-            location_average_check = (
-                location_revenue / location_active_orders.count()
-            )
+        location_cash = ZERO
+        location_bank = ZERO
 
-        location_cash = Decimal("0")
-        location_bank = Decimal("0")
+        for o in loc_active:
+            order_food_total = o.subtotal_amount - o.discount_amount
+            order_commission = ZERO
+            if o.source:
+                order_commission = order_food_total * o.source.commission_percent / HUNDRED
 
-        for order in location_active_orders:
-
-            order_food_total = (
-                order.subtotal_amount
-                - order.discount_amount
-            )
-
-            order_commission = Decimal("0")
-
-            if order.source:
-                order_commission = (
-                    order_food_total
-                    * order.source.commission_percent
-                    / Decimal("100")
-                )
-
-            if order.payment_method and order.payment_method.is_cash:
-                location_cash += order.total_amount
+            if o.payment_method and o.payment_method.is_cash:
+                location_cash += o.total_amount
             else:
-                if order.source and order.source.commission_percent > 0:
-                    location_bank += order.total_amount - order_commission
+                if o.source and o.source.commission_percent > 0:
+                    location_bank += o.total_amount - order_commission
                 else:
-                    location_bank += order.total_amount
+                    location_bank += o.total_amount
 
-        location_customer_ids = set(
-            location_active_orders
-            .exclude(customer_id__isnull=True)
-            .values_list("customer_id", flat=True)
-        )
-
-        location_new_customers = 0
-        location_returning_customers = 0
-
-        for customer_id in location_customer_ids:
-            previous_orders = Order.objects.filter(
-                country=country,
-                customer_id=customer_id,
-                is_cancelled=False,
-                order_date__date__lt=date_from,
-            ).exists()
-
-            if previous_orders:
-                location_returning_customers += 1
-            else:
-                location_new_customers += 1
+        loc_customer_ids = {
+            o.customer_id for o in loc_active if o.customer_id is not None
+        }
+        location_returning_customers = len(loc_customer_ids & prior_customer_ids)
+        location_new_customers = len(loc_customer_ids) - location_returning_customers
 
         locations_summary.append({
             "name": location.name,
 
-            "orders_count": location_orders.count(),
-            "active_orders_count": location_active_orders.count(),
-            "cancelled_orders_count": location_cancelled_orders.count(),
+            "orders_count": len(loc_all),
+            "active_orders_count": location_active_count,
+            "cancelled_orders_count": len(loc_cancelled),
 
             "revenue": location_revenue,
             "net_revenue": location_net_revenue,
@@ -1491,147 +1419,161 @@ def order_analytics(request, country_slug):
             "returning_customers": location_returning_customers,
         })
 
-    top_dishes = (
-        OrderItem.objects
-        .filter(order__in=active_orders)
-        .values("dish__name")
-        .annotate(
-            total_qty=Sum("quantity"),
-            total_sum=Sum("total_price"),
-        )
-        .order_by("-total_qty")[:10]
-    )
+    # ---- ТОП блюд уже посчитан выше (top_dishes) из позиций в памяти ----
 
+    # ---- сводка по методам оплаты (в памяти) ----
     payment_summary = []
 
-    payment_methods = PaymentMethod.objects.filter(
-        country=country,
-        is_active=True
-    ).order_by("name")
+    payment_methods = (
+        PaymentMethod.objects
+        .filter(country=country, is_active=True)
+        .order_by("name")
+    )
 
     for method in payment_methods:
-
-        method_orders = active_orders.filter(payment_method=method)
-
+        method_orders = [o for o in active if o.payment_method_id == method.id]
         payment_summary.append({
             "name": method.name,
-            "orders_count": method_orders.count(),
-            "revenue": sum(order.total_amount for order in method_orders),
+            "orders_count": len(method_orders),
+            "revenue": sum((o.total_amount for o in method_orders), ZERO),
         })
 
+    # ---- сводка по источникам (в памяти) ----
     source_summary = []
 
-    order_sources = OrderSource.objects.filter(
-        country=country,
-        is_active=True
-    ).order_by("name")
+    order_sources = (
+        OrderSource.objects
+        .filter(country=country, is_active=True)
+        .order_by("name")
+    )
 
     for source in order_sources:
-
-        source_orders = active_orders.filter(source=source)
-
-        source_revenue = sum(order.total_amount for order in source_orders)
-        source_commission = Decimal("0")
-
-        for order in source_orders:
-            source_commission += (
-                order.total_amount
-                * source.commission_percent
-                / Decimal("100")
-            )
-
+        source_orders = [o for o in active if o.source_id == source.id]
+        source_revenue = sum((o.total_amount for o in source_orders), ZERO)
+        source_commission = sum(
+            (o.total_amount * source.commission_percent / HUNDRED for o in source_orders),
+            ZERO,
+        )
         source_summary.append({
             "name": source.name,
-            "orders_count": source_orders.count(),
+            "orders_count": len(source_orders),
             "revenue": source_revenue,
             "commission": source_commission,
             "net_revenue": source_revenue - source_commission,
         })
 
+    # ---- сводка по доставке (в памяти) ----
     delivery_summary = []
 
-    delivery_providers = DeliveryProvider.objects.filter(
-        country=country,
-        is_active=True
-    ).order_by("name")
+    delivery_providers = (
+        DeliveryProvider.objects
+        .filter(country=country, is_active=True)
+        .order_by("name")
+    )
 
     for provider in delivery_providers:
-
-        provider_orders = active_orders.filter(delivery_provider=provider)
-
-        provider_delivery_total = sum(
-            order.delivery_amount
-            for order in provider_orders
-        )
-
+        provider_orders = [o for o in active if o.delivery_provider_id == provider.id]
+        provider_delivery_total = sum((o.delivery_amount for o in provider_orders), ZERO)
         provider_customer_delivery = sum(
-            order.customer_delivery_amount
-            for order in provider_orders
+            (o.customer_delivery_amount for o in provider_orders), ZERO
         )
-
         delivery_summary.append({
             "name": provider.name,
-            "orders_count": provider_orders.count(),
+            "orders_count": len(provider_orders),
             "delivery_sum": provider_delivery_total,
             "customer_delivery": provider_customer_delivery,
             "company_delivery": provider_delivery_total - provider_customer_delivery,
-            "revenue": sum(order.total_amount for order in provider_orders),
+            "revenue": sum((o.total_amount for o in provider_orders), ZERO),
         })
 
-    cancel_reasons_stats = (
-        cancelled_orders
-        .values("cancel_reason__name")
-        .annotate(total=Count("id"))
-        .order_by("-total")
+    # ---- причины отмен (в памяти) ----
+    cancel_reason_counts = {}
+    for o in cancelled:
+        name = o.cancel_reason.name if o.cancel_reason else None
+        cancel_reason_counts[name] = cancel_reason_counts.get(name, 0) + 1
+
+    cancel_reasons_stats = sorted(
+        (
+            {"cancel_reason__name": k, "total": v}
+            for k, v in cancel_reason_counts.items()
+        ),
+        key=lambda r: r["total"],
+        reverse=True,
     )
 
-    hourly_stats = []
+    # ---- по часам: ОДИН группирующий запрос (ExtractHour даёт тот же
+    #      tz-срез, что прежний created_at__hour) ----
+    hour_rows = (
+        Order.objects
+        .filter(
+            country=country,
+            order_date__date__gte=date_from,
+            order_date__date__lte=date_to,
+            is_cancelled=False,
+        )
+        .annotate(h=ExtractHour("created_at"))
+        .values("h")
+        .annotate(orders=Count("id"), revenue=Sum("total_amount"))
+    )
+    hour_map = {r["h"]: r for r in hour_rows}
 
-    max_hour_revenue = Decimal("0")
+    hourly_stats = []
+    max_hour_revenue = ZERO
 
     for hour in range(24):
-
-        hour_orders = active_orders.filter(created_at__hour=hour)
-
-        hour_revenue = sum(order.total_amount for order in hour_orders)
+        row = hour_map.get(hour)
+        hour_revenue = (row["revenue"] if row else None) or ZERO
+        hour_orders_count = row["orders"] if row else 0
 
         if hour_revenue > max_hour_revenue:
             max_hour_revenue = hour_revenue
 
         hourly_stats.append({
             "hour": f"{hour:02d}:00",
-            "orders": hour_orders.count(),
+            "orders": hour_orders_count,
             "revenue": hour_revenue,
         })
 
     for item in hourly_stats:
-
         percent = 0
-
         if max_hour_revenue > 0:
             percent = item["revenue"] / max_hour_revenue * 100
-
         item["percent"] = percent
 
-    daily_stats = []
+    # ---- по дням: ОДИН группирующий запрос (TruncDate = тот же tz-срез,
+    #      что прежний order_date__date) ----
+    day_rows = (
+        Order.objects
+        .filter(
+            country=country,
+            order_date__date__gte=date_from,
+            order_date__date__lte=date_to,
+        )
+        .annotate(d=TruncDate("order_date"))
+        .values("d")
+        .annotate(
+            active=Count("id", filter=Q(is_cancelled=False)),
+            cancelled=Count("id", filter=Q(is_cancelled=True)),
+            revenue=Sum("total_amount", filter=Q(is_cancelled=False)),
+        )
+    )
+    day_map = {r["d"]: r for r in day_rows}
 
+    daily_stats = []
     current_day = date_from
-    max_daily_revenue = Decimal("0")
+    max_daily_revenue = ZERO
 
     while current_day <= date_to:
-
-        day_orders = active_orders.filter(order_date__date=current_day)
-        day_cancelled_orders = cancelled_orders.filter(order_date__date=current_day)
-
-        day_revenue = sum(order.total_amount for order in day_orders)
+        row = day_map.get(current_day)
+        day_revenue = (row["revenue"] if row else None) or ZERO
 
         if day_revenue > max_daily_revenue:
             max_daily_revenue = day_revenue
 
         daily_stats.append({
             "date": current_day,
-            "orders": day_orders.count(),
-            "cancelled": day_cancelled_orders.count(),
+            "orders": (row["active"] if row else 0),
+            "cancelled": (row["cancelled"] if row else 0),
             "revenue": day_revenue,
         })
 
@@ -1640,12 +1582,9 @@ def order_analytics(request, country_slug):
     daily_count = len(daily_stats)
 
     for index, item in enumerate(daily_stats):
-
         percent = Decimal("0")
-
         if max_daily_revenue > 0:
             percent = item["revenue"] / max_daily_revenue * 100
-
         item["percent"] = percent
         item["svg_x"] = 50 if daily_count == 1 else index / (daily_count - 1) * 100
         item["svg_y"] = max(8, 100 - float(percent))
@@ -1661,7 +1600,7 @@ def order_analytics(request, country_slug):
             "date_from": date_from,
             "date_to": date_to,
 
-            "orders": orders,
+            "orders": orders_qs,
             "latest_orders": latest_orders,
 
             "total_orders": total_orders,
