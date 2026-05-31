@@ -1,838 +1,287 @@
 {% extends "foodcost/base.html" %}
 
-{% block title %}
-Клиент
-{% endblock %}
+{% block title %}Клиент{% endblock %}
 
 {% block content %}
 
+<!-- CSS inline (без staticfiles). FoodCost UI Kit v2. Сохранены все данные
+     старой карточки: статистика, история заказов, инфо о клиенте, адреса,
+     комментарий. Добавлен блок управления статусами (вкл. отказ в доставке). -->
 <style>
-.page{
-    max-width:1450px;
-    margin:0 auto;
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-warning:#F59E0B; --fc-warning-soft:#FEF3C7; --fc-warning-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-hover:#DC2626; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-
-.topbar{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:18px;
-    padding:22px;
-    margin-bottom:18px;
-}
-
-.breadcrumbs{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    color:#6b7280;
-    font-size:14px;
-    margin-bottom:18px;
-}
-
-.breadcrumbs span{
-    opacity:0.5;
-}
-
-h1{
-    margin:0;
-    font-size:44px;
-    line-height:1;
-    color:#111827;
-    letter-spacing:-0.04em;
-}
-
-.muted{
-    color:#64748b;
-    margin-top:10px;
-    font-size:18px;
-    font-weight:800;
-}
-
-.stats-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:14px;
-    margin-bottom:18px;
-}
-
-.stat-card{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:18px;
-    padding:18px;
-    box-shadow:0 10px 28px rgba(15,23,42,0.05);
-    display:grid;
-    grid-template-columns:54px 1fr;
-    gap:14px;
-    align-items:center;
-}
-
-.stat-icon{
-    width:54px;
-    height:54px;
-    border-radius:16px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.stat-icon svg{
-    width:24px;
-    height:24px;
-    stroke-width:2.2;
-}
-
-.stat-label{
-    color:#64748b;
-    font-size:14px;
-    font-weight:800;
-    margin-bottom:8px;
-}
-
-.stat-value{
-    font-size:24px;
-    font-weight:950;
-    color:#111827;
-    line-height:1.1;
-}
-
-.stat-blue .stat-icon{background:#eef2ff;color:#4f46e5;}
-.stat-green .stat-icon{background:#ecfdf5;color:#16a34a;}
-.stat-orange .stat-icon{background:#fff7ed;color:#f59e0b;}
-.stat-purple .stat-icon{background:#f5f3ff;color:#9333ea;}
-
-.layout{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 380px;
-    gap:18px;
-    align-items:start;
-}
-
-.card{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:18px;
-    box-shadow:0 10px 28px rgba(15,23,42,0.05);
-}
-
-.section-title{
-    font-size:24px;
-    font-weight:950;
-    color:#111827;
-}
-
-.orders-card{
-    overflow:hidden;
-}
-
-.orders-header{
-    padding:22px;
-    border-bottom:1px solid #eef2f7;
-}
-
-.orders-table{
-    display:flex;
-    flex-direction:column;
-}
-
-.order-head,
-.order-row{
-    display:grid;
-    grid-template-columns:90px 170px 150px minmax(110px,1fr) 110px;
-    gap:12px;
-    align-items:center;
-    padding:16px 22px;
-}
-
-.order-head{
-    background:#f8fafc;
-    color:#64748b;
-    font-size:13px;
-    font-weight:900;
-}
-
-.order-row{
-    border-top:1px solid #f1f5f9;
-}
-
-.order-id{
-    font-size:20px;
-    font-weight:950;
-    color:#111827;
-}
-
-.order-date{
-    font-size:14px;
-    font-weight:800;
-    color:#374151;
-}
-
-.order-sum{
-    font-size:18px;
-    font-weight:950;
-    color:#111827;
-}
-
-.order-location{
-    font-size:14px;
-    font-weight:900;
-    color:#111827;
-}
-
-.open-btn{
-    background:#0f172a;
-    color:white;
-    text-decoration:none;
-    border-radius:10px;
-    padding:10px 12px;
-    font-size:14px;
-    font-weight:900;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.side-column{
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-}
-
-.side-card{
-    padding:22px;
-}
-
-.client-info{
-    display:flex;
-    flex-direction:column;
-    gap:16px;
-}
-
-.info-row{
-    display:grid;
-    grid-template-columns:28px 1fr;
-    gap:14px;
-    align-items:start;
-    padding-bottom:16px;
-    border-bottom:1px solid #eef2f7;
-}
-
-.info-row:last-child{
-    border-bottom:0;
-    padding-bottom:0;
-}
-
-.info-icon{
-    width:28px;
-    height:28px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#64748b;
-}
-
-.info-icon svg{
-    width:20px;
-    height:20px;
-    stroke-width:2.2;
-}
-
-.info-label{
-    color:#64748b;
-    font-size:14px;
-    margin-bottom:4px;
-}
-
-.info-value{
-    color:#111827;
-    font-size:16px;
-    font-weight:900;
-    line-height:1.4;
-}
-
-.badge{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:7px 12px;
-    border-radius:999px;
-    font-size:13px;
-    font-weight:900;
-}
-
-.badge-green{
-    background:#dcfce7;
-    color:#15803d;
-}
-
-.badge-red{
-    background:#fee2e2;
-    color:#b91c1c;
-}
-
-.address-list{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-}
-
-.address-item{
-    display:grid;
-    grid-template-columns:38px 1fr auto;
-    gap:12px;
-    align-items:start;
-    padding-bottom:14px;
-    border-bottom:1px solid #f1f5f9;
-}
-
-.address-item:last-child{
-    border-bottom:0;
-    padding-bottom:0;
-}
-
-.address-icon{
-    width:38px;
-    height:38px;
-    border-radius:12px;
-    background:#eff6ff;
-    color:#2563eb;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.address-icon svg{
-    width:18px;
-    height:18px;
-    stroke-width:2.2;
-}
-
-.address-text{
-    font-size:15px;
-    font-weight:800;
-    color:#111827;
-    margin-bottom:4px;
-}
-
-.address-meta{
-    color:#64748b;
-    font-size:13px;
-}
-
-.address-badge{
-    background:#eff6ff;
-    color:#2563eb;
-    border-radius:999px;
-    padding:6px 10px;
-    font-size:12px;
-    font-weight:900;
-}
-
-.comment-box{
-    background:#fffbeb;
-    border:1px solid #fde68a;
-    border-radius:14px;
-    padding:16px;
-    color:#374151;
-    line-height:1.7;
-    font-size:15px;
-}
-
-.empty{
-    padding:50px 20px;
-    text-align:center;
-    color:#64748b;
-}
-
-@media (max-width:1200px){
-    .layout{
-        grid-template-columns:1fr;
-    }
-
-    .stats-grid{
-        grid-template-columns:1fr 1fr;
-    }
-}
-
-@media (max-width:800px){
-    .stats-grid{
-        grid-template-columns:1fr;
-    }
-
-    .order-head{
-        display:none;
-    }
-
-    .order-row{
-        grid-template-columns:1fr;
-        gap:10px;
-    }
-
-    h1{
-        font-size:34px;
-    }
-}
-
-/* FIXES */
-
-.topbar{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:18px;
-    padding:24px 28px;
-    margin-bottom:18px;
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    justify-content:center;
-}
-
-.topbar h1{
-    text-align:left;
-}
-
-.topbar .muted{
-    text-align:left;
-}
-
-.order-head,
-.order-row{
-    grid-template-columns:80px 150px 130px minmax(90px,1fr) 90px;
-    padding:14px 18px;
-}
-
-.open-btn{
-    width:100%;
-    box-sizing:border-box;
-    padding:9px 10px;
-    font-size:13px;
-}
-
-.order-sum{
-    white-space:nowrap;
-}
-
-.order-location{
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.info-icon svg{
-    display:block;
-}
-
-@media (max-width:1200px){
-    .layout{
-        grid-template-columns:1fr;
-    }
-
-    .order-head,
-    .order-row{
-        grid-template-columns:80px 150px 130px minmax(90px,1fr) 90px;
-    }
-}
-
-@media (max-width:800px){
-    .order-row{
-        grid-template-columns:1fr;
-    }
-
-    .open-btn{
-        width:100%;
-    }
-}
-
-.customer-header{
-    display:block;
-    text-align:left;
-}
-
-.customer-header h1,
-.customer-header .muted{
-    text-align:left;
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1280px; margin:0 auto; padding:24px; }
+
+.fc-breadcrumbs{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--fc-muted); margin-bottom:16px; flex-wrap:wrap; }
+.fc-breadcrumbs a{ color:var(--fc-muted); text-decoration:none; }
+.fc-breadcrumbs a:hover{ color:var(--fc-text); }
+.fc-breadcrumbs .sep{ opacity:.5; }
+.fc-breadcrumbs .current{ color:var(--fc-text); font-weight:600; }
+
+.fc-page-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.fc-page-head h1{ margin:0 0 8px; font-size:32px; font-weight:600; letter-spacing:-0.02em; }
+.fc-page-head .muted{ margin:0 0 10px; color:var(--fc-muted); font-size:15px; }
+.head-badges{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:24px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 16px; font-size:20px; font-weight:600; letter-spacing:-0.01em; }
+
+.fc-banner{ display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--fc-radius-input); font-size:14px; margin-bottom:16px; line-height:1.5; }
+.fc-banner-success{ background:var(--fc-green-soft); color:var(--fc-green-text); border:1px solid #86EFAC; }
+.fc-banner-danger{ background:var(--fc-danger-soft); color:var(--fc-danger-text); border:1px solid #FCA5A5; }
+.fc-banner strong{ font-weight:700; }
+
+.fc-badge{ display:inline-flex; align-items:center; gap:4px; padding:4px 12px; border-radius:var(--fc-radius-pill); font-size:13px; font-weight:600; line-height:1.4; white-space:nowrap; }
+.fc-badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.fc-badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.fc-badge-amber{ background:var(--fc-warning-soft); color:var(--fc-warning-text); }
+.fc-badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; transition:background-color .12s,border-color .12s,color .12s; white-space:nowrap; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; }
+.fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.fc-btn-secondary:hover{ border-color:var(--fc-text); }
+
+.fc-input,.fc-textarea{ width:100%; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; color:var(--fc-text); transition:border-color .12s,box-shadow .12s; }
+.fc-input{ height:40px; padding:0 12px; }
+.fc-textarea{ padding:10px 12px; min-height:72px; resize:vertical; line-height:1.5; }
+.fc-input:focus,.fc-textarea:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+.fc-label{ font-size:13px; font-weight:600; color:var(--fc-text); margin-bottom:6px; display:block; }
+
+/* KPI stats */
+.stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+.stat-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:16px 18px; min-height:104px; display:flex; flex-direction:column; justify-content:center; }
+.stat-label{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--fc-muted); margin-bottom:8px; }
+.stat-value{ font-size:24px; font-weight:700; letter-spacing:-0.01em; font-variant-numeric:tabular-nums; }
+.stat-value.green{ color:var(--fc-green-text); }
+
+/* layout */
+.layout{ display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:16px; align-items:start; }
+.side-column{ display:flex; flex-direction:column; gap:16px; }
+
+/* orders table */
+.fc-table{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); overflow:hidden; background:var(--fc-card); }
+.ord-head,.ord-row{ display:grid; grid-template-columns:80px 1fr 1fr 1fr 110px; gap:12px; align-items:center; padding:12px 16px; }
+.ord-head{ background:var(--fc-card-soft); border-bottom:1px solid var(--fc-border); font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; }
+.ord-row{ border-bottom:1px solid var(--fc-border-soft); min-height:52px; }
+.ord-row:last-child{ border-bottom:0; }
+.ord-row:hover{ background:var(--fc-card-soft); }
+.ord-id{ font-weight:700; }
+.ord-sum{ font-weight:700; font-variant-numeric:tabular-nums; }
+.ord-open{ background:var(--fc-text); color:#fff; text-decoration:none; border-radius:var(--fc-radius-input); padding:8px 12px; font-size:13px; font-weight:600; text-align:center; }
+
+/* client info rows */
+.info-row{ display:flex; flex-direction:column; gap:2px; padding:10px 0; border-bottom:1px solid var(--fc-border-soft); }
+.info-row:last-child{ border-bottom:0; }
+.info-label{ color:var(--fc-muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+.info-value{ color:var(--fc-text); font-size:15px; font-weight:600; }
+
+/* status editor */
+.toggle{ display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); margin-bottom:10px; cursor:pointer; }
+.toggle input{ margin-top:2px; width:18px; height:18px; accent-color:var(--fc-green); cursor:pointer; }
+.toggle.danger input{ accent-color:var(--fc-danger); }
+.toggle .t-title{ font-weight:600; font-size:14px; }
+.toggle .t-sub{ color:var(--fc-muted); font-size:13px; margin-top:2px; }
+
+.address-item{ padding:12px 0; border-bottom:1px solid var(--fc-border-soft); }
+.address-item:last-child{ border-bottom:0; }
+.address-text{ font-weight:600; font-size:14px; }
+.address-meta{ color:var(--fc-muted); font-size:13px; margin-top:2px; }
+
+.fc-empty{ text-align:center; padding:40px 16px; color:var(--fc-muted); }
+.comment-box{ background:var(--fc-warning-soft); border:1px solid #FDE68A; border-radius:var(--fc-radius-input); padding:14px; color:var(--fc-text); line-height:1.6; font-size:14px; }
+
+@media (max-width:1100px){ .layout{ grid-template-columns:1fr; } }
+@media (max-width:720px){
+    .fc-page{ padding:16px; }
+    .stats-grid{ grid-template-columns:1fr 1fr; }
+    .ord-head{ display:none; }
+    .ord-row{ grid-template-columns:1fr 1fr; gap:6px 12px; }
+    .ord-row > div::before{ content:attr(data-label); display:block; font-size:10px; text-transform:uppercase; color:var(--fc-muted-soft); font-weight:600; }
+    .ord-row > .ord-cell-action{ grid-column:1 / -1; }
+    .ord-row > .ord-cell-action::before{ content:none; }
 }
 </style>
 
-<div class="page">
+<div class="fc-scope">
+<div class="fc-page">
 
-	<div>
+    <nav class="fc-breadcrumbs" aria-label="Breadcrumbs">
+        <a href="/c/{{ country.slug }}/">Главная</a>
+        <span class="sep">›</span>
+        <a href="/c/{{ country.slug }}/customers/">Клиенты</a>
+        <span class="sep">›</span>
+        <span class="current">{{ customer.name|default:"Без имени" }}</span>
+    </nav>
 
-	   
+    {% if saved %}
+        <div class="fc-banner fc-banner-success"><strong>Сохранено.</strong> Статусы клиента обновлены.</div>
+    {% endif %}
 
-	    <div class="customer-header">
+    {% if customer.delivery_blocked %}
+        <div class="fc-banner fc-banner-danger">
+            <strong>⚠ Отказ в доставке.</strong>
+            Этому клиенту отказано в доставке.
+            {% if customer.delivery_block_reason %}Причина: {{ customer.delivery_block_reason }}{% endif %}
+        </div>
+    {% endif %}
 
-	        <h1>
-	            {{ customer.name }}
-	        </h1>
-
-	        <div class="muted">
-	            {{ customer.phone }}
-	        </div>
-
-	    </div>
-
-	</div>
+    <div class="fc-page-head">
+        <div>
+            <h1>{{ customer.name|default:"Без имени" }}</h1>
+            <p class="muted">{{ customer.phone }}</p>
+            <div class="head-badges">
+                {% if customer.is_regular %}<span class="fc-badge fc-badge-green">Постоянный</span>{% endif %}
+                {% if customer.is_problematic %}<span class="fc-badge fc-badge-red">Проблемный</span>{% endif %}
+                {% if customer.delivery_blocked %}<span class="fc-badge fc-badge-red">⚠ Отказ в доставке</span>{% endif %}
+                {% if not customer.is_regular and not customer.is_problematic and not customer.delivery_blocked %}
+                    <span class="fc-badge fc-badge-gray">Без флага</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
     <div class="stats-grid">
-
-        <div class="stat-card stat-blue">
-
-            <div class="stat-icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18l-1 13H4L3 7zm3 0V5a6 6 0 0112 0v2"/>
-                </svg>
-            </div>
-
-            <div>
-                <div class="stat-label">
-                    Заказов
-                </div>
-
-                <div class="stat-value">
-                    {{ total_orders }}
-                </div>
-            </div>
-
-        </div>
-
-        <div class="stat-card stat-green">
-
-            <div class="stat-icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v10a2 2 0 002 2h6a2 2 0 002-2V9z"/>
-                </svg>
-            </div>
-
-            <div>
-                <div class="stat-label">
-                    Сумма заказов
-                </div>
-
-                <div class="stat-value">
-                    {{ total_amount|floatformat:0 }} сум
-                </div>
-            </div>
-
-        </div>
-
-        <div class="stat-card stat-orange">
-
-            <div class="stat-icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 19V6m0 13l-4-4m4 4l4-4"/>
-                </svg>
-            </div>
-
-            <div>
-                <div class="stat-label">
-                    Средний чек
-                </div>
-
-                <div class="stat-value">
-                    {{ average_check|floatformat:0 }} сум
-                </div>
-            </div>
-
-        </div>
-
-        <div class="stat-card stat-purple">
-
-            <div class="stat-icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-            </div>
-
-            <div>
-                <div class="stat-label">
-                    Адресов
-                </div>
-
-                <div class="stat-value">
-                    {{ customer.addresses.count }}
-                </div>
-            </div>
-
-        </div>
-
+        <div class="stat-card"><div class="stat-label">Заказов</div><div class="stat-value">{{ total_orders }}</div></div>
+        <div class="stat-card"><div class="stat-label">Сумма заказов</div><div class="stat-value green">{{ total_amount_display }} сум</div></div>
+        <div class="stat-card"><div class="stat-label">Средний чек</div><div class="stat-value">{{ average_check_display }} сум</div></div>
+        <div class="stat-card"><div class="stat-label">Адресов</div><div class="stat-value">{{ addresses_count }}</div></div>
     </div>
 
     <div class="layout">
 
         <div>
-
-            <div class="card orders-card">
-
-                <div class="orders-header">
-
-                    <div class="section-title">
-                        История заказов
-                    </div>
-
+            <div class="fc-card" style="padding:0;">
+                <div style="padding:20px 24px;border-bottom:1px solid var(--fc-border-soft);">
+                    <h2 style="margin:0;">История заказов</h2>
                 </div>
-
-                {% if orders %}
-
-                    <div class="orders-table">
-
-                        <div class="order-head">
-
-                            <div>№ заказа</div>
-                            <div>Дата</div>
-                            <div>Сумма</div>
-                            <div>Филиал</div>
-                            <div>Действие</div>
-
+                {% if order_rows %}
+                    <div class="fc-table" style="border:0;border-radius:0;">
+                        <div class="ord-head">
+                            <div>№</div><div>Дата</div><div>Сумма</div><div>Филиал</div><div>Действие</div>
                         </div>
-
-                        {% for order in orders %}
-
-                            <div class="order-row">
-
-                                <div class="order-id">
-                                    #{{ order.id }}
+                        {% for o in order_rows %}
+                            <div class="ord-row">
+                                <div data-label="№" class="ord-id">#{{ o.id }}</div>
+                                <div data-label="Дата">{{ o.created_at|date:"d.m.Y H:i" }}</div>
+                                <div data-label="Сумма" class="ord-sum">{{ o.sum_display }} сум</div>
+                                <div data-label="Филиал">{{ o.location_name }}</div>
+                                <div class="ord-cell-action">
+                                    <a class="ord-open" href="/c/{{ country.slug }}/orders/{{ o.id }}/">Открыть</a>
                                 </div>
-
-                                <div class="order-date">
-                                    {{ order.created_at|date:"d.m.Y H:i" }}
-                                </div>
-
-                                <div class="order-sum">
-                                    {{ order.total_amount|floatformat:0 }} сум
-                                </div>
-
-                                <div class="order-location">
-
-                                    {% if order.location %}
-                                        {{ order.location.name }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-
-                                </div>
-
-                                <div>
-
-                                    <a
-                                        href="/c/{{ country.slug }}/orders/{{ order.id }}/"
-                                        class="open-btn"
-                                    >
-                                        Открыть
-                                    </a>
-
-                                </div>
-
                             </div>
-
                         {% endfor %}
-
                     </div>
-
                 {% else %}
-
-                    <div class="empty">
-                        Заказов пока нет
-                    </div>
-
+                    <div class="fc-empty">Заказов пока нет</div>
                 {% endif %}
-
             </div>
-
         </div>
 
         <div class="side-column">
 
-            <div class="card side-card">
+            {% if can_edit %}
+                <div class="fc-card">
+                    <h2>Статус клиента</h2>
+                    <form method="post" action="/c/{{ country.slug }}/customers/{{ customer.id }}/">
+                        {% csrf_token %}
 
-                <div class="section-title">
-                    Клиент
+                        <label class="toggle">
+                            <input type="checkbox" name="is_regular" {% if customer.is_regular %}checked{% endif %}>
+                            <span><span class="t-title">Постоянный</span><span class="t-sub">Лояльный клиент, заказывает регулярно.</span></span>
+                        </label>
+
+                        <label class="toggle">
+                            <input type="checkbox" name="is_problematic" {% if customer.is_problematic %}checked{% endif %}>
+                            <span><span class="t-title">Проблемный</span><span class="t-sub">На заметке: жалобы, возвраты, сложности.</span></span>
+                        </label>
+
+                        <label class="toggle danger">
+                            <input type="checkbox" name="delivery_blocked" {% if customer.delivery_blocked %}checked{% endif %}>
+                            <span><span class="t-title">⚠ Отказ в доставке (алярм)</span><span class="t-sub">Жёсткий стоп: этому клиенту доставку не оформляем.</span></span>
+                        </label>
+
+                        <div style="margin:6px 0 14px;">
+                            <label class="fc-label">Причина отказа</label>
+                            <input class="fc-input" type="text" name="delivery_block_reason" maxlength="255"
+                                   value="{{ customer.delivery_block_reason }}" placeholder="Например: систематические ложные заказы">
+                        </div>
+
+                        <div style="margin-bottom:14px;">
+                            <label class="fc-label">Комментарий</label>
+                            <textarea class="fc-textarea" name="comment" placeholder="Заметки о клиенте">{{ customer.comment }}</textarea>
+                        </div>
+
+                        <button type="submit" class="fc-btn fc-btn-primary" style="width:100%;">Сохранить</button>
+                    </form>
                 </div>
+            {% endif %}
 
-                <div class="client-info">
-
-                    <div class="info-row">
-
-                        <div class="info-icon">
-							<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							    <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8z"/>
-							    <path stroke-linecap="round" stroke-linejoin="round" d="M4 21a8 8 0 0116 0"/>
-							</svg>
-                        </div>
-
-                        <div>
-                            <div class="info-label">
-                                Имя
-                            </div>
-
-                            <div class="info-value">
-                                {{ customer.name }}
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="info-row">
-
-                        <div class="info-icon">
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a2 2 0 011.94 1.515l.57 2.28a2 2 0 01-.45 1.82l-1.27 1.27a16 16 0 006.36 6.36l1.27-1.27a2 2 0 011.82-.45l2.28.57A2 2 0 0121 15.72V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                            </svg>
-                        </div>
-
-                        <div>
-                            <div class="info-label">
-                                Телефон
-                            </div>
-
-                            <div class="info-value">
-                                {{ customer.phone }}
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="info-row">
-
-                        <div class="info-icon">
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 5L3 12l7 2 2 7 9-16z"/>
-                            </svg>
-                        </div>
-
-                        <div>
-                            <div class="info-label">
-                                Telegram
-                            </div>
-
-                            <div class="info-value">
-                                {{ customer.telegram|default:"—" }}
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="info-row">
-
-                        <div class="info-icon">
-							<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
-							    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
-							</svg>
-                        </div>
-
-                        <div>
-                            <div class="info-label">
-                                Статус
-                            </div>
-
-                            <div class="info-value">
-
-                                {% if customer.is_problematic %}
-
-                                    <span class="badge badge-red">
-                                        Проблемный
-                                    </span>
-
-                                {% elif customer.is_regular %}
-
-                                    <span class="badge badge-green">
-                                        Постоянный
-                                    </span>
-
-                                {% else %}
-
-                                    —
-
-                                {% endif %}
-
-                            </div>
-                        </div>
-
-                    </div>
-
+            <div class="fc-card">
+                <h2>Клиент</h2>
+                <div class="info-row">
+                    <span class="info-label">Имя</span>
+                    <span class="info-value">{{ customer.name|default:"—" }}</span>
                 </div>
-
+                <div class="info-row">
+                    <span class="info-label">Телефон</span>
+                    <span class="info-value">{{ customer.phone }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Telegram</span>
+                    <span class="info-value">{{ customer.telegram|default:"—" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Статус</span>
+                    <span class="info-value">
+                        {% if customer.is_problematic %}Проблемный
+                        {% elif customer.is_regular %}Постоянный
+                        {% else %}Обычный{% endif %}
+                        {% if customer.delivery_blocked %} · ⚠ отказ в доставке{% endif %}
+                    </span>
+                </div>
             </div>
 
-            <div class="card side-card">
-
-                <div class="section-title">
-                    Адреса доставки
-                </div>
-
-                <div class="address-list">
-
-                    {% for address in customer.addresses.all %}
-
-                        <div class="address-item">
-
-                            <div class="address-icon">
-
-                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9z"/>
-                                </svg>
-
-                            </div>
-
-                            <div>
-
-                                <div class="address-text">
-                                    {{ address.address }}
-                                </div>
-
-                                <div class="address-meta">
-
-                                    {% if address.location %}
-                                        {{ address.location.name }}
-                                    {% endif %}
-
-                                </div>
-
-                            </div>
-
-                            {% if address.is_default %}
-
-                                <div class="address-badge">
-                                    Основной
-                                </div>
-
-                            {% endif %}
-
+            <div class="fc-card">
+                <h2>Адреса доставки</h2>
+                {% for address in customer.addresses.all %}
+                    <div class="address-item">
+                        <div class="address-text">
+                            {{ address.address }}
+                            {% if address.is_default %}<span class="fc-badge fc-badge-gray" style="margin-left:6px;">Основной</span>{% endif %}
                         </div>
-
-                    {% empty %}
-
-                        <div class="empty">
-                            Адресов нет
-                        </div>
-
-                    {% endfor %}
-
-                </div>
-
+                        {% if address.location %}<div class="address-meta">{{ address.location.name }}</div>{% endif %}
+                    </div>
+                {% empty %}
+                    <div class="fc-empty">Адресов нет</div>
+                {% endfor %}
             </div>
 
-            <div class="card side-card">
-
-                <div class="section-title">
-                    Комментарий
+            {% if not can_edit %}
+                <div class="fc-card">
+                    <h2>Комментарий</h2>
+                    <div class="comment-box">{{ customer.comment|default:"Комментария нет" }}</div>
                 </div>
-
-                <div class="comment-box">
-
-                    {{ customer.comment|default:"Комментария нет" }}
-
-                </div>
-
-            </div>
+            {% endif %}
 
         </div>
 
     </div>
 
+</div>
 </div>
 
 {% endblock %}
