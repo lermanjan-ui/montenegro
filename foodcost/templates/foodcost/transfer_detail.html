@@ -111,7 +111,7 @@
         <form method="post">
             {% csrf_token %}<input type="hidden" name="action" value="update_header">
             <div class="grid3">
-                <div><label class="fc-label">Откуда (склад) *</label><select class="fc-select" name="from_warehouse_id" id="hdr_from"><option value="">— выбрать —</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if transfer.from_warehouse_id == w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Откуда (склад) *</label>{% if lock_from %}<div class="field-val" style="padding:11px 0;">{{ kitchen_location.name|default:"—" }}</div><input type="hidden" name="from_warehouse_id" id="hdr_from" value="{{ kitchen_location.id }}">{% else %}<select class="fc-select" name="from_warehouse_id" id="hdr_from"><option value="">— выбрать —</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if transfer.from_warehouse_id == w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select>{% endif %}</div>
                 <div><label class="fc-label">Куда (склад) *</label><select class="fc-select" name="to_warehouse_id" id="hdr_to"><option value="">— выбрать —</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if transfer.to_warehouse_id == w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
                 <div><label class="fc-label">Дата *</label><input class="fc-input" type="date" name="transfer_date" id="hdr_date" value="{{ transfer.transfer_date|date:'Y-m-d' }}"></div>
             </div>

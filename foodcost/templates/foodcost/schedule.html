@@ -72,6 +72,28 @@ th.col-emp{ z-index:3; }
 .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
 
 @media (max-width:600px){ .fc-page{ padding:14px; } .week-lbl{ min-width:auto; } .mg{ grid-template-columns:1fr; } }
+
+.viewtoggle{ display:inline-flex; border:1px solid var(--fc-border); border-radius:10px; overflow:hidden; }
+.viewtoggle a{ padding:0 14px; height:40px; display:inline-flex; align-items:center; text-decoration:none; color:var(--fc-text); font-weight:600; font-size:14px; background:var(--fc-card); }
+.viewtoggle a.active{ background:#0F172A; color:#fff; }
+.cal{ width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
+.cal th{ background:var(--fc-card-soft); font-size:12px; color:var(--fc-muted); font-weight:600; padding:8px; border-bottom:1px solid var(--fc-border-soft); text-align:left; }
+.cal td{ vertical-align:top; border:1px solid var(--fc-border-soft); padding:6px; height:112px; width:14.28%; }
+.cal td.wknd{ background:#FEF2F2; }
+.cal td.other{ background:var(--fc-card-soft); opacity:.5; }
+.cal td.today{ outline:2px solid var(--fc-info); outline-offset:-2px; }
+.daynum{ font-weight:700; font-size:13px; margin-bottom:4px; }
+.daycell{ cursor:pointer; min-height:96px; }
+.mchip{ border-radius:6px; padding:3px 6px; margin-bottom:3px; font-size:11px; line-height:1.25; position:relative; padding-right:16px; }
+.mchip .who{ font-weight:700; } .mchip .tm{ opacity:.8; }
+.mchip.planned{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+.mchip.in_progress{ background:var(--fc-info); color:#fff; }
+.mchip.done{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.mchip.late{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.mchip.missed{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.mchip .del{ position:absolute; top:1px; right:2px; border:none; background:none; cursor:pointer; opacity:.55; font-size:10px; color:inherit; line-height:1; }
+.mchip .del:hover{ opacity:1; }
+@media (max-width:760px){ .cal td{ height:auto; min-height:62px; padding:3px; } .cal .mchip .tm{ display:none; } }
 </style>
 
 <div class="fc-scope">
@@ -84,14 +106,28 @@ th.col-emp{ z-index:3; }
 
     <div class="fc-card">
         <div class="toolbar">
-            <div class="month-nav">
-                <a href="?week={{ prev_week }}{% if location_id %}&location={{ location_id }}{% endif %}">‹</a>
-                <span class="week-lbl">{{ week_label }}</span>
-                <a href="?week={{ next_week }}{% if location_id %}&location={{ location_id }}{% endif %}">›</a>
+            <div class="viewtoggle">
+                <a href="?view=week&week={{ toggle_week_value }}{% if location_id %}&location={{ location_id }}{% endif %}" class="{% if view == 'week' %}active{% endif %}">Неделя</a>
+                <a href="?view=month&month={{ toggle_month_value }}{% if location_id %}&location={{ location_id }}{% endif %}" class="{% if view == 'month' %}active{% endif %}">Месяц</a>
             </div>
-            <a class="btn-today" href="?week={{ today_week }}{% if location_id %}&location={{ location_id }}{% endif %}">Сегодня</a>
+            {% if view == 'week' %}
+            <div class="month-nav">
+                <a href="?view=week&week={{ prev_week }}{% if location_id %}&location={{ location_id }}{% endif %}">‹</a>
+                <span class="week-lbl">{{ week_label }}</span>
+                <a href="?view=week&week={{ next_week }}{% if location_id %}&location={{ location_id }}{% endif %}">›</a>
+            </div>
+            <a class="btn-today" href="?view=week&week={{ today_week }}{% if location_id %}&location={{ location_id }}{% endif %}">Сегодня</a>
+            {% else %}
+            <div class="month-nav">
+                <a href="?view=month&month={{ prev_month }}{% if location_id %}&location={{ location_id }}{% endif %}">‹</a>
+                <span class="week-lbl">{{ month_label }}</span>
+                <a href="?view=month&month={{ next_month }}{% if location_id %}&location={{ location_id }}{% endif %}">›</a>
+            </div>
+            <a class="btn-today" href="?view=month&month={{ today_month }}{% if location_id %}&location={{ location_id }}{% endif %}">Сегодня</a>
+            {% endif %}
             <form method="get" style="display:flex;gap:10px;align-items:center;">
-                <input type="hidden" name="week" value="{{ week_value }}">
+                <input type="hidden" name="view" value="{{ view }}">
+                {% if view == 'week' %}<input type="hidden" name="week" value="{{ week_value }}">{% else %}<input type="hidden" name="month" value="{{ month_value }}">{% endif %}
                 <select class="fc-select" name="location" onchange="this.form.submit()">
                     <option value="">Все филиалы</option>
                     {% for l in locations %}<option value="{{ l.id }}" {% if location_id == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}
@@ -101,6 +137,7 @@ th.col-emp{ z-index:3; }
     </div>
 
     <div class="fc-card">
+        {% if view == 'week' %}
         <div class="grid-wrap">
             <table class="grid">
                 <thead>
@@ -119,7 +156,7 @@ th.col-emp{ z-index:3; }
                                 {% for sh in c.shifts %}
                                 <div class="chip {{ sh.status }}">
                                     <div class="t">{{ sh.time }}</div>{% if sh.location %}<div class="l">{{ sh.location }}</div>{% endif %}
-                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('Удалить смену?');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="week" value="{{ week_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
+                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('Удалить смену?');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="view" value="week"><input type="hidden" name="week" value="{{ week_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
                                 </div>
                                 {% endfor %}
                                 {% if can_edit %}<div class="add-hint">+</div>{% endif %}
@@ -137,6 +174,32 @@ th.col-emp{ z-index:3; }
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="grid-wrap">
+            <table class="cal">
+                <thead><tr>{% for wd in weekday_names %}<th>{{ wd }}</th>{% endfor %}</tr></thead>
+                <tbody>
+                    {% for week in weeks %}
+                    <tr>
+                        {% for c in week %}
+                        <td class="{% if c.is_weekend %}wknd {% endif %}{% if not c.in_month %}other {% endif %}{% if c.is_today %}today{% endif %}">
+                            <div class="daycell" {% if can_edit %}onclick="cellAdd(event,'','{{ c.iso }}')"{% endif %}>
+                                <div class="daynum">{{ c.day }}</div>
+                                {% for sh in c.shifts %}
+                                <div class="mchip {{ sh.status }}">
+                                    <span class="who">{{ sh.employee }}</span> <span class="tm">{{ sh.time }}</span>
+                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('Удалить смену?');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="view" value="month"><input type="hidden" name="month" value="{{ month_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
         <div class="legend">
             <span><span class="dot" style="background:var(--fc-info-soft);"></span> Запланирована</span>
             <span><span class="dot" style="background:var(--fc-green-soft);"></span> Отработана</span>
@@ -155,10 +218,12 @@ th.col-emp{ z-index:3; }
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_shift">
+            <input type="hidden" name="view" value="{{ view }}">
             <input type="hidden" name="week" value="{{ week_value }}">
+            <input type="hidden" name="month" value="{{ month_value }}">
             <input type="hidden" name="flt_location" value="{{ location_id }}">
             <div class="mg">
-                <div class="full"><label class="fc-label">Сотрудник</label><select class="fc-input" name="employee_id" id="sEmp" required><option value="">— выберите —</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">Сотрудник</label><select class="fc-input" name="employee_id" id="sEmp" required><option value="">— выберите —</option>{% for e in popup_employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select></div>
                 <div class="full"><label class="fc-label">Дата</label><input class="fc-input" type="date" name="shift_date" id="sDate" required></div>
                 <div><label class="fc-label">Время начала</label><input class="fc-input" type="time" name="start_time" value="08:00"></div>
                 <div><label class="fc-label">Время окончания</label><input class="fc-input" type="time" name="end_time" value="17:00"></div>
@@ -182,7 +247,7 @@ function openShift(empId, dateStr){
     o.classList.add('show');
 }
 function cellAdd(e, empId, dateStr){
-    if(e.target.closest('.chip')) return;  // клик по существующей смене не открывает попап
+    if(e.target.closest('.chip') || e.target.closest('.mchip')) return;  // клик по существующей смене не открывает попап
     openShift(empId, dateStr);
 }
 function closeShift(){ var o=document.getElementById('ovShift'); if(o) o.classList.remove('show'); }

@@ -125,17 +125,43 @@ def transfer_list(request, country_slug):
         return access_error
 
     can_edit = user_can_edit(request.user)
+    profile = getattr(request.user, "profile", None)
+    is_kitchen = bool(profile and profile.is_kitchen_staff())
+    can_create = can_edit or is_kitchen
+    kitchen_location = None
+    if is_kitchen and profile and profile.location_id:
+        kitchen_location = Location.objects.filter(id=profile.location_id, country=country).first()
 
     if request.method == "POST" and request.POST.get("action") == "create_draft":
-        if not can_edit:
+        if not can_create:
             return redirect(f"/c/{country.slug}/transfers/")
         transfer = Transfer.objects.create(
             country=country,
             status=Transfer.STATUS_DRAFT,
             transfer_date=timezone.now().date(),
+            from_warehouse=kitchen_location if is_kitchen else None,
             created_by=request.user,
         )
         return redirect(f"/c/{country.slug}/transfers/{transfer.id}/")
+
+    # Повар не видит историю перемещений — только свои черновики для сборки.
+    if is_kitchen:
+        my_drafts = list(
+            Transfer.objects
+            .filter(country=country, created_by=request.user, status=Transfer.STATUS_DRAFT)
+            .select_related("from_warehouse", "to_warehouse")
+            .annotate(items_count=Count("items"))
+            .order_by("-id")
+        )
+        return render(request, "foodcost/transfer_list.html", {
+            "country": country,
+            "can_edit": can_edit,
+            "can_create": can_create,
+            "is_kitchen": True,
+            "kitchen_location": kitchen_location,
+            "my_drafts": my_drafts,
+            "warehouses": Location.objects.filter(country=country).order_by("name"),
+        })
 
     date_from = (request.GET.get("date_from") or "").strip()
     date_to = (request.GET.get("date_to") or "").strip()
@@ -195,6 +221,8 @@ def transfer_list(request, country_slug):
     return render(request, "foodcost/transfer_list.html", {
         "country": country,
         "can_edit": can_edit,
+        "can_create": can_create,
+        "is_kitchen": False,
         "page_obj": page_obj,
         "total_count": paginator.count,
         "base_qs": base_qs,
@@ -224,16 +252,29 @@ def transfer_detail(request, country_slug, transfer_id):
     transfer = get_object_or_404(Transfer, id=transfer_id, country=country)
     is_draft = transfer.status == Transfer.STATUS_DRAFT
 
+    profile = getattr(request.user, "profile", None)
+    is_kitchen = bool(profile and profile.is_kitchen_staff())
+    kitchen_location = None
+    if is_kitchen and profile and profile.location_id:
+        kitchen_location = Location.objects.filter(id=profile.location_id, country=country).first()
+    # Повар может собирать только свой черновик; склад-источник фиксируется на его точке.
+    can_edit_draft = can_edit or (
+        is_kitchen and is_draft and transfer.created_by_id == request.user.id
+    )
+
     if request.method == "POST":
         action = request.POST.get("action")
 
-        if action in ("update_header", "add_item", "remove_item", "delete", "copy") and not can_edit:
+        if action in ("update_header", "add_item", "remove_item", "delete", "copy", "confirm") and not can_edit_draft:
             return redirect(f"/c/{country.slug}/transfers/{transfer.id}/")
 
         if action == "update_header" and is_draft:
             from_id = request.POST.get("from_warehouse_id")
             to_id = request.POST.get("to_warehouse_id")
-            transfer.from_warehouse = Location.objects.filter(id=from_id, country=country).first() if from_id else None
+            if is_kitchen:
+                transfer.from_warehouse = kitchen_location
+            else:
+                transfer.from_warehouse = Location.objects.filter(id=from_id, country=country).first() if from_id else None
             transfer.to_warehouse = Location.objects.filter(id=to_id, country=country).first() if to_id else None
             transfer.transfer_date = request.POST.get("transfer_date") or transfer.transfer_date
             transfer.comment = (request.POST.get("comment") or "").strip()
@@ -247,7 +288,10 @@ def transfer_detail(request, country_slug, transfer_id):
             if "hdr_from" in request.POST:
                 hf = request.POST.get("hdr_from")
                 ht = request.POST.get("hdr_to")
-                transfer.from_warehouse = Location.objects.filter(id=hf, country=country).first() if hf else transfer.from_warehouse
+                if is_kitchen:
+                    transfer.from_warehouse = kitchen_location
+                else:
+                    transfer.from_warehouse = Location.objects.filter(id=hf, country=country).first() if hf else transfer.from_warehouse
                 transfer.to_warehouse = Location.objects.filter(id=ht, country=country).first() if ht else transfer.to_warehouse
                 if request.POST.get("hdr_date"):
                     transfer.transfer_date = request.POST.get("hdr_date")
@@ -333,7 +377,10 @@ def transfer_detail(request, country_slug, transfer_id):
 
     return render(request, "foodcost/transfer_detail.html", {
         "country": country,
-        "can_edit": can_edit,
+        "can_edit": can_edit_draft,
+        "is_kitchen": is_kitchen,
+        "lock_from": is_kitchen,
+        "kitchen_location": kitchen_location,
         "show_money": show_money,
         "transfer": transfer,
         "is_draft": is_draft,

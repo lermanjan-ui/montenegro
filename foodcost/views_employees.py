@@ -637,11 +637,12 @@ def schedule_page(request, country_slug):
         if action == "delete_shift":
             EmployeeShift.objects.filter(id=request.POST.get("shift_id"), country=country).delete()
 
-        wk = request.POST.get("week") or ""
-        loc = request.POST.get("flt_location") or ""
         suffix = []
-        if wk:
-            suffix.append(f"week={wk}")
+        for key in ("view", "month", "week"):
+            val = request.POST.get(key)
+            if val:
+                suffix.append(f"{key}={val}")
+        loc = request.POST.get("flt_location") or ""
         if loc:
             suffix.append(f"location={loc}")
         q = ("?" + "&".join(suffix)) if suffix else ""
@@ -650,88 +651,156 @@ def schedule_page(request, country_slug):
     # ---------- GET ----------
     import datetime as _dt
     today = timezone.localdate()
-    ref = _parse_date(request.GET.get("week")) or today
-    monday = ref - _dt.timedelta(days=ref.weekday())
-    days = [monday + _dt.timedelta(days=i) for i in range(7)]
-    day_names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-
+    view = request.GET.get("view") or "month"
     location_id = (request.GET.get("location") or "").strip()
 
-    emp_qs = Employee.objects.filter(country=country, is_active=True).select_related("location")
-    if location_id:
-        emp_qs = emp_qs.filter(location_id=location_id)
-    employees = list(emp_qs.order_by("position", "name"))
+    day_names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+    months_ru = ["", "января", "февраля", "марта", "апреля", "мая", "июня", "июля",
+                 "августа", "сентября", "октября", "ноября", "декабря"]
+    months_nom = ["", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль",
+                  "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 
-    # смены недели
-    week_end = monday + _dt.timedelta(days=6)
-    shift_qs = EmployeeShift.objects.filter(
-        country=country, shift_date__gte=monday, shift_date__lte=week_end
-    ).exclude(status=EmployeeShift.STATUS_CANCELLED).select_related("location")
-    if location_id:
-        shift_qs = shift_qs.filter(location_id=location_id)
+    # сотрудники для попапа (все активные страны)
+    popup_employees = list(
+        Employee.objects.filter(country=country, is_active=True).order_by("position", "name")
+    )
 
-    shift_map = {}  # (emp_id, iso) -> list of shift dicts
-    day_hours = {d.isoformat(): Decimal(0) for d in days}
-    for s in shift_qs:
-        key = (s.employee_id, s.shift_date.isoformat())
-        shift_map.setdefault(key, []).append({
+    # период недели (из ?week или сегодня) — для недельного вида и переключателя
+    wref = _parse_date(request.GET.get("week")) or today
+    monday = wref - _dt.timedelta(days=wref.weekday())
+    week_value = monday.isoformat()
+
+    # период месяца (из ?month=YYYY-MM или сегодня)
+    mp = request.GET.get("month")
+    my, mm = today.year, today.month
+    if mp:
+        try:
+            my, mm = int(mp[:4]), int(mp[5:7])
+        except (ValueError, IndexError):
+            pass
+    month_start = _dt.date(my, mm, 1)
+    next_month = _dt.date(my + 1, 1, 1) if mm == 12 else _dt.date(my, mm + 1, 1)
+    month_end = next_month - _dt.timedelta(days=1)
+    month_value = f"{my}-{mm:02d}"
+
+    locations = Location.objects.filter(country=country, is_active=True).order_by("name")
+
+    common = {
+        "country": country,
+        "can_edit": can_edit,
+        "view": view,
+        "location_id": location_id,
+        "locations": locations,
+        "popup_employees": popup_employees,
+        "shift_types": EmployeeShift.SHIFT_TYPE_CHOICES,
+        "shift_statuses": EmployeeShift.STATUS_CHOICES,
+        # значения для переключателя режимов
+        "week_value": week_value,
+        "month_value": month_value,
+        "toggle_week_value": (month_start - _dt.timedelta(days=month_start.weekday())).isoformat() if view == "month" else week_value,
+        "toggle_month_value": f"{monday.year}-{monday.month:02d}" if view == "week" else month_value,
+    }
+
+    def _chip(s):
+        return {
             "id": s.id,
+            "employee": s.employee.name if s.employee else "—",
             "time": (f"{s.start_time.strftime('%H:%M')}–{s.end_time.strftime('%H:%M')}" if s.start_time and s.end_time else _fmt_qty(s.hours or 0) + " ч"),
             "location": s.location.name if s.location else "",
             "status": s.status,
-        })
-        day_hours[s.shift_date.isoformat()] = day_hours.get(s.shift_date.isoformat(), Decimal(0)) + (s.hours or Decimal(0))
+        }
 
-    # строки сетки
-    rows = []
-    for e in employees:
-        cells = []
-        for d in days:
-            cells.append({
-                "date": d,
-                "iso": d.isoformat(),
-                "is_weekend": d.weekday() >= 5,
-                "shifts": shift_map.get((e.id, d.isoformat()), []),
+    if view == "week":
+        days = [monday + _dt.timedelta(days=i) for i in range(7)]
+        emp_qs = Employee.objects.filter(country=country, is_active=True).select_related("location")
+        if location_id:
+            emp_qs = emp_qs.filter(location_id=location_id)
+        employees = list(emp_qs.order_by("position", "name"))
+
+        week_end = monday + _dt.timedelta(days=6)
+        shift_qs = EmployeeShift.objects.filter(
+            country=country, shift_date__gte=monday, shift_date__lte=week_end
+        ).exclude(status=EmployeeShift.STATUS_CANCELLED).select_related("location", "employee")
+        if location_id:
+            shift_qs = shift_qs.filter(location_id=location_id)
+
+        shift_map = {}
+        day_hours = {d.isoformat(): Decimal(0) for d in days}
+        for s in shift_qs:
+            shift_map.setdefault((s.employee_id, s.shift_date.isoformat()), []).append(_chip(s))
+            day_hours[s.shift_date.isoformat()] = day_hours.get(s.shift_date.isoformat(), Decimal(0)) + (s.hours or Decimal(0))
+
+        rows = []
+        for e in employees:
+            cells = []
+            for d in days:
+                cells.append({
+                    "date": d, "iso": d.isoformat(),
+                    "is_weekend": d.weekday() >= 5,
+                    "shifts": shift_map.get((e.id, d.isoformat()), []),
+                })
+            rows.append({
+                "id": e.id, "name": e.name, "position": e.position or "—",
+                "initials": (e.name[:2].upper() if e.name else "—"), "cells": cells,
             })
-        rows.append({
-            "id": e.id,
-            "name": e.name,
-            "position": e.position or "—",
-            "initials": (e.name[:2].upper() if e.name else "—"),
-            "cells": cells,
-        })
 
-    header_days = []
-    for i, d in enumerate(days):
-        header_days.append({
-            "label": day_names[i],
-            "day": d.day,
+        header_days = [{
+            "label": day_names[i], "day": d.day,
             "is_weekend": d.weekday() >= 5,
             "hours": _fmt_qty(day_hours.get(d.isoformat(), Decimal(0))),
+        } for i, d in enumerate(days)]
+
+        common.update({
+            "rows": rows,
+            "header_days": header_days,
+            "employees": employees,
+            "week_label": f"{monday.day} {months_ru[monday.month]} – {week_end.day} {months_ru[week_end.month]} {week_end.year}",
+            "prev_week": (monday - _dt.timedelta(days=7)).isoformat(),
+            "next_week": (monday + _dt.timedelta(days=7)).isoformat(),
+            "today_week": today.isoformat(),
         })
+        return render(request, "foodcost/schedule.html", common)
 
-    months_ru = ["", "января", "февраля", "марта", "апреля", "мая", "июня", "июля",
-                 "августа", "сентября", "октября", "ноября", "декабря"]
-    week_label = f"{monday.day} {months_ru[monday.month]} – {week_end.day} {months_ru[week_end.month]} {week_end.year}"
-    prev_week = (monday - _dt.timedelta(days=7)).isoformat()
-    next_week = (monday + _dt.timedelta(days=7)).isoformat()
+    # ----- МЕСЯЦ (календарь 7×5) -----
+    grid_start = month_start - _dt.timedelta(days=month_start.weekday())
+    grid_end = month_end + _dt.timedelta(days=(6 - month_end.weekday()))
 
-    return render(request, "foodcost/schedule.html", {
-        "country": country,
-        "can_edit": can_edit,
-        "rows": rows,
-        "header_days": header_days,
-        "week_label": week_label,
-        "week_value": monday.isoformat(),
-        "prev_week": prev_week,
-        "next_week": next_week,
-        "today_week": today.isoformat(),
-        "location_id": location_id,
-        "locations": Location.objects.filter(country=country, is_active=True).order_by("name"),
-        "employees": employees,
-        "shift_types": EmployeeShift.SHIFT_TYPE_CHOICES,
-        "shift_statuses": EmployeeShift.STATUS_CHOICES,
+    shift_qs = EmployeeShift.objects.filter(
+        country=country, shift_date__gte=grid_start, shift_date__lte=grid_end
+    ).exclude(status=EmployeeShift.STATUS_CANCELLED).select_related("location", "employee").order_by("start_time", "id")
+    if location_id:
+        shift_qs = shift_qs.filter(location_id=location_id)
+
+    by_day = {}
+    for s in shift_qs:
+        by_day.setdefault(s.shift_date.isoformat(), []).append(_chip(s))
+
+    weeks = []
+    d = grid_start
+    while d <= grid_end:
+        week_cells = []
+        for _ in range(7):
+            iso = d.isoformat()
+            week_cells.append({
+                "day": d.day, "iso": iso,
+                "in_month": (d.month == mm),
+                "is_weekend": d.weekday() >= 5,
+                "is_today": (d == today),
+                "shifts": by_day.get(iso, []),
+            })
+            d = d + _dt.timedelta(days=1)
+        weeks.append(week_cells)
+
+    prev_m = month_start - _dt.timedelta(days=1)
+    common.update({
+        "weeks": weeks,
+        "weekday_names": day_names,
+        "month_label": f"{months_nom[mm]} {my}",
+        "prev_month": f"{prev_m.year}-{prev_m.month:02d}",
+        "next_month": f"{next_month.year}-{next_month.month:02d}",
+        "today_month": f"{today.year}-{today.month:02d}",
     })
+    return render(request, "foodcost/schedule.html", common)
 
 
 @login_required(login_url="/login/")

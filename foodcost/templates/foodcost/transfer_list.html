@@ -78,10 +78,34 @@
 
     <div class="fc-page-head">
         <div><h1>Перемещения</h1><p class="muted">Перемещение товаров и заготовок между складами.</p></div>
-        {% if can_edit %}
+        {% if can_create %}
         <form method="post">{% csrf_token %}<input type="hidden" name="action" value="create_draft"><button type="submit" class="fc-btn fc-btn-dark">+ Новое перемещение</button></form>
         {% endif %}
     </div>
+
+    {% if is_kitchen %}
+    <div class="fc-card">
+        <p class="muted" style="margin:0 0 6px;">Соберите перемещение со своего склада{% if kitchen_location %} «{{ kitchen_location.name }}»{% endif %} на другой склад. Нажмите «+ Новое перемещение», добавьте позиции и подтвердите.</p>
+    </div>
+    <div class="fc-card">
+        <div class="fc-table">
+            <div class="t-head" style="grid-template-columns:1.2fr 1fr 1.4fr 0.8fr auto;">
+                <div>Черновик</div><div>Дата</div><div>Куда</div><div>Позиций</div><div></div>
+            </div>
+            {% for t in my_drafts %}
+            <div class="t-row" style="grid-template-columns:1.2fr 1fr 1.4fr 0.8fr auto;">
+                <div class="docnum"><span class="muted">черновик #{{ t.id }}</span></div>
+                <div>{{ t.transfer_date|date:"d.m.Y" }}</div>
+                <div class="flow">→ {{ t.to_warehouse.name|default:"— не выбран —" }}</div>
+                <div class="num">{{ t.items_count }}</div>
+                <div class="row-actions"><a href="/c/{{ country.slug }}/transfers/{{ t.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">Открыть</a></div>
+            </div>
+            {% empty %}
+                <div class="empty">Нет незавершённых черновиков. Нажмите «+ Новое перемещение».</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
 
     <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label">Всего перемещений</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">документов</div></div>
@@ -144,6 +168,7 @@
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
 </div>
 </div>
