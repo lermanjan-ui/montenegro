@@ -84,6 +84,7 @@ urlpatterns = [
     path("c/<slug:country_slug>/employees/<int:employee_id>/", views_employees.employee_detail, name="employee_detail"),
     path("c/<slug:country_slug>/schedule/", views_employees.schedule_page, name="schedule_page"),
     path("c/<slug:country_slug>/shifts/", views_employees.shifts_journal, name="shifts_journal"),
+    path("c/<slug:country_slug>/employee/me/", views_employees.employee_me, name="employee_me"),
 
     # упаковка
     path("c/<slug:country_slug>/packaging/", views.packaging_list, name="packaging_list"),

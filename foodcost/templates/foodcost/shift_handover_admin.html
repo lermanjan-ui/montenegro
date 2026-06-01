@@ -194,6 +194,30 @@
                         </div>
                     {% endif %}
 
+                    {% if handover.from_employee %}
+                        <div class="muted" style="margin-top:8px;">
+                            От: {{ handover.from_employee.name }}
+                        </div>
+                    {% endif %}
+
+                    <div style="margin-top:8px;">
+                        {% if handover.effective_status == 'viewed' %}
+                            <span class="tag" style="background:#dcfce7;color:#166534;">Просмотрена</span>
+                        {% elif handover.effective_status == 'expired' %}
+                            <span class="tag" style="background:#f3f4f6;color:#6b7280;">Истекла</span>
+                        {% elif handover.effective_status == 'archived' %}
+                            <span class="tag" style="background:#f3f4f6;color:#6b7280;">В архиве</span>
+                        {% else %}
+                            <span class="tag" style="background:#dbeafe;color:#1e40af;">Создана</span>
+                        {% endif %}
+                    </div>
+
+                    {% if handover.viewed_at %}
+                        <div class="muted" style="margin-top:6px;">
+                            Просмотрел: {{ handover.viewed_by.username }} в {{ handover.viewed_at|date:"d.m H:i" }}
+                        </div>
+                    {% endif %}
+
                     <div class="muted" style="margin-top:8px;">
                         {{ handover.created_at|date:"H:i" }}
                     </div>
@@ -258,6 +282,20 @@
                                         — {{ item.comment }}
                                     {% endif %}
                                 </div>
+                            {% empty %}
+                                <span class="muted">—</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="block">
+                        <div class="block-title">
+                            Задачи для следующей смены
+                        </div>
+
+                        <div class="tag-list">
+                            {% for t in handover.tasks.all %}
+                                <div class="tag">{{ t.text }}</div>
                             {% empty %}
                                 <span class="muted">—</span>
                             {% endfor %}

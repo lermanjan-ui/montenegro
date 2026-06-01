@@ -1,0 +1,203 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Мой кабинет{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Личный кабинет сотрудника: смены, начисления, остаток. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1100px; margin:0 auto; padding:24px; }
+.hero{ display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+.ava{ width:56px; height:56px; border-radius:50%; background:var(--fc-info-soft); color:var(--fc-info-text); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; }
+.hero h1{ margin:0; font-size:24px; font-weight:600; }
+.hero .sub{ color:var(--fc-muted); font-size:14px; margin-top:2px; }
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 14px; font-size:17px; font-weight:600; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:16px; }
+.kpi-label{ color:var(--fc-muted); font-size:12px; font-weight:600; margin-bottom:6px; }
+.kpi-value{ font-size:22px; font-weight:700; } .kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
+.num{ font-variant-numeric:tabular-nums; } .pos{ color:var(--fc-green-text); } .neg{ color:var(--fc-danger-text); }
+
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 20px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-dark{ background:#0F172A; color:#fff; }
+.fc-btn-block{ width:100%; }
+
+.active-shift{ background:var(--fc-info-soft); border:1px solid #bfdbfe; border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.active-shift .big{ font-size:16px; font-weight:700; color:var(--fc-info-text); }
+
+.items{ width:100%; border-collapse:collapse; }
+.items th{ text-align:left; font-size:11px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; padding:9px 8px; border-bottom:1px solid var(--fc-border); }
+.items td{ padding:11px 8px; border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.items tr:last-child td{ border-bottom:0; } .items th.r,.items td.r{ text-align:right; }
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:var(--fc-radius-pill); font-size:12px; font-weight:600; }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); } .badge-info{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); } .badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); } .badge-live{ background:var(--fc-info); color:#fff; }
+.empty{ text-align:center; padding:24px; color:var(--fc-muted); }
+.two{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+.notice{ background:var(--fc-amber-soft); color:var(--fc-amber-text); border:1px solid #fde68a; border-radius:12px; padding:20px; font-size:15px; }
+
+@media (max-width:860px){ .kpi-grid{ grid-template-columns:1fr 1fr; } .two{ grid-template-columns:1fr; } }
+@media (max-width:600px){ .fc-page{ padding:16px; } }
+@media (max-width:680px){ table.items{ display:block; overflow-x:auto; white-space:nowrap; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+{% if not employee %}
+    <div class="hero"><h1>Мой кабинет</h1></div>
+    <div class="notice">
+        Ваш аккаунт пока не привязан к карточке сотрудника. Обратитесь к менеджеру, чтобы он связал ваш профиль с сотрудником — после этого здесь появятся ваши смены и начисления.
+    </div>
+{% else %}
+
+    <div class="hero">
+        <div class="ava">{{ initials }}</div>
+        <div>
+            <h1>{{ employee.name }}</h1>
+            <div class="sub">{{ employee.position|default:"—" }}{% if role_label %} · {{ role_label }}{% endif %}{% if employee.location %} · {{ employee.location.name }}{% endif %}</div>
+        </div>
+    </div>
+
+    {% if geo_error %}
+    <div class="notice" style="margin-bottom:16px;">
+        Не удалось начать смену: вы вне зоны точки или не разрешён доступ к геолокации. Начать смену можно, находясь на точке (в радиусе 200 м) и разрешив доступ к геопозиции в браузере.
+    </div>
+    {% endif %}
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Отработано</div><div class="kpi-value num">{{ month_hours_display }} ч</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">Начислено</div><div class="kpi-value num">{{ accrued_month_display }}</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">Выплачено</div><div class="kpi-value num">{{ paid_month_display }}</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">К выплате</div><div class="kpi-value num pos">{{ balance_display }}</div><div class="kpi-sub">остаток</div></div>
+    </div>
+
+    <div class="fc-card">
+        <h2>Моя смена сегодня</h2>
+        {% if active_shift %}
+            <div class="active-shift">
+                <div>
+                    <div class="big">● Смена идёт</div>
+                    <div class="sub" style="color:var(--fc-info-text);">Начало в {{ active_shift.start }} · {{ active_shift.location }}</div>
+                </div>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="finish_shift"><input type="hidden" name="shift_id" value="{{ active_shift.id }}"><button type="submit" class="fc-btn fc-btn-dark">■ Завершить смену</button></form>
+            </div>
+        {% elif today_planned %}
+            {% for s in today_planned %}
+            <div class="active-shift" style="background:var(--fc-card-soft);border-color:var(--fc-border);">
+                <div>
+                    <div class="big" style="color:var(--fc-text);">Запланирована на сегодня</div>
+                    <div class="sub">{{ s.start }}–{{ s.end }} · {{ s.location }}</div>
+                </div>
+                <form method="post" class="geo-start">{% csrf_token %}<input type="hidden" name="action" value="start_shift"><input type="hidden" name="shift_id" value="{{ s.id }}"><input type="hidden" name="lat"><input type="hidden" name="lng"><button type="submit" class="fc-btn fc-btn-primary">▶ Начать смену</button></form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:var(--fc-muted);margin:0 0 14px;">На сегодня смен в графике нет.</p>
+            <form method="post" class="geo-start">{% csrf_token %}<input type="hidden" name="action" value="start_new"><input type="hidden" name="lat"><input type="hidden" name="lng"><button type="submit" class="fc-btn fc-btn-primary fc-btn-block">▶ Начать смену сейчас</button></form>
+        {% endif %}
+    </div>
+
+    <div class="two">
+        <div class="fc-card">
+            <h2>Ближайшие смены</h2>
+            <table class="items">
+                <thead><tr><th>Дата</th><th>Время</th><th>Локация</th><th>Статус</th></tr></thead>
+                <tbody>
+                    {% for s in upcoming %}
+                    <tr>
+                        <td class="num">{{ s.date|date:"d.m" }}</td>
+                        <td class="num">{{ s.start }}–{{ s.end }}</td>
+                        <td>{{ s.location }}</td>
+                        <td>{% if s.status == 'in_progress' %}<span class="badge badge-live">Идёт</span>{% elif s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="4" class="empty">Запланированных смен нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="fc-card">
+            <h2>Отработанные смены (месяц)</h2>
+            <table class="items">
+                <thead><tr><th>Дата</th><th>Время</th><th class="r">Часы</th><th>Статус</th></tr></thead>
+                <tbody>
+                    {% for s in recent_shifts %}
+                    <tr>
+                        <td class="num">{{ s.date|date:"d.m" }}</td>
+                        <td class="num">{{ s.start }}–{{ s.end }}</td>
+                        <td class="r num">{{ s.hours }}</td>
+                        <td>{% if s.status == 'in_progress' %}<span class="badge badge-live">Идёт</span>{% elif s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="4" class="empty">Смен в этом месяце нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="fc-card">
+        <h2>Мои начисления</h2>
+        <table class="items">
+            <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th><th>Статус</th></tr></thead>
+            <tbody>
+                {% for p in payroll %}
+                <tr>
+                    <td class="num">{{ p.date|date:"d.m.Y" }}</td>
+                    <td>{{ p.type_label }}</td>
+                    <td style="color:var(--fc-muted);">{{ p.comment|default:"—" }}</td>
+                    <td class="r num {% if p.is_negative %}neg{% else %}pos{% endif %}">{% if p.is_negative %}−{% else %}+{% endif %}{{ p.amount_display }}</td>
+                    <td>{% if p.status == 'done' %}<span class="badge badge-green">Проведено</span>{% else %}<span class="badge badge-gray">Планируется</span>{% endif %}</td>
+                </tr>
+                {% empty %}<tr><td colspan="5" class="empty">Начислений пока нет.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="/c/{{ country.slug }}/shift-handover/" class="fc-btn fc-btn-dark fc-btn-block" style="margin-bottom:20px;">Передача смены →</a>
+
+{% endif %}
+
+</div>
+</div>
+
+<script>
+// При старте смены запрашиваем геопозицию и кладём в скрытые поля.
+// Если доступ запрещён — всё равно отправляем (сервер решит: при заданных
+// координатах точки старт без геопозиции будет отклонён).
+document.querySelectorAll('form.geo-start').forEach(function(form){
+    form.addEventListener('submit', function(e){
+        if (form.dataset.ready === '1') return; // уже с координатами — отправляем
+        e.preventDefault();
+        var btn = form.querySelector('button[type=submit]');
+        if (btn){ btn.disabled = true; btn.textContent = 'Определяем геопозицию…'; }
+        function submitNow(){ form.dataset.ready = '1'; form.submit(); }
+        if (!navigator.geolocation){ submitNow(); return; }
+        navigator.geolocation.getCurrentPosition(
+            function(pos){
+                form.querySelector('input[name=lat]').value = pos.coords.latitude;
+                form.querySelector('input[name=lng]').value = pos.coords.longitude;
+                submitNow();
+            },
+            function(){ submitNow(); },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    });
+});
+</script>
+
+{% endblock %}

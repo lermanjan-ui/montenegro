@@ -2217,8 +2217,10 @@ def user_access_list(request, country_slug):
             (UserProfile.SECTION_UTILITIES, "Коммуналка"),
             (UserProfile.SECTION_FINANCE, "Финансы"),
         ]),
-        ("team", "Команда", [
+        ("team", "Персонал и операции кухни", [
             (UserProfile.SECTION_EMPLOYEES, "Сотрудники"),
+            (UserProfile.SECTION_SCHEDULE, "График смен"),
+            (UserProfile.SECTION_SHIFTS, "Журнал смен"),
         ]),
         ("admin", "Админка", [
             (UserProfile.SECTION_USERS, "Пользователи"),

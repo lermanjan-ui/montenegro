@@ -941,6 +941,8 @@ class UserProfile(models.Model):
     SECTION_STOCK = "stock"
     SECTION_TRANSFERS = "transfers"
     SECTION_FINANCE = "finance"
+    SECTION_SCHEDULE = "schedule"
+    SECTION_SHIFTS = "shifts"
 
     SECTION_CHOICES = [
         (SECTION_DISHES, "Блюда"),
@@ -966,6 +968,8 @@ class UserProfile(models.Model):
         (SECTION_STOCK, "Остатки"),
         (SECTION_TRANSFERS, "Перемещения"),
         (SECTION_FINANCE, "Финансы"),
+        (SECTION_SCHEDULE, "График смен"),
+        (SECTION_SHIFTS, "Журнал смен"),
     ]
 
     user = models.OneToOneField(
@@ -1161,6 +1165,17 @@ class WriteOff(models.Model):
         
 # 🔁 ПЕРЕДАЧА СМЕНЫ
 class ShiftHandover(models.Model):
+    STATUS_CREATED = "created"
+    STATUS_VIEWED = "viewed"
+    STATUS_EXPIRED = "expired"
+    STATUS_ARCHIVED = "archived"
+    STATUS_CHOICES = [
+        (STATUS_CREATED, "Создана"),
+        (STATUS_VIEWED, "Просмотрена"),
+        (STATUS_EXPIRED, "Истекла"),
+        (STATUS_ARCHIVED, "В архиве"),
+    ]
+
     country = models.ForeignKey(
         Country,
         on_delete=models.CASCADE,
@@ -1185,6 +1200,29 @@ class ShiftHandover(models.Model):
         related_name="shift_handovers"
     )
 
+    from_employee = models.ForeignKey(
+        "Employee",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="handovers_from",
+    )
+
+    status = models.CharField(
+        max_length=12,
+        choices=STATUS_CHOICES,
+        default=STATUS_CREATED,
+    )
+    viewed_at = models.DateTimeField(null=True, blank=True)
+    viewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="viewed_handovers",
+    )
+    expires_at = models.DateTimeField(null=True, blank=True)
+
     comment = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1192,6 +1230,32 @@ class ShiftHandover(models.Model):
     def __str__(self):
         responsible_name = self.responsible.username if self.responsible else "—"
         return f"Передача смены {self.shift_date} — {responsible_name}"
+
+    def effective_status(self):
+        """Статус с учётом срока: если 23 ч прошли и не просмотрена/архив — Истекла."""
+        from django.utils import timezone as _tz
+        if self.status in (self.STATUS_ARCHIVED, self.STATUS_VIEWED):
+            return self.status
+        if self.expires_at and _tz.now() > self.expires_at:
+            return self.STATUS_EXPIRED
+        return self.status
+
+
+class ShiftHandoverTask(models.Model):
+    handover = models.ForeignKey(
+        ShiftHandover,
+        on_delete=models.CASCADE,
+        related_name="tasks",
+    )
+    text = models.CharField(max_length=500)
+    is_done = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.text
 
 
 class ShiftPurchaseNeed(models.Model):

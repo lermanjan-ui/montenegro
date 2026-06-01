@@ -738,8 +738,28 @@
 
 				{% endif %}
 
-			    {% if can_menu_employees %}
-			    <details class="menu-section" {% if '/employees/' in request.path %}open{% endif %}>
+			    {% if is_employee %}
+			    <details class="menu-section" {% if '/employee/me/' in request.path %}open{% endif %}>
+			        <summary class="menu-title">
+			            <span class="menu-title-left">
+			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+			                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+			                    <circle cx="12" cy="7" r="4"/>
+			                </svg>
+			                Мой кабинет
+			            </span>
+			            <span class="menu-arrow">⌄</span>
+			        </summary>
+			        <div class="menu-items">
+			            <a class="side-link {% if '/employee/me/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/employee/me/">
+			                Мои смены и зарплата
+			            </a>
+			        </div>
+			    </details>
+			    {% endif %}
+
+			    {% if can_menu_employees or can_menu_schedule or can_menu_shifts %}
+			    <details class="menu-section" {% if '/employees/' in request.path or '/schedule/' in request.path or '/shifts/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
 			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
@@ -748,15 +768,27 @@
 			                    <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
 			                    <path d="M4 21v-2a4 4 0 0 1 3-3.87"/>
 			                </svg>
-			                Команда
+			                Персонал и операции кухни
 			            </span>
 			            <span class="menu-arrow">⌄</span>
 			        </summary>
 
 			        <div class="menu-items">
+			            {% if can_menu_employees %}
 			            <a class="side-link {% if '/employees/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/employees/">
 			                Сотрудники
 			            </a>
+			            {% endif %}
+			            {% if can_menu_schedule %}
+			            <a class="side-link {% if '/schedule/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/schedule/">
+			                График смен
+			            </a>
+			            {% endif %}
+			            {% if can_menu_shifts %}
+			            <a class="side-link {% if '/shifts/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/shifts/">
+			                Журнал смен
+			            </a>
+			            {% endif %}
 			        </div>
 			    </details>
 			    {% endif %}

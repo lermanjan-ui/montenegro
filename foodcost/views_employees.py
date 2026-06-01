@@ -69,6 +69,39 @@ def _country_users(country, current_user=None):
     return qs.distinct().order_by("username")
 
 
+GEOFENCE_RADIUS_M = 200
+
+
+def _distance_m(lat1, lng1, lat2, lng2):
+    """Расстояние между двумя точками в метрах (формула гаверсинуса)."""
+    import math
+    r = 6371000.0
+    p1 = math.radians(float(lat1))
+    p2 = math.radians(float(lat2))
+    dp = math.radians(float(lat2) - float(lat1))
+    dl = math.radians(float(lng2) - float(lng1))
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(min(1.0, math.sqrt(a)))
+
+
+def _check_geofence(employee, request):
+    """Проверяет, что сотрудник в пределах радиуса от своей точки.
+    Возвращает (ok, message, distance_m). Если у точки нет координат —
+    проверку пропускаем (ok=True), чтобы не блокировать."""
+    loc = employee.location
+    if not loc or loc.latitude is None or loc.longitude is None:
+        return True, None, None
+    try:
+        lat = float(request.POST.get("lat"))
+        lng = float(request.POST.get("lng"))
+    except (TypeError, ValueError):
+        return False, "Не удалось определить геолокацию. Разрешите доступ к геопозиции.", None
+    dist = _distance_m(lat, lng, loc.latitude, loc.longitude)
+    if dist > GEOFENCE_RADIUS_M:
+        return False, f"Вы вне зоны точки (≈{int(dist)} м).", dist
+    return True, None, dist
+
+
 def _fmt_money(value):
     try:
         value = Decimal(value or 0)
@@ -565,7 +598,7 @@ def employee_detail(request, country_slug, employee_id):
 def schedule_page(request, country_slug):
     country = get_country(country_slug, request.user)
 
-    access_error = require_section_access(request.user, UserProfile.SECTION_EMPLOYEES)
+    access_error = require_section_access(request.user, UserProfile.SECTION_SCHEDULE)
     if access_error:
         return access_error
 
@@ -705,7 +738,7 @@ def schedule_page(request, country_slug):
 def shifts_journal(request, country_slug):
     country = get_country(country_slug, request.user)
 
-    access_error = require_section_access(request.user, UserProfile.SECTION_EMPLOYEES)
+    access_error = require_section_access(request.user, UserProfile.SECTION_SHIFTS)
     if access_error:
         return access_error
 
@@ -807,4 +840,146 @@ def shifts_journal(request, country_slug):
         "emp_id": emp_id,
         "locations": Location.objects.filter(country=country, is_active=True).order_by("name"),
         "employees": Employee.objects.filter(country=country, is_active=True).order_by("name"),
+    })
+
+
+@login_required(login_url="/login/")
+def employee_me(request, country_slug):
+    """Личный кабинет сотрудника: свои смены, начисления, остаток."""
+    country = get_country(country_slug, request.user)
+
+    employee = Employee.objects.filter(user=request.user, country=country).select_related("location").first()
+    if not employee:
+        return render(request, "foodcost/employee_me.html", {
+            "country": country,
+            "employee": None,
+        })
+
+    now = timezone.localtime()
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "start_new":
+            ok, msg, _d = _check_geofence(employee, request)
+            if not ok:
+                return redirect(f"/c/{country.slug}/employee/me/?geo_error=1")
+            EmployeeShift.objects.create(
+                country=country, employee=employee, location=employee.location,
+                shift_date=timezone.localdate(),
+                start_time=now.time().replace(second=0, microsecond=0),
+                break_minutes=0, shift_type=EmployeeShift.SHIFT_TYPE_DAY,
+                planned_hours=employee.default_shift_hours,
+                actual_hours=Decimal(0), hours=Decimal(0),
+                fixed_amount=employee.shift_rate_amount, kpi_amount=employee.shift_kpi_amount,
+                kpi_percent=Decimal("100"), hourly_rate_snapshot=employee.hourly_rate_amount,
+                tax_percent_snapshot=employee.tax_percent,
+                status=EmployeeShift.STATUS_IN_PROGRESS, comment="",
+            )
+        elif action == "start_shift":
+            ok, msg, _d = _check_geofence(employee, request)
+            if not ok:
+                return redirect(f"/c/{country.slug}/employee/me/?geo_error=1")
+            sh = EmployeeShift.objects.filter(id=request.POST.get("shift_id"), employee=employee).first()
+            if sh:
+                sh.start_time = now.time().replace(second=0, microsecond=0)
+                sh.status = EmployeeShift.STATUS_IN_PROGRESS
+                sh.save(update_fields=["start_time", "status"])
+        elif action == "finish_shift":
+            sh = EmployeeShift.objects.filter(id=request.POST.get("shift_id"), employee=employee).first()
+            if sh:
+                end_t = now.time().replace(second=0, microsecond=0)
+                hours = _shift_hours(sh.start_time, end_t, sh.break_minutes, sh.planned_hours)
+                sh.end_time = end_t
+                sh.hours = hours
+                sh.actual_hours = hours
+                sh.status = EmployeeShift.STATUS_DONE
+                sh.save(update_fields=["end_time", "hours", "actual_hours", "status"])
+        return redirect(f"/c/{country.slug}/employee/me/")
+
+    today = timezone.localdate()
+    month_start = date(today.year, today.month, 1)
+    worked_statuses = [EmployeeShift.STATUS_DONE, EmployeeShift.STATUS_LATE]
+
+    month_hours = (
+        EmployeeShift.objects.filter(employee=employee, shift_date__gte=month_start,
+                                     shift_date__lte=today, status__in=worked_statuses)
+        .aggregate(s=Sum("hours"))["s"] or Decimal(0)
+    )
+
+    T = EmployeePayrollEntry
+    by_type_month = {}
+    for row in (T.objects.filter(employee=employee, status=T.STATUS_DONE,
+                                 entry_date__gte=month_start, entry_date__lte=today)
+                .values("entry_type").annotate(s=Sum("amount"))):
+        by_type_month[row["entry_type"]] = row["s"] or Decimal(0)
+    by_type_all = {}
+    for row in (T.objects.filter(employee=employee, status=T.STATUS_DONE)
+                .values("entry_type").annotate(s=Sum("amount"))):
+        by_type_all[row["entry_type"]] = row["s"] or Decimal(0)
+
+    def g(d, k):
+        return d.get(k, Decimal(0)) or Decimal(0)
+
+    accrued_m = g(by_type_month, T.TYPE_SALARY) + g(by_type_month, T.TYPE_BONUS)
+    paid_m = g(by_type_month, T.TYPE_PAYOUT) + g(by_type_month, T.TYPE_ADVANCE)
+    balance = (g(by_type_all, T.TYPE_SALARY) + g(by_type_all, T.TYPE_BONUS)
+               - g(by_type_all, T.TYPE_PAYOUT) - g(by_type_all, T.TYPE_ADVANCE)
+               - g(by_type_all, T.TYPE_PENALTY) + g(by_type_all, T.TYPE_CORRECTION))
+
+    # текущая смена (идёт) + сегодняшние запланированные
+    active_shift = EmployeeShift.objects.filter(
+        employee=employee, status=EmployeeShift.STATUS_IN_PROGRESS
+    ).order_by("-shift_date").first()
+    today_planned = list(EmployeeShift.objects.filter(
+        employee=employee, shift_date=today, status=EmployeeShift.STATUS_PLANNED
+    ).select_related("location"))
+
+    # ближайшие смены (от сегодня вперёд)
+    upcoming = list(
+        EmployeeShift.objects.filter(employee=employee, shift_date__gte=today)
+        .exclude(status=EmployeeShift.STATUS_CANCELLED)
+        .select_related("location").order_by("shift_date")[:10]
+    )
+    # последние смены месяца
+    recent_shifts = list(
+        EmployeeShift.objects.filter(employee=employee, shift_date__gte=month_start, shift_date__lte=today)
+        .select_related("location").order_by("-shift_date")[:10]
+    )
+
+    def shift_row(s):
+        return {
+            "id": s.id, "date": s.shift_date,
+            "start": s.start_time.strftime("%H:%M") if s.start_time else "—",
+            "end": s.end_time.strftime("%H:%M") if s.end_time else "—",
+            "location": s.location.name if s.location else "—",
+            "hours": _fmt_qty(s.hours or 0),
+            "status": s.status, "status_label": s.get_status_display(),
+        }
+
+    payroll = []
+    for p in T.objects.filter(employee=employee).order_by("-entry_date", "-id")[:15]:
+        payroll.append({
+            "date": p.entry_date, "type_label": p.get_entry_type_display(),
+            "comment": p.comment, "amount_display": _fmt_money(abs(p.amount or 0)),
+            "is_negative": p.signed_amount() < 0,
+            "status": p.status, "status_label": p.get_status_display(),
+        })
+
+    return render(request, "foodcost/employee_me.html", {
+        "country": country,
+        "employee": employee,
+        "geo_error": request.GET.get("geo_error"),
+        "initials": (employee.name[:2].upper() if employee.name else "—"),
+        "role_label": employee.get_role_display() if employee.role else "",
+        "today": today,
+        "month_hours_display": _fmt_qty(month_hours),
+        "accrued_month_display": _fmt_money(accrued_m),
+        "paid_month_display": _fmt_money(paid_m),
+        "balance_display": _fmt_money(balance),
+        "active_shift": shift_row(active_shift) if active_shift else None,
+        "today_planned": [shift_row(s) for s in today_planned],
+        "upcoming": [shift_row(s) for s in upcoming],
+        "recent_shifts": [shift_row(s) for s in recent_shifts],
+        "payroll": payroll,
     })

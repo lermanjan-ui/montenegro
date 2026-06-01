@@ -674,6 +674,23 @@
             </div>
 
             <div class="added-list" id="dish-list"></div>
+        </div>
+
+        <div class="panel">
+            <div class="section-title">Задачи для следующей смены</div>
+
+            <div class="add-grid">
+                <div style="grid-column: 1 / 3;">
+                    <label>Задача</label>
+                    <input id="task-text" type="text" placeholder="Например: разморозить мясо к открытию">
+                </div>
+
+                <div></div>
+
+                <button type="button" class="add-btn" onclick="addTask()">Добавить</button>
+            </div>
+
+            <div class="added-list" id="task-list"></div>
 
             <div class="submit-row">
                 <button type="submit" class="submit-btn" id="submit-btn">Передать смену</button>
@@ -703,6 +720,26 @@
 					    {% endif %}
 					    {{ handover.created_at|date:"H:i" }}
 					</div>
+
+					{% if handover.from_employee %}
+					<div class="muted" style="margin-top:6px;">От: {{ handover.from_employee.name }}</div>
+					{% endif %}
+
+					<div style="margin-top:8px;">
+					    {% if handover.status == 'viewed' %}<span class="tag" style="background:#dcfce7;color:#166534;">Просмотрена</span>
+					    {% elif handover.status == 'expired' %}<span class="tag" style="background:#f3f4f6;color:#6b7280;">Истекла</span>
+					    {% elif handover.status == 'archived' %}<span class="tag" style="background:#f3f4f6;color:#6b7280;">В архиве</span>
+					    {% else %}<span class="tag" style="background:#dbeafe;color:#1e40af;">Создана</span>{% endif %}
+					</div>
+
+					{% if handover.tasks.all %}
+					<div style="margin-top:10px;">
+					    <div class="history-label" style="margin-bottom:6px;">Задачи</div>
+					    <div class="tag-list">
+					        {% for t in handover.tasks.all %}<div class="tag">{{ t.text }}</div>{% endfor %}
+					    </div>
+					</div>
+					{% endif %}
                 </div>
 
                 <div class="history-labels">
@@ -1038,10 +1075,32 @@ function addStopItem() {
     document.getElementById("dish-comment").value = "";
 }
 
+function addTask() {
+    const text = document.getElementById("task-text").value.trim();
+    if (!text) {
+        alert("Введите текст задачи");
+        return;
+    }
+    const list = document.getElementById("task-list");
+    const row = document.createElement("div");
+    row.className = "added-row";
+    row.innerHTML = `
+        <input type="hidden" name="task_texts" value="${text.replace(/"/g, '&quot;')}">
+        <div class="added-name">${text}</div>
+        <div class="small-muted">—</div>
+        <div class="small-muted">—</div>
+        <button type="button" class="remove-btn" onclick="this.closest('.added-row').remove()" aria-label="Удалить">${trashIcon()}</button>
+    `;
+    list.appendChild(row);
+    document.getElementById("task-text").value = "";
+}
+
 function clearFormLists() {
     document.getElementById("product-list").innerHTML = "";
     document.getElementById("preparation-list").innerHTML = "";
     document.getElementById("dish-list").innerHTML = "";
+    var tl = document.getElementById("task-list");
+    if (tl) tl.innerHTML = "";
 }
 
 function openEdit(id) {

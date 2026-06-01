@@ -25,8 +25,11 @@ def menu_context(request):
     else:
         countries_count = 0
 
+    is_employee = hasattr(request.user, "employee_profile")
+
     return {
         "can_switch_country": countries_count > 1,
+        "is_employee": is_employee,
 
         "can_menu_dishes": user_has_section(request.user, UserProfile.SECTION_DISHES),
         "can_menu_products": user_has_section(request.user, UserProfile.SECTION_PRODUCTS),
@@ -50,5 +53,7 @@ def menu_context(request):
         "can_menu_inventory": user_has_section(request.user, UserProfile.SECTION_INVENTORY),
         "can_menu_stock": user_has_section(request.user, UserProfile.SECTION_STOCK),
         "can_menu_transfers": user_has_section(request.user, UserProfile.SECTION_TRANSFERS),
+        "can_menu_schedule": user_has_section(request.user, UserProfile.SECTION_SCHEDULE),
+        "can_menu_shifts": user_has_section(request.user, UserProfile.SECTION_SHIFTS),
         "can_menu_finance": user_has_section(request.user, UserProfile.SECTION_FINANCE),
     }

@@ -18,7 +18,10 @@ from .models import (
     Preparation,
     Dish,
     Location,
+    Employee,
+    EmployeeShift,
     ShiftHandover,
+    ShiftHandoverTask,
     ShiftPurchaseNeed,
     ShiftPreparationNeed,
     ShiftStopItem,
@@ -222,13 +225,20 @@ def shift_handover_list(request, country_slug):
             handover.purchase_needs.all().delete()
             handover.preparation_needs.all().delete()
             handover.stop_items.all().delete()
+            handover.tasks.all().delete()
 
         else:
+            from datetime import timedelta as _td
+            my_emp = Employee.objects.filter(user=request.user, country=country).first()
+            _now = timezone.now()
             handover = ShiftHandover.objects.create(
                 country=country,
                 location=getattr(request.user.profile, "location", None),
                 shift_date=request.POST.get("shift_date"),
                 responsible=request.user,
+                from_employee=my_emp,
+                status=ShiftHandover.STATUS_CREATED,
+                expires_at=_now + _td(hours=23),
                 comment=request.POST.get("comment", ""),
             )
 
@@ -292,6 +302,19 @@ def shift_handover_list(request, country_slug):
                 comment=comment,
             )
 
+        task_texts = request.POST.getlist("task_texts")
+        order = 0
+        for txt in task_texts:
+            txt = (txt or "").strip()
+            if not txt:
+                continue
+            ShiftHandoverTask.objects.create(
+                handover=handover,
+                text=txt,
+                order=order,
+            )
+            order += 1
+
         send_shift_handover_to_telegram(
             handover,
             is_update=(action == "update")
@@ -303,20 +326,44 @@ def shift_handover_list(request, country_slug):
         country=country
     )
 
-    if (
-        request.user.profile.is_kitchen_staff()
-        and request.user.profile.location_id
-    ):
-        handovers = handovers.filter(
-            location_id=request.user.profile.location_id
-        )
-
-    handovers = handovers.order_by(
-        "-shift_date",
-        "-created_at"
-    )
-
     now = timezone.now()
+
+    # Кухонный сотрудник видит передачи только за последние 23 часа и только
+    # те, по которым у него есть смена в графике на эту дату/локацию (вариант 2),
+    # плюс созданные им самим. Старше 23 ч — только у менеджера в истории.
+    if request.user.profile.is_kitchen_staff():
+        cutoff = now - timedelta(hours=23)
+        recent = list(
+            handovers.filter(created_at__gte=cutoff).order_by("-shift_date", "-created_at")
+        )
+        my_emp = Employee.objects.filter(user=request.user, country=country).first()
+        my_pairs = set()
+        if my_emp and recent:
+            dates = {h.shift_date for h in recent}
+            my_pairs = set(
+                EmployeeShift.objects
+                .filter(employee=my_emp, shift_date__in=dates)
+                .exclude(status=EmployeeShift.STATUS_CANCELLED)
+                .values_list("shift_date", "location_id")
+            )
+        visible = []
+        to_mark_viewed = []
+        for h in recent:
+            is_own = (h.responsible_id == request.user.id)
+            in_schedule = (h.shift_date, h.location_id) in my_pairs
+            if is_own or in_schedule:
+                visible.append(h)
+                # отметка «просмотрено»: получатель (не автор) открыл передачу
+                if (not is_own) and h.status == ShiftHandover.STATUS_CREATED:
+                    to_mark_viewed.append(h)
+        for h in to_mark_viewed:
+            h.status = ShiftHandover.STATUS_VIEWED
+            h.viewed_at = now
+            h.viewed_by = request.user
+            h.save(update_fields=["status", "viewed_at", "viewed_by"])
+        handovers = visible
+    else:
+        handovers = list(handovers.order_by("-shift_date", "-created_at"))
 
     for handover in handovers:
         handover.can_edit = (
