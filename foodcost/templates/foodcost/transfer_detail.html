@@ -171,8 +171,12 @@
             </div>
             <div>
                 <label class="fc-label">Наименование</label>
-                <select class="fc-select" name="product_id" id="sel_product"><option value="">— товар —</option>{% for p in products %}<option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>{% endfor %}</select>
-                <select class="fc-select" name="preparation_id" id="sel_prep" style="display:none;"><option value="">— заготовка —</option>{% for p in preparations %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
+                <input class="fc-select" id="search_product" list="dl_products" placeholder="Начните вводить товар…" autocomplete="off">
+                <datalist id="dl_products">{% for p in products %}<option value="{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
+                <input type="hidden" name="product_id" id="sel_product">
+                <input class="fc-select" id="search_prep" list="dl_preps" placeholder="Начните вводить заготовку…" autocomplete="off" style="display:none;">
+                <datalist id="dl_preps">{% for p in preparations %}<option value="{{ p.name }}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
+                <input type="hidden" name="preparation_id" id="sel_prep">
             </div>
             <div><label class="fc-label">Кол-во</label><input class="fc-input num" name="quantity" placeholder="0" required></div>
             <div><label class="fc-label">Комментарий</label><input class="fc-input" name="comment" placeholder="необязательно"></div>
@@ -203,23 +207,33 @@
 (function(){
     var sel = document.getElementById("item_type_sel");
     if (!sel) return;
-    var prod = document.getElementById("sel_product");
-    var prep = document.getElementById("sel_prep");
+    var sp = document.getElementById("search_product");
+    var spp = document.getElementById("search_prep");
+    function resolve(inputEl, listId, hiddenId){
+        var val = (inputEl.value || "").trim();
+        var opts = document.getElementById(listId).options;
+        var id = "";
+        for (var i=0;i<opts.length;i++){ if (opts[i].value === val){ id = opts[i].getAttribute("data-id"); break; } }
+        document.getElementById(hiddenId).value = id;
+    }
+    if (sp) sp.addEventListener("input", function(){ resolve(sp,"dl_products","sel_product"); });
+    if (spp) spp.addEventListener("input", function(){ resolve(spp,"dl_preps","sel_prep"); });
     function sync(){
         var isProd = sel.value === "product";
-        prod.style.display = isProd ? "" : "none";
-        prep.style.display = isProd ? "none" : "";
-        prod.disabled = !isProd;
-        prep.disabled = isProd;
+        if (sp){ sp.style.display = isProd ? "" : "none"; }
+        if (spp){ spp.style.display = isProd ? "none" : ""; }
+        document.getElementById("sel_product").disabled = !isProd;
+        document.getElementById("sel_prep").disabled = isProd;
     }
     sel.addEventListener("change", sync);
     sync();
 
-    // При добавлении товара переносим текущие (возможно несохранённые)
-    // значения шапки в скрытые поля, чтобы они не обнулялись.
     var addForm = document.getElementById("add_item_form");
     if (addForm){
-        addForm.addEventListener("submit", function(){
+        addForm.addEventListener("submit", function(e){
+            // финальный резолв id на случай выбора без события input
+            if (sel.value === "product"){ resolve(sp,"dl_products","sel_product"); if(!document.getElementById("sel_product").value){ e.preventDefault(); alert("Выберите товар из списка"); return; } }
+            else { resolve(spp,"dl_preps","sel_prep"); if(!document.getElementById("sel_prep").value){ e.preventDefault(); alert("Выберите заготовку из списка"); return; } }
             function cp(srcId, dstId){
                 var s = document.getElementById(srcId), d = document.getElementById(dstId);
                 if (s && d) d.value = s.value;

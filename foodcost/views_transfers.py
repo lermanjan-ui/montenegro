@@ -83,6 +83,22 @@ def _show_money(request):
     return not (profile and profile.is_kitchen_staff())
 
 
+def _kitchen_warehouse(user, country):
+    """Склад сотрудника кухни: сначала из связанной карточки Employee.location,
+    затем из локации профиля пользователя."""
+    try:
+        from .models import Employee
+        emp = Employee.objects.filter(user=user, country=country).select_related("location").first()
+        if emp and emp.location_id:
+            return emp.location
+    except Exception:
+        pass
+    profile = getattr(user, "profile", None)
+    if profile and getattr(profile, "location_id", None):
+        return Location.objects.filter(id=profile.location_id, country=country).first()
+    return None
+
+
 def _next_doc_number(country, year):
     prefix = f"TR-{year}-"
     count = Transfer.objects.filter(
@@ -128,9 +144,7 @@ def transfer_list(request, country_slug):
     profile = getattr(request.user, "profile", None)
     is_kitchen = bool(profile and profile.is_kitchen_staff())
     can_create = can_edit or is_kitchen
-    kitchen_location = None
-    if is_kitchen and profile and profile.location_id:
-        kitchen_location = Location.objects.filter(id=profile.location_id, country=country).first()
+    kitchen_location = _kitchen_warehouse(request.user, country) if is_kitchen else None
 
     if request.method == "POST" and request.POST.get("action") == "create_draft":
         if not can_create:
@@ -254,9 +268,7 @@ def transfer_detail(request, country_slug, transfer_id):
 
     profile = getattr(request.user, "profile", None)
     is_kitchen = bool(profile and profile.is_kitchen_staff())
-    kitchen_location = None
-    if is_kitchen and profile and profile.location_id:
-        kitchen_location = Location.objects.filter(id=profile.location_id, country=country).first()
+    kitchen_location = _kitchen_warehouse(request.user, country) if is_kitchen else None
     # Повар может собирать только свой черновик; склад-источник фиксируется на его точке.
     can_edit_draft = can_edit or (
         is_kitchen and is_draft and transfer.created_by_id == request.user.id

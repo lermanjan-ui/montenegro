@@ -122,9 +122,11 @@
             {% if editable %}
             <div class="add-line">
                 <div><label class="fc-label">Добавить продукт из справочника</label>
-                    <select name="product_id" id="add_product_sel"><option value="">— выбрать продукт —</option>{% for p in avail_products %}<option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>{% endfor %}</select>
+                    <input class="fc-input" id="inv_search_product" list="dl_inv_products" placeholder="Начните вводить продукт…" autocomplete="off">
+                    <datalist id="dl_inv_products">{% for p in avail_products %}<option value="{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
+                    <input type="hidden" name="product_id" id="add_product_sel">
                 </div>
-                <button type="submit" class="fc-btn fc-btn-secondary" onclick="document.getElementById('form_action').value='add_product';">+ Добавить продукт</button>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="invResolve('inv_search_product','dl_inv_products','add_product_sel'); document.getElementById('form_action').value='add_product';">+ Добавить продукт</button>
             </div>
             {% endif %}
         </div>
@@ -150,9 +152,11 @@
             {% if editable %}
             <div class="add-line">
                 <div><label class="fc-label">Добавить заготовку из справочника</label>
-                    <select name="preparation_id" id="add_prep_sel"><option value="">— выбрать заготовку —</option>{% for p in avail_preparations %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
+                    <input class="fc-input" id="inv_search_prep" list="dl_inv_preps" placeholder="Начните вводить заготовку…" autocomplete="off">
+                    <datalist id="dl_inv_preps">{% for p in avail_preparations %}<option value="{{ p.name }}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
+                    <input type="hidden" name="preparation_id" id="add_prep_sel">
                 </div>
-                <button type="submit" class="fc-btn fc-btn-secondary" onclick="document.getElementById('form_action').value='add_preparation';">+ Добавить заготовку</button>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="invResolve('inv_search_prep','dl_inv_preps','add_prep_sel'); document.getElementById('form_action').value='add_preparation';">+ Добавить заготовку</button>
             </div>
             {% endif %}
         </div>
@@ -181,6 +185,25 @@
             document.getElementById("form_action").value = "remove_item";
             btn.closest("form").submit();
         });
+    });
+})();
+
+// Резолв id по введённому названию из datalist
+function invResolve(inputId, listId, hiddenId){
+    var inp = document.getElementById(inputId);
+    var list = document.getElementById(listId);
+    var hidden = document.getElementById(hiddenId);
+    if (!inp || !list || !hidden) return;
+    var val = (inp.value || "").trim();
+    var id = "";
+    for (var i=0;i<list.options.length;i++){ if (list.options[i].value === val){ id = list.options[i].getAttribute("data-id"); break; } }
+    hidden.value = id;
+}
+(function(){
+    [["inv_search_product","dl_inv_products","add_product_sel"],
+     ["inv_search_prep","dl_inv_preps","add_prep_sel"]].forEach(function(t){
+        var inp = document.getElementById(t[0]);
+        if (inp) inp.addEventListener("input", function(){ invResolve(t[0],t[1],t[2]); });
     });
 })();
 </script>
