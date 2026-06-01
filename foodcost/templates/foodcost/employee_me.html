@@ -52,6 +52,9 @@
 .empty{ text-align:center; padding:24px; color:var(--fc-muted); }
 .two{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
 .notice{ background:var(--fc-amber-soft); color:var(--fc-amber-text); border:1px solid #fde68a; border-radius:12px; padding:20px; font-size:15px; }
+.totrow{ display:flex; justify-content:space-between; align-items:center; padding-top:12px; margin-top:6px; border-top:1px solid var(--fc-border-soft); font-size:14px; }
+.accrue-box{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding:14px 16px; background:var(--fc-green-soft); color:var(--fc-green-text); border-radius:12px; font-weight:700; font-size:16px; }
+.accrue-box .num{ font-size:20px; }
 
 @media (max-width:860px){ .kpi-grid{ grid-template-columns:1fr 1fr; } .two{ grid-template-columns:1fr; } }
 @media (max-width:600px){ .fc-page{ padding:16px; } }
@@ -72,7 +75,7 @@
         <div class="ava">{{ initials }}</div>
         <div>
             <h1>{{ employee.name }}</h1>
-            <div class="sub">{{ employee.position|default:"—" }}{% if role_label %} · {{ role_label }}{% endif %}{% if employee.location %} · {{ employee.location.name }}{% endif %}</div>
+            <div class="sub">{% if header_role %}{{ header_role }}{% endif %}{% if employee.location %} · {{ employee.location.name }}{% endif %}</div>
         </div>
     </div>
 
@@ -81,13 +84,6 @@
         Не удалось начать смену: вы вне зоны точки или не разрешён доступ к геолокации. Начать смену можно, находясь на точке (в радиусе 200 м) и разрешив доступ к геопозиции в браузере.
     </div>
     {% endif %}
-
-    <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Отработано</div><div class="kpi-value num">{{ month_hours_display }} ч</div><div class="kpi-sub">за месяц</div></div>
-        <div class="kpi"><div class="kpi-label">Начислено</div><div class="kpi-value num">{{ accrued_month_display }}</div><div class="kpi-sub">за месяц</div></div>
-        <div class="kpi"><div class="kpi-label">Выплачено</div><div class="kpi-value num">{{ paid_month_display }}</div><div class="kpi-sub">за месяц</div></div>
-        <div class="kpi"><div class="kpi-label">К выплате</div><div class="kpi-value num pos">{{ balance_display }}</div><div class="kpi-sub">остаток</div></div>
-    </div>
 
     <div class="fc-card">
         <h2>Моя смена сегодня</h2>
@@ -115,57 +111,81 @@
         {% endif %}
     </div>
 
-    <div class="two">
-        <div class="fc-card">
-            <h2>Ближайшие смены</h2>
-            <table class="items">
-                <thead><tr><th>Дата</th><th>Время</th><th>Локация</th><th>Статус</th></tr></thead>
-                <tbody>
-                    {% for s in upcoming %}
-                    <tr>
-                        <td class="num">{{ s.date|date:"d.m" }}</td>
-                        <td class="num">{{ s.start }}–{{ s.end }}</td>
-                        <td>{{ s.location }}</td>
-                        <td>{% if s.status == 'in_progress' %}<span class="badge badge-live">Идёт</span>{% elif s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
-                    </tr>
-                    {% empty %}<tr><td colspan="4" class="empty">Запланированных смен нет.</td></tr>{% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="fc-card">
-            <h2>Отработанные смены (месяц)</h2>
-            <table class="items">
-                <thead><tr><th>Дата</th><th>Время</th><th class="r">Часы</th><th>Статус</th></tr></thead>
-                <tbody>
-                    {% for s in recent_shifts %}
-                    <tr>
-                        <td class="num">{{ s.date|date:"d.m" }}</td>
-                        <td class="num">{{ s.start }}–{{ s.end }}</td>
-                        <td class="r num">{{ s.hours }}</td>
-                        <td>{% if s.status == 'in_progress' %}<span class="badge badge-live">Идёт</span>{% elif s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
-                    </tr>
-                    {% empty %}<tr><td colspan="4" class="empty">Смен в этом месяце нет.</td></tr>{% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="fc-card">
+        <h2>Ближайшие смены</h2>
+        <table class="items">
+            <thead><tr><th>Дата</th><th>Время</th><th>Локация</th><th>Статус</th></tr></thead>
+            <tbody>
+                {% for s in upcoming %}
+                <tr>
+                    <td class="num">{{ s.date|date:"d.m" }}</td>
+                    <td class="num">{{ s.start }}–{{ s.end }}</td>
+                    <td>{{ s.location }}</td>
+                    <td>{% if s.status == 'in_progress' %}<span class="badge badge-live">Идёт</span>{% elif s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
+                </tr>
+                {% empty %}<tr><td colspan="4" class="empty">Запланированных смен нет.</td></tr>{% endfor %}
+            </tbody>
+        </table>
     </div>
 
     <div class="fc-card">
-        <h2>Мои начисления</h2>
+        <h2>Отработанные смены и заработок</h2>
         <table class="items">
-            <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th><th>Статус</th></tr></thead>
+            <thead><tr><th>Дата</th><th>Время</th><th>Локация</th><th class="r">Часы</th><th>Статус</th><th class="r">За смену</th></tr></thead>
             <tbody>
-                {% for p in payroll %}
+                {% for s in worked_rows %}
+                <tr>
+                    <td class="num">{{ s.date|date:"d.m.Y" }}</td>
+                    <td class="num">{{ s.start }}–{{ s.end }}</td>
+                    <td>{{ s.location }}</td>
+                    <td class="r num">{{ s.hours }}</td>
+                    <td>{% if s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% else %}<span class="badge badge-green">Отработана</span>{% endif %}</td>
+                    <td class="r num pos">{{ s.pay_display }}</td>
+                </tr>
+                {% empty %}<tr><td colspan="6" class="empty">Отработанных смен пока нет.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+        <div class="totrow"><span>Смен: {{ worked_count }} · Часов: {{ worked_hours_display }}</span><span class="num pos" style="font-weight:700;">Заработано: {{ earned_total_display }}</span></div>
+    </div>
+
+    <div class="fc-card">
+        <h2>Штрафы и бонусы</h2>
+        <table class="items">
+            <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th></tr></thead>
+            <tbody>
+                {% for p in adj_rows %}
                 <tr>
                     <td class="num">{{ p.date|date:"d.m.Y" }}</td>
                     <td>{{ p.type_label }}</td>
                     <td style="color:var(--fc-muted);">{{ p.comment|default:"—" }}</td>
-                    <td class="r num {% if p.is_negative %}neg{% else %}pos{% endif %}">{% if p.is_negative %}−{% else %}+{% endif %}{{ p.amount_display }}</td>
-                    <td>{% if p.status == 'done' %}<span class="badge badge-green">Проведено</span>{% else %}<span class="badge badge-gray">Планируется</span>{% endif %}</td>
+                    <td class="r num {% if p.is_penalty %}neg{% else %}pos{% endif %}">{% if p.is_penalty %}−{% else %}+{% endif %}{{ p.amount_display }}</td>
                 </tr>
-                {% empty %}<tr><td colspan="5" class="empty">Начислений пока нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="4" class="empty">Штрафов и бонусов нет.</td></tr>{% endfor %}
             </tbody>
         </table>
+        <div class="totrow"><span class="muted">Бонусы: +{{ bonuses_total_display }} · Штрафы: −{{ penalties_total_display }}</span></div>
+        <div class="accrue-box"><span>Итого к начислению</span><span class="num">{{ to_accrue_display }}</span></div>
+    </div>
+
+    <div class="fc-card">
+        <h2>Выплаты</h2>
+        <p class="muted" style="margin:0 0 12px;font-size:13px;">Реально отправленные вам деньги.</p>
+        <table class="items">
+            <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th><th>Статус</th></tr></thead>
+            <tbody>
+                {% for p in pay_rows %}
+                <tr>
+                    <td class="num">{{ p.date|date:"d.m.Y" }}</td>
+                    <td>{{ p.type_label }}</td>
+                    <td style="color:var(--fc-muted);">{{ p.comment|default:"—" }}</td>
+                    <td class="r num">{{ p.amount_display }}</td>
+                    <td>{% if p.status == 'done' %}<span class="badge badge-green">Отправлено</span>{% else %}<span class="badge badge-gray">Планируется</span>{% endif %}</td>
+                </tr>
+                {% empty %}<tr><td colspan="5" class="empty">Выплат пока нет.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+        <div class="totrow"><span class="muted">Всего выплачено: {{ paid_total_display }}</span></div>
+        <div class="accrue-box"><span>Остаток к выплате</span><span class="num">{{ remaining_display }}</span></div>
     </div>
 
     <a href="/c/{{ country.slug }}/shift-handover/" class="fc-btn fc-btn-dark fc-btn-block" style="margin-bottom:20px;">Передача смены →</a>

@@ -967,34 +967,76 @@ def employee_me(request, country_slug):
         return redirect(f"/c/{country.slug}/employee/me/")
 
     today = timezone.localdate()
-    month_start = date(today.year, today.month, 1)
     worked_statuses = [EmployeeShift.STATUS_DONE, EmployeeShift.STATUS_LATE]
-
-    month_hours = (
-        EmployeeShift.objects.filter(employee=employee, shift_date__gte=month_start,
-                                     shift_date__lte=today, status__in=worked_statuses)
-        .aggregate(s=Sum("hours"))["s"] or Decimal(0)
-    )
-
     T = EmployeePayrollEntry
-    by_type_month = {}
-    for row in (T.objects.filter(employee=employee, status=T.STATUS_DONE,
-                                 entry_date__gte=month_start, entry_date__lte=today)
-                .values("entry_type").annotate(s=Sum("amount"))):
-        by_type_month[row["entry_type"]] = row["s"] or Decimal(0)
-    by_type_all = {}
-    for row in (T.objects.filter(employee=employee, status=T.STATUS_DONE)
-                .values("entry_type").annotate(s=Sum("amount"))):
-        by_type_all[row["entry_type"]] = row["s"] or Decimal(0)
 
-    def g(d, k):
-        return d.get(k, Decimal(0)) or Decimal(0)
+    def _shift_pay(s):
+        """Сумма за смену по типу оплаты сотрудника (по снимкам ставок смены)."""
+        if employee.pay_type == Employee.PAY_TYPE_HOURLY:
+            rate = s.hourly_rate_snapshot or employee.hourly_rate_amount or Decimal(0)
+            return (s.hours or Decimal(0)) * rate
+        if employee.pay_type == Employee.PAY_TYPE_SHIFT:
+            return (s.fixed_amount or Decimal(0)) + (s.kpi_amount or Decimal(0))
+        return Decimal(0)  # оклад — за смену не считаем
 
-    accrued_m = g(by_type_month, T.TYPE_SALARY) + g(by_type_month, T.TYPE_BONUS)
-    paid_m = g(by_type_month, T.TYPE_PAYOUT) + g(by_type_month, T.TYPE_ADVANCE)
-    balance = (g(by_type_all, T.TYPE_SALARY) + g(by_type_all, T.TYPE_BONUS)
-               - g(by_type_all, T.TYPE_PAYOUT) - g(by_type_all, T.TYPE_ADVANCE)
-               - g(by_type_all, T.TYPE_PENALTY) + g(by_type_all, T.TYPE_CORRECTION))
+    # --- отработанные смены + заработок (все, без ограничения по месяцу) ---
+    worked = list(
+        EmployeeShift.objects.filter(employee=employee, status__in=worked_statuses)
+        .select_related("location").order_by("-shift_date", "-id")
+    )
+    earned_total = Decimal(0)
+    worked_hours = Decimal(0)
+    worked_rows = []
+    for s in worked:
+        pay = _shift_pay(s)
+        earned_total += pay
+        worked_hours += (s.hours or Decimal(0))
+        if len(worked_rows) < 80:
+            worked_rows.append({
+                "date": s.shift_date,
+                "start": s.start_time.strftime("%H:%M") if s.start_time else "—",
+                "end": s.end_time.strftime("%H:%M") if s.end_time else "—",
+                "location": s.location.name if s.location else "—",
+                "hours": _fmt_qty(s.hours or 0),
+                "pay_display": _fmt_money(pay),
+                "status": s.status, "status_label": s.get_status_display(),
+            })
+
+    # --- штрафы и бонусы (отдельный список) ---
+    adj_rows = []
+    bonuses_total = Decimal(0)
+    penalties_total = Decimal(0)
+    for p in (T.objects.filter(employee=employee, entry_type__in=[T.TYPE_PENALTY, T.TYPE_BONUS])
+              .order_by("-entry_date", "-id")):
+        amt = abs(p.amount or 0)
+        is_penalty = (p.entry_type == T.TYPE_PENALTY)
+        if is_penalty:
+            penalties_total += amt
+        else:
+            bonuses_total += amt
+        adj_rows.append({
+            "date": p.entry_date, "type_label": p.get_entry_type_display(),
+            "comment": p.comment, "amount_display": _fmt_money(amt),
+            "is_penalty": is_penalty,
+        })
+
+    # итого к начислению (заработано + бонусы − штрафы)
+    to_accrue = earned_total + bonuses_total - penalties_total
+
+    # --- выплаты (реально отправленные деньги) ---
+    pay_rows = []
+    paid_total = Decimal(0)
+    for p in (T.objects.filter(employee=employee, entry_type__in=[T.TYPE_PAYOUT, T.TYPE_ADVANCE])
+              .order_by("-entry_date", "-id")):
+        amt = abs(p.amount or 0)
+        paid_total += amt
+        pay_rows.append({
+            "date": p.entry_date, "type_label": p.get_entry_type_display(),
+            "comment": p.comment, "amount_display": _fmt_money(amt),
+            "status": p.status, "status_label": p.get_status_display(),
+        })
+
+    remaining = to_accrue - paid_total
 
     # текущая смена (идёт) + сегодняшние запланированные
     active_shift = EmployeeShift.objects.filter(
@@ -1004,16 +1046,10 @@ def employee_me(request, country_slug):
         employee=employee, shift_date=today, status=EmployeeShift.STATUS_PLANNED
     ).select_related("location"))
 
-    # ближайшие смены (от сегодня вперёд)
     upcoming = list(
         EmployeeShift.objects.filter(employee=employee, shift_date__gte=today)
         .exclude(status=EmployeeShift.STATUS_CANCELLED)
         .select_related("location").order_by("shift_date")[:10]
-    )
-    # последние смены месяца
-    recent_shifts = list(
-        EmployeeShift.objects.filter(employee=employee, shift_date__gte=month_start, shift_date__lte=today)
-        .select_related("location").order_by("-shift_date")[:10]
     )
 
     def shift_row(s):
@@ -1026,29 +1062,29 @@ def employee_me(request, country_slug):
             "status": s.status, "status_label": s.get_status_display(),
         }
 
-    payroll = []
-    for p in T.objects.filter(employee=employee).order_by("-entry_date", "-id")[:15]:
-        payroll.append({
-            "date": p.entry_date, "type_label": p.get_entry_type_display(),
-            "comment": p.comment, "amount_display": _fmt_money(abs(p.amount or 0)),
-            "is_negative": p.signed_amount() < 0,
-            "status": p.status, "status_label": p.get_status_display(),
-        })
-
     return render(request, "foodcost/employee_me.html", {
         "country": country,
         "employee": employee,
         "geo_error": request.GET.get("geo_error"),
         "initials": (employee.name[:2].upper() if employee.name else "—"),
-        "role_label": employee.get_role_display() if employee.role else "",
+        "header_role": (employee.position or (employee.get_role_display() if employee.role else "")),
         "today": today,
-        "month_hours_display": _fmt_qty(month_hours),
-        "accrued_month_display": _fmt_money(accrued_m),
-        "paid_month_display": _fmt_money(paid_m),
-        "balance_display": _fmt_money(balance),
+        # смены/заработок
+        "worked_rows": worked_rows,
+        "worked_count": len(worked),
+        "worked_hours_display": _fmt_qty(worked_hours),
+        "earned_total_display": _fmt_money(earned_total),
+        # штрафы/бонусы
+        "adj_rows": adj_rows,
+        "bonuses_total_display": _fmt_money(bonuses_total),
+        "penalties_total_display": _fmt_money(penalties_total),
+        "to_accrue_display": _fmt_money(to_accrue),
+        # выплаты
+        "pay_rows": pay_rows,
+        "paid_total_display": _fmt_money(paid_total),
+        "remaining_display": _fmt_money(remaining),
+        # смены сегодня/ближайшие
         "active_shift": shift_row(active_shift) if active_shift else None,
         "today_planned": [shift_row(s) for s in today_planned],
         "upcoming": [shift_row(s) for s in upcoming],
-        "recent_shifts": [shift_row(s) for s in recent_shifts],
-        "payroll": payroll,
     })

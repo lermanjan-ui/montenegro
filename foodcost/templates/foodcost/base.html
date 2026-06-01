@@ -493,6 +493,7 @@
 			    </details>
 			    {% endif %}
 
+			    {% if can_menu_writeoffs or can_menu_shift_handover %}
 			    <details class="menu-section" {% if '/writeoffs/' in request.path or '/shift-handover/' in request.path or '/production/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
@@ -522,6 +523,7 @@
 			            {% endif %}
 			        </div>
 			    </details>
+			    {% endif %}
 				
 			{% if can_menu_customers or can_menu_order_analytics or can_menu_writeoff_analytics or can_menu_shift_handover_admin %}
 
@@ -586,6 +588,7 @@
 
 			{% endif %}
 			   
+			    {% if can_menu_dishes or can_menu_products or can_menu_preparations or can_menu_packaging %}
 			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
@@ -629,6 +632,7 @@
 			            {% endif %}
 			        </div>
 			    </details>
+			    {% endif %}
 				
 				{% if can_menu_stock or can_menu_purchases or can_menu_transfers or can_menu_suppliers or can_menu_inventory %}
 
@@ -793,6 +797,7 @@
 			    </details>
 			    {% endif %}
 
+			    {% if can_menu_users or can_menu_settings or can_menu_all_orders %}
 			    <details class="menu-section" {% if '/settings/' in request.path or '/users/' in request.path or '/orders/all/' in request.path or '/orders/analytics/' in request.path or '/shift-handover/admin/' in request.path or '/writeoffs/analytics/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
@@ -838,6 +843,7 @@
 			            {% endif %}
 			        </div>
 			    </details>
+			    {% endif %}
 
 			</nav>
 
