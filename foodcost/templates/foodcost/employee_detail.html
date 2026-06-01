@@ -1,0 +1,357 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}{{ employee.name }}{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Карточка сотрудника: Общее / График и смены / Начисления. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-purple-soft:#EDE9FE; --fc-purple-text:#5B21B6;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1380px; margin:0 auto; padding:24px; }
+.crumbs{ font-size:13px; color:var(--fc-muted); margin-bottom:10px; }
+.crumbs a{ color:var(--fc-muted); text-decoration:none; }
+.fc-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:4px; flex-wrap:wrap; }
+.fc-head h1{ margin:0; font-size:26px; font-weight:600; display:flex; align-items:center; gap:12px; }
+.sub{ color:var(--fc-muted); font-size:14px; margin:2px 0 18px; }
+.head-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.muted{ color:var(--fc-muted); }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 14px; font-size:17px; font-weight:600; }
+
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:42px; padding:0 18px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.fc-btn-dark{ background:#0F172A; color:#fff; }
+.fc-btn-sm{ height:34px; padding:0 12px; font-size:13px; }
+.fc-btn-danger{ background:var(--fc-card); color:var(--fc-danger-text); border-color:#FCA5A5; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 11px; border-radius:var(--fc-radius-pill); font-size:12px; font-weight:600; }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-info{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+.badge-purple{ background:var(--fc-purple-soft); color:var(--fc-purple-text); }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:16px; }
+.kpi-label{ color:var(--fc-muted); font-size:12px; font-weight:600; margin-bottom:6px; }
+.kpi-value{ font-size:22px; font-weight:700; }
+.kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
+
+.tabs{ display:flex; gap:4px; border-bottom:1px solid var(--fc-border); margin-bottom:18px; }
+.tab{ padding:12px 16px; font-size:14px; font-weight:600; color:var(--fc-muted); cursor:pointer; border-bottom:2px solid transparent; background:none; border-top:none; border-left:none; border-right:none; font-family:inherit; }
+.tab.active{ color:var(--fc-green); border-bottom-color:var(--fc-green); }
+.pane{ display:none; } .pane.active{ display:block; }
+
+.two{ display:grid; grid-template-columns:1fr 1.3fr; gap:16px; align-items:start; }
+.info-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.info-row:last-child{ border-bottom:0; } .info-row .k{ color:var(--fc-muted); } .info-row .v{ font-weight:600; }
+.calc-row{ display:flex; justify-content:space-between; padding:8px 0; font-size:14px; }
+.calc-total{ display:flex; justify-content:space-between; padding:12px 0 0; border-top:2px solid var(--fc-border); margin-top:6px; font-weight:700; font-size:16px; }
+.pos{ color:var(--fc-green-text); } .neg{ color:var(--fc-danger-text); }
+
+.items{ width:100%; border-collapse:collapse; }
+.items th{ text-align:left; font-size:11px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; padding:9px 8px; border-bottom:1px solid var(--fc-border); }
+.items td{ padding:10px 8px; border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.items tr:last-child td{ border-bottom:0; } .items th.r,.items td.r{ text-align:right; }
+.num{ font-variant-numeric:tabular-nums; }
+.empty{ color:var(--fc-muted); padding:16px 8px; text-align:center; }
+.sec-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; flex-wrap:wrap; }
+.month-nav{ display:flex; align-items:center; gap:10px; }
+.month-nav a{ width:34px; height:34px; border:1px solid var(--fc-border); border-radius:8px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; color:var(--fc-text); }
+.month-lbl{ font-weight:600; min-width:140px; text-align:center; }
+
+.pay-kpi{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:16px; }
+.pay-kpi .kpi-value{ font-size:18px; }
+
+.filter-bar{ display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.fc-select{ height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; }
+
+.ov{ position:fixed; inset:0; background:rgba(15,23,42,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
+.ov.show{ display:flex; }
+.modal{ background:var(--fc-card); border-radius:14px; width:100%; max-width:560px; max-height:90vh; overflow:auto; padding:24px; }
+.modal h3{ margin:0 0 16px; font-size:19px; font-weight:600; }
+.mg{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.mg .full{ grid-column:1 / -1; }
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input{ width:100%; height:42px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; }
+textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+.chk{ display:flex; align-items:center; gap:8px; font-size:14px; }
+
+@media (max-width:980px){ .kpi-grid{ grid-template-columns:1fr 1fr; } .two{ grid-template-columns:1fr; } .pay-kpi{ grid-template-columns:1fr 1fr; } }
+@media (max-width:600px){ .fc-page{ padding:16px; } .mg{ grid-template-columns:1fr; } .tabs{ overflow-x:auto; } }
+@media (max-width:680px){ table.items{ display:block; overflow-x:auto; white-space:nowrap; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="crumbs"><a href="/c/{{ country.slug }}/employees/">Сотрудники</a> › {{ employee.name }}</div>
+
+    <div class="fc-head">
+        <h1>{{ employee.name }}
+            {% if employee.is_active %}<span class="badge badge-green">● Активен</span>{% else %}<span class="badge badge-gray">Неактивен</span>{% endif %}
+        </h1>
+        {% if can_edit %}
+        <div class="head-actions">
+            <button type="button" class="fc-btn fc-btn-secondary" onclick="openEdit()">✎ Редактировать</button>
+            <button type="button" class="fc-btn fc-btn-dark" onclick="openPayroll()">+ Добавить начисление</button>
+        </div>
+        {% endif %}
+    </div>
+    <p class="sub">{{ employee.position|default:"—" }} · {{ employee.location.name|default:"—" }}</p>
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Отработано часов</div><div class="kpi-value num">{{ month_hours_display }} ч</div><div class="kpi-sub">план: {{ plan_hours_display }} ч</div></div>
+        <div class="kpi"><div class="kpi-label">Начислено</div><div class="kpi-value num">{{ accrued_month_display }}</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">Выплачено</div><div class="kpi-value num">{{ paid_month_display }}</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">Остаток к выплате</div><div class="kpi-value num pos">{{ balance_display }}</div><div class="kpi-sub">на {{ balance_date|date:"d.m.Y" }}</div></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab" data-tab="general">Общее</button>
+        <button class="tab" data-tab="schedule">График и смены</button>
+        <button class="tab" data-tab="payroll">Начисления</button>
+    </div>
+
+    <!-- ОБЩЕЕ -->
+    <div class="pane" id="pane-general">
+        <div class="two">
+            <div>
+                <div class="fc-card">
+                    <h2>Основная информация</h2>
+                    <div class="info-row"><span class="k">ФИО</span><span class="v">{{ employee.name|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">Телефон</span><span class="v">{{ employee.phone|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">Должность</span><span class="v">{{ employee.position|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">Тип</span><span class="v">{% if employee.role %}{{ employee.get_role_display }}{% else %}—{% endif %}</span></div>
+                    <div class="info-row"><span class="k">Локация</span><span class="v">{{ employee.location.name|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">Тип оплаты</span><span class="v">{{ pay_type_label }}</span></div>
+                    <div class="info-row"><span class="k">Ставка</span><span class="v">{{ rate_display }} {{ rate_unit }}</span></div>
+                    <div class="info-row"><span class="k">Дата приёма</span><span class="v">{% if employee.hire_date %}{{ employee.hire_date|date:"d.m.Y" }}{% else %}—{% endif %}</span></div>
+                    <div class="info-row"><span class="k">Статус</span><span class="v">{% if employee.is_active %}Активен{% else %}Неактивен{% endif %}</span></div>
+                </div>
+                <div class="fc-card">
+                    <h2>Расчёт остатка к выплате</h2>
+                    <div class="calc-row"><span>Начислено</span><span class="num pos">{{ calc_accrued }}</span></div>
+                    <div class="calc-row"><span>Премии</span><span class="num pos">{{ calc_bonus }}</span></div>
+                    <div class="calc-row"><span>Выплаты</span><span class="num neg">−{{ calc_payout }}</span></div>
+                    <div class="calc-row"><span>Авансы</span><span class="num neg">−{{ calc_advance }}</span></div>
+                    <div class="calc-row"><span>Штрафы</span><span class="num neg">−{{ calc_penalty }}</span></div>
+                    <div class="calc-total"><span>К выплате</span><span class="num pos">{{ balance_display }}</span></div>
+                </div>
+            </div>
+            <div>
+                <div class="fc-card">
+                    <div class="sec-head"><h2 style="margin:0;">Последние смены</h2><button class="tab" style="padding:0;color:var(--fc-info-text);" data-tab="schedule">Перейти к сменам →</button></div>
+                    <table class="items">
+                        <thead><tr><th>Дата</th><th>Начало</th><th>Конец</th><th>Локация</th><th class="r">Часы</th><th>Статус</th></tr></thead>
+                        <tbody>
+                            {% for s in last_shifts %}
+                            <tr><td class="num">{{ s.date|date:"d.m.Y" }}</td><td class="num">{{ s.start }}</td><td class="num">{{ s.end }}</td><td>{{ s.location }}</td><td class="r num">{{ s.hours }}</td>
+                            <td>{% if s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td></tr>
+                            {% empty %}<tr><td colspan="6" class="empty">Смен нет.</td></tr>{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="fc-card">
+                    <div class="sec-head"><h2 style="margin:0;">Последние начисления</h2><button class="tab" style="padding:0;color:var(--fc-info-text);" data-tab="payroll">Перейти к начислениям →</button></div>
+                    <table class="items">
+                        <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th></tr></thead>
+                        <tbody>
+                            {% for p in last_payroll %}
+                            <tr><td class="num">{{ p.date|date:"d.m.Y" }}</td><td>{{ p.type_label }}</td><td class="muted">{{ p.comment|default:"—" }}</td><td class="r num {% if p.is_negative %}neg{% else %}pos{% endif %}">{% if p.is_negative %}−{% else %}+{% endif %}{{ p.amount_display }}</td></tr>
+                            {% empty %}<tr><td colspan="4" class="empty">Начислений нет.</td></tr>{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ГРАФИК И СМЕНЫ -->
+    <div class="pane" id="pane-schedule">
+        <div class="fc-card">
+            <div class="sec-head">
+                <div class="month-nav">
+                    <a href="?tab=schedule&month={{ prev_month }}">‹</a>
+                    <span class="month-lbl">{{ sel_month_label }}</span>
+                    <a href="?tab=schedule&month={{ next_month }}">›</a>
+                </div>
+                {% if can_edit %}<button type="button" class="fc-btn fc-btn-primary fc-btn-sm" onclick="openShift()">+ Добавить смену</button>{% endif %}
+            </div>
+            <table class="items">
+                <thead><tr><th>Дата</th><th>Начало</th><th>Конец</th><th>Локация</th><th class="r">Часы</th><th>Статус</th>{% if can_edit %}<th class="r"></th>{% endif %}</tr></thead>
+                <tbody>
+                    {% for s in shifts %}
+                    <tr>
+                        <td class="num">{{ s.date|date:"d.m.Y" }}</td><td class="num">{{ s.start }}</td><td class="num">{{ s.end }}</td>
+                        <td>{{ s.location }}</td><td class="r num">{{ s.hours }}</td>
+                        <td>{% if s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
+                        {% if can_edit %}<td class="r"><form method="post" onsubmit="return confirm('Удалить смену?');" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ s.id }}"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
+                    </tr>
+                    {% empty %}<tr><td colspan="7" class="empty">В этом месяце смен нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- НАЧИСЛЕНИЯ -->
+    <div class="pane" id="pane-payroll">
+        <div class="pay-kpi">
+            <div class="kpi"><div class="kpi-label">Начислено</div><div class="kpi-value num">{{ k_accrued }}</div><div class="kpi-sub">за месяц</div></div>
+            <div class="kpi"><div class="kpi-label">Выплачено</div><div class="kpi-value num">{{ k_paid }}</div><div class="kpi-sub">за месяц</div></div>
+            <div class="kpi"><div class="kpi-label">Авансы</div><div class="kpi-value num">{{ k_advance }}</div><div class="kpi-sub">за месяц</div></div>
+            <div class="kpi"><div class="kpi-label">Штрафы</div><div class="kpi-value num">{{ k_penalty }}</div><div class="kpi-sub">за месяц</div></div>
+            <div class="kpi"><div class="kpi-label">Премии</div><div class="kpi-value num">{{ k_bonus }}</div><div class="kpi-sub">за месяц</div></div>
+        </div>
+        <div class="fc-card">
+            <div class="filter-bar">
+                <select class="fc-select" id="fltType" onchange="filterPay()"><option value="">Все типы операций</option>{% for v,l in payroll_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+                <select class="fc-select" id="fltStatus" onchange="filterPay()"><option value="">Все статусы</option>{% for v,l in payroll_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+            </div>
+            <table class="items">
+                <thead><tr><th>Дата</th><th>Тип операции</th><th>Комментарий</th><th class="r">Сумма</th><th>Статус</th><th>Создал</th>{% if is_super %}<th class="r"></th>{% endif %}</tr></thead>
+                <tbody id="payBody">
+                    {% for p in payroll %}
+                    <tr data-type="{{ p.type }}" data-status="{{ p.status }}">
+                        <td class="num">{{ p.date|date:"d.m.Y" }}</td>
+                        <td>{{ p.type_label }}</td>
+                        <td class="muted">{{ p.comment|default:"—" }}</td>
+                        <td class="r num {% if p.is_negative %}neg{% else %}pos{% endif %}">{% if p.is_negative %}−{% else %}+{% endif %}{{ p.amount_display }}</td>
+                        <td>{% if p.status == 'done' %}<span class="badge badge-green">Проведено</span>{% else %}<span class="badge badge-gray">Планируется</span>{% endif %}</td>
+                        <td class="muted">{{ p.author }}</td>
+                        {% if is_super %}<td class="r"><form method="post" onsubmit="return confirm('Удалить операцию?');" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="delete_payroll"><input type="hidden" name="payroll_id" value="{{ p.id }}"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
+                    </tr>
+                    {% empty %}<tr><td colspan="7" class="empty">Начислений нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</div>
+
+{% if can_edit %}
+<!-- Попап: добавить начисление -->
+<div class="ov" id="ovPayroll">
+    <div class="modal">
+        <h3>Добавить начисление</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_payroll">
+            <div class="mg">
+                <div class="full"><label class="fc-label">Тип операции</label><select class="fc-input" name="entry_type">{% for v,l in payroll_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Дата</label><input class="fc-input" type="date" name="entry_date" value="{{ balance_date|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">Период</label><input class="fc-input" name="period" placeholder="напр. Май 2026"></div>
+                <div class="full"><label class="fc-label">Сумма</label><input class="fc-input" name="amount" inputmode="decimal" placeholder="0"></div>
+                <div class="full"><label class="fc-label">Статус</label><select class="fc-input" name="status">{% for v,l in payroll_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">Комментарий</label><textarea class="fc-input" name="comment" rows="2"></textarea></div>
+            </div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">Сохранить</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Попап: добавить смену -->
+<div class="ov" id="ovShift">
+    <div class="modal">
+        <h3>Добавить смену</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_shift">
+            <div class="mg">
+                <div class="full"><label class="fc-label">Дата</label><input class="fc-input" type="date" name="shift_date" value="{{ balance_date|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">Время начала</label><input class="fc-input" type="time" name="start_time" value="08:00"></div>
+                <div><label class="fc-label">Время окончания</label><input class="fc-input" type="time" name="end_time" value="17:00"></div>
+                <div><label class="fc-label">Перерыв, мин</label><input class="fc-input" name="break_minutes" inputmode="numeric" value="0"></div>
+                <div><label class="fc-label">Тип смены</label><select class="fc-input" name="shift_type">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Локация</label><select class="fc-input" name="location_id"><option value="">— по умолчанию —</option>{% for l in locations %}<option value="{{ l.id }}" {% if employee.location_id == l.id %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Статус</label><select class="fc-input" name="status">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">Комментарий</label><textarea class="fc-input" name="comment" rows="2"></textarea></div>
+            </div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">Сохранить</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Попап: редактировать сотрудника -->
+<div class="ov" id="ovEdit">
+    <div class="modal">
+        <h3>Редактировать сотрудника</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_employee">
+            <div class="mg">
+                <div class="full"><label class="fc-label">ФИО *</label><input class="fc-input" name="name" value="{{ employee.name }}" required></div>
+                <div><label class="fc-label">Телефон</label><input class="fc-input" name="phone" value="{{ employee.phone }}"></div>
+                <div><label class="fc-label">Должность</label><input class="fc-input" name="position" value="{{ employee.position }}"></div>
+                <div><label class="fc-label">Тип сотрудника</label><select class="fc-input" name="role"><option value="">— не указан —</option>{% for v,lb in roles %}<option value="{{ v }}" {% if employee.role == v %}selected{% endif %}>{{ lb }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Локация</label><select class="fc-input" name="location_id"><option value="">— не выбрана —</option>{% for l in locations %}<option value="{{ l.id }}" {% if employee.location_id == l.id %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Тип оплаты</label><select class="fc-input" name="pay_type">{% for v,l in pay_types %}<option value="{{ v }}" {% if employee.pay_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Ставка, сум/ч</label><input class="fc-input" name="hourly_rate_amount" value="{{ employee.hourly_rate_amount }}"></div>
+                <div><label class="fc-label">Оклад, сум/мес</label><input class="fc-input" name="monthly_salary" value="{{ employee.monthly_salary }}"></div>
+                <div><label class="fc-label">Ставка за смену</label><input class="fc-input" name="shift_rate_amount" value="{{ employee.shift_rate_amount }}"></div>
+                <div><label class="fc-label">KPI за смену</label><input class="fc-input" name="shift_kpi_amount" value="{{ employee.shift_kpi_amount }}"></div>
+                <div><label class="fc-label">Часов в смене</label><input class="fc-input" name="default_shift_hours" value="{{ employee.default_shift_hours }}"></div>
+                <div><label class="fc-label">Дата приёма</label><input class="fc-input" type="date" name="hire_date" value="{{ employee.hire_date|date:'Y-m-d' }}"></div>
+                <div class="full"><label class="fc-label">Аккаунт для входа (необязательно)</label><select class="fc-input" name="user_id"><option value="">— без аккаунта —</option>{% for u in users %}<option value="{{ u.id }}" {% if employee.user_id == u.id %}selected{% endif %}>{{ u.username }}{% if u.first_name or u.last_name %} ({{ u.first_name }} {{ u.last_name }}){% endif %}</option>{% endfor %}</select></div>
+                <div class="full"><label class="chk"><input type="checkbox" name="is_active" {% if employee.is_active %}checked{% endif %}> Активен</label></div>
+            </div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">Сохранить</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// вкладки
+var activeTab = "{{ active_tab }}";
+function showTab(name){
+    document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(t){ if(t.dataset.tab) t.classList.remove('active'); });
+    var pane = document.getElementById('pane-'+name);
+    if(pane) pane.classList.add('active');
+    document.querySelectorAll('.tab[data-tab="'+name+'"]').forEach(function(t){ t.classList.add('active'); });
+}
+document.querySelectorAll('.tab').forEach(function(t){
+    if(t.dataset.tab) t.addEventListener('click', function(){ showTab(t.dataset.tab); });
+});
+showTab(activeTab);
+
+// фильтр начислений
+function filterPay(){
+    var ty = document.getElementById('fltType').value;
+    var st = document.getElementById('fltStatus').value;
+    document.querySelectorAll('#payBody tr').forEach(function(tr){
+        if(!tr.dataset.type){ return; }
+        var ok = (!ty || tr.dataset.type===ty) && (!st || tr.dataset.status===st);
+        tr.style.display = ok ? '' : 'none';
+    });
+}
+
+// попапы
+function openPayroll(){ var o=document.getElementById('ovPayroll'); if(o) o.classList.add('show'); }
+function openShift(){ var o=document.getElementById('ovShift'); if(o) o.classList.add('show'); }
+function openEdit(){ var o=document.getElementById('ovEdit'); if(o) o.classList.add('show'); }
+function closeAll(){ document.querySelectorAll('.ov').forEach(function(o){ o.classList.remove('show'); }); }
+document.querySelectorAll('.ov').forEach(function(o){ o.addEventListener('click', function(e){ if(e.target===this) closeAll(); }); });
+</script>
+
+{% endblock %}

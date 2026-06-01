@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.utils.text import slugify
+from django.utils import timezone
 
 
 # 🌍 СТРАНА
@@ -27,6 +28,22 @@ class Product(models.Model):
 
     name = models.CharField(max_length=255)
     unit = models.CharField(max_length=20)
+
+    # Артикул товара. Генерируется автоматически при создании, но может быть
+    # изменён вручную. Используется на странице остатков и в поиске.
+    sku = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
+    # Минимальный остаток для предупреждений на странице "Остатки".
+    minimum_stock = models.DecimalField(
+        max_digits=14,
+        decimal_places=3,
+        default=0,
+    )
 
     def __str__(self):
         return self.name
@@ -611,6 +628,24 @@ class DishPreparationItem(models.Model):
 
 # 👨‍🍳 СОТРУДНИК
 class Employee(models.Model):
+    PAY_TYPE_HOURLY = "hourly"
+    PAY_TYPE_SHIFT = "shift"
+    PAY_TYPE_SALARY = "salary"
+    PAY_TYPE_CHOICES = [
+        (PAY_TYPE_HOURLY, "Почасовая"),
+        (PAY_TYPE_SHIFT, "Посменная"),
+        (PAY_TYPE_SALARY, "Оклад"),
+    ]
+
+    ROLE_COOK = "cook"
+    ROLE_CASHIER = "cashier"
+    ROLE_CLEANER = "cleaner"
+    ROLE_CHOICES = [
+        (ROLE_COOK, "Повар"),
+        (ROLE_CASHIER, "Кассир"),
+        (ROLE_CLEANER, "Клинер"),
+    ]
+
     country = models.ForeignKey(
         Country,
         on_delete=models.CASCADE,
@@ -695,6 +730,27 @@ class Employee(models.Model):
         max_digits=8,
         decimal_places=2,
         default=0
+    )
+
+    phone = models.CharField(
+        max_length=40,
+        blank=True,
+        default=""
+    )
+    pay_type = models.CharField(
+        max_length=20,
+        choices=PAY_TYPE_CHOICES,
+        default=PAY_TYPE_HOURLY,
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        blank=True,
+        default="",
+    )
+    hire_date = models.DateField(
+        null=True,
+        blank=True
     )
 
     def __str__(self):
@@ -874,6 +930,7 @@ class UserProfile(models.Model):
     SECTION_SHIFT_HANDOVER = "shift_handover"
     SECTION_ORDERS = "orders"
     SECTION_SETTINGS = "settings"
+    SECTION_SITE = "site"
     SECTION_CUSTOMERS = "customers"
     SECTION_ORDER_ANALYTICS = "order_analytics"
     SECTION_ALL_ORDERS = "all_orders"
@@ -881,6 +938,8 @@ class UserProfile(models.Model):
     SECTION_PURCHASES = "purchases"
     SECTION_SUPPLIERS = "suppliers"
     SECTION_INVENTORY = "inventory"
+    SECTION_STOCK = "stock"
+    SECTION_TRANSFERS = "transfers"
     SECTION_FINANCE = "finance"
 
     SECTION_CHOICES = [
@@ -896,13 +955,16 @@ class UserProfile(models.Model):
         (SECTION_SHIFT_HANDOVER, "Передача смены"),
         (SECTION_ORDERS, "Заказы"),
         (SECTION_SETTINGS, "Настройки"),
+        (SECTION_SITE, "Сайт"),
         (SECTION_CUSTOMERS, "Клиенты"),
         (SECTION_ORDER_ANALYTICS, "Аналитика заказов"),
         (SECTION_ALL_ORDERS, "Все заказы"),
         (SECTION_SHIFT_HANDOVER_ADMIN, "Передачи смен"),
         (SECTION_PURCHASES, "Закупки"),
         (SECTION_SUPPLIERS, "Поставщики"),
-        (SECTION_INVENTORY, "Остатки"),
+        (SECTION_INVENTORY, "Инвентаризация"),
+        (SECTION_STOCK, "Остатки"),
+        (SECTION_TRANSFERS, "Перемещения"),
         (SECTION_FINANCE, "Финансы"),
     ]
 
@@ -998,6 +1060,16 @@ class WriteOff(models.Model):
     country = models.ForeignKey(
         Country,
         on_delete=models.CASCADE,
+        related_name="writeoffs"
+    )
+
+    # Склад, с которого происходит списание. Для повара подставляется его
+    # филиал автоматически; для админа/менеджера выбирается в форме.
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="writeoffs"
     )
 
@@ -2007,13 +2079,26 @@ class FinancialExpense(models.Model):
 class EmployeeShift(models.Model):
 
     STATUS_PLANNED = "planned"
+    STATUS_IN_PROGRESS = "in_progress"
     STATUS_DONE = "done"
     STATUS_CANCELLED = "cancelled"
+    STATUS_MISSED = "missed"
+    STATUS_LATE = "late"
 
     STATUS_CHOICES = [
         (STATUS_PLANNED, "Запланирована"),
+        (STATUS_IN_PROGRESS, "Идёт"),
         (STATUS_DONE, "Отработана"),
         (STATUS_CANCELLED, "Отменена"),
+        (STATUS_MISSED, "Пропуск"),
+        (STATUS_LATE, "Опоздание"),
+    ]
+
+    SHIFT_TYPE_DAY = "day"
+    SHIFT_TYPE_NIGHT = "night"
+    SHIFT_TYPE_CHOICES = [
+        (SHIFT_TYPE_DAY, "Дневная"),
+        (SHIFT_TYPE_NIGHT, "Ночная"),
     ]
 
     country = models.ForeignKey(
@@ -2037,6 +2122,15 @@ class EmployeeShift(models.Model):
     )
 
     shift_date = models.DateField()
+
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    break_minutes = models.PositiveIntegerField(default=0)
+    shift_type = models.CharField(
+        max_length=10,
+        choices=SHIFT_TYPE_CHOICES,
+        default=SHIFT_TYPE_DAY,
+    )
 
     hours = models.DecimalField(
         max_digits=8,
@@ -2222,6 +2316,94 @@ class EmployeePayment(models.Model):
 
     def __str__(self):
         return f"{self.employee} — {self.amount}"
+
+
+class EmployeePayrollEntry(models.Model):
+    """Единый журнал финансовых операций сотрудника:
+    начисление зарплаты, выплата, аванс, штраф, премия, корректировка.
+    Остаток к выплате = начислено + премии − выплаты − авансы − штрафы."""
+
+    TYPE_SALARY = "salary"
+    TYPE_PAYOUT = "payout"
+    TYPE_ADVANCE = "advance"
+    TYPE_PENALTY = "penalty"
+    TYPE_BONUS = "bonus"
+    TYPE_CORRECTION = "correction"
+    TYPE_CHOICES = [
+        (TYPE_SALARY, "Начисление зарплаты"),
+        (TYPE_PAYOUT, "Выплата"),
+        (TYPE_ADVANCE, "Аванс"),
+        (TYPE_PENALTY, "Штраф"),
+        (TYPE_BONUS, "Премия"),
+        (TYPE_CORRECTION, "Корректировка"),
+    ]
+
+    STATUS_DONE = "done"
+    STATUS_PLANNED = "planned"
+    STATUS_CHOICES = [
+        (STATUS_DONE, "Проведено"),
+        (STATUS_PLANNED, "Планируется"),
+    ]
+
+    # для расчёта остатка: что увеличивает долг компании перед сотрудником (+)
+    POSITIVE_TYPES = (TYPE_SALARY, TYPE_BONUS)
+    # что уменьшает (−)
+    NEGATIVE_TYPES = (TYPE_PAYOUT, TYPE_ADVANCE, TYPE_PENALTY)
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="payroll_entries",
+    )
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="payroll_entries",
+    )
+    entry_type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+    )
+    entry_date = models.DateField()
+    period = models.CharField(
+        max_length=20,
+        blank=True,
+        default="",
+    )
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=STATUS_CHOICES,
+        default=STATUS_DONE,
+    )
+    comment = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_payroll_entries",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-entry_date", "-id"]
+
+    def __str__(self):
+        return f"{self.employee} — {self.get_entry_type_display()} {self.amount}"
+
+    def signed_amount(self):
+        """Сумма со знаком для расчёта остатка (корректировка — как есть)."""
+        amt = self.amount or 0
+        if self.entry_type == self.TYPE_CORRECTION:
+            return amt
+        if self.entry_type in self.NEGATIVE_TYPES:
+            return -abs(amt)
+        return abs(amt)
 
 
 # =============================================================================
@@ -3084,3 +3266,554 @@ class DishUpsellLink(models.Model):
             raise ValidationError(
                 {"to_dish": "Блюда должны быть из одной страны."}
             )
+
+
+# =====================================================================
+# СКЛАДСКОЙ МОДУЛЬ (этап 1: модели)
+# Поставщики, приходы, перемещения, инвентаризация, движения склада,
+# общий журнал изменений документов. Остатки НЕ хранятся в Product —
+# считаются из StockMovement (Σ quantity_delta по складу+позиции).
+# =====================================================================
+
+
+# 🏭 ПОСТАВЩИК
+class Supplier(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="suppliers",
+    )
+
+    name = models.CharField(max_length=255)
+    contact_person = models.CharField(max_length=255, blank=True, default="")
+
+    # Несколько телефонов — по одному в строке.
+    phone = models.TextField(blank=True, default="")
+
+    telegram = models.CharField(max_length=255, blank=True, default="")
+    email = models.CharField(max_length=255, blank=True, default="")
+    comment = models.TextField(blank=True, default="")
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+# 🔗 ТОВАР ПОСТАВЩИКА (связь поставщик ↔ продукт)
+class SupplierProduct(models.Model):
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE,
+        related_name="supplier_products",
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="supplier_products",
+    )
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("supplier", "product")
+
+    def __str__(self):
+        return f"{self.supplier.name} — {self.product.name}"
+
+
+# 📥 ПРИХОД (поступление товара от поставщика)
+class PurchaseReceipt(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_CONFIRMED = "confirmed"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, "Черновик"),
+        (STATUS_CONFIRMED, "Подтверждён"),
+        (STATUS_CANCELLED, "Отменён"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="purchase_receipts",
+    )
+
+    # Автономер вида PR-2026-000123 (присваивается при подтверждении).
+    document_number = models.CharField(max_length=32, blank=True, default="", db_index=True)
+
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="purchase_receipts",
+    )
+
+    warehouse = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="purchase_receipts",
+    )
+
+    receipt_date = models.DateField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+        db_index=True,
+    )
+
+    comment = models.TextField(blank=True, default="")
+
+    is_paid = models.BooleanField(default=False)
+    paid_at = models.DateField(null=True, blank=True)
+    paid_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+
+    # Кэш суммы документа (Σ строк).
+    total_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchase_receipts",
+    )
+
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.document_number or f"Приход #{self.pk}"
+
+    def debt(self):
+        return (self.total_amount or 0) - (self.paid_amount or 0)
+
+
+class PurchaseReceiptItem(models.Model):
+    receipt = models.ForeignKey(
+        PurchaseReceipt,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name="purchase_items",
+    )
+
+    quantity = models.DecimalField(max_digits=14, decimal_places=3, default=0)
+    unit_price = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+
+    def save(self, *args, **kwargs):
+        self.total = (self.quantity or 0) * (self.unit_price or 0)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.product.name} — {self.quantity} × {self.unit_price}"
+
+
+# 🔄 ПЕРЕМЕЩЕНИЕ (между складами)
+class Transfer(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_CONFIRMED = "confirmed"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, "Черновик"),
+        (STATUS_CONFIRMED, "Подтверждён"),
+        (STATUS_CANCELLED, "Отменён"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="transfers",
+    )
+
+    # Автономер вида TR-2026-000045.
+    document_number = models.CharField(max_length=32, blank=True, default="", db_index=True)
+
+    from_warehouse = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="transfers_out",
+    )
+
+    to_warehouse = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="transfers_in",
+    )
+
+    transfer_date = models.DateField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+        db_index=True,
+    )
+
+    comment = models.TextField(blank=True, default="")
+
+    # Стоимость доставки перемещения (пойдёт в блок расходов).
+    delivery_cost = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="transfers",
+    )
+
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.document_number or f"Перемещение #{self.pk}"
+
+
+class TransferItem(models.Model):
+    ITEM_TYPE_PRODUCT = "product"
+    ITEM_TYPE_PREPARATION = "preparation"
+
+    ITEM_TYPE_CHOICES = [
+        (ITEM_TYPE_PRODUCT, "Продукт"),
+        (ITEM_TYPE_PREPARATION, "Заготовка"),
+    ]
+
+    transfer = models.ForeignKey(
+        Transfer,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+
+    item_type = models.CharField(max_length=20, choices=ITEM_TYPE_CHOICES)
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="transfer_items",
+    )
+
+    preparation = models.ForeignKey(
+        Preparation,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="transfer_items",
+    )
+
+    quantity = models.DecimalField(max_digits=14, decimal_places=3, default=0)
+    comment = models.CharField(max_length=255, blank=True, default="")
+
+    def __str__(self):
+        name = self.product.name if self.product else (
+            self.preparation.name if self.preparation else "—"
+        )
+        return f"{name} — {self.quantity}"
+
+
+# 📋 ИНВЕНТАРИЗАЦИЯ
+class Inventory(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_AWAITING = "awaiting"
+    STATUS_CONFIRMED = "confirmed"
+    STATUS_REJECTED = "rejected"
+
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, "Черновик"),
+        (STATUS_IN_PROGRESS, "Проводится"),
+        (STATUS_AWAITING, "Ожидает проверки"),
+        (STATUS_CONFIRMED, "Подтверждена"),
+        (STATUS_REJECTED, "Отклонена"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="inventories",
+    )
+
+    # Автономер вида INV-2026-000128.
+    document_number = models.CharField(max_length=32, blank=True, default="", db_index=True)
+
+    warehouse = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        related_name="inventories",
+    )
+
+    inventory_date = models.DateField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+        db_index=True,
+    )
+
+    comment = models.TextField(blank=True, default="")
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="inventories_created",
+    )
+
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.document_number or f"Инвентаризация #{self.pk}"
+
+
+class InventoryItem(models.Model):
+    ITEM_TYPE_PRODUCT = "product"
+    ITEM_TYPE_PREPARATION = "preparation"
+
+    ITEM_TYPE_CHOICES = [
+        (ITEM_TYPE_PRODUCT, "Продукт"),
+        (ITEM_TYPE_PREPARATION, "Заготовка"),
+    ]
+
+    inventory = models.ForeignKey(
+        Inventory,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+
+    item_type = models.CharField(max_length=20, choices=ITEM_TYPE_CHOICES)
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="inventory_items",
+    )
+
+    preparation = models.ForeignKey(
+        Preparation,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="inventory_items",
+    )
+
+    # Остаток по системе на момент создания инвентаризации (снапшот).
+    system_qty = models.DecimalField(max_digits=14, decimal_places=3, default=0)
+
+    # Фактический остаток (вводит повар). null = ещё не заполнено.
+    fact_qty = models.DecimalField(max_digits=14, decimal_places=3, null=True, blank=True)
+
+    # Себестоимость единицы для расчёта стоимости расхождения.
+    unit_cost = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+
+    comment = models.CharField(max_length=255, blank=True, default="")
+
+    def __str__(self):
+        name = self.product.name if self.product else (
+            self.preparation.name if self.preparation else "—"
+        )
+        return f"{name} — факт {self.fact_qty}"
+
+
+# 📒 ДВИЖЕНИЕ СКЛАДА (журнал; источник правды по остаткам)
+class StockMovement(models.Model):
+    ITEM_TYPE_PRODUCT = "product"
+    ITEM_TYPE_PREPARATION = "preparation"
+
+    ITEM_TYPE_CHOICES = [
+        (ITEM_TYPE_PRODUCT, "Продукт"),
+        (ITEM_TYPE_PREPARATION, "Заготовка"),
+    ]
+
+    TYPE_RECEIPT = "receipt"
+    TYPE_SALE = "sale"
+    TYPE_WRITEOFF = "writeoff"
+    TYPE_TRANSFER_OUT = "transfer_out"
+    TYPE_TRANSFER_IN = "transfer_in"
+    TYPE_INVENTORY_ADJUSTMENT = "inventory_adjustment"
+    TYPE_RETURN_CANCEL = "return_cancel"
+
+    MOVEMENT_TYPE_CHOICES = [
+        (TYPE_RECEIPT, "Приход"),
+        (TYPE_SALE, "Списание по заказу"),
+        (TYPE_WRITEOFF, "Списание ручное"),
+        (TYPE_TRANSFER_OUT, "Перемещение (выход)"),
+        (TYPE_TRANSFER_IN, "Перемещение (вход)"),
+        (TYPE_INVENTORY_ADJUSTMENT, "Инвентаризация"),
+        (TYPE_RETURN_CANCEL, "Возврат от отмены"),
+    ]
+
+    SOURCE_PURCHASE_RECEIPT = "purchase_receipt"
+    SOURCE_ORDER = "order"
+    SOURCE_WRITEOFF = "writeoff"
+    SOURCE_TRANSFER = "transfer"
+    SOURCE_INVENTORY = "inventory"
+
+    SOURCE_TYPE_CHOICES = [
+        (SOURCE_PURCHASE_RECEIPT, "Приход"),
+        (SOURCE_ORDER, "Заказ"),
+        (SOURCE_WRITEOFF, "Списание"),
+        (SOURCE_TRANSFER, "Перемещение"),
+        (SOURCE_INVENTORY, "Инвентаризация"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="stock_movements",
+    )
+
+    warehouse = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        related_name="stock_movements",
+    )
+
+    item_type = models.CharField(max_length=20, choices=ITEM_TYPE_CHOICES)
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stock_movements",
+    )
+
+    preparation = models.ForeignKey(
+        Preparation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stock_movements",
+    )
+
+    # + приход / − расход (всегда в базовой единице позиции).
+    quantity_delta = models.DecimalField(max_digits=14, decimal_places=3, default=0)
+
+    movement_type = models.CharField(
+        max_length=30,
+        choices=MOVEMENT_TYPE_CHOICES,
+        db_index=True,
+    )
+
+    # Мягкая ссылка на документ-источник.
+    source_type = models.CharField(
+        max_length=30,
+        choices=SOURCE_TYPE_CHOICES,
+        blank=True,
+        default="",
+    )
+    source_id = models.PositiveIntegerField(null=True, blank=True)
+
+    # Цена/стоимость движения (для KPI и журнала; для кухни скрывается в UI).
+    unit_cost = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    total_cost = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+
+    comment = models.CharField(max_length=500, blank=True, default="")
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stock_movements",
+    )
+
+    # Дата/время движения (может отличаться от created_at, напр. для списания
+    # по заказу датой прошлого дня).
+    movement_datetime = models.DateTimeField(default=timezone.now, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["country", "warehouse", "product"]),
+            models.Index(fields=["country", "warehouse", "preparation"]),
+            models.Index(fields=["source_type", "source_id"]),
+            models.Index(fields=["movement_datetime"]),
+        ]
+
+    def __str__(self):
+        name = self.product.name if self.product else (
+            self.preparation.name if self.preparation else "—"
+        )
+        return f"{self.get_movement_type_display()}: {name} {self.quantity_delta}"
+
+
+# 📝 ОБЩИЙ ЖУРНАЛ ИЗМЕНЕНИЙ ДОКУМЕНТОВ (аудит)
+class DocumentLog(models.Model):
+    DOC_PURCHASE_RECEIPT = "purchase_receipt"
+    DOC_TRANSFER = "transfer"
+    DOC_INVENTORY = "inventory"
+
+    DOC_TYPE_CHOICES = [
+        (DOC_PURCHASE_RECEIPT, "Приход"),
+        (DOC_TRANSFER, "Перемещение"),
+        (DOC_INVENTORY, "Инвентаризация"),
+    ]
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="document_logs",
+    )
+
+    document_type = models.CharField(max_length=30, choices=DOC_TYPE_CHOICES)
+    document_id = models.PositiveIntegerField()
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="document_logs",
+    )
+
+    # created / updated / confirmed / cancelled / payment / unlocked / status_changed
+    action = models.CharField(max_length=64)
+    field = models.CharField(max_length=128, blank=True, default="")
+    old_value = models.TextField(blank=True, default="")
+    new_value = models.TextField(blank=True, default="")
+    comment = models.CharField(max_length=500, blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["document_type", "document_id", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} #{self.document_id} — {self.action}"

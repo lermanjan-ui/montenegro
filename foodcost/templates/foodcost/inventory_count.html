@@ -1,0 +1,188 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Подсчёт — {{ inventory.document_number }}{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Форма подсчёта (повар). «Слепой» ввод: показываем
+     только фактический остаток, БЕЗ системного количества, расхождений и
+     денег — чтобы не подсказывать. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:920px; margin:0 auto; padding:24px; }
+.crumbs{ font-size:13px; color:var(--fc-muted); margin-bottom:10px; }
+.crumbs a{ color:var(--fc-muted); text-decoration:none; }
+.fc-head{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:8px; flex-wrap:wrap; }
+.fc-head h1{ margin:0; font-size:26px; font-weight:600; display:flex; align-items:center; gap:12px; }
+.sub{ color:var(--fc-muted); font-size:14px; margin:0 0 18px; }
+.muted{ color:var(--fc-muted); }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 14px; font-size:18px; font-weight:600; }
+
+.banner{ padding:12px 14px; border-radius:var(--fc-radius-input); font-size:14px; margin-bottom:16px; }
+.banner-green{ background:var(--fc-green-soft); color:var(--fc-green-text); border:1px solid #86EFAC; }
+.banner-info{ background:var(--fc-info-soft); color:var(--fc-info-text); border:1px solid #93C5FD; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:var(--fc-radius-pill); font-size:13px; font-weight:600; }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.badge-info{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+
+.progress{ display:flex; align-items:center; gap:10px; font-size:14px; }
+.count-list{ display:flex; flex-direction:column; }
+.count-row{ display:grid; grid-template-columns:1fr 70px 130px; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--fc-border-soft); }
+.count-row:last-child{ border-bottom:0; }
+.c-name{ font-weight:500; }
+.fc-input{ width:100%; height:38px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; text-align:right; font-variant-numeric:tabular-nums; }
+.fc-input:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+.fc-input.filled{ border-color:#86EFAC; background:#F0FDF4; }
+.unit{ color:var(--fc-muted); font-size:13px; }
+.fact-val{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+.fact-cell{ display:flex; gap:6px; align-items:center; }
+.rm-btn{ flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:1px solid #FCA5A5; background:var(--fc-card); color:var(--fc-danger-text); cursor:pointer; font-size:13px; }
+.rm-btn:hover{ background:var(--fc-danger-soft); }
+.add-line{ display:flex; gap:10px; align-items:end; margin-top:16px; padding-top:16px; border-top:1px dashed var(--fc-border); flex-wrap:wrap; }
+.add-line .fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.add-line select{ height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; min-width:280px; }
+
+.actions{ display:flex; gap:10px; justify-content:flex-end; position:sticky; bottom:0; background:linear-gradient(transparent, var(--fc-bg) 40%); padding-top:14px; }
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 20px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-dark{ background:var(--fc-text); color:#fff; }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.empty{ color:var(--fc-muted); padding:14px 0; }
+
+@media (max-width:560px){ .fc-page{ padding:16px; } .count-row{ grid-template-columns:1fr 110px; } .count-row .unit{ display:none; } }
+
+@media (max-width:680px){ .add-line{ flex-direction:column; align-items:stretch; } .add-line select{ min-width:0; width:100%; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="crumbs"><a href="/c/{{ country.slug }}/inventory/">Инвентаризация</a> › {{ inventory.document_number }}</div>
+
+    <div class="fc-head">
+        <h1>{{ inventory.document_number }}
+            {% if inventory.status == 'confirmed' %}<span class="badge badge-green">Подтверждена</span>
+            {% elif inventory.status == 'rejected' %}<span class="badge badge-red">Отклонена</span>
+            {% elif inventory.status == 'awaiting' %}<span class="badge badge-info">Ожидает проверки</span>
+            {% elif inventory.status == 'in_progress' %}<span class="badge badge-amber">Проводится</span>
+            {% else %}<span class="badge badge-gray">Черновик</span>{% endif %}
+        </h1>
+        <div class="progress"><span class="muted">Заполнено</span> <strong>{{ filled }} / {{ total_items }}</strong></div>
+    </div>
+    <p class="sub">Склад: <strong>{{ inventory.warehouse.name }}</strong> · Дата: {{ inventory.inventory_date|date:"d.m.Y" }}</p>
+
+    {% if saved_flag %}<div class="banner banner-green">Черновик подсчёта сохранён.</div>{% endif %}
+    {% if added_flag %}<div class="banner banner-green">Позиция добавлена в подсчёт.</div>{% endif %}
+    {% if removed_flag %}<div class="banner banner-info">Позиция убрана из подсчёта.</div>{% endif %}
+    {% if finished_flag %}<div class="banner banner-info">Подсчёт завершён и отправлен на проверку менеджеру.</div>{% endif %}
+    {% if not editable %}<div class="banner banner-info">Подсчёт завершён. Изменение фактических остатков недоступно.</div>{% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save" id="form_action">
+        <input type="hidden" name="remove_id" value="" id="remove_id">
+
+        <div class="fc-card">
+            <h2>Продукты</h2>
+            <div class="count-list">
+                {% for r in products %}
+                <div class="count-row">
+                    <div class="c-name">{{ r.name }}</div>
+                    <div class="unit">{{ r.unit }}</div>
+                    {% if editable %}
+                        <div class="fact-cell">
+                            <input class="fc-input {% if r.filled %}filled{% endif %}" type="text" inputmode="decimal" name="fact_{{ r.id }}" value="{{ r.fact }}" placeholder="—">
+                            <button type="button" class="rm-btn" data-id="{{ r.id }}" title="Убрать строку">✕</button>
+                        </div>
+                    {% else %}
+                        <div class="fact-val">{% if r.fact %}{{ r.fact }}{% else %}<span class="muted">не посчитано</span>{% endif %}</div>
+                    {% endif %}
+                </div>
+                {% empty %}<div class="empty">Продуктов на складе нет.</div>{% endfor %}
+            </div>
+            {% if editable %}
+            <div class="add-line">
+                <div><label class="fc-label">Добавить продукт из справочника</label>
+                    <select name="product_id" id="add_product_sel"><option value="">— выбрать продукт —</option>{% for p in avail_products %}<option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>{% endfor %}</select>
+                </div>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="document.getElementById('form_action').value='add_product';">+ Добавить продукт</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="fc-card">
+            <h2>Заготовки</h2>
+            <div class="count-list">
+                {% for r in preparations %}
+                <div class="count-row">
+                    <div class="c-name">{{ r.name }}</div>
+                    <div class="unit">{{ r.unit }}</div>
+                    {% if editable %}
+                        <div class="fact-cell">
+                            <input class="fc-input {% if r.filled %}filled{% endif %}" type="text" inputmode="decimal" name="fact_{{ r.id }}" value="{{ r.fact }}" placeholder="—">
+                            <button type="button" class="rm-btn" data-id="{{ r.id }}" title="Убрать строку">✕</button>
+                        </div>
+                    {% else %}
+                        <div class="fact-val">{% if r.fact %}{{ r.fact }}{% else %}<span class="muted">не посчитано</span>{% endif %}</div>
+                    {% endif %}
+                </div>
+                {% empty %}<div class="empty">Заготовок на складе нет.</div>{% endfor %}
+            </div>
+            {% if editable %}
+            <div class="add-line">
+                <div><label class="fc-label">Добавить заготовку из справочника</label>
+                    <select name="preparation_id" id="add_prep_sel"><option value="">— выбрать заготовку —</option>{% for p in avail_preparations %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
+                </div>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="document.getElementById('form_action').value='add_preparation';">+ Добавить заготовку</button>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if editable %}
+        <div class="actions">
+            <button type="submit" class="fc-btn fc-btn-secondary" onclick="document.getElementById('form_action').value='save';">💾 Сохранить</button>
+            <button type="submit" class="fc-btn fc-btn-dark" onclick="document.getElementById('form_action').value='finish'; return confirm('Завершить подсчёт и отправить на проверку? После этого изменить факт будет нельзя.');">✓ Завершить подсчёт</button>
+        </div>
+        {% else %}
+        <div class="actions"><a href="/c/{{ country.slug }}/inventory/" class="fc-btn fc-btn-secondary">← К журналу</a></div>
+        {% endif %}
+    </form>
+
+</div>
+</div>
+
+<script>
+(function(){
+    // Удаление строки: ставим id в скрытое поле, переключаем действие,
+    // отправляем основную форму (введённый факт при этом сохранится).
+    document.querySelectorAll(".rm-btn").forEach(function(btn){
+        btn.addEventListener("click", function(){
+            if (!confirm("Убрать эту позицию из подсчёта?")) return;
+            document.getElementById("remove_id").value = btn.dataset.id;
+            document.getElementById("form_action").value = "remove_item";
+            btn.closest("form").submit();
+        });
+    });
+})();
+</script>
+
+{% endblock %}

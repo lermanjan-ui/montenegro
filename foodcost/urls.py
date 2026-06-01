@@ -6,6 +6,12 @@ from . import views_settings
 from . import views_homepage
 from . import writeoff_views
 from . import shift_views
+from . import views_stock
+from . import views_suppliers
+from . import views_purchases
+from . import views_transfers
+from . import views_inventory
+from . import views_autowriteoff
 from . import public_api
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
@@ -75,6 +81,9 @@ urlpatterns = [
 
     # сотрудники
     path("c/<slug:country_slug>/employees/", views_employees.employee_list, name="employee_list"),
+    path("c/<slug:country_slug>/employees/<int:employee_id>/", views_employees.employee_detail, name="employee_detail"),
+    path("c/<slug:country_slug>/schedule/", views_employees.schedule_page, name="schedule_page"),
+    path("c/<slug:country_slug>/shifts/", views_employees.shifts_journal, name="shifts_journal"),
 
     # упаковка
     path("c/<slug:country_slug>/packaging/", views.packaging_list, name="packaging_list"),
@@ -174,6 +183,91 @@ urlpatterns = [
     ),
     
     
+
+    # =========================================================================
+    # 📦 СКЛАД — Остатки (только чтение)
+    # =========================================================================
+    path(
+        "c/<slug:country_slug>/stock/",
+        views_stock.stock_list,
+        name="stock_list",
+    ),
+    path(
+        "c/<slug:country_slug>/stock/movements/",
+        views_stock.stock_movements,
+        name="stock_movements",
+    ),
+    path(
+        "c/<slug:country_slug>/stock/product/<int:product_id>/",
+        views_stock.stock_product_detail,
+        name="stock_product_detail",
+    ),
+    path(
+        "c/<slug:country_slug>/stock/auto-writeoff/",
+        views_autowriteoff.auto_writeoff_page,
+        name="auto_writeoff_page",
+    ),
+
+    # =========================================================================
+    # 🏭 СКЛАД — Поставщики
+    # =========================================================================
+    path(
+        "c/<slug:country_slug>/suppliers/",
+        views_suppliers.supplier_list,
+        name="supplier_list",
+    ),
+    path(
+        "c/<slug:country_slug>/suppliers/<int:supplier_id>/",
+        views_suppliers.supplier_detail,
+        name="supplier_detail",
+    ),
+
+    # =========================================================================
+    # 📥 СКЛАД — Приходы
+    # =========================================================================
+    path(
+        "c/<slug:country_slug>/purchases/",
+        views_purchases.purchase_list,
+        name="purchase_list",
+    ),
+    path(
+        "c/<slug:country_slug>/purchases/<int:receipt_id>/",
+        views_purchases.purchase_detail,
+        name="purchase_detail",
+    ),
+
+    # =========================================================================
+    # 🔄 СКЛАД — Перемещения
+    # =========================================================================
+    path(
+        "c/<slug:country_slug>/transfers/",
+        views_transfers.transfer_list,
+        name="transfer_list",
+    ),
+    path(
+        "c/<slug:country_slug>/transfers/<int:transfer_id>/",
+        views_transfers.transfer_detail,
+        name="transfer_detail",
+    ),
+
+    # =========================================================================
+    # 📋 СКЛАД — Инвентаризация
+    # =========================================================================
+    path(
+        "c/<slug:country_slug>/inventory/",
+        views_inventory.inventory_list,
+        name="inventory_list",
+    ),
+    path(
+        "c/<slug:country_slug>/inventory/<int:inventory_id>/",
+        views_inventory.inventory_detail,
+        name="inventory_detail",
+    ),
+    path(
+        "c/<slug:country_slug>/inventory/<int:inventory_id>/count/",
+        views_inventory.inventory_count,
+        name="inventory_count",
+    ),
 
     # 👇 НОВОЕ — пользователи и доступы (ТОЛЬКО ДЛЯ ГЛАВНОГО АДМИНА)
     path("c/<slug:country_slug>/users/", views.user_access_list, name="user_access_list"),

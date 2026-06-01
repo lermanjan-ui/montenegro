@@ -1,0 +1,170 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Инвентаризация{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Журнал инвентаризаций. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1320px; margin:0 auto; padding:24px; }
+.fc-page-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.fc-page-head h1{ margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 16px; font-size:18px; font-weight:600; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:18px; }
+.kpi-label{ color:var(--fc-muted); font-size:13px; font-weight:600; margin-bottom:4px; }
+.kpi-value{ font-size:26px; font-weight:700; }
+.kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
+
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input,.fc-select,.fc-textarea{ width:100%; height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; color:var(--fc-text); }
+.fc-textarea{ height:auto; min-height:44px; padding:10px 12px; }
+.fc-input:focus,.fc-select:focus,.fc-textarea:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+.filters{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; align-items:end; }
+.create-row{ display:grid; grid-template-columns:1.4fr 1fr 2fr auto; gap:12px; align-items:end; }
+.filter-actions{ display:flex; gap:10px; }
+
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-dark{ background:var(--fc-text); color:#fff; }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); } .fc-btn-secondary:hover{ border-color:var(--fc-text); }
+.fc-btn-danger{ background:var(--fc-card); color:var(--fc-danger-text); border-color:#FCA5A5; } .fc-btn-danger:hover{ background:var(--fc-danger-soft); }
+.fc-btn-sm{ height:32px; padding:0 10px; font-size:13px; }
+
+.fc-table{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); overflow:hidden; }
+.t-head,.t-row{ display:grid; gap:12px; align-items:center; padding:13px 16px;
+    grid-template-columns: 1.3fr 1fr 1.5fr 80px 1.2fr 1fr auto; }
+.t-head{ background:var(--fc-card-soft); border-bottom:1px solid var(--fc-border); font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; }
+.t-row{ border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.t-row:last-child{ border-bottom:0; } .t-row:hover{ background:var(--fc-card-soft); }
+.num{ font-variant-numeric:tabular-nums; }
+.docnum{ font-weight:600; }
+.row-actions{ display:flex; gap:6px; justify-self:end; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 11px; border-radius:var(--fc-radius-pill); font-size:12px; font-weight:600; white-space:nowrap; }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.badge-info{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+
+.t-foot{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+.pager{ display:flex; gap:6px; align-items:center; }
+.pager a,.pager span{ min-width:36px; height:36px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--fc-border); border-radius:8px; text-decoration:none; color:var(--fc-text); font-size:14px; font-weight:600; }
+.pager .cur{ background:var(--fc-text); color:#fff; border-color:var(--fc-text); }
+.pager .disabled{ color:var(--fc-muted-soft); pointer-events:none; opacity:.5; }
+.empty{ text-align:center; padding:36px 16px; color:var(--fc-muted); font-size:14px; }
+
+@media (max-width:1024px){ .kpi-grid{ grid-template-columns:1fr 1fr; } .filters,.create-row{ grid-template-columns:1fr 1fr; } .t-head{ display:none; } .t-row{ grid-template-columns:1fr 1fr; } }
+@media (max-width:560px){ .fc-page{ padding:16px; } .kpi-grid,.filters,.create-row,.t-row{ grid-template-columns:1fr; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="fc-page-head">
+        <div><h1>Инвентаризация</h1><p class="muted">Сверка фактических остатков на складе с системными.</p></div>
+        <a href="#create-inv" class="fc-btn fc-btn-dark">+ Создать инвентаризацию</a>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Всего</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">документов</div></div>
+        <div class="kpi"><div class="kpi-label">В работе</div><div class="kpi-value">{{ kpi_in_work }}</div><div class="kpi-sub">черновик/проводится</div></div>
+        <div class="kpi"><div class="kpi-label">Ожидает проверки</div><div class="kpi-value">{{ kpi_awaiting }}</div><div class="kpi-sub">завершён подсчёт</div></div>
+        <div class="kpi"><div class="kpi-label">Подтверждено</div><div class="kpi-value">{{ kpi_confirmed }}</div><div class="kpi-sub">проведено</div></div>
+    </div>
+
+    <!-- Создать -->
+    <div class="fc-card" id="create-inv">
+        <h2>Новая инвентаризация</h2>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="create-row">
+                <div><label class="fc-label">Склад *</label><select class="fc-select" name="warehouse_id" required><option value="">— выбрать —</option>{% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Дата</label><input class="fc-input" type="date" name="inventory_date" value="{{ today|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">Комментарий</label><input class="fc-input" name="comment" placeholder="необязательно"></div>
+                <div><button type="submit" class="fc-btn fc-btn-primary">Создать и считать</button></div>
+            </div>
+            <p class="muted" style="margin-top:10px;">При создании система зафиксирует текущие остатки склада (снимок). Затем откроется форма подсчёта.</p>
+        </form>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="fc-card">
+        <form method="get">
+            <div class="filters">
+                <div><label class="fc-label">Дата от</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
+                <div><label class="fc-label">Дата до</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
+                <div><label class="fc-label">Склад</label><select class="fc-select" name="warehouse"><option value="">Все</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Статус</label><select class="fc-select" name="status"><option value="">Все</option>{% for v,l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div style="grid-column:span 2;"><label class="fc-label">Поиск</label><input class="fc-input" name="search" value="{{ search }}" placeholder="Номер или комментарий"></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/inventory/" class="fc-btn fc-btn-secondary">Сбросить</a></div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Таблица -->
+    <div class="fc-card">
+        <div class="fc-table">
+            <div class="t-head"><div>№ документа</div><div>Дата</div><div>Склад</div><div>Позиций</div><div>Статус</div><div>Создал</div><div></div></div>
+            {% for inv in page_obj %}
+            <div class="t-row">
+                <div class="docnum">{{ inv.document_number|default:"—" }}</div>
+                <div>{{ inv.inventory_date|date:"d.m.Y" }}</div>
+                <div>{{ inv.warehouse.name|default:"—" }}</div>
+                <div class="num">{{ inv.items_count }}</div>
+                <div>
+                    {% if inv.status == 'confirmed' %}<span class="badge badge-green">Подтверждена</span>
+                    {% elif inv.status == 'rejected' %}<span class="badge badge-red">Отклонена</span>
+                    {% elif inv.status == 'awaiting' %}<span class="badge badge-info">Ожидает проверки</span>
+                    {% elif inv.status == 'in_progress' %}<span class="badge badge-amber">Проводится</span>
+                    {% else %}<span class="badge badge-gray">Черновик</span>{% endif %}
+                </div>
+                <div class="muted">{{ inv.created_by.username|default:"—" }}</div>
+                <div class="row-actions">
+                    {% if inv.status == 'draft' or inv.status == 'in_progress' %}
+                        <a href="/c/{{ country.slug }}/inventory/{{ inv.id }}/count/" class="fc-btn fc-btn-secondary fc-btn-sm">Считать</a>
+                        <form method="post" onsubmit="return confirm('Удалить инвентаризацию? Введённые данные будут потеряны.');">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="inventory_id" value="{{ inv.id }}"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form>
+                    {% else %}
+                        <a href="/c/{{ country.slug }}/inventory/{{ inv.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">Открыть</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+                <div class="empty">Инвентаризаций пока нет. Создайте первую выше.</div>
+            {% endfor %}
+        </div>
+
+        <div class="t-foot">
+            <div class="muted">{% if total_count %}Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}{% else %}Ничего не найдено{% endif %}</div>
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="pager">
+                {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{{ base_qs }}">‹</a>{% else %}<span class="disabled">‹</span>{% endif %}
+                {% for n in page_obj.paginator.page_range %}{% if n == page_obj.number %}<span class="cur">{{ n }}</span>{% elif n > page_obj.number|add:'-3' and n < page_obj.number|add:'3' %}<a href="?page={{ n }}{{ base_qs }}">{{ n }}</a>{% endif %}{% endfor %}
+                {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{{ base_qs }}">›</a>{% else %}<span class="disabled">›</span>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+</div>
+{% endblock %}

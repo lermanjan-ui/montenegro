@@ -4,1280 +4,230 @@
 
 {% block content %}
 
+<!-- FoodCost UI Kit v2. Список сотрудников + KPI + фильтры + попап создания/правки. -->
 <style>
-
-.page{
-    max-width:1500px;
-    margin:0 auto;
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1480px; margin:0 auto; padding:24px; }
+.fc-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.fc-head h1{ margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
 
-.card{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:24px;
-    padding:24px;
-    margin-bottom:20px;
-    box-shadow:0 10px 28px rgba(15,23,42,0.05);
-}
+.kpi-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:16px; }
+.kpi-label{ color:var(--fc-muted); font-size:12px; font-weight:600; margin-bottom:6px; }
+.kpi-value{ font-size:20px; font-weight:700; }
+.kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
 
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:24px;
-}
+.filters{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr 1fr auto; gap:12px; align-items:end; }
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input,.fc-select{ width:100%; height:42px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; color:var(--fc-text); }
+.fc-input:focus,.fc-select:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+.filter-actions{ display:flex; gap:10px; }
 
-h1{
-    margin:0;
-    font-size:42px;
-    line-height:1;
-    color:#111827;
-    letter-spacing:-0.03em;
-}
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:42px; padding:0 18px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); } .fc-btn-secondary:hover{ border-color:var(--fc-text); }
+.fc-btn-dark{ background:#0F172A; color:#fff; }
 
-.muted{
-    color:#6b7280;
-    margin-top:8px;
-    font-size:15px;
-}
+.fc-table{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); overflow:hidden; }
+.t-head,.t-row{ display:grid; grid-template-columns: 1.8fr 1.1fr 1.1fr 0.9fr 1fr 0.9fr 1.1fr 1.1fr 1.1fr 0.9fr; gap:10px; align-items:center; padding:12px 14px; }
+.t-head{ background:var(--fc-card-soft); border-bottom:1px solid var(--fc-border); font-size:11px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; }
+.t-row{ border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.t-row:last-child{ border-bottom:0; } .t-row:hover{ background:var(--fc-card-soft); }
+.r{ text-align:right; } .num{ font-variant-numeric:tabular-nums; }
+.emp{ display:flex; align-items:center; gap:10px; }
+.ava{ width:36px; height:36px; border-radius:50%; background:var(--fc-info-soft); color:var(--fc-info-text); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex:0 0 auto; }
+.emp-name{ font-weight:600; } .emp-phone{ color:var(--fc-muted-soft); font-size:12px; }
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:var(--fc-radius-pill); font-size:12px; font-weight:600; }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.balance-pos{ color:var(--fc-green-text); font-weight:700; } .balance-neg{ color:var(--fc-danger-text); font-weight:700; }
+.row-actions{ display:flex; gap:6px; justify-content:flex-end; }
+.icon-btn{ width:32px; height:32px; border-radius:8px; border:1px solid var(--fc-border); background:var(--fc-card); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--fc-muted); text-decoration:none; }
+.icon-btn:hover{ border-color:var(--fc-text); color:var(--fc-text); }
+.empty{ text-align:center; padding:40px 16px; color:var(--fc-muted); }
+.t-foot{ margin-top:14px; color:var(--fc-muted); font-size:13px; }
 
-.create-grid{
-    display:grid;
-    grid-template-columns:1.5fr 1fr 1fr 1fr 1fr 180px;
-    gap:14px;
-    align-items:end;
-}
+/* modal */
+.ov{ position:fixed; inset:0; background:rgba(15,23,42,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
+.ov.show{ display:flex; }
+.modal{ background:var(--fc-card); border-radius:14px; width:100%; max-width:620px; max-height:90vh; overflow:auto; padding:24px; }
+.modal h3{ margin:0 0 16px; font-size:20px; font-weight:600; }
+.mg{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.mg .full{ grid-column:1 / -1; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+.chk{ display:flex; align-items:center; gap:8px; font-size:14px; }
 
-.employee-table{
-    border:1px solid #eef2f7;
-    border-radius:18px;
-    overflow:hidden;
-}
-
-.employee-head,
-.employee-row-form{
-    display:grid;
-    grid-template-columns:1.4fr 1fr 1fr 1fr 1fr 1fr 220px;
-    gap:14px;
-    align-items:center;
-}
-
-.employee-head{
-    background:#f9fafb;
-    padding:16px 18px;
-    font-size:13px;
-    font-weight:950;
-    color:#6b7280;
-    border-bottom:1px solid #eef2f7;
-}
-
-.employee-row{
-    padding:18px;
-    border-bottom:1px solid #f3f4f6;
-}
-
-.employee-row:last-child{
-    border-bottom:0;
-}
-
-input,
-select{
-    width:100%;
-    padding:12px 14px;
-    border:1px solid #d1d5db;
-    border-radius:12px;
-    font-size:14px;
-    box-sizing:border-box;
-}
-
-button{
-    border:0;
-    border-radius:12px;
-    padding:12px 14px;
-    font-size:14px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.save-btn{
-    background:#111827;
-    color:white;
-}
-
-.edit-btn{
-    background:white;
-    border:1px solid #d1d5db;
-    color:#111827;
-}
-
-.delete-btn{
-    background:#fee2e2;
-    color:#991b1b;
-    border:1px solid #fecaca;
-}
-
-.employee-name{
-    font-weight:950;
-    color:#111827;
-}
-
-.view-mode{
-    font-weight:900;
-    color:#111827;
-}
-
-.edit-mode{
-    display:none;
-}
-
-.editing .view-mode{
-    display:none;
-}
-
-.editing .edit-mode{
-    display:block;
-}
-
-.row-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-}
-
-.empty{
-    padding:30px;
-    text-align:center;
-    color:#6b7280;
-    font-weight:800;
-}
-
-.summary-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:18px;
-    margin-bottom:20px;
-}
-
-.stat-card{
-    background:#f9fafb;
-    border-radius:18px;
-    padding:18px;
-}
-
-.stat-label{
-    font-size:13px;
-    color:#6b7280;
-    font-weight:900;
-    margin-bottom:10px;
-}
-
-.stat-value{
-    font-size:32px;
-    font-weight:950;
-    color:#111827;
-}
-
-@media (max-width:1200px){
-
-    .create-grid,
-    .employee-row-form{
-        grid-template-columns:1fr;
-    }
-
-    .employee-head{
-        display:none;
-    }
-
-    .summary-grid{
-        grid-template-columns:1fr 1fr;
-    }
-
-}
-
-@media (max-width:700px){
-
-    .summary-grid{
-        grid-template-columns:1fr;
-    }
-
-}
-
+@media (max-width:1200px){ .kpi-grid{ grid-template-columns:repeat(3,1fr); } .filters{ grid-template-columns:1fr 1fr; } .t-head{ display:none; } .t-row{ grid-template-columns:1fr 1fr; } }
+@media (max-width:600px){ .fc-page{ padding:16px; } .kpi-grid{ grid-template-columns:1fr 1fr; } .filters,.t-row,.mg{ grid-template-columns:1fr; } }
 </style>
 
-<div class="page">
+<div class="fc-scope">
+<div class="fc-page">
 
-    <div class="topbar">
-
-        <div>
-            <h1>Сотрудники</h1>
-
-            <div class="muted">
-                Управление персоналом и расчет зарплат
-            </div>
-        </div>
-
+    <div class="fc-head">
+        <div><h1>Сотрудники</h1><p class="muted">Управление сотрудниками кухни и учёт рабочего времени</p></div>
+        <button type="button" class="fc-btn fc-btn-dark" onclick="openCreate()">+ Добавить сотрудника</button>
     </div>
 
-    <div class="summary-grid">
-
-        <div class="stat-card">
-            <div class="stat-label">Сотрудников</div>
-            <div class="stat-value">
-                {{ employees.count }}
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">Почасовой фонд</div>
-            <div class="stat-value">
-                {% widthratio employees|length 1 1 %}
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">Налоговая нагрузка</div>
-            <div class="stat-value">—</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">Долги по зарплате</div>
-            <div class="stat-value">—</div>
-        </div>
-
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Всего сотрудников</div><div class="kpi-value">{{ total_count }}</div><div class="kpi-sub">всего</div></div>
+        <div class="kpi"><div class="kpi-label">Активные</div><div class="kpi-value">{{ active_count }}</div><div class="kpi-sub">работают</div></div>
+        <div class="kpi"><div class="kpi-label">Отработано часов</div><div class="kpi-value num">{{ kpi_hours_display }}</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">Начислено</div><div class="kpi-value num">{{ kpi_accrued_display }}</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">Выплачено</div><div class="kpi-value num">{{ kpi_paid_display }}</div><div class="kpi-sub">за месяц</div></div>
+        <div class="kpi"><div class="kpi-label">Остаток к выплате</div><div class="kpi-value num">{{ kpi_balance_display }}</div><div class="kpi-sub">всего</div></div>
     </div>
 
-    <div class="card">
-
-        <form method="post" class="create-grid">
-
-            {% csrf_token %}
-
-            <input type="hidden" name="action" value="create_employee">
-
-            <div>
-                <label>Имя</label>
-                <input type="text" name="name">
+    <div class="fc-card">
+        <form method="get">
+            <div class="filters">
+                <div><label class="fc-label">Поиск</label><input class="fc-input" name="search" value="{{ search }}" placeholder="ФИО или телефон"></div>
+                <div><label class="fc-label">Статус</label><select class="fc-select" name="status"><option value="">Все статусы</option><option value="active" {% if status == 'active' %}selected{% endif %}>Активные</option><option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Неактивные</option></select></div>
+                <div><label class="fc-label">Должность</label><select class="fc-select" name="position"><option value="">Все должности</option>{% for p in positions %}<option value="{{ p }}" {% if position == p %}selected{% endif %}>{{ p }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Тип</label><select class="fc-select" name="role"><option value="">Все типы</option>{% for v,lb in roles %}<option value="{{ v }}" {% if role == v %}selected{% endif %}>{{ lb }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Локация</label><select class="fc-select" name="location"><option value="">Все локации</option>{% for l in locations %}<option value="{{ l.id }}" {% if location_id == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/employees/" class="fc-btn fc-btn-secondary">Сбросить</a></div>
             </div>
-
-            <div>
-                <label>Должность</label>
-                <input type="text" name="position">
-            </div>
-
-            <div>
-                <label>Филиал</label>
-
-                <select name="location_id">
-
-                    <option value="">Не выбран</option>
-
-                    {% for location in locations %}
-                        <option value="{{ location.id }}">
-                            {{ location.name }}
-                        </option>
-                    {% endfor %}
-
-                </select>
-            </div>
-
-            <div>
-				<label>Ставка за смену</label>
-				<input type="number" step="0.01" name="shift_rate_amount">
-            </div>
-
-            <div>
-				<label>KPI за смену</label>
-				<input type="number" step="0.01" name="shift_kpi_amount">
-            </div>
-			
-			<div>
-			    <label>Часов в смене</label>
-
-			    <input
-			        type="number"
-			        step="0.01"
-			        name="default_shift_hours"
-			        value="12"
-			    >
-			</div>
-
-            <div>
-                <label>Налог %</label>
-                <input type="number" step="0.01" name="tax_percent">
-            </div>
-
-            <button type="submit" class="save-btn">
-                Добавить сотрудника
-            </button>
-
         </form>
-
     </div>
 
-    <div class="card">
-
-        <div class="employee-table">
-
-            <div class="employee-head">
-
-                <div>Сотрудник</div>
-                <div>Должность</div>
-                <div>Филиал</div>
-				<div>Ставка смены</div>
-				<div>KPI</div>
-				<div>План</div>
-				<div>Часы</div>
-                <div>Действия</div>
-
+    <div class="fc-card">
+        <div class="fc-table">
+            <div class="t-head">
+                <div>Сотрудник</div><div>Должность</div><div>Локация</div><div>Статус</div><div class="r">Ставка</div>
+                <div class="r">Часов / мес</div><div class="r">Начислено</div><div class="r">Выплачено</div><div class="r">Остаток</div><div class="r">Действия</div>
             </div>
-
-            {% for employee in employees %}
-
-            <div class="employee-row">
-
-                <form method="post" class="employee-row-form editable-row">
-
-                    {% csrf_token %}
-
-                    <input
-                        type="hidden"
-                        name="employee_id"
-                        value="{{ employee.id }}"
-                    >
-
-                    <div>
-
-                        <div class="view-mode employee-name">
-                            {{ employee.name }}
-                        </div>
-
-                        <input
-                            class="edit-mode"
-                            type="text"
-                            name="name"
-                            value="{{ employee.name }}"
-                        >
-
-                    </div>
-
-                    <div>
-
-                        <div class="view-mode">
-                            {{ employee.position }}
-                        </div>
-
-                        <input
-                            class="edit-mode"
-                            type="text"
-                            name="position"
-                            value="{{ employee.position }}"
-                        >
-
-                    </div>
-
-                    <div>
-
-                        <div class="view-mode">
-                            {% if employee.location %}
-                                {{ employee.location.name }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </div>
-
-                        <select
-                            class="edit-mode"
-                            name="location_id"
-                        >
-
-                            <option value="">Не выбран</option>
-
-                            {% for location in locations %}
-                                <option
-                                    value="{{ location.id }}"
-                                    {% if employee.location_id == location.id %}selected{% endif %}
-                                >
-                                    {{ location.name }}
-                                </option>
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-                    <div>
-
-                        <div class="view-mode">
-                            {{ employee.shift_rate_amount|floatformat:0 }}
-                        </div>
-
-                        <input
-                            class="edit-mode"
-                            type="number"
-                            step="0.01"
-                            name="shift_rate_amount"
-                            value="{{ employee.shift_rate_amount }}"
-                        >
-
-                    </div>
-
-                    <div>
-
-                        <div class="view-mode">
-                            {{ employee.shift_kpi_amount|floatformat:0 }}
-                        </div>
-
-                        <input
-                            class="edit-mode"
-                            type="number"
-                            step="0.01"
-                            name="shift_kpi_amount"
-                            value="{{ employee.shift_kpi_amount }}"
-                        >
-
-                    </div>
-
-                    <div>
-
-                        <div class="view-mode">
-                            {{ employee.default_shift_hours|floatformat:0 }}
-                        </div>
-
-                        <input
-                            class="edit-mode"
-                            type="number"
-                            step="0.01"
-                            name="default_shift_hours"
-                            value="{{ employee.default_shift_hours }}"
-                        >
-
-                    </div>
-
-                    <div class="row-actions">
-
-                        <button
-                            type="button"
-                            class="edit-btn"
-                        >
-                            Редактировать
-                        </button>
-
-                        <button
-                            type="submit"
-                            name="action"
-                            value="delete_employee"
-                            class="delete-btn"
-                            onclick="return confirm('Удалить сотрудника?')"
-                        >
-                            Удалить
-                        </button>
-
-                    </div>
-
-                </form>
-
+            {% for r in rows %}
+            <div class="t-row">
+                <div class="emp"><div class="ava">{{ r.initials }}</div><div><div class="emp-name">{{ r.e.name|default:"—" }}</div>{% if r.e.phone %}<div class="emp-phone">{{ r.e.phone }}</div>{% endif %}</div></div>
+                <div>{{ r.e.position|default:"—" }}{% if r.role_label %}<div class="emp-phone">{{ r.role_label }}</div>{% endif %}</div>
+                <div>{{ r.e.location.name|default:"—" }}</div>
+                <div>{% if r.e.is_active %}<span class="badge badge-green">● Активен</span>{% else %}<span class="badge badge-gray">Неактивен</span>{% endif %}</div>
+                <div class="r num">{{ r.rate_display }} <span class="muted" style="font-size:11px;">{{ r.rate_unit }}</span></div>
+                <div class="r num">{{ r.hours_display }} ч</div>
+                <div class="r num">{{ r.accrued_display }}</div>
+                <div class="r num">{{ r.paid_display }}</div>
+                <div class="r num {% if r.balance_negative %}balance-neg{% else %}balance-pos{% endif %}">{{ r.balance_display }}</div>
+                <div class="row-actions">
+                    <a class="icon-btn" href="/c/{{ country.slug }}/employees/{{ r.e.id }}/" title="Открыть карточку">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                    <button type="button" class="icon-btn"
+                        data-id="{{ r.e.id }}" data-name="{{ r.e.name }}" data-phone="{{ r.e.phone }}"
+                        data-position="{{ r.e.position }}" data-location="{{ r.e.location_id|default:'' }}"
+                        data-paytype="{{ r.e.pay_type }}" data-hourly="{{ r.e.hourly_rate_amount }}"
+                        data-shiftrate="{{ r.e.shift_rate_amount }}" data-shiftkpi="{{ r.e.shift_kpi_amount }}"
+                        data-salary="{{ r.e.monthly_salary }}" data-defhours="{{ r.e.default_shift_hours }}"
+                        data-hire="{{ r.e.hire_date|date:'Y-m-d' }}" data-active="{{ r.e.is_active|yesno:'1,' }}" data-user="{{ r.e.user_id|default:'' }}" data-role="{{ r.e.role }}"
+                        onclick="openEdit(this)" title="Редактировать">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </button>
+                </div>
             </div>
-
             {% empty %}
-
-            <div class="empty">
-                Сотрудников пока нет
-            </div>
-
+                <div class="empty">Сотрудников нет. Нажмите «Добавить сотрудника».</div>
             {% endfor %}
-
         </div>
-
+        <div class="t-foot">Показано {{ rows|length }} из {{ total_count }} сотрудников</div>
     </div>
 
 </div>
-
-<div class="card">
-
-    <div
-        style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:18px;
-        "
-    >
-
-        <div>
-
-            <h2 style="margin:0;">
-                Смены
-            </h2>
-
-            <div class="muted">
-                График и начисления
-            </div>
-
-        </div>
-
-    </div>
-
-    <form
-        method="post"
-        style="
-            display:grid;
-            grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-            gap:14px;
-            margin-bottom:24px;
-        "
-    >
-
-        {% csrf_token %}
-
-        <input
-            type="hidden"
-            name="action"
-            value="create_shift"
-        >
-
-        <div>
-
-            <label>Сотрудник</label>
-
-            <select name="employee_id">
-
-                {% for employee in employees %}
-                    <option value="{{ employee.id }}">
-                        {{ employee.name }}
-                    </option>
-                {% endfor %}
-
-            </select>
-
-        </div>
-
-        <div>
-
-            <label>Дата</label>
-
-            <input
-                type="date"
-                name="shift_date"
-            >
-
-        </div>
-
-        <div>
-
-			<label>Факт. часы</label>
-			<input type="number" step="0.01" name="actual_hours">
-
-        </div>
-
-     
-
-        <div>
-
-			<label>KPI %</label>
-			<input type="number" step="0.01" name="kpi_percent" value="100">
-
-        </div>
-
-        <div>
-
-            <label>Статус</label>
-
-            <select name="status">
-
-                {% for value, label in shift_statuses %}
-                    <option value="{{ value }}">
-                        {{ label }}
-                    </option>
-                {% endfor %}
-
-            </select>
-
-        </div>
-
-        <div
-            style="
-                display:flex;
-                align-items:flex-end;
-            "
-        >
-
-            <button
-                type="submit"
-                class="save-btn"
-                style="width:100%;"
-            >
-                Добавить смену
-            </button>
-
-        </div>
-
-    </form>
-
-    <div class="employee-table">
-
-        <div class="employee-head">
-
-            <div>Сотрудник</div>
-            <div>Дата</div>
-			<div>Факт. часы</div>
-			<div>Ставка смены</div>
-			<div>KPI %</div>
-            <div>Статус</div>
-            <div>Начислено</div>
-
-        </div>
-
-        {% for shift in shifts %}
-
-        <div class="employee-row">
-
-            <div class="employee-row-form">
-
-                <div>
-                    {{ shift.employee.name }}
-                </div>
-
-                <div>
-                    {{ shift.shift_date }}
-                </div>
-
-                <div>
-                    {{ shift.actual_hours }}
-                </div>
-
-                <div>
-                    {{ shift.fixed_amount|floatformat:0 }}
-                </div>
-				<div
-				    style="
-				        font-size:12px;
-				        color:#6b7280;
-				        margin-top:4px;
-				    "
-				>
-				    Итог:
-				    {{ shift.salary_before_penalties|floatformat:0 }}
-				</div>
-
-                <div>
-                    {{ shift.kpi_percent|floatformat:0 }}%
-                </div>
-				
-				<div>
-				    {{ shift.planned_hours|floatformat:0 }} ч
-				</div>
-
-                <div>
-                    {{ shift.get_status_display }}
-                </div>
-
-                <div
-                    style="
-                        font-weight:950;
-                        color:#047857;
-                    "
-                >
-                    {{ shift.salary_before_penalties|floatformat:0 }}
-                </div>
-
-            </div>
-
-        </div>
-
-        {% empty %}
-
-        <div class="empty">
-            Смен пока нет
-        </div>
-
-        {% endfor %}
-
-    </div>
-
 </div>
 
-<div class="card">
-
-    <div
-        style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:18px;
-        "
-    >
-
-        <div>
-
-            <h2 style="margin:0;">
-                Штрафы
-            </h2>
-
-            <div class="muted">
-                Штрафы и удержания сотрудников
-            </div>
-
-        </div>
-
-    </div>
-
-    <div
-        style="
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:18px;
-            margin-bottom:24px;
-        "
-    >
-
-        <form method="post" class="card" style="margin:0;">
-
+<!-- Попап создания/правки -->
+<div class="ov" id="ov">
+    <div class="modal">
+        <h3 id="modalTitle">Добавить сотрудника</h3>
+        <form method="post">
             {% csrf_token %}
-
-            <input
-                type="hidden"
-                name="action"
-                value="create_penalty_type"
-            >
-
-            <h3 style="margin-top:0;">
-                Тип штрафа
-            </h3>
-
-            <div style="margin-bottom:14px;">
-
-                <label>Название</label>
-
-                <input
-                    type="text"
-                    name="name"
-                >
-
+            <input type="hidden" name="action" value="create_employee" id="formAction">
+            <input type="hidden" name="employee_id" value="" id="empId">
+            <div class="mg">
+                <div class="full"><label class="fc-label">ФИО *</label><input class="fc-input" name="name" id="fName" required></div>
+                <div><label class="fc-label">Телефон</label><input class="fc-input" name="phone" id="fPhone"></div>
+                <div><label class="fc-label">Должность</label><input class="fc-input" name="position" id="fPosition"></div>
+                <div><label class="fc-label">Тип сотрудника</label><select class="fc-select" name="role" id="fRole"><option value="">— не указан —</option>{% for v,lb in roles %}<option value="{{ v }}">{{ lb }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Локация</label><select class="fc-select" name="location_id" id="fLocation"><option value="">— не выбрана —</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Тип оплаты</label><select class="fc-select" name="pay_type" id="fPayType" onchange="toggleRate()">{% for v,lb in pay_types %}<option value="{{ v }}">{{ lb }}</option>{% endfor %}</select></div>
+                <div id="wrapHourly"><label class="fc-label">Ставка, сум/ч</label><input class="fc-input" name="hourly_rate_amount" id="fHourly" inputmode="decimal"></div>
+                <div id="wrapSalary" style="display:none;"><label class="fc-label">Оклад, сум/мес</label><input class="fc-input" name="monthly_salary" id="fSalary" inputmode="decimal"></div>
+                <div id="wrapShift" style="display:none;"><label class="fc-label">Ставка за смену</label><input class="fc-input" name="shift_rate_amount" id="fShiftRate" inputmode="decimal"></div>
+                <div id="wrapShiftKpi" style="display:none;"><label class="fc-label">KPI за смену</label><input class="fc-input" name="shift_kpi_amount" id="fShiftKpi" inputmode="decimal"></div>
+                <div><label class="fc-label">Часов в смене</label><input class="fc-input" name="default_shift_hours" id="fDefHours" value="12" inputmode="decimal"></div>
+                <div><label class="fc-label">Дата приёма</label><input class="fc-input" type="date" name="hire_date" id="fHire"></div>
+                <div class="full"><label class="fc-label">Аккаунт для входа (необязательно)</label><select class="fc-select" name="user_id" id="fUser"><option value="">— без аккаунта —</option>{% for u in users %}<option value="{{ u.id }}">{{ u.username }}{% if u.first_name or u.last_name %} ({{ u.first_name }} {{ u.last_name }}){% endif %}</option>{% endfor %}</select></div>
+                <div class="full"><label class="chk"><input type="checkbox" name="is_active" id="fActive" checked> Активен</label></div>
             </div>
-
-            <div style="margin-bottom:18px;">
-
-                <label>Сумма по умолчанию</label>
-
-                <input
-                    type="number"
-                    step="0.01"
-                    name="default_amount"
-                >
-
+            <div class="modal-actions">
+                <button type="button" class="fc-btn fc-btn-secondary" onclick="closeModal()">Отмена</button>
+                <button type="submit" class="fc-btn fc-btn-primary">Сохранить</button>
             </div>
-
-            <button
-                type="submit"
-                class="save-btn"
-            >
-                Добавить тип штрафа
-            </button>
-
         </form>
-
-        <form method="post" class="card" style="margin:0;">
-
-            {% csrf_token %}
-
-            <input
-                type="hidden"
-                name="action"
-                value="create_penalty"
-            >
-
-            <h3 style="margin-top:0;">
-                Начислить штраф
-            </h3>
-
-            <div style="margin-bottom:14px;">
-
-                <label>Сотрудник</label>
-
-                <select name="employee_id">
-
-                    {% for employee in employees %}
-                        <option value="{{ employee.id }}">
-                            {{ employee.name }}
-                        </option>
-                    {% endfor %}
-
-                </select>
-
-            </div>
-
-            <div style="margin-bottom:14px;">
-
-                <label>Тип штрафа</label>
-
-                <select name="penalty_type_id">
-
-                    <option value="">
-                        Не выбран
-                    </option>
-
-                    {% for item in penalty_types %}
-                        <option value="{{ item.id }}">
-                            {{ item.name }}
-                        </option>
-                    {% endfor %}
-
-                </select>
-
-            </div>
-
-            <div style="margin-bottom:14px;">
-
-                <label>Дата</label>
-
-                <input
-                    type="date"
-                    name="penalty_date"
-                >
-
-            </div>
-
-            <div style="margin-bottom:14px;">
-
-                <label>Сумма</label>
-
-                <input
-                    type="number"
-                    step="0.01"
-                    name="amount"
-                >
-
-            </div>
-
-            <div style="margin-bottom:18px;">
-
-                <label>Причина</label>
-
-                <input
-                    type="text"
-                    name="reason"
-                >
-
-            </div>
-
-            <button
-                type="submit"
-                class="save-btn"
-            >
-                Добавить штраф
-            </button>
-
-        </form>
-
     </div>
-
-    <div class="employee-table">
-
-        <div class="employee-head">
-
-            <div>Сотрудник</div>
-            <div>Тип</div>
-            <div>Дата</div>
-            <div>Причина</div>
-            <div>Сумма</div>
-            <div></div>
-            <div></div>
-
-        </div>
-
-        {% for penalty in penalties %}
-
-        <div class="employee-row">
-
-            <div class="employee-row-form">
-
-                <div>
-                    {{ penalty.employee.name }}
-                </div>
-
-                <div>
-                    {% if penalty.penalty_type %}
-                        {{ penalty.penalty_type.name }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </div>
-
-                <div>
-                    {{ penalty.penalty_date }}
-                </div>
-
-                <div>
-                    {{ penalty.reason }}
-                </div>
-
-                <div
-                    style="
-                        color:#991b1b;
-                        font-weight:950;
-                    "
-                >
-                    - {{ penalty.amount|floatformat:0 }}
-                </div>
-
-                <div></div>
-                <div></div>
-
-            </div>
-
-        </div>
-
-        {% empty %}
-
-        <div class="empty">
-            Штрафов пока нет
-        </div>
-
-        {% endfor %}
-
-    </div>
-
-</div>
-
-<div class="card">
-
-    <div
-        style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:18px;
-        "
-    >
-
-        <div>
-
-            <h2 style="margin:0;">
-                Выплаты
-            </h2>
-
-            <div class="muted">
-                Выплаты зарплат сотрудникам
-            </div>
-
-        </div>
-
-    </div>
-
-    <form
-        method="post"
-        style="
-            display:grid;
-            grid-template-columns:1fr 1fr 1fr 2fr 220px;
-            gap:14px;
-            margin-bottom:24px;
-        "
-    >
-
-        {% csrf_token %}
-
-        <input
-            type="hidden"
-            name="action"
-            value="create_payment"
-        >
-
-        <div>
-
-            <label>Сотрудник</label>
-
-            <select name="employee_id">
-
-                {% for employee in employees %}
-                    <option value="{{ employee.id }}">
-                        {{ employee.name }}
-                    </option>
-                {% endfor %}
-
-            </select>
-
-        </div>
-
-        <div>
-
-            <label>Дата выплаты</label>
-
-            <input
-                type="date"
-                name="payment_date"
-            >
-
-        </div>
-
-        <div>
-
-            <label>Сумма</label>
-
-            <input
-                type="number"
-                step="0.01"
-                name="amount"
-            >
-
-        </div>
-
-        <div>
-
-            <label>Комментарий</label>
-
-            <input
-                type="text"
-                name="comment"
-            >
-
-        </div>
-
-        <div
-            style="
-                display:flex;
-                align-items:flex-end;
-            "
-        >
-
-            <button
-                type="submit"
-                class="save-btn"
-                style="width:100%;"
-            >
-                Добавить выплату
-            </button>
-
-        </div>
-
-    </form>
-
-    <div class="employee-table">
-
-        <div class="employee-head">
-
-            <div>Сотрудник</div>
-            <div>Дата</div>
-            <div>Сумма</div>
-            <div>Комментарий</div>
-            <div></div>
-            <div></div>
-            <div></div>
-
-        </div>
-
-        {% for payment in payments %}
-
-        <div class="employee-row">
-
-            <div class="employee-row-form">
-
-                <div>
-                    {{ payment.employee.name }}
-                </div>
-
-                <div>
-                    {{ payment.payment_date }}
-                </div>
-
-                <div
-                    style="
-                        color:#047857;
-                        font-weight:950;
-                    "
-                >
-                    {{ payment.amount|floatformat:0 }}
-                </div>
-
-                <div>
-                    {{ payment.comment }}
-                </div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-
-            </div>
-
-        </div>
-
-        {% empty %}
-
-        <div class="empty">
-            Выплат пока нет
-        </div>
-
-        {% endfor %}
-
-    </div>
-
-</div>
-
-<div class="card">
-
-    <div
-
-        style="
-
-            display:flex;
-
-            justify-content:space-between;
-
-            align-items:center;
-
-            margin-bottom:18px;
-
-        "
-
-    >
-
-        <div>
-
-            <h2 style="margin:0;">
-
-                Сводка
-
-            </h2>
-
-            <div class="muted">
-
-                Общая зарплатная нагрузка
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="summary-grid">
-
-        <div class="stat-card">
-
-            <div class="stat-label">
-
-                Начислено
-
-            </div>
-
-            <div class="stat-value">
-
-                {{ total_salary|floatformat:0 }}
-
-            </div>
-
-        </div>
-
-        <div class="stat-card">
-
-            <div class="stat-label">
-
-                Штрафы
-
-            </div>
-
-            <div class="stat-value">
-
-                {{ total_penalties|floatformat:0 }}
-
-            </div>
-
-        </div>
-
-        <div class="stat-card">
-
-            <div class="stat-label">
-
-                Выплачено
-
-            </div>
-
-            <div class="stat-value">
-
-                {{ total_payments|floatformat:0 }}
-
-            </div>
-
-        </div>
-
-        <div class="stat-card">
-
-            <div class="stat-label">
-
-                Долг
-
-            </div>
-
-            <div class="stat-value">
-
-                {{ total_debt|floatformat:0 }}
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="summary-grid">
-
-        <div class="stat-card">
-
-            <div class="stat-label">
-
-                Налоги
-
-            </div>
-
-            <div class="stat-value">
-
-                {{ total_taxes|floatformat:0 }}
-
-            </div>
-
-        </div>
-
-    </div>
-
 </div>
 
 <script>
-
-document.addEventListener("click", function(e) {
-
-    const btn = e.target.closest(".edit-btn");
-
-    if (!btn) return;
-
-    e.preventDefault();
-
-    const form = btn.closest("form");
-
-    if (!form.classList.contains("editing")) {
-
-        form.classList.add("editing");
-
-        btn.textContent = "Сохранить";
-
-        return;
-    }
-
-    let actionInput = form.querySelector(
-        'input[name="action"]'
-    );
-
-    if (!actionInput) {
-
-        actionInput = document.createElement("input");
-
-        actionInput.type = "hidden";
-        actionInput.name = "action";
-
-        form.appendChild(actionInput);
-    }
-
-    actionInput.value = "update_employee";
-
-    form.submit();
-});
-
+function toggleRate(){
+    var t = document.getElementById('fPayType').value;
+    document.getElementById('wrapHourly').style.display = (t==='hourly')?'':'none';
+    document.getElementById('wrapSalary').style.display = (t==='salary')?'':'none';
+    document.getElementById('wrapShift').style.display = (t==='shift')?'':'none';
+    document.getElementById('wrapShiftKpi').style.display = (t==='shift')?'':'none';
+}
+function openCreate(){
+    document.getElementById('modalTitle').textContent = 'Добавить сотрудника';
+    document.getElementById('formAction').value = 'create_employee';
+    document.getElementById('empId').value = '';
+    document.getElementById('fName').value=''; document.getElementById('fPhone').value='';
+    document.getElementById('fPosition').value=''; document.getElementById('fLocation').value=''; document.getElementById('fRole').value='';
+    document.getElementById('fPayType').value='hourly';
+    document.getElementById('fHourly').value=''; document.getElementById('fSalary').value='';
+    document.getElementById('fShiftRate').value=''; document.getElementById('fShiftKpi').value='';
+    document.getElementById('fDefHours').value='12'; document.getElementById('fHire').value='';
+    document.getElementById('fActive').checked=true;
+    document.getElementById('fUser').value='';
+    toggleRate();
+    document.getElementById('ov').classList.add('show');
+}
+function openEdit(btn){
+    var d = btn.dataset;
+    document.getElementById('modalTitle').textContent = 'Редактировать сотрудника';
+    document.getElementById('formAction').value = 'update_employee';
+    document.getElementById('empId').value = d.id;
+    document.getElementById('fName').value = d.name || '';
+    document.getElementById('fPhone').value = d.phone || '';
+    document.getElementById('fPosition').value = d.position || '';
+    document.getElementById('fRole').value = d.role || '';
+    document.getElementById('fLocation').value = d.location || '';
+    document.getElementById('fPayType').value = d.paytype || 'hourly';
+    document.getElementById('fHourly').value = d.hourly || '';
+    document.getElementById('fSalary').value = d.salary || '';
+    document.getElementById('fShiftRate').value = d.shiftrate || '';
+    document.getElementById('fShiftKpi').value = d.shiftkpi || '';
+    document.getElementById('fDefHours').value = d.defhours || '12';
+    document.getElementById('fHire').value = d.hire || '';
+    document.getElementById('fActive').checked = (d.active === '1');
+    document.getElementById('fUser').value = d.user || '';
+    toggleRate();
+    document.getElementById('ov').classList.add('show');
+}
+function closeModal(){ document.getElementById('ov').classList.remove('show'); }
+document.getElementById('ov').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
 </script>
 
 {% endblock %}

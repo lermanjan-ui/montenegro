@@ -187,7 +187,7 @@ def order_all_list(request, country_slug):
 
     access_error = require_section_access(
         request.user,
-        UserProfile.SECTION_ORDERS
+        UserProfile.SECTION_ALL_ORDERS
     )
 
     if access_error:
@@ -1056,7 +1056,7 @@ def customer_detail(request, country_slug, customer_id):
     orders = (
         customer.orders
         .select_related("location", "payment_method")
-        .order_by("-created_at")
+        .order_by("-order_date")
     )
 
     total_orders = orders.count()
@@ -1065,7 +1065,7 @@ def customer_detail(request, country_slug, customer_id):
 
     order_rows = [{
         "id": o.id,
-        "created_at": o.created_at,
+        "order_date": o.order_date,
         "sum_display": _fmt_money(o.total_amount),
         "location_name": o.location.name if o.location else "—",
     } for o in orders]
@@ -1091,7 +1091,7 @@ def order_analytics(request, country_slug):
 
     access_error = require_section_access(
         request.user,
-        UserProfile.SECTION_ORDERS
+        UserProfile.SECTION_ORDER_ANALYTICS
     )
 
     if access_error:
@@ -1156,7 +1156,7 @@ def order_analytics(request, country_slug):
             "cancel_reason",
             "customer",
         )
-        .order_by("-created_at")
+        .order_by("-order_date")
     )
 
     # Единственный проход по заказам периода. list() кэширует результат в
@@ -1511,7 +1511,7 @@ def order_analytics(request, country_slug):
             order_date__date__lte=date_to,
             is_cancelled=False,
         )
-        .annotate(h=ExtractHour("created_at"))
+        .annotate(h=ExtractHour("order_date"))
         .values("h")
         .annotate(orders=Count("id"), revenue=Sum("total_amount"))
     )

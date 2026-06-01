@@ -176,7 +176,7 @@
                         {% for o in order_rows %}
                             <div class="ord-row">
                                 <div data-label="№" class="ord-id">#{{ o.id }}</div>
-                                <div data-label="Дата">{{ o.created_at|date:"d.m.Y H:i" }}</div>
+                                <div data-label="Дата">{{ o.order_date|date:"d.m.Y H:i" }}</div>
                                 <div data-label="Сумма" class="ord-sum">{{ o.sum_display }} сум</div>
                                 <div data-label="Филиал">{{ o.location_name }}</div>
                                 <div class="ord-cell-action">

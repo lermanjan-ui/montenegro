@@ -630,22 +630,21 @@
 			        </div>
 			    </details>
 				
-				{% if can_menu_purchases or can_menu_suppliers or can_menu_inventory %}
+				{% if can_menu_stock or can_menu_purchases or can_menu_transfers or can_menu_suppliers or can_menu_inventory %}
 
-				<details class="menu-section" {% if '/purchases/' in request.path or '/suppliers/' in request.path or '/inventory/' in request.path %}open{% endif %}>
+				<details class="menu-section" {% if '/stock/' in request.path or '/purchases/' in request.path or '/transfers/' in request.path or '/suppliers/' in request.path or '/inventory/' in request.path %}open{% endif %}>
 
 				    <summary class="menu-title">
 
 				        <span class="menu-title-left">
 
 				            <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
-				                <path d="M6 6h15l-2 9H8L6 6Z"/>
-				                <path d="M6 6 5 3H2"/>
-				                <circle cx="9" cy="20" r="1"/>
-				                <circle cx="18" cy="20" r="1"/>
+				                <path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+				                <path d="m3.3 7 8.7 5 8.7-5"/>
+				                <path d="M12 22V12"/>
 				            </svg>
 
-				            Закупки
+				            Склад
 
 				        </span>
 
@@ -655,28 +654,46 @@
 
 				    <div class="menu-items">
 
-				        {% if can_menu_purchases %}
-
-				            <a class="side-link {% if '/purchases/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/purchases/">
-				                Закупки
+				        {% if can_menu_stock %}
+				            <a class="side-link {% if '/stock/' in request.path and '/movements/' not in request.path and '/auto-writeoff/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/stock/">
+				                Остатки
 				            </a>
+				        {% endif %}
 
+				        {% if can_menu_purchases %}
+				            <a class="side-link {% if '/purchases/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/purchases/">
+				                Приходы
+				            </a>
+				        {% endif %}
+
+				        {% if can_menu_transfers %}
+				            <a class="side-link {% if '/transfers/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/transfers/">
+				                Перемещения
+				            </a>
 				        {% endif %}
 
 				        {% if can_menu_suppliers %}
-
 				            <a class="side-link {% if '/suppliers/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/suppliers/">
 				                Поставщики
 				            </a>
-
 				        {% endif %}
 
 				        {% if can_menu_inventory %}
-
 				            <a class="side-link {% if '/inventory/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/inventory/">
-				                Остатки
+				                Инвентаризация
+				            </a>
+				        {% endif %}
+
+				        {% if can_menu_stock %}
+				            <a class="side-link {% if '/stock/movements/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/stock/movements/">
+				                Движения склада
 				            </a>
 
+				            {% if request.user.is_superuser %}
+				            <a class="side-link {% if '/stock/auto-writeoff/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/stock/auto-writeoff/">
+				                Автосписание продаж
+				            </a>
+				            {% endif %}
 				        {% endif %}
 
 				    </div>

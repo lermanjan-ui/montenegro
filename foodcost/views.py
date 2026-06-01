@@ -2181,6 +2181,62 @@ def user_access_list(request, country_slug):
         .order_by("location__name", "site_sort_order", "name")
     )
 
+    # Группировка разделов для UI страницы доступов — ОДИН-В-ОДИН как в
+    # сайдбаре (base.html): те же заголовки блоков, те же названия пунктов и
+    # тот же порядок. Любой раздел из SECTION_CHOICES, не попавший в группы
+    # ниже, уходит в "Прочее" (fallback) — ничего не потеряется при добавлении
+    # новых разделов в будущем.
+    _menu_groups = [
+        ("kassa", "Касса", [
+            (UserProfile.SECTION_ORDERS, "Управление заказами"),
+        ]),
+        ("kitchen", "Кухня", [
+            (UserProfile.SECTION_WRITE_OFFS, "Списания"),
+            (UserProfile.SECTION_SHIFT_HANDOVER, "Передача смены"),
+        ]),
+        ("crm", "CRM", [
+            (UserProfile.SECTION_CUSTOMERS, "Клиенты"),
+            (UserProfile.SECTION_ORDER_ANALYTICS, "Аналитика заказов"),
+            (UserProfile.SECTION_WRITE_OFF_ANALYTICS, "Аналитика списаний"),
+            (UserProfile.SECTION_SHIFT_HANDOVER_ADMIN, "Передачи смен"),
+        ]),
+        ("menu", "Меню", [
+            (UserProfile.SECTION_DISHES, "Блюда"),
+            (UserProfile.SECTION_PRODUCTS, "Продукты"),
+            (UserProfile.SECTION_PREPARATIONS, "Заготовки"),
+            (UserProfile.SECTION_PACKAGING, "Упаковка"),
+        ]),
+        ("warehouse", "Склад", [
+            (UserProfile.SECTION_STOCK, "Остатки"),
+            (UserProfile.SECTION_PURCHASES, "Приходы"),
+            (UserProfile.SECTION_TRANSFERS, "Перемещения"),
+            (UserProfile.SECTION_SUPPLIERS, "Поставщики"),
+            (UserProfile.SECTION_INVENTORY, "Инвентаризация"),
+        ]),
+        ("finance", "Финансы", [
+            (UserProfile.SECTION_UTILITIES, "Коммуналка"),
+            (UserProfile.SECTION_FINANCE, "Финансы"),
+        ]),
+        ("team", "Команда", [
+            (UserProfile.SECTION_EMPLOYEES, "Сотрудники"),
+        ]),
+        ("admin", "Админка", [
+            (UserProfile.SECTION_USERS, "Пользователи"),
+            (UserProfile.SECTION_SETTINGS, "Настройки"),
+            (UserProfile.SECTION_SITE, "Главная сайта"),
+            (UserProfile.SECTION_ALL_ORDERS, "Все заказы"),
+        ]),
+    ]
+    section_groups = []
+    _seen = set()
+    for _key, _title, _items in _menu_groups:
+        section_groups.append({"key": _key, "label": _title, "items": _items})
+        for _v, _l in _items:
+            _seen.add(_v)
+    _rest = [(v, l) for v, l in UserProfile.SECTION_CHOICES if v not in _seen]
+    if _rest:
+        section_groups.append({"key": "extra", "label": "Прочее", "items": _rest})
+
     return render(request, "foodcost/user_access_list.html", {
         "country": country,
         "users": users,
@@ -2189,6 +2245,7 @@ def user_access_list(request, country_slug):
         "delivery_zones": delivery_zones,
         "roles": UserProfile.ROLE_CHOICES,
         "sections": UserProfile.SECTION_CHOICES,
+        "section_groups": section_groups,
         "error": error,
     })
     

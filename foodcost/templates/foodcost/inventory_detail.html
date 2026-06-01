@@ -1,0 +1,167 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Аналитика — {{ inventory.document_number }}{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Аналитика инвентаризации (менеджер): система vs факт,
+     ушло в заготовки (рекурсивно), расхождения, стоимость, подтверждение. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-hover:#DC2626; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1180px; margin:0 auto; padding:24px; }
+.crumbs{ font-size:13px; color:var(--fc-muted); margin-bottom:10px; }
+.crumbs a{ color:var(--fc-muted); text-decoration:none; }
+.fc-head{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:6px; flex-wrap:wrap; }
+.fc-head h1{ margin:0; font-size:26px; font-weight:600; display:flex; align-items:center; gap:12px; }
+.head-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.sub{ color:var(--fc-muted); font-size:14px; margin:0 0 18px; }
+.muted{ color:var(--fc-muted); }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 14px; font-size:18px; font-weight:600; }
+
+.banner{ padding:12px 14px; border-radius:var(--fc-radius-input); font-size:14px; margin-bottom:16px; }
+.banner-green{ background:var(--fc-green-soft); color:var(--fc-green-text); border:1px solid #86EFAC; }
+.banner-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); border:1px solid #FCA5A5; }
+.banner-info{ background:var(--fc-info-soft); color:var(--fc-info-text); border:1px solid #93C5FD; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:var(--fc-radius-pill); font-size:13px; font-weight:600; }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.badge-info{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:18px; }
+.kpi-label{ color:var(--fc-muted); font-size:13px; font-weight:600; margin-bottom:4px; }
+.kpi-value{ font-size:22px; font-weight:700; }
+.kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
+
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:42px; padding:0 18px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); } .fc-btn-secondary:hover{ border-color:var(--fc-text); }
+.fc-btn-danger{ background:var(--fc-card); color:var(--fc-danger-text); border-color:#FCA5A5; } .fc-btn-danger:hover{ background:var(--fc-danger-soft); }
+
+.items{ width:100%; border-collapse:collapse; }
+.items th{ text-align:left; font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; padding:10px 8px; border-bottom:1px solid var(--fc-border); }
+.items td{ padding:11px 8px; border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.items tr:last-child td{ border-bottom:0; }
+.items th.r,.items td.r{ text-align:right; }
+.num{ font-variant-numeric:tabular-nums; }
+.short{ color:var(--fc-danger-text); font-weight:600; }
+.surplus{ color:var(--fc-green-text); font-weight:600; }
+.ok{ color:var(--fc-muted); }
+.notcounted{ color:var(--fc-muted-soft); font-style:italic; }
+
+.log-list{ display:flex; flex-direction:column; gap:10px; }
+.log-item{ font-size:13px; border-left:2px solid var(--fc-border); padding-left:12px; }
+.log-meta{ color:var(--fc-muted-soft); font-size:12px; }
+.empty{ color:var(--fc-muted); padding:14px 8px; }
+
+@media (max-width:860px){ .kpi-grid{ grid-template-columns:1fr 1fr; } .fc-page{ padding:16px; } .items th.hide,.items td.hide{ display:none; } }
+
+@media (max-width:680px){ table.items{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; } table.items th,table.items td{ white-space:nowrap; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="crumbs"><a href="/c/{{ country.slug }}/inventory/">Инвентаризация</a> › {{ inventory.document_number }}</div>
+
+    <div class="fc-head">
+        <h1>{{ inventory.document_number }}
+            {% if is_confirmed %}<span class="badge badge-green">Подтверждена</span>
+            {% elif is_rejected %}<span class="badge badge-red">Отклонена</span>
+            {% elif is_awaiting %}<span class="badge badge-info">Ожидает проверки</span>
+            {% else %}<span class="badge badge-amber">Проводится</span>{% endif %}
+        </h1>
+        <div class="head-actions">
+            {% if is_awaiting %}
+                <form method="post"><input type="hidden" name="action" value="confirm">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-primary" onclick="return confirm('Подтвердить инвентаризацию? Остатки склада будут приведены к фактическим значениям.');">✓ Подтвердить</button></form>
+                <form method="post"><input type="hidden" name="action" value="recount">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">↩ На пересчёт</button></form>
+                <form method="post" onsubmit="return confirm('Отклонить инвентаризацию?');"><input type="hidden" name="action" value="reject">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger">✕ Отклонить</button></form>
+            {% elif is_rejected %}
+                <form method="post"><input type="hidden" name="action" value="recount">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">↩ Вернуть на пересчёт</button></form>
+            {% endif %}
+        </div>
+    </div>
+    <p class="sub">Склад: <strong>{{ inventory.warehouse.name }}</strong> · Дата: {{ inventory.inventory_date|date:"d.m.Y" }}</p>
+
+    {% if confirmed_flag %}<div class="banner banner-green">Инвентаризация подтверждена. Остатки склада приведены к факту.</div>{% endif %}
+    {% if rejected_flag %}<div class="banner banner-red">Инвентаризация отклонена.</div>{% endif %}
+    {% if editable_stage %}<div class="banner banner-info">Подсчёт ещё не завершён поваром. Цифры предварительные.</div>{% endif %}
+    {% if is_confirmed %}<div class="banner banner-green">Документ подтверждён, остатки склада обновлены по факту.</div>{% endif %}
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Посчитано позиций</div><div class="kpi-value">{{ counted_count }} / {{ total_items }}</div><div class="kpi-sub">факт введён</div></div>
+        <div class="kpi"><div class="kpi-label">Недостача</div><div class="kpi-value num" style="color:var(--fc-danger-text);">{{ total_shortage_display }}</div><div class="kpi-sub">стоимость</div></div>
+        <div class="kpi"><div class="kpi-label">Излишки</div><div class="kpi-value num" style="color:var(--fc-green-text);">{{ total_surplus_display }}</div><div class="kpi-sub">стоимость</div></div>
+        <div class="kpi"><div class="kpi-label">Итог (недостача − излишки)</div><div class="kpi-value num">{{ net_display }}</div><div class="kpi-sub">влияние на склад</div></div>
+    </div>
+
+    <!-- Продукты -->
+    <div class="fc-card">
+        <h2>Продукты</h2>
+        <table class="items">
+            <thead><tr><th>Товар</th><th class="r">Система</th><th class="r">Факт</th><th class="r hide">Ушло в заготовки</th><th class="r">Недостача</th><th class="r">Стоимость</th></tr></thead>
+            <tbody>
+                {% for r in product_rows %}
+                <tr>
+                    <td><strong>{{ r.name }}</strong> <span class="muted">{{ r.unit }}</span></td>
+                    <td class="r num">{{ r.system }}</td>
+                    <td class="r num">{% if r.counted %}{{ r.fact }}{% else %}<span class="notcounted">не посчитано</span>{% endif %}</td>
+                    <td class="r num hide muted">{{ r.gone }}</td>
+                    <td class="r num {{ r.shortage_dir }}">{% if r.shortage != None %}{{ r.shortage }}{% else %}—{% endif %}</td>
+                    <td class="r num {{ r.shortage_dir }}">{{ r.cost }}</td>
+                </tr>
+                {% empty %}<tr><td colspan="6" class="empty">Продуктов нет.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+        <p class="muted" style="font-size:12px;margin-top:10px;">«Ушло в заготовки» — сколько этого продукта вошло в посчитанные заготовки по техкарте (рекурсивно). Недостача = Система − Факт − Ушло в заготовки.</p>
+    </div>
+
+    <!-- Заготовки -->
+    <div class="fc-card">
+        <h2>Заготовки</h2>
+        <table class="items">
+            <thead><tr><th>Заготовка</th><th class="r">Система</th><th class="r">Факт</th><th class="r">Расхождение</th><th class="r">Стоимость</th></tr></thead>
+            <tbody>
+                {% for r in prep_rows %}
+                <tr>
+                    <td><strong>{{ r.name }}</strong> <span class="muted">{{ r.unit }}</span></td>
+                    <td class="r num">{{ r.system }}</td>
+                    <td class="r num">{% if r.counted %}{{ r.fact }}{% else %}<span class="notcounted">не посчитано</span>{% endif %}</td>
+                    <td class="r num {{ r.diff_dir }}">{% if r.diff != None %}{{ r.diff }}{% else %}—{% endif %}</td>
+                    <td class="r num {{ r.diff_dir }}">{{ r.cost }}</td>
+                </tr>
+                {% empty %}<tr><td colspan="5" class="empty">Заготовок нет.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if logs %}
+    <div class="fc-card">
+        <h2>История</h2>
+        <div class="log-list">
+            {% for log in logs %}<div class="log-item"><div>{{ log.action }}{% if log.comment %} — {{ log.comment }}{% endif %}</div><div class="log-meta">{{ log.created_at|date:"d.m.Y H:i" }} · {{ log.user.username|default:"—" }}</div></div>{% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+</div>
+{% endblock %}

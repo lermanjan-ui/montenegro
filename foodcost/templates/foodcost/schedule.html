@@ -1,0 +1,193 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}График смен{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Недельный график: строки — сотрудники, столбцы — дни. Клик по ячейке = добавить смену. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1560px; margin:0 auto; padding:24px; }
+.fc-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+.fc-head h1{ margin:0 0 6px; font-size:28px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:16px; margin-bottom:16px; }
+
+.toolbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.month-nav{ display:flex; align-items:center; gap:8px; }
+.month-nav a,.btn-today{ height:40px; padding:0 14px; border:1px solid var(--fc-border); border-radius:10px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; color:var(--fc-text); font-weight:600; font-size:14px; background:var(--fc-card); }
+.week-lbl{ font-weight:600; min-width:230px; text-align:center; }
+.fc-select{ height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; }
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-dark{ background:#0F172A; color:#fff; } .fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.spacer{ flex:1; }
+
+.grid-wrap{ overflow-x:auto; }
+.grid{ width:100%; border-collapse:separate; border-spacing:0; min-width:980px; }
+.grid th,.grid td{ border-bottom:1px solid var(--fc-border-soft); border-right:1px solid var(--fc-border-soft); padding:8px; vertical-align:top; }
+.grid th{ background:var(--fc-card-soft); font-size:12px; color:var(--fc-muted); font-weight:600; text-align:left; position:sticky; top:0; }
+.grid th.wknd,.grid td.wknd{ background:#FEF2F2; }
+.col-emp{ width:200px; position:sticky; left:0; background:var(--fc-card); z-index:2; }
+th.col-emp{ z-index:3; }
+.day-h{ text-align:center; } .day-h .dn{ font-weight:700; color:var(--fc-text); } .day-h .dd{ font-size:11px; color:var(--fc-muted); }
+.emp-cell{ display:flex; align-items:center; gap:8px; }
+.ava{ width:30px; height:30px; border-radius:50%; background:var(--fc-info-soft); color:var(--fc-info-text); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex:0 0 auto; }
+.emp-name{ font-weight:600; font-size:13px; } .emp-pos{ font-size:11px; color:var(--fc-muted-soft); }
+.cell{ min-height:54px; cursor:pointer; border-radius:8px; }
+.cell:hover{ background:var(--fc-card-soft); }
+.chip{ border-radius:8px; padding:6px 8px; margin-bottom:4px; font-size:12px; line-height:1.3; position:relative; }
+.chip .t{ font-weight:700; } .chip .l{ font-size:11px; opacity:.8; }
+.chip.planned{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+.chip.done{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.chip.late{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.chip.missed{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.chip .del{ position:absolute; top:3px; right:4px; cursor:pointer; opacity:.5; font-size:11px; border:none; background:none; color:inherit; }
+.chip .del:hover{ opacity:1; }
+.add-hint{ color:var(--fc-muted-soft); font-size:18px; text-align:center; line-height:40px; opacity:0; }
+.cell:hover .add-hint{ opacity:.6; }
+.totals td{ font-weight:700; background:var(--fc-card-soft); }
+.legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:14px; font-size:13px; color:var(--fc-muted); }
+.legend span{ display:inline-flex; align-items:center; gap:6px; } .dot{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+
+.ov{ position:fixed; inset:0; background:rgba(15,23,42,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
+.ov.show{ display:flex; }
+.modal{ background:var(--fc-card); border-radius:14px; width:100%; max-width:540px; padding:24px; max-height:90vh; overflow:auto; }
+.modal h3{ margin:0 0 16px; font-size:19px; font-weight:600; }
+.mg{ display:grid; grid-template-columns:1fr 1fr; gap:14px; } .mg .full{ grid-column:1/-1; }
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input{ width:100%; height:42px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+@media (max-width:600px){ .fc-page{ padding:14px; } .week-lbl{ min-width:auto; } .mg{ grid-template-columns:1fr; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="fc-head">
+        <div><h1>График смен</h1><p class="muted">Планирование и управление графиком работы сотрудников</p></div>
+        {% if can_edit %}<button type="button" class="fc-btn fc-btn-dark" onclick="openShift('','')">+ Добавить смену</button>{% endif %}
+    </div>
+
+    <div class="fc-card">
+        <div class="toolbar">
+            <div class="month-nav">
+                <a href="?week={{ prev_week }}{% if location_id %}&location={{ location_id }}{% endif %}">‹</a>
+                <span class="week-lbl">{{ week_label }}</span>
+                <a href="?week={{ next_week }}{% if location_id %}&location={{ location_id }}{% endif %}">›</a>
+            </div>
+            <a class="btn-today" href="?week={{ today_week }}{% if location_id %}&location={{ location_id }}{% endif %}">Сегодня</a>
+            <form method="get" style="display:flex;gap:10px;align-items:center;">
+                <input type="hidden" name="week" value="{{ week_value }}">
+                <select class="fc-select" name="location" onchange="this.form.submit()">
+                    <option value="">Все филиалы</option>
+                    {% for l in locations %}<option value="{{ l.id }}" {% if location_id == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="fc-card">
+        <div class="grid-wrap">
+            <table class="grid">
+                <thead>
+                    <tr>
+                        <th class="col-emp">Сотрудник</th>
+                        {% for h in header_days %}<th class="day-h {% if h.is_weekend %}wknd{% endif %}"><div class="dn">{{ h.label }}</div><div class="dd">{{ h.day }}</div></th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td class="col-emp"><div class="emp-cell"><div class="ava">{{ row.initials }}</div><div><div class="emp-name"><a href="/c/{{ country.slug }}/employees/{{ row.id }}/" style="color:inherit;text-decoration:none;">{{ row.name }}</a></div><div class="emp-pos">{{ row.position }}</div></div></div></td>
+                        {% for c in row.cells %}
+                        <td class="{% if c.is_weekend %}wknd{% endif %}">
+                            <div class="cell" {% if can_edit %}onclick="cellAdd(event,'{{ row.id }}','{{ c.iso }}')"{% endif %}>
+                                {% for sh in c.shifts %}
+                                <div class="chip {{ sh.status }}">
+                                    <div class="t">{{ sh.time }}</div>{% if sh.location %}<div class="l">{{ sh.location }}</div>{% endif %}
+                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('Удалить смену?');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="week" value="{{ week_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
+                                </div>
+                                {% endfor %}
+                                {% if can_edit %}<div class="add-hint">+</div>{% endif %}
+                            </div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr><td class="col-emp">—</td><td colspan="7" style="padding:24px;color:var(--fc-muted);text-align:center;">Активных сотрудников нет.</td></tr>
+                    {% endfor %}
+                    <tr class="totals">
+                        <td class="col-emp">Итого часов</td>
+                        {% for h in header_days %}<td class="{% if h.is_weekend %}wknd{% endif %}" style="text-align:center;">{{ h.hours }} ч</td>{% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="legend">
+            <span><span class="dot" style="background:var(--fc-info-soft);"></span> Запланирована</span>
+            <span><span class="dot" style="background:var(--fc-green-soft);"></span> Отработана</span>
+            <span><span class="dot" style="background:var(--fc-amber-soft);"></span> Опоздание</span>
+            <span><span class="dot" style="background:var(--fc-danger-soft);"></span> Пропуск</span>
+        </div>
+    </div>
+
+</div>
+</div>
+
+{% if can_edit %}
+<div class="ov" id="ovShift">
+    <div class="modal">
+        <h3>Добавить смену</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_shift">
+            <input type="hidden" name="week" value="{{ week_value }}">
+            <input type="hidden" name="flt_location" value="{{ location_id }}">
+            <div class="mg">
+                <div class="full"><label class="fc-label">Сотрудник</label><select class="fc-input" name="employee_id" id="sEmp" required><option value="">— выберите —</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">Дата</label><input class="fc-input" type="date" name="shift_date" id="sDate" required></div>
+                <div><label class="fc-label">Время начала</label><input class="fc-input" type="time" name="start_time" value="08:00"></div>
+                <div><label class="fc-label">Время окончания</label><input class="fc-input" type="time" name="end_time" value="17:00"></div>
+                <div><label class="fc-label">Перерыв, мин</label><input class="fc-input" name="break_minutes" value="0" inputmode="numeric"></div>
+                <div><label class="fc-label">Тип смены</label><select class="fc-input" name="shift_type">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Локация</label><select class="fc-input" name="location_id"><option value="">— по умолчанию —</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Статус</label><select class="fc-input" name="status">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">Комментарий</label><input class="fc-input" name="comment"></div>
+            </div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeShift()">Отмена</button><button type="submit" class="fc-btn fc-btn-dark">Сохранить</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function openShift(empId, dateStr){
+    var o=document.getElementById('ovShift'); if(!o) return;
+    if(empId) document.getElementById('sEmp').value = empId;
+    if(dateStr) document.getElementById('sDate').value = dateStr;
+    o.classList.add('show');
+}
+function cellAdd(e, empId, dateStr){
+    if(e.target.closest('.chip')) return;  // клик по существующей смене не открывает попап
+    openShift(empId, dateStr);
+}
+function closeShift(){ var o=document.getElementById('ovShift'); if(o) o.classList.remove('show'); }
+var ov=document.getElementById('ovShift');
+if(ov) ov.addEventListener('click', function(e){ if(e.target===this) closeShift(); });
+</script>
+
+{% endblock %}

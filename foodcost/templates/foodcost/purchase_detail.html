@@ -1,0 +1,298 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Приход{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Карточка прихода. Черновик редактируется (can_edit);
+     подтверждённый — только чтение (+ оплата). Деньги скрыты для кухни. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1100px; margin:0 auto; padding:24px; }
+.crumbs{ font-size:13px; color:var(--fc-muted); margin-bottom:10px; }
+.crumbs a{ color:var(--fc-muted); text-decoration:none; }
+.fc-head{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+.fc-head h1{ margin:0; font-size:26px; font-weight:600; letter-spacing:-0.02em; display:flex; align-items:center; gap:12px; }
+.head-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.muted{ color:var(--fc-muted); }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 16px; font-size:18px; font-weight:600; }
+
+.banner{ padding:12px 14px; border-radius:var(--fc-radius-input); font-size:14px; margin-bottom:16px; }
+.banner-green{ background:var(--fc-green-soft); color:var(--fc-green-text); border:1px solid #86EFAC; }
+.banner-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); border:1px solid #FCA5A5; }
+.banner-info{ background:var(--fc-info-soft); color:var(--fc-info-text); border:1px solid #93C5FD; }
+
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input,.fc-select,.fc-textarea{ width:100%; height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; color:var(--fc-text); }
+.fc-textarea{ height:auto; min-height:64px; padding:10px 12px; }
+.fc-input:focus,.fc-select:focus,.fc-textarea:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+.grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field-val{ font-size:15px; font-weight:500; }
+.field-box{ margin-bottom:14px; }
+
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-dark{ background:var(--fc-text); color:#fff; }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); } .fc-btn-secondary:hover{ border-color:var(--fc-text); }
+.fc-btn-danger{ background:var(--fc-card); color:var(--fc-danger-text); border-color:#FCA5A5; } .fc-btn-danger:hover{ background:var(--fc-danger-soft); }
+.fc-btn-sm{ height:34px; padding:0 12px; font-size:13px; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:var(--fc-radius-pill); font-size:13px; font-weight:600; }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+
+.items{ width:100%; border-collapse:collapse; }
+.items th{ text-align:left; font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; padding:10px 8px; border-bottom:1px solid var(--fc-border); }
+.items td{ padding:11px 8px; border-bottom:1px solid var(--fc-border-soft); font-size:14px; vertical-align:middle; }
+.items tr:last-child td{ border-bottom:0; }
+.num{ font-variant-numeric:tabular-nums; }
+.add-row{ display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:10px; align-items:end; margin-top:16px; padding-top:16px; border-top:1px dashed var(--fc-border); }
+
+.totals{ display:flex; gap:24px; flex-wrap:wrap; margin-top:16px; }
+.totals .tt{ font-size:13px; color:var(--fc-muted); } .totals .tv{ font-size:20px; font-weight:700; }
+.log-list{ display:flex; flex-direction:column; gap:10px; }
+.log-item{ font-size:13px; color:var(--fc-text); border-left:2px solid var(--fc-border); padding-left:12px; }
+.log-meta{ color:var(--fc-muted-soft); font-size:12px; }
+
+@media (max-width:720px){ .grid3,.grid2{ grid-template-columns:1fr; } .add-row{ grid-template-columns:1fr; } .fc-page{ padding:16px; } }
+
+@media (max-width:680px){ table.items{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; } table.items th,table.items td{ white-space:nowrap; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="crumbs"><a href="/c/{{ country.slug }}/purchases/">Приходы</a> › {% if receipt.document_number %}{{ receipt.document_number }}{% else %}Новый приход{% endif %}</div>
+
+    <div class="fc-head">
+        <h1>
+            {% if receipt.document_number %}{{ receipt.document_number }}{% else %}Приход (черновик){% endif %}
+            {% if is_confirmed %}<span class="badge badge-green">Подтверждён</span>
+            {% elif is_cancelled %}<span class="badge badge-red">Отменён</span>
+            {% else %}<span class="badge badge-amber">Черновик</span>{% endif %}
+        </h1>
+        <div class="head-actions">
+            {% if is_draft %}
+                <form method="post"><input type="hidden" name="action" value="confirm">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-dark" onclick="return confirm('Подтвердить приход? После подтверждения редактирование будет запрещено, на складе появятся остатки.');">✓ Подтвердить приход</button></form>
+            {% endif %}
+            {% if can_edit %}
+                <form method="post"><input type="hidden" name="action" value="copy">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">⧉ Копировать</button></form>
+            {% endif %}
+            {% if is_draft and can_edit %}
+                <form method="post" onsubmit="return confirm('Удалить черновик?');"><input type="hidden" name="action" value="delete">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger">Удалить</button></form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if confirmed_flag %}<div class="banner banner-green">Приход подтверждён. Остатки на складе обновлены.</div>{% endif %}
+    {% if err == 'supplier' %}<div class="banner banner-red">Укажите поставщика перед подтверждением.</div>
+    {% elif err == 'warehouse' %}<div class="banner banner-red">Укажите склад поступления перед подтверждением.</div>
+    {% elif err == 'date' %}<div class="banner banner-red">Укажите дату поставки перед подтверждением.</div>
+    {% elif err == 'items' %}<div class="banner banner-red">Добавьте хотя бы один товар перед подтверждением.</div>
+    {% elif err == 'status' %}<div class="banner banner-red">Документ уже не в статусе черновика.</div>{% endif %}
+
+    {% if is_confirmed %}<div class="banner banner-info">Документ подтверждён и доступен только для просмотра. Редактирование запрещено.</div>{% endif %}
+
+    <!-- Основная информация -->
+    <div class="fc-card">
+        <h2>Основная информация</h2>
+
+        {% if is_draft and can_edit %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_header">
+            <div class="grid3">
+                <div>
+                    <label class="fc-label">Поставщик *</label>
+                    <select class="fc-select" name="supplier_id" id="hdr_supplier">
+                        <option value="">— выбрать —</option>
+                        {% for s in suppliers %}<option value="{{ s.id }}" {% if receipt.supplier_id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="fc-label">Склад поступления *</label>
+                    <select class="fc-select" name="warehouse_id" id="hdr_warehouse">
+                        <option value="">— выбрать —</option>
+                        {% for w in warehouses %}<option value="{{ w.id }}" {% if receipt.warehouse_id == w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="fc-label">Дата поставки *</label>
+                    <input class="fc-input" type="date" name="receipt_date" id="hdr_date" value="{{ receipt.receipt_date|date:'Y-m-d' }}">
+                </div>
+            </div>
+            <div class="field-box" style="margin-top:14px;">
+                <label class="fc-label">Комментарий</label>
+                <textarea class="fc-textarea" name="comment" id="hdr_comment" placeholder="Необязательно">{{ receipt.comment }}</textarea>
+            </div>
+
+            {% if show_money %}
+            <div class="grid3" style="align-items:end;">
+                <div><label class="fc-label">Оплачено</label><label style="display:flex;align-items:center;gap:8px;height:40px;"><input type="checkbox" name="is_paid" {% if receipt.is_paid %}checked{% endif %} style="width:17px;height:17px;accent-color:var(--fc-green);"> Да</label></div>
+                <div><label class="fc-label">Дата оплаты</label><input class="fc-input" type="date" name="paid_at" value="{{ receipt.paid_at|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">Оплачено всего (сумма)</label><input class="fc-input num" type="text" name="paid_amount" value="{{ receipt.paid_amount|floatformat:0 }}" placeholder="0"></div>
+            </div>
+            {% endif %}
+
+            <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+                <button type="submit" class="fc-btn fc-btn-primary">💾 Сохранить черновик</button>
+            </div>
+        </form>
+
+        <div style="margin-top:12px;border-top:1px dashed var(--fc-border);padding-top:12px;">
+            <form method="post" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_supplier_inline">
+                <div style="flex:1;min-width:220px;"><label class="fc-label">Быстро добавить нового поставщика</label><input class="fc-input" name="supplier_name" placeholder="Название поставщика"></div>
+                <button type="submit" class="fc-btn fc-btn-secondary">+ Новый поставщик</button>
+            </form>
+        </div>
+
+        {% else %}
+        <!-- read-only -->
+        <div class="grid3">
+            <div class="field-box"><label class="fc-label">Поставщик</label><div class="field-val">{{ receipt.supplier.name|default:"—" }}</div></div>
+            <div class="field-box"><label class="fc-label">Склад поступления</label><div class="field-val">{{ receipt.warehouse.name|default:"—" }}</div></div>
+            <div class="field-box"><label class="fc-label">Дата поставки</label><div class="field-val">{{ receipt.receipt_date|date:"d.m.Y" }}</div></div>
+        </div>
+        {% if receipt.comment %}<div class="field-box"><label class="fc-label">Комментарий</label><div class="field-val">{{ receipt.comment }}</div></div>{% endif %}
+
+        {% if show_money and can_edit and not is_cancelled %}
+        <form method="post" style="border-top:1px dashed var(--fc-border);padding-top:14px;margin-top:6px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_header">
+            <div class="grid3" style="align-items:end;">
+                <div><label class="fc-label">Оплачено</label><label style="display:flex;align-items:center;gap:8px;height:40px;"><input type="checkbox" name="is_paid" {% if receipt.is_paid %}checked{% endif %} style="width:17px;height:17px;accent-color:var(--fc-green);"> Да</label></div>
+                <div><label class="fc-label">Дата оплаты</label><input class="fc-input" type="date" name="paid_at" value="{{ receipt.paid_at|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">Оплачено всего</label><input class="fc-input num" type="text" name="paid_amount" value="{{ receipt.paid_amount|floatformat:0 }}"></div>
+            </div>
+            <div style="margin-top:12px;display:flex;justify-content:flex-end;"><button type="submit" class="fc-btn fc-btn-primary fc-btn-sm">Сохранить оплату</button></div>
+        </form>
+        {% elif show_money %}
+        <div class="grid3" style="margin-top:6px;">
+            <div class="field-box"><label class="fc-label">Оплачено</label><div class="field-val">{% if receipt.is_paid %}Да{% else %}Нет{% endif %}</div></div>
+            <div class="field-box"><label class="fc-label">Дата оплаты</label><div class="field-val">{{ receipt.paid_at|date:"d.m.Y"|default:"—" }}</div></div>
+            <div class="field-box"><label class="fc-label">Оплачено всего</label><div class="field-val num">{{ paid_display }}</div></div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Товары -->
+    <div class="fc-card">
+        <h2>Товары</h2>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>Товар</th><th>Кол-во</th><th>Ед.</th>
+                    {% if show_money %}<th>Цена закупки</th><th>Сумма</th>{% endif %}
+                    {% if is_draft and can_edit %}<th></th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for it in item_rows %}
+                <tr>
+                    <td><strong>{{ it.name }}</strong>{% if it.sku %}<div class="muted" style="font-size:12px;">{{ it.sku }}</div>{% endif %}</td>
+                    <td class="num">{{ it.qty_display }}</td>
+                    <td class="muted">{{ it.unit }}</td>
+                    {% if show_money %}<td class="num">{{ it.price_display }}</td><td class="num"><strong>{{ it.total_display }}</strong></td>{% endif %}
+                    {% if is_draft and can_edit %}
+                    <td style="text-align:right;">
+                        <form method="post"><input type="hidden" name="action" value="remove_item"><input type="hidden" name="item_id" value="{{ it.obj.id }}">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="Удалить">✕</button></form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="muted" style="padding:18px 8px;">Товары не добавлены.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if is_draft and can_edit %}
+        <form method="post" class="add-row" id="add_item_form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_item">
+            <input type="hidden" name="hdr_supplier" id="sync_supplier">
+            <input type="hidden" name="hdr_warehouse" id="sync_warehouse">
+            <input type="hidden" name="hdr_date" id="sync_date">
+            <input type="hidden" name="hdr_comment" id="sync_comment">
+            <div>
+                <label class="fc-label">Товар</label>
+                <select class="fc-select" name="product_id" required>
+                    <option value="">— выбрать товар —</option>
+                    {% for p in products %}<option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>{% endfor %}
+                </select>
+            </div>
+            <div><label class="fc-label">Количество</label><input class="fc-input num" name="quantity" placeholder="0" required></div>
+            <div><label class="fc-label">Цена закупки</label><input class="fc-input num" name="unit_price" placeholder="0"></div>
+            <div><button type="submit" class="fc-btn fc-btn-secondary">+ Добавить</button></div>
+        </form>
+        {% endif %}
+
+        <div class="totals">
+            <div><div class="tt">Позиций</div><div class="tv">{{ items_count }}</div></div>
+            {% if show_money %}
+            <div><div class="tt">Общая сумма</div><div class="tv num">{{ total_display }}</div></div>
+            <div><div class="tt">Оплачено</div><div class="tv num">{{ paid_display }}</div></div>
+            <div><div class="tt">Долг</div><div class="tv num" style="color:var(--fc-danger-text);">{{ debt_display }}</div></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Журнал изменений -->
+    {% if logs %}
+    <div class="fc-card">
+        <h2>История изменений</h2>
+        <div class="log-list">
+            {% for log in logs %}
+            <div class="log-item">
+                <div>{{ log.action }}{% if log.comment %} — {{ log.comment }}{% endif %}</div>
+                <div class="log-meta">{{ log.created_at|date:"d.m.Y H:i" }} · {{ log.user.username|default:"—" }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+</div>
+
+<script>
+(function(){
+    // При добавлении товара переносим текущие (возможно несохранённые)
+    // значения шапки в скрытые поля, чтобы выбор поставщика/склада/даты
+    // не обнулялся.
+    var addForm = document.getElementById("add_item_form");
+    if (!addForm) return;
+    addForm.addEventListener("submit", function(){
+        function cp(srcId, dstId){
+            var s = document.getElementById(srcId), d = document.getElementById(dstId);
+            if (s && d) d.value = s.value;
+        }
+        cp("hdr_supplier","sync_supplier");
+        cp("hdr_warehouse","sync_warehouse");
+        cp("hdr_date","sync_date");
+        cp("hdr_comment","sync_comment");
+    });
+})();
+</script>
+
+{% endblock %}

@@ -1,1015 +1,787 @@
 {% extends "foodcost/base.html" %}
 
-{% block title %}Пользователи и доступы{% endblock %}
+{% block title %}Пользователи{% endblock %}
 
 {% block content %}
 
+<!-- CSS inline (без staticfiles). FoodCost UI Kit v2. Все поля/экшены/JS-хуки
+     сохранены 1:1: список и редактирование пользователей (.edit-btn /
+     .cancel-edit-btn / .user-card.editing), создание пользователя, филиалы и
+     зоны доставки — те же name= и value=action, что и раньше. -->
 <style>
-    .page {
-        max-width: 1280px;
-        margin: 0 auto;
-    }
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-warning:#F59E0B; --fc-warning-soft:#FEF3C7; --fc-warning-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-hover:#DC2626; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1280px; margin:0 auto; padding:24px; }
 
-    .back {
-        display: inline-block;
-        margin-bottom: 12px;
-        color: #374151;
-        text-decoration: none;
-        font-weight: 800;
-        font-size: 14px;
-    }
+.fc-page-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.fc-page-head h1{ margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
 
-    .card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
-        padding: 24px 28px;
-        margin-bottom: 18px;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-    }
+.fc-card,.card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:24px; margin-bottom:16px; }
+.fc-card-head{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+.fc-card h1,.card h1{ margin:0 0 6px; font-size:26px; font-weight:600; }
+.fc-card h2,.card h2{ margin:0 0 4px; font-size:20px; font-weight:600; letter-spacing:-0.01em; }
 
-    h1 {
-        margin: 0 0 10px;
-        font-size: 36px;
-        color: #111827;
-        letter-spacing: -0.03em;
-    }
+/* ---- buttons ---- */
+.fc-scope button,.fc-btn,.secondary-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    height:40px; padding:0 16px; border-radius:var(--fc-radius-input);
+    border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600;
+    cursor:pointer; text-decoration:none; white-space:nowrap; transition:background-color .12s,border-color .12s,color .12s;
+}
+.fc-scope button[type=submit],.fc-btn-primary{ background:var(--fc-green); color:#fff; }
+.fc-scope button[type=submit]:hover,.fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-secondary,.secondary-btn,.fc-scope button[type=button]{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.fc-btn-secondary:hover,.secondary-btn:hover,.fc-scope button[type=button]:hover{ border-color:var(--fc-text); }
+.fc-btn-sm{ height:34px; padding:0 12px; font-size:13px; }
+.branch-delete-btn,.fc-btn-danger{ background:var(--fc-danger)!important; color:#fff!important; border-color:transparent!important; }
+.branch-delete-btn:hover,.fc-btn-danger:hover{ background:var(--fc-danger-hover)!important; }
 
-    h2 {
-        margin: 0 0 20px;
-        font-size: 24px;
-        color: #111827;
-    }
+/* ---- inputs (bare inputs in branch/zone/user forms get styled automatically) ---- */
+.fc-scope form input:not([type=checkbox]):not([type=radio]),
+.fc-scope form select,
+.fc-scope form textarea,
+.fc-input{
+    width:100%; height:40px; padding:0 12px; background:var(--fc-card);
+    border:1px solid var(--fc-border); border-radius:var(--fc-radius-input);
+    font-family:inherit; font-size:14px; color:var(--fc-text); transition:border-color .12s,box-shadow .12s;
+}
+.fc-scope form textarea{ height:auto; padding:10px 12px; min-height:64px; }
+.fc-scope form input:focus,.fc-scope form select:focus,.fc-scope form textarea:focus,.fc-input:focus{
+    outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12);
+}
+.fc-scope form label{ display:block; font-size:13px; font-weight:600; color:var(--fc-text); margin-bottom:6px; }
+.fc-scope form label.check-row,.fc-scope form label.checkbox-pill{ display:flex; align-items:center; gap:8px; font-weight:500; margin-bottom:0; cursor:pointer; }
+.fc-scope input[type=checkbox]{ width:17px; height:17px; accent-color:var(--fc-green); cursor:pointer; flex:0 0 auto; }
 
-    .muted {
-        color: #6b7280;
-        font-size: 14px;
-        margin: 0;
-    }
+.form-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:14px; }
+.form-grid > div[style*="span 2"]{ grid-column:span 2; }
+.edit-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; flex-wrap:wrap; }
 
-    .error {
-        background: #fffafa;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-        padding: 12px;
-        border-radius: 12px;
-        margin-bottom: 16px;
-        font-weight: 900;
-    }
+.error{ background:var(--fc-danger-soft); border:1px solid #FCA5A5; color:var(--fc-danger-text); padding:12px 14px; border-radius:var(--fc-radius-input); font-size:14px; margin-bottom:14px; }
+.empty{ text-align:center; padding:32px 16px; color:var(--fc-muted); font-size:14px; }
 
-    label {
-        font-weight: 900;
-        font-size: 13px;
-        margin-bottom: 6px;
-        display: block;
-        color: #111827;
-    }
+/* ---- badges ---- */
+.fc-badge,.role-badge,.branch-badge,.superuser-yes,.superuser-no{
+    display:inline-flex; align-items:center; gap:4px; padding:3px 11px; border-radius:var(--fc-radius-pill);
+    font-size:12px; font-weight:600; line-height:1.5; white-space:nowrap;
+}
+.role-badge{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.superuser-yes{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.superuser-no{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.branch-badge-on{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.branch-badge-off{ background:var(--fc-border-soft); color:var(--fc-muted); }
 
-    input,
-    select {
-        width: 100%;
-        padding: 11px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        font-size: 15px;
-        box-sizing: border-box;
-        background: white;
-        color: #111827;
-        font-weight: 700;
-    }
+/* ====================== USERS LIST (table-like) ====================== */
+.u-search{ max-width:360px; margin-bottom:16px; }
+.fc-table{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); overflow:hidden; }
+.u-head,.user-view{
+    display:grid;
+    grid-template-columns: minmax(190px,1.7fr) 1.1fr 1.1fr 0.9fr 1fr 0.8fr auto;
+    gap:14px; align-items:center; padding:14px 18px;
+}
+.u-head{ background:var(--fc-card-soft); border-bottom:1px solid var(--fc-border); font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; }
+.user-card{ border-bottom:1px solid var(--fc-border-soft); }
+.user-card:last-child{ border-bottom:0; }
+.user-view:hover{ background:var(--fc-card-soft); }
+.u-userbox{ display:flex; align-items:center; gap:12px; min-width:0; }
+.u-avatar{ width:38px; height:38px; border-radius:50%; background:var(--fc-green-soft); color:var(--fc-green-text); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex:0 0 auto; }
+.username{ font-weight:600; font-size:15px; color:var(--fc-text); }
+.u-login{ color:var(--fc-muted); font-size:13px; }
+.small-label{ display:none; }
+.country-list,.section-list{ font-size:14px; color:var(--fc-text); }
+.u-actions{ display:flex; align-items:center; gap:8px; justify-self:end; }
+.u-chevron{ width:36px!important; padding:0!important; font-size:16px; }
+.user-card.editing .u-chevron{ transform:rotate(180deg); }
+.u-foot{ text-align:center; margin-top:14px; }
 
-    input:focus,
-    select:focus {
-        outline: none;
-        border-color: #111827;
-        box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
-    }
+.edit-panel{ display:none; padding:18px; background:var(--fc-card-soft); border-top:1px solid var(--fc-border); }
+.user-card.editing .edit-panel{ display:block; }
+.edit-main-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
 
-    button {
-        background: #111827;
-        color: white;
-        border: 0;
-        border-radius: 12px;
-        padding: 11px 16px;
-        cursor: pointer;
-        font-weight: 900;
-        font-size: 14px;
-        white-space: nowrap;
-    }
+/* ---- access panels / grouped sections ---- */
+.access-grid{ display:grid; grid-template-columns:260px 1fr; gap:16px; margin:6px 0 16px; }
+.checkbox-panel{ background:var(--fc-card-soft); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); padding:16px; }
+.checkbox-title{ font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--fc-muted); margin-bottom:12px; }
+.checkboxes{ display:flex; flex-direction:column; gap:10px; }
+.sec-groups{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.sec-group{ min-width:0; }
+.sec-group-title{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:700; color:var(--fc-text); margin-bottom:10px; }
+.sec-group-title svg{ width:16px; height:16px; color:var(--fc-muted); }
+.sec-items{ display:flex; flex-direction:column; gap:10px; }
+.create-top-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:6px; }
+.pw-wrap{ position:relative; }
+.pw-wrap .pw-eye{ position:absolute; right:6px; top:50%; transform:translateY(-50%); height:30px!important; width:34px!important; padding:0!important; border:0!important; background:transparent!important; color:var(--fc-muted)!important; }
 
-    .secondary-btn {
-        background: white;
-        color: #111827;
-        border: 1px solid #d1d5db;
-    }
+/* ---- branches / zones rows ---- */
+details > summary{ list-style:none; }
+details > summary::-webkit-details-marker{ display:none; }
+.create-summary{ cursor:pointer; font-weight:600; color:var(--fc-green-text); font-size:14px; user-select:none; display:inline-flex; align-items:center; gap:6px; }
+.branch-row{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); padding:16px 18px; margin-top:12px; }
+.branch-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+.branch-title{ font-weight:600; font-size:16px; }
+.branch-sub{ color:var(--fc-muted); font-size:13px; margin-top:3px; }
+.branch-badges{ display:flex; gap:6px; flex-wrap:wrap; }
+.branch-edit{ margin-top:12px; }
+.branch-edit > summary{ cursor:pointer; font-weight:600; font-size:13px; color:var(--fc-info-text); user-select:none; }
 
-    .create-form {
-        display: grid;
-        gap: 18px;
-    }
-
-    .form-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr 1fr;
-        gap: 14px;
-        align-items: end;
-    }
-
-    .access-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
-    }
-
-    .checkbox-panel {
-        background: #fbfcfd;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        padding: 14px;
-    }
-
-    .checkbox-title {
-        font-weight: 950;
-        color: #111827;
-        margin-bottom: 10px;
-        font-size: 14px;
-    }
-
-    .checkboxes {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .checkbox-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 9px 12px;
-        cursor: pointer;
-        font-weight: 800;
-        color: #374151;
-    }
-
-    .checkbox-pill input {
-        width: auto;
-        margin: 0;
-    }
-
-    .users-list {
-        display: grid;
-        gap: 10px;
-    }
-
-    .user-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        background: white;
-        overflow: hidden;
-    }
-
-    .user-view {
-		display: grid;
-		grid-template-columns: 1.1fr 1fr 1.1fr 1.1fr 1.2fr 0.8fr 160px;
-        gap: 14px;
-        align-items: center;
-        padding: 16px;
-    }
-
-    .username {
-        font-weight: 950;
-        color: #111827;
-        font-size: 16px;
-    }
-
-    .small-label {
-        color: #6b7280;
-        font-size: 12px;
-        font-weight: 900;
-        margin-bottom: 4px;
-    }
-
-    .role-badge {
-        display: inline-flex;
-        align-items: center;
-        background: #ecfdf5;
-        color: #047857;
-        border-radius: 999px;
-        padding: 6px 10px;
-        font-size: 13px;
-        font-weight: 950;
-    }
-
-    .section-list,
-    .country-list {
-        font-weight: 850;
-        color: #374151;
-        line-height: 1.35;
-    }
-
-    .superuser-yes {
-        color: #047857;
-        font-weight: 950;
-    }
-
-    .superuser-no {
-        color: #6b7280;
-        font-weight: 900;
-    }
-
-    .edit-panel {
-        display: none;
-        border-top: 1px solid #e5e7eb;
-        background: #fbfcfd;
-        padding: 16px;
-    }
-
-    .user-card.editing .edit-panel {
-        display: block;
-    }
-
-    .edit-grid {
-        display: grid;
-        gap: 18px;
-    }
-
-	.edit-main-grid {
-	    display: grid;
-	    grid-template-columns: 1fr 1fr 1fr 1fr;
-        gap: 14px;
-    }
-
-    .edit-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
-    .empty {
-        padding: 18px 0;
-        color: #6b7280;
-        font-weight: 800;
-    }
-
-    /* ===== Филиалы (Part 6 — branch management) ===== */
-    .branch-row {
-        border: 1px solid #eef2f7;
-        background: #fbfcfd;
-        border-radius: 14px;
-        padding: 14px 16px;
-        margin-bottom: 12px;
-    }
-
-    .branch-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        flex-wrap: wrap;
-    }
-
-    .branch-title {
-        font-weight: 950;
-        color: #111827;
-        font-size: 16px;
-    }
-
-    .branch-sub {
-        color: #6b7280;
-        font-size: 12.5px;
-        font-weight: 700;
-        margin-top: 3px;
-    }
-
-    .branch-badges {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-
-    .branch-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 3px 9px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 900;
-        line-height: 1;
-        white-space: nowrap;
-    }
-
-    .branch-badge-on {
-        background: #dcfce7;
-        color: #15803d;
-    }
-
-    .branch-badge-off {
-        background: #f1f5f9;
-        color: #64748b;
-    }
-
-    .branch-edit {
-        margin-top: 14px;
-        padding-top: 14px;
-        border-top: 1px dashed #e5e7eb;
-    }
-
-    .branch-row .form-grid {
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-    }
-
-    .branch-row details > summary {
-        cursor: pointer;
-        font-weight: 900;
-        color: #2563ff;
-        font-size: 13px;
-        user-select: none;
-        list-style: none;
-    }
-
-    .branch-row details > summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .branch-row details > summary::before {
-        content: "▸ ";
-        color: #2563ff;
-    }
-
-    .branch-row details[open] > summary::before {
-        content: "▾ ";
-    }
-
-    .branch-delete-btn {
-        background: #fff;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-    }
-
-    .branch-delete-btn:hover {
-        background: #fef2f2;
-    }
-
-    @media (max-width: 1000px) {
-        .form-grid,
-        .access-grid,
-        .user-view,
-        .edit-main-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .branch-row .form-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+@media (max-width:1024px){
+    .form-grid,.edit-main-grid,.create-top-grid,.sec-groups{ grid-template-columns:1fr 1fr; }
+    .access-grid{ grid-template-columns:1fr; }
+}
+@media (max-width:720px){
+    .fc-page{ padding:16px; }
+    .form-grid,.edit-main-grid,.create-top-grid,.sec-groups{ grid-template-columns:1fr; }
+    .u-head{ display:none; }
+    .user-view{ grid-template-columns:1fr 1fr; }
+    .u-userbox{ grid-column:1 / -1; }
+    .small-label{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--fc-muted-soft); font-weight:600; margin-bottom:2px; }
+    .u-actions{ grid-column:1 / -1; justify-self:start; }
+}
 </style>
 
-<div class="page">
+<div class="fc-scope">
+<div class="fc-page">
 
-<a href="/c/{{ country.slug }}/" class="back">← Назад</a>
-
-<div class="card">
-    <h1>Пользователи и доступы</h1>
-    <p class="muted">Создание пользователей, назначение роли, стран и доступных разделов.</p>
-</div>
-
-<div class="card">
-    <h2>Филиалы</h2>
-    <p class="muted" style="margin-bottom:18px;">
-        Создание, редактирование и отключение филиалов. Поля с пометкой
-        «для сайта» используются на публичном фронте — если филиал скрыт,
-        он не появится в каталоге и не примет онлайн-заказы.
-    </p>
+    <div class="fc-page-head">
+        <div>
+            <h1>Пользователи</h1>
+            <p class="muted">Список всех пользователей системы и их доступы</p>
+        </div>
+        <a href="#create-user" class="fc-btn fc-btn-primary">+ Создать пользователя</a>
+    </div>
 
     {% if error %}
         <div class="error">{{ error }}</div>
     {% endif %}
 
-    <details style="margin-bottom:18px;">
-        <summary style="cursor:pointer;font-weight:900;color:#2563ff;font-size:14px;user-select:none;">
-            + Создать новый филиал
-        </summary>
+    {# ============================ СПИСОК ПОЛЬЗОВАТЕЛЕЙ ============================ #}
+    <div class="card">
+        <input class="fc-input u-search" id="userSearch" type="text" placeholder="Поиск пользователя...">
 
-        <form method="post" class="create-form" style="margin-top:14px;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="create_location">
-
-            <div class="form-grid">
-                <div>
-                    <label>Название филиала *</label>
-                    <input name="location_name" placeholder="Например: Яшнобод" required>
-                </div>
-                <div>
-                    <label>Telegram thread ID</label>
-                    <input name="telegram_thread_id" placeholder="Например: 2" type="number">
-                </div>
-                <div>
-                    <label>Название для сайта</label>
-                    <input name="public_name" placeholder="Raccoon · Яшнобод">
-                </div>
-                <div>
-                    <label>Порядок на сайте</label>
-                    <input name="site_sort_order" type="number" min="0" step="1" value="0">
-                </div>
+        <div class="fc-table">
+            <div class="u-head">
+                <div>Пользователь</div>
+                <div>Роль</div>
+                <div>Страны</div>
+                <div>Разделы</div>
+                <div>Филиал</div>
+                <div>Superuser</div>
+                <div>Действия</div>
             </div>
 
-            <div class="form-grid">
-                <div style="grid-column: span 2;">
-                    <label>Адрес</label>
-                    <input name="address" placeholder="ул. Шахрисабз, 14">
-                </div>
-                <div>
-                    <label>Телефон</label>
-                    <input name="phone" placeholder="+998 ...">
-                </div>
-                <div>
-                    <label>Часы работы</label>
-                    <input name="working_hours" placeholder="12:00–24:00">
-                </div>
-            </div>
-
-            <div class="form-grid">
-                <div>
-                    <label>Широта</label>
-                    <input name="latitude" placeholder="41.2995">
-                </div>
-                <div>
-                    <label>Долгота</label>
-                    <input name="longitude" placeholder="69.2401">
-                </div>
-                <div class="checkbox-panel" style="grid-column: span 2;">
-                    <div class="checkbox-title">Статус</div>
-                    <div class="checkboxes">
-                        <label><input type="checkbox" name="is_active" checked> Активен</label>
-                        <label><input type="checkbox" name="is_visible_on_site"> Показывать на сайте</label>
-                        <label><input type="checkbox" name="supports_delivery" checked> Доставка</label>
-                        <label><input type="checkbox" name="supports_pickup"> Самовывоз</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="edit-actions">
-                <button type="submit">Создать филиал</button>
-            </div>
-        </form>
-    </details>
-
-    {% for branch in locations %}
-        <div class="branch-row">
-            <div class="branch-head">
-                <div>
-                    <div class="branch-title">{{ branch.name }}</div>
-                    <div class="branch-sub">
-                        {% if branch.public_name %}{{ branch.public_name }}{% if branch.address %} · {% endif %}{% endif %}
-                        {{ branch.address }}
-                        {% if branch.phone %} · {{ branch.phone }}{% endif %}
-                    </div>
-                </div>
-                <div class="branch-badges">
-                    {% if branch.is_active %}
-                        <span class="branch-badge branch-badge-on">Активен</span>
-                    {% else %}
-                        <span class="branch-badge branch-badge-off">Отключён</span>
-                    {% endif %}
-
-                    {% if branch.is_visible_on_site %}
-                        <span class="branch-badge branch-badge-on">На сайте</span>
-                    {% else %}
-                        <span class="branch-badge branch-badge-off">Скрыт</span>
-                    {% endif %}
-
-                    {% if branch.supports_delivery %}
-                        <span class="branch-badge branch-badge-on">Доставка</span>
-                    {% else %}
-                        <span class="branch-badge branch-badge-off">Без доставки</span>
-                    {% endif %}
-
-                    {% if branch.supports_pickup %}
-                        <span class="branch-badge branch-badge-on">Самовывоз</span>
-                    {% else %}
-                        <span class="branch-badge branch-badge-off">Без самовывоза</span>
-                    {% endif %}
-                </div>
-            </div>
-
-            <details class="branch-edit">
-                <summary>Редактировать</summary>
-
-                <form method="post" class="create-form" style="margin-top:14px;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_location">
-                    <input type="hidden" name="location_id" value="{{ branch.id }}">
-
-                    <div class="form-grid">
-                        <div>
-                            <label>Название филиала *</label>
-                            <input name="location_name" value="{{ branch.name }}" required>
-                        </div>
-                        <div>
-                            <label>Telegram thread ID</label>
-                            <input name="telegram_thread_id" type="number" value="{% if branch.telegram_thread_id is not None %}{{ branch.telegram_thread_id }}{% endif %}">
-                        </div>
-                        <div>
-                            <label>Название для сайта</label>
-                            <input name="public_name" value="{{ branch.public_name }}">
-                        </div>
-                        <div>
-                            <label>Порядок на сайте</label>
-                            <input name="site_sort_order" type="number" min="0" step="1" value="{{ branch.site_sort_order }}">
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div style="grid-column: span 2;">
-                            <label>Адрес</label>
-                            <input name="address" value="{{ branch.address }}">
-                        </div>
-                        <div>
-                            <label>Телефон</label>
-                            <input name="phone" value="{{ branch.phone }}">
-                        </div>
-                        <div>
-                            <label>Часы работы</label>
-                            <input name="working_hours" value="{{ branch.working_hours }}">
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div>
-                            <label>Широта</label>
-                            <input name="latitude" value="{% if branch.latitude is not None %}{{ branch.latitude }}{% endif %}">
-                        </div>
-                        <div>
-                            <label>Долгота</label>
-                            <input name="longitude" value="{% if branch.longitude is not None %}{{ branch.longitude }}{% endif %}">
-                        </div>
-                        <div class="checkbox-panel" style="grid-column: span 2;">
-                            <div class="checkbox-title">Статус</div>
-                            <div class="checkboxes">
-                                <label><input type="checkbox" name="is_active" {% if branch.is_active %}checked{% endif %}> Активен</label>
-                                <label><input type="checkbox" name="is_visible_on_site" {% if branch.is_visible_on_site %}checked{% endif %}> Показывать на сайте</label>
-                                <label><input type="checkbox" name="supports_delivery" {% if branch.supports_delivery %}checked{% endif %}> Доставка</label>
-                                <label><input type="checkbox" name="supports_pickup" {% if branch.supports_pickup %}checked{% endif %}> Самовывоз</label>
+            <div class="users-list">
+                {% for user in users %}
+                <div class="user-card" data-name="{{ user.username|lower }}">
+                    <div class="user-view">
+                        <div class="u-userbox">
+                            <div class="u-avatar">{{ user.username|first|upper }}</div>
+                            <div>
+                                <div class="username">{{ user.username }}</div>
+                                <div class="u-login">Логин: {{ user.username }}</div>
                             </div>
                         </div>
+
+                        <div>
+                            <div class="small-label">Роль</div>
+                            <span class="role-badge">{{ user.profile.get_role_display }}</span>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Страны</div>
+                            <div class="country-list">
+                                {% if user.is_superuser %}
+                                    Все страны
+                                {% else %}
+                                    {% for c in user.profile.countries.all %}
+                                        {{ c.name }}{% if not forloop.last %}, {% endif %}
+                                    {% empty %}
+                                        <span class="muted">Не выбраны</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Разделы</div>
+                            <div class="section-list">
+                                {% if user.is_superuser %}
+                                    Все разделы
+                                {% else %}
+                                    {{ user.profile.allowed_sections|length }} разделов
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Филиал</div>
+                            <div class="country-list">
+                                {% if user.profile.location %}
+                                    {{ user.profile.location.name }}
+                                {% else %}
+                                    <span class="muted">Без филиала</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Superuser</div>
+                            {% if user.is_superuser %}
+                                <span class="superuser-yes">Да</span>
+                            {% else %}
+                                <span class="superuser-no">Нет</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="u-actions">
+                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm edit-btn">✎ Редактировать</button>
+                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm u-chevron edit-btn" aria-label="Развернуть">⌄</button>
+                        </div>
                     </div>
 
-                    <div class="edit-actions">
-                        <button type="submit">Сохранить</button>
-                    </div>
-                </form>
+                    <div class="edit-panel">
+                        <form method="post" class="edit-grid">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_user">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
 
-                <form method="post" style="margin-top:10px;text-align:right;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_location">
-                    <input type="hidden" name="location_id" value="{{ branch.id }}">
-                    <button type="submit" class="branch-delete-btn"
-                            onclick="return confirm('Удалить филиал «{{ branch.name|escapejs }}»? Это действие необратимо.')">
-                        Удалить филиал
-                    </button>
-                </form>
-            </details>
+                            <div class="edit-main-grid">
+                                <div>
+                                    <label>Логин</label>
+                                    <input name="username" value="{{ user.username }}">
+                                </div>
+                                <div>
+                                    <label>Новый пароль</label>
+                                    <input name="password" type="password" placeholder="Если нужно">
+                                </div>
+                                <div>
+                                    <label>Роль</label>
+                                    <select name="role">
+                                        {% for value, label in roles %}
+                                            <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>Филиал</label>
+                                    <select name="location_id">
+                                        <option value="">Без филиала</option>
+                                        {% for location in locations %}
+                                            <option value="{{ location.id }}" {% if user.profile.location_id == location.id %}selected{% endif %}>{{ location.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="access-grid">
+                                <div class="checkbox-panel">
+                                    <div class="checkbox-title">Страны</div>
+                                    <div class="checkboxes">
+                                        {% for c in countries %}
+                                            <label class="check-row">
+                                                <input type="checkbox" name="countries" value="{{ c.id }}" {% if c in user.profile.countries.all %}checked{% endif %}>
+                                                <span>{{ c.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="checkbox-panel">
+                                    <div class="checkbox-title">Доступные разделы</div>
+                                    <div class="sec-groups">
+                                        {% for g in section_groups %}
+                                            <div class="sec-group">
+                                                <div class="sec-group-title">
+                                                    <svg class="grp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                                                    {{ g.label }}
+                                                </div>
+                                                <div class="sec-items">
+                                                    {% for value, label in g.items %}
+                                                        <label class="check-row">
+                                                            <input type="checkbox" name="allowed_sections" value="{{ value }}" {% if value in user.profile.allowed_sections %}checked{% endif %}>
+                                                            <span>{{ label }}</span>
+                                                        </label>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="edit-actions">
+                                <button type="button" class="secondary-btn cancel-edit-btn">Отмена</button>
+                                <button type="submit">Сохранить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                    <div class="empty">Пользователей пока нет.</div>
+                {% endfor %}
+            </div>
         </div>
-    {% empty %}
-        <div class="empty">Пока нет филиалов</div>
-    {% endfor %}
-</div>
 
-<div class="card">
-    <h2>Зоны доставки</h2>
-    <p class="muted" style="margin-bottom:18px;">
-        Круглые зоны (центр + радиус) для автоматического выбора филиала,
-        который повезёт заказ. Если у клиента есть координаты — ERP сам
-        подберёт ближайшую активную зону. Если зон нет, сайт использует
-        правило по умолчанию: 15 000 при сумме до 150 000, бесплатно от
-        150 000.
-    </p>
+        <div class="u-foot muted">Показано 1–{{ users|length }} из {{ users|length }} пользователей</div>
+    </div>
 
-    <details style="margin-bottom:18px;">
-        <summary style="cursor:pointer;font-weight:900;color:#2563ff;font-size:14px;user-select:none;">
-            + Создать зону доставки
-        </summary>
+    {# ============================ СОЗДАТЬ ПОЛЬЗОВАТЕЛЯ ============================ #}
+    <div class="card" id="create-user">
+        <div class="fc-card-head"><h2>Создать пользователя</h2></div>
 
-        <form method="post" class="create-form" style="margin-top:14px;">
+        <form method="post" class="create-form">
             {% csrf_token %}
-            <input type="hidden" name="action" value="create_delivery_zone">
+            <input type="hidden" name="action" value="create_user">
 
-            <div class="form-grid">
+            <div class="create-top-grid">
                 <div>
-                    <label>Название зоны *</label>
-                    <input name="zone_name" placeholder="Мирабад зона 1" required>
+                    <label>Логин</label>
+                    <input name="username" placeholder="Например: manager_uz">
                 </div>
                 <div>
-                    <label>Филиал *</label>
-                    <select name="zone_location_id" required>
-                        <option value="">— выбери филиал —</option>
-                        {% for loc in locations %}
-                            <option value="{{ loc.id }}">{{ loc.name }}</option>
+                    <label>Пароль</label>
+                    <div class="pw-wrap">
+                        <input name="password" type="password" id="createPw" placeholder="Пароль">
+                        <button type="button" class="pw-eye" data-target="createPw" aria-label="Показать пароль">👁</button>
+                    </div>
+                </div>
+                <div>
+                    <label>Роль</label>
+                    <select name="role">
+                        {% for value, label in roles %}
+                            <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label>Время доставки</label>
-                    <input name="zone_estimated_time" value="35–45 мин">
-                </div>
-                <div>
-                    <label>Порядок</label>
-                    <input name="zone_sort_order" type="number" min="0" step="1" value="0">
+                    <label>Филиал</label>
+                    <select name="location_id">
+                        <option value="">Без филиала</option>
+                        {% for location in locations %}
+                            <option value="{{ location.id }}">{{ location.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
 
-            <div class="form-grid">
-                <div>
-                    <label>Широта центра</label>
-                    <input name="zone_center_latitude" placeholder="41.2995">
-                </div>
-                <div>
-                    <label>Долгота центра</label>
-                    <input name="zone_center_longitude" placeholder="69.2401">
-                </div>
-                <div>
-                    <label>Радиус (км)</label>
-                    <input name="zone_radius_km" placeholder="3">
-                </div>
+            <div class="access-grid">
                 <div class="checkbox-panel">
-                    <div class="checkbox-title">Статус</div>
+                    <div class="checkbox-title">Страны</div>
                     <div class="checkboxes">
-                        <label><input type="checkbox" name="zone_is_active" checked> Активна</label>
+                        {% for c in countries %}
+                            <label class="check-row">
+                                <input type="checkbox" name="countries" value="{{ c.id }}">
+                                <span>{{ c.name }}</span>
+                            </label>
+                        {% endfor %}
                     </div>
                 </div>
-            </div>
 
-            <div class="form-grid">
-                <div>
-                    <label>Стоимость доставки</label>
-                    <input name="zone_delivery_price" type="number" min="0" step="1" value="15000">
-                </div>
-                <div>
-                    <label>Бесплатно от</label>
-                    <input name="zone_free_delivery_threshold" type="number" min="0" step="1" value="150000">
+                <div class="checkbox-panel">
+                    <div class="checkbox-title">Доступные разделы</div>
+                    <div class="sec-groups">
+                        {% for g in section_groups %}
+                            <div class="sec-group">
+                                <div class="sec-group-title">
+                                    <svg class="grp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                                    {{ g.label }}
+                                </div>
+                                <div class="sec-items">
+                                    {% for value, label in g.items %}
+                                        <label class="check-row">
+                                            <input type="checkbox" name="allowed_sections" value="{{ value }}">
+                                            <span>{{ label }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 
             <div class="edit-actions">
-                <button type="submit">Создать зону</button>
+                <button type="submit">Создать пользователя</button>
             </div>
         </form>
-    </details>
+    </div>
 
-    {% for zone in delivery_zones %}
-        <div class="branch-row">
-            <div class="branch-head">
-                <div>
-                    <div class="branch-title">{{ zone.name }}</div>
-                    <div class="branch-sub">
-                        Филиал: {{ zone.location.name }}
-                        {% if zone.radius_km %} · радиус {{ zone.radius_km }} км{% endif %}
-                        {% if zone.center_latitude is not None and zone.center_longitude is not None %}
-                            · центр {{ zone.center_latitude }}, {{ zone.center_longitude }}
-                        {% endif %}
-                        · {{ zone.estimated_time|default:"35–45 мин" }}
+    {# ============================ ФИЛИАЛЫ ============================ #}
+    <div class="card">
+        <h2>Филиалы</h2>
+        <p class="muted" style="margin-bottom:14px;">
+            Создание, редактирование и отключение филиалов. Поля с пометкой
+            «для сайта» используются на публичном фронте — если филиал скрыт,
+            он не появится в каталоге и не примет онлайн-заказы.
+        </p>
+
+        <details style="margin-bottom:8px;">
+            <summary class="create-summary">+ Создать новый филиал</summary>
+
+            <form method="post" class="create-form" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_location">
+
+                <div class="form-grid">
+                    <div>
+                        <label>Название филиала *</label>
+                        <input name="location_name" placeholder="Например: Яшнобод" required>
+                    </div>
+                    <div>
+                        <label>Telegram thread ID</label>
+                        <input name="telegram_thread_id" placeholder="Например: 2" type="number">
+                    </div>
+                    <div>
+                        <label>Название для сайта</label>
+                        <input name="public_name" placeholder="Raccoon · Яшнобод">
+                    </div>
+                    <div>
+                        <label>Порядок на сайте</label>
+                        <input name="site_sort_order" type="number" min="0" step="1" value="0">
                     </div>
                 </div>
-                <div class="branch-badges">
-                    {% if zone.is_active %}
-                        <span class="branch-badge branch-badge-on">Активна</span>
-                    {% else %}
-                        <span class="branch-badge branch-badge-off">Отключена</span>
-                    {% endif %}
-                    <span class="branch-badge branch-badge-off">{{ zone.delivery_price|floatformat:0 }}</span>
-                    {% if zone.free_delivery_threshold %}
-                        <span class="branch-badge branch-badge-off">free от {{ zone.free_delivery_threshold|floatformat:0 }}</span>
-                    {% endif %}
+
+                <div class="form-grid">
+                    <div style="grid-column: span 2;">
+                        <label>Адрес</label>
+                        <input name="address" placeholder="ул. Шахрисабз, 14">
+                    </div>
+                    <div>
+                        <label>Телефон</label>
+                        <input name="phone" placeholder="+998 ...">
+                    </div>
+                    <div>
+                        <label>Часы работы</label>
+                        <input name="working_hours" placeholder="12:00–24:00">
+                    </div>
                 </div>
-            </div>
 
-            <details class="branch-edit">
-                <summary>Редактировать</summary>
-
-                <form method="post" class="create-form" style="margin-top:14px;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_delivery_zone">
-                    <input type="hidden" name="zone_id" value="{{ zone.id }}">
-
-                    <div class="form-grid">
-                        <div>
-                            <label>Название зоны *</label>
-                            <input name="zone_name" value="{{ zone.name }}" required>
-                        </div>
-                        <div>
-                            <label>Филиал *</label>
-                            <select name="zone_location_id" required>
-                                {% for loc in locations %}
-                                    <option value="{{ loc.id }}"
-                                        {% if loc.id == zone.location_id %}selected{% endif %}>
-                                        {{ loc.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label>Время доставки</label>
-                            <input name="zone_estimated_time" value="{{ zone.estimated_time }}">
-                        </div>
-                        <div>
-                            <label>Порядок</label>
-                            <input name="zone_sort_order" type="number" min="0" step="1" value="{{ zone.site_sort_order }}">
+                <div class="form-grid">
+                    <div>
+                        <label>Широта</label>
+                        <input name="latitude" placeholder="41.2995">
+                    </div>
+                    <div>
+                        <label>Долгота</label>
+                        <input name="longitude" placeholder="69.2401">
+                    </div>
+                    <div class="checkbox-panel" style="grid-column: span 2;">
+                        <div class="checkbox-title">Статус</div>
+                        <div class="checkboxes">
+                            <label class="check-row"><input type="checkbox" name="is_active" checked> <span>Активен</span></label>
+                            <label class="check-row"><input type="checkbox" name="is_visible_on_site"> <span>Показывать на сайте</span></label>
+                            <label class="check-row"><input type="checkbox" name="supports_delivery" checked> <span>Доставка</span></label>
+                            <label class="check-row"><input type="checkbox" name="supports_pickup"> <span>Самовывоз</span></label>
                         </div>
                     </div>
+                </div>
 
-                    <div class="form-grid">
-                        <div>
-                            <label>Широта центра</label>
-                            <input name="zone_center_latitude" value="{% if zone.center_latitude is not None %}{{ zone.center_latitude }}{% endif %}">
+                <div class="edit-actions">
+                    <button type="submit">Создать филиал</button>
+                </div>
+            </form>
+        </details>
+
+        {% for branch in locations %}
+            <div class="branch-row">
+                <div class="branch-head">
+                    <div>
+                        <div class="branch-title">{{ branch.name }}</div>
+                        <div class="branch-sub">
+                            {% if branch.public_name %}{{ branch.public_name }}{% if branch.address %} · {% endif %}{% endif %}
+                            {{ branch.address }}
+                            {% if branch.phone %} · {{ branch.phone }}{% endif %}
                         </div>
-                        <div>
-                            <label>Долгота центра</label>
-                            <input name="zone_center_longitude" value="{% if zone.center_longitude is not None %}{{ zone.center_longitude }}{% endif %}">
-                        </div>
-                        <div>
-                            <label>Радиус (км)</label>
-                            <input name="zone_radius_km" value="{% if zone.radius_km is not None %}{{ zone.radius_km }}{% endif %}">
-                        </div>
-                        <div class="checkbox-panel">
-                            <div class="checkbox-title">Статус</div>
-                            <div class="checkboxes">
-                                <label><input type="checkbox" name="zone_is_active" {% if zone.is_active %}checked{% endif %}> Активна</label>
+                    </div>
+                    <div class="branch-badges">
+                        {% if branch.is_active %}<span class="branch-badge branch-badge-on">Активен</span>{% else %}<span class="branch-badge branch-badge-off">Отключён</span>{% endif %}
+                        {% if branch.is_visible_on_site %}<span class="branch-badge branch-badge-on">На сайте</span>{% else %}<span class="branch-badge branch-badge-off">Скрыт</span>{% endif %}
+                        {% if branch.supports_delivery %}<span class="branch-badge branch-badge-on">Доставка</span>{% else %}<span class="branch-badge branch-badge-off">Без доставки</span>{% endif %}
+                        {% if branch.supports_pickup %}<span class="branch-badge branch-badge-on">Самовывоз</span>{% else %}<span class="branch-badge branch-badge-off">Без самовывоза</span>{% endif %}
+                    </div>
+                </div>
+
+                <details class="branch-edit">
+                    <summary>Редактировать</summary>
+
+                    <form method="post" class="create-form" style="margin-top:14px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_location">
+                        <input type="hidden" name="location_id" value="{{ branch.id }}">
+
+                        <div class="form-grid">
+                            <div>
+                                <label>Название филиала *</label>
+                                <input name="location_name" value="{{ branch.name }}" required>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div>
-                            <label>Стоимость доставки</label>
-                            <input name="zone_delivery_price" type="number" min="0" step="1" value="{{ zone.delivery_price|floatformat:0 }}">
-                        </div>
-                        <div>
-                            <label>Бесплатно от</label>
-                            <input name="zone_free_delivery_threshold" type="number" min="0" step="1" value="{{ zone.free_delivery_threshold|floatformat:0 }}">
-                        </div>
-                    </div>
-
-                    <div class="edit-actions">
-                        <button type="submit">Сохранить</button>
-                    </div>
-                </form>
-
-                <form method="post" style="margin-top:10px;text-align:right;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_delivery_zone">
-                    <input type="hidden" name="zone_id" value="{{ zone.id }}">
-                    <button type="submit" class="branch-delete-btn"
-                            onclick="return confirm('Удалить зону доставки «{{ zone.name|escapejs }}»? Филиал останется, только зона будет удалена.')">
-                        Удалить зону
-                    </button>
-                </form>
-            </details>
-        </div>
-    {% empty %}
-        <div class="empty">Зон доставки пока нет. Сайт будет использовать правило по умолчанию.</div>
-    {% endfor %}
-</div>
-
-<div class="card">
-    <h2>Создать пользователя</h2>
-
-    {% if error %}
-        <div class="error">{{ error }}</div>
-    {% endif %}
-
-    <form method="post" class="create-form">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="create_user">
-
-        <div class="form-grid">
-            <div>
-                <label>Логин</label>
-                <input name="username" placeholder="Например: manager_uz">
-            </div>
-
-            <div>
-                <label>Пароль</label>
-                <input name="password" type="password" placeholder="Пароль">
-            </div>
-
-            <div>
-                <label>Роль</label>
-                <select name="role">
-                    {% for value, label in roles %}
-                        <option value="{{ value }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-			<div>
-			    <label>Филлиал</label>
-			    <select name="location_id">
-			        <option value="">Без филиалла</option>
-			        {% for location in locations %}
-			            <option value="{{ location.id }}">{{ location.name }}</option>
-			        {% endfor %}
-			    </select>
-			</div>
-        </div>
-
-        <div class="access-grid">
-            <div class="checkbox-panel">
-                <div class="checkbox-title">Страны</div>
-
-                <div class="checkboxes">
-                    {% for c in countries %}
-                        <label class="checkbox-pill">
-                            <input type="checkbox" name="countries" value="{{ c.id }}">
-                            {{ c.name }}
-                        </label>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="checkbox-panel">
-                <div class="checkbox-title">Доступные разделы</div>
-
-                <div class="checkboxes">
-                    {% for value, label in sections %}
-                        <label class="checkbox-pill">
-                            <input type="checkbox" name="allowed_sections" value="{{ value }}">
-                            {{ label }}
-                        </label>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <div>
-            <button type="submit">Создать</button>
-        </div>
-    </form>
-</div>
-
-<div class="card">
-    <h2>Существующие пользователи</h2>
-
-    <div class="users-list">
-        {% for user in users %}
-        <div class="user-card">
-            <div class="user-view">
-                <div>
-                    <div class="username">{{ user.username }}</div>
-                    <div class="muted">Логин</div>
-                </div>
-
-                <div>
-                    <div class="small-label">Роль</div>
-                    <span class="role-badge">{{ user.profile.get_role_display }}</span>
-                </div>
-
-                <div>
-                    <div class="small-label">Страны</div>
-                    <div class="country-list">
-                        {% for c in user.profile.countries.all %}
-                            {{ c.name }}{% if not forloop.last %}, {% endif %}
-                        {% empty %}
-                            <span class="muted">Страны не выбраны</span>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div>
-                    <div class="small-label">Разделы</div>
-                    <div class="section-list">
-                        {% for section_value, section_label in sections %}
-                            {% if section_value in user.profile.allowed_sections %}
-                                {{ section_label }}{% if not forloop.last %}, {% endif %}
-                            {% endif %}
-                        {% empty %}
-                            <span class="muted">Разделы не выбраны</span>
-                        {% endfor %}
-                    </div>
-                </div>
-				
-				<div>
-				    <div class="small-label">Филлиал</div>
-				    <div class="country-list">
-				        {% if user.profile.location %}
-				            {{ user.profile.location.name }}
-				        {% else %}
-				            <span class="muted">Не выбрана</span>
-				        {% endif %}
-				    </div>
-				</div>
-
-                <div>
-                    <div class="small-label">Superuser</div>
-                    {% if user.is_superuser %}
-                        <span class="superuser-yes">Да</span>
-                    {% else %}
-                        <span class="superuser-no">Нет</span>
-                    {% endif %}
-                </div>
-
-                <button type="button" class="secondary-btn edit-btn">Редактировать</button>
-            </div>
-
-            <div class="edit-panel">
-                <form method="post" class="edit-grid">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_user">
-                    <input type="hidden" name="user_id" value="{{ user.id }}">
-
-					<div class="edit-main-grid">
-					    <div>
-					        <label>Логин</label>
-					        <input name="username" value="{{ user.username }}">
-					    </div>
-
-					    <div>
-					        <label>Новый пароль</label>
-					        <input name="password" type="password" placeholder="Если нужно">
-					    </div>
-
-					    <div>
-					        <label>Роль</label>
-					        <select name="role">
-					            {% for value, label in roles %}
-					                <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>
-					                    {{ label }}
-					                </option>
-					            {% endfor %}
-					        </select>
-					    </div>
-
-					    <div>
-					        <label>Филлиал</label>
-
-					        <select name="location_id">
-					            <option value="">Без филиалла</option>
-
-					            {% for location in locations %}
-					                <option
-					                    value="{{ location.id }}"
-					                    {% if user.profile.location_id == location.id %}selected{% endif %}
-					                >
-					                    {{ location.name }}
-					                </option>
-					            {% endfor %}
-					        </select>
-					    </div>
-					</div>
-
-                    <div class="access-grid">
-                        <div class="checkbox-panel">
-                            <div class="checkbox-title">Страны</div>
-
-                            <div class="checkboxes">
-                                {% for c in countries %}
-                                    <label class="checkbox-pill">
-                                        <input
-                                            type="checkbox"
-                                            name="countries"
-                                            value="{{ c.id }}"
-                                            {% if c in user.profile.countries.all %}checked{% endif %}
-                                        >
-                                        {{ c.name }}
-                                    </label>
-                                {% endfor %}
+                            <div>
+                                <label>Telegram thread ID</label>
+                                <input name="telegram_thread_id" type="number" value="{% if branch.telegram_thread_id is not None %}{{ branch.telegram_thread_id }}{% endif %}">
+                            </div>
+                            <div>
+                                <label>Название для сайта</label>
+                                <input name="public_name" value="{{ branch.public_name }}">
+                            </div>
+                            <div>
+                                <label>Порядок на сайте</label>
+                                <input name="site_sort_order" type="number" min="0" step="1" value="{{ branch.site_sort_order }}">
                             </div>
                         </div>
 
-                        <div class="checkbox-panel">
-                            <div class="checkbox-title">Доступные разделы</div>
-
-                            <div class="checkboxes">
-                                {% for value, label in sections %}
-                                    <label class="checkbox-pill">
-                                        <input
-                                            type="checkbox"
-                                            name="allowed_sections"
-                                            value="{{ value }}"
-                                            {% if value in user.profile.allowed_sections %}checked{% endif %}
-                                        >
-                                        {{ label }}
-                                    </label>
-                                {% endfor %}
+                        <div class="form-grid">
+                            <div style="grid-column: span 2;">
+                                <label>Адрес</label>
+                                <input name="address" value="{{ branch.address }}">
+                            </div>
+                            <div>
+                                <label>Телефон</label>
+                                <input name="phone" value="{{ branch.phone }}">
+                            </div>
+                            <div>
+                                <label>Часы работы</label>
+                                <input name="working_hours" value="{{ branch.working_hours }}">
                             </div>
                         </div>
-                    </div>
 
-                    <div class="edit-actions">
-                        <button type="button" class="secondary-btn cancel-edit-btn">Отмена</button>
-                        <button type="submit">Сохранить</button>
-                    </div>
-                </form>
+                        <div class="form-grid">
+                            <div>
+                                <label>Широта</label>
+                                <input name="latitude" value="{% if branch.latitude is not None %}{{ branch.latitude }}{% endif %}">
+                            </div>
+                            <div>
+                                <label>Долгота</label>
+                                <input name="longitude" value="{% if branch.longitude is not None %}{{ branch.longitude }}{% endif %}">
+                            </div>
+                            <div class="checkbox-panel" style="grid-column: span 2;">
+                                <div class="checkbox-title">Статус</div>
+                                <div class="checkboxes">
+                                    <label class="check-row"><input type="checkbox" name="is_active" {% if branch.is_active %}checked{% endif %}> <span>Активен</span></label>
+                                    <label class="check-row"><input type="checkbox" name="is_visible_on_site" {% if branch.is_visible_on_site %}checked{% endif %}> <span>Показывать на сайте</span></label>
+                                    <label class="check-row"><input type="checkbox" name="supports_delivery" {% if branch.supports_delivery %}checked{% endif %}> <span>Доставка</span></label>
+                                    <label class="check-row"><input type="checkbox" name="supports_pickup" {% if branch.supports_pickup %}checked{% endif %}> <span>Самовывоз</span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="edit-actions">
+                            <button type="submit">Сохранить</button>
+                        </div>
+                    </form>
+
+                    <form method="post" style="margin-top:10px;text-align:right;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_location">
+                        <input type="hidden" name="location_id" value="{{ branch.id }}">
+                        <button type="submit" class="branch-delete-btn"
+                                onclick="return confirm('Удалить филиал «{{ branch.name|escapejs }}»? Это действие необратимо.')">
+                            Удалить филиал
+                        </button>
+                    </form>
+                </details>
             </div>
-        </div>
         {% empty %}
-            <div class="empty">Пользователей пока нет.</div>
+            <div class="empty">Пока нет филиалов</div>
         {% endfor %}
     </div>
-</div>
 
+    {# ============================ ЗОНЫ ДОСТАВКИ ============================ #}
+    <div class="card">
+        <h2>Зоны доставки</h2>
+        <p class="muted" style="margin-bottom:14px;">
+            Круглые зоны (центр + радиус) для автоматического выбора филиала,
+            который повезёт заказ. Если у клиента есть координаты — ERP сам
+            подберёт ближайшую активную зону. Если зон нет, сайт использует
+            правило по умолчанию: 15 000 при сумме до 150 000, бесплатно от
+            150 000.
+        </p>
+
+        <details style="margin-bottom:8px;">
+            <summary class="create-summary">+ Создать зону доставки</summary>
+
+            <form method="post" class="create-form" style="margin-top:14px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_delivery_zone">
+
+                <div class="form-grid">
+                    <div>
+                        <label>Название зоны *</label>
+                        <input name="zone_name" placeholder="Мирабад зона 1" required>
+                    </div>
+                    <div>
+                        <label>Филиал *</label>
+                        <select name="zone_location_id" required>
+                            <option value="">— выбери филиал —</option>
+                            {% for loc in locations %}
+                                <option value="{{ loc.id }}">{{ loc.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Время доставки</label>
+                        <input name="zone_estimated_time" value="35–45 мин">
+                    </div>
+                    <div>
+                        <label>Порядок</label>
+                        <input name="zone_sort_order" type="number" min="0" step="1" value="0">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Широта центра</label>
+                        <input name="zone_center_latitude" placeholder="41.2995">
+                    </div>
+                    <div>
+                        <label>Долгота центра</label>
+                        <input name="zone_center_longitude" placeholder="69.2401">
+                    </div>
+                    <div>
+                        <label>Радиус (км)</label>
+                        <input name="zone_radius_km" placeholder="3">
+                    </div>
+                    <div class="checkbox-panel">
+                        <div class="checkbox-title">Статус</div>
+                        <div class="checkboxes">
+                            <label class="check-row"><input type="checkbox" name="zone_is_active" checked> <span>Активна</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Стоимость доставки</label>
+                        <input name="zone_delivery_price" type="number" min="0" step="1" value="15000">
+                    </div>
+                    <div>
+                        <label>Бесплатно от</label>
+                        <input name="zone_free_delivery_threshold" type="number" min="0" step="1" value="150000">
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <button type="submit">Создать зону</button>
+                </div>
+            </form>
+        </details>
+
+        {% for zone in delivery_zones %}
+            <div class="branch-row">
+                <div class="branch-head">
+                    <div>
+                        <div class="branch-title">{{ zone.name }}</div>
+                        <div class="branch-sub">
+                            Филиал: {{ zone.location.name }}
+                            {% if zone.radius_km %} · радиус {{ zone.radius_km }} км{% endif %}
+                            {% if zone.center_latitude is not None and zone.center_longitude is not None %}
+                                · центр {{ zone.center_latitude }}, {{ zone.center_longitude }}
+                            {% endif %}
+                            · {{ zone.estimated_time|default:"35–45 мин" }}
+                        </div>
+                    </div>
+                    <div class="branch-badges">
+                        {% if zone.is_active %}<span class="branch-badge branch-badge-on">Активна</span>{% else %}<span class="branch-badge branch-badge-off">Отключена</span>{% endif %}
+                        <span class="branch-badge branch-badge-off">{{ zone.delivery_price|floatformat:0 }}</span>
+                        {% if zone.free_delivery_threshold %}<span class="branch-badge branch-badge-off">free от {{ zone.free_delivery_threshold|floatformat:0 }}</span>{% endif %}
+                    </div>
+                </div>
+
+                <details class="branch-edit">
+                    <summary>Редактировать</summary>
+
+                    <form method="post" class="create-form" style="margin-top:14px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_delivery_zone">
+                        <input type="hidden" name="zone_id" value="{{ zone.id }}">
+
+                        <div class="form-grid">
+                            <div>
+                                <label>Название зоны *</label>
+                                <input name="zone_name" value="{{ zone.name }}" required>
+                            </div>
+                            <div>
+                                <label>Филиал *</label>
+                                <select name="zone_location_id" required>
+                                    {% for loc in locations %}
+                                        <option value="{{ loc.id }}" {% if loc.id == zone.location_id %}selected{% endif %}>{{ loc.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Время доставки</label>
+                                <input name="zone_estimated_time" value="{{ zone.estimated_time }}">
+                            </div>
+                            <div>
+                                <label>Порядок</label>
+                                <input name="zone_sort_order" type="number" min="0" step="1" value="{{ zone.site_sort_order }}">
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div>
+                                <label>Широта центра</label>
+                                <input name="zone_center_latitude" value="{% if zone.center_latitude is not None %}{{ zone.center_latitude }}{% endif %}">
+                            </div>
+                            <div>
+                                <label>Долгота центра</label>
+                                <input name="zone_center_longitude" value="{% if zone.center_longitude is not None %}{{ zone.center_longitude }}{% endif %}">
+                            </div>
+                            <div>
+                                <label>Радиус (км)</label>
+                                <input name="zone_radius_km" value="{% if zone.radius_km is not None %}{{ zone.radius_km }}{% endif %}">
+                            </div>
+                            <div class="checkbox-panel">
+                                <div class="checkbox-title">Статус</div>
+                                <div class="checkboxes">
+                                    <label class="check-row"><input type="checkbox" name="zone_is_active" {% if zone.is_active %}checked{% endif %}> <span>Активна</span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div>
+                                <label>Стоимость доставки</label>
+                                <input name="zone_delivery_price" type="number" min="0" step="1" value="{{ zone.delivery_price|floatformat:0 }}">
+                            </div>
+                            <div>
+                                <label>Бесплатно от</label>
+                                <input name="zone_free_delivery_threshold" type="number" min="0" step="1" value="{{ zone.free_delivery_threshold|floatformat:0 }}">
+                            </div>
+                        </div>
+
+                        <div class="edit-actions">
+                            <button type="submit">Сохранить</button>
+                        </div>
+                    </form>
+
+                    <form method="post" style="margin-top:10px;text-align:right;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_delivery_zone">
+                        <input type="hidden" name="zone_id" value="{{ zone.id }}">
+                        <button type="submit" class="branch-delete-btn"
+                                onclick="return confirm('Удалить зону доставки «{{ zone.name|escapejs }}»? Филиал останется, только зона будет удалена.')">
+                            Удалить зону
+                        </button>
+                    </form>
+                </details>
+            </div>
+        {% empty %}
+            <div class="empty">Зон доставки пока нет. Сайт будет использовать правило по умолчанию.</div>
+        {% endfor %}
+    </div>
+
+</div>
 </div>
 
 <script>
@@ -1017,18 +789,36 @@ document.addEventListener("click", function(e) {
     const editBtn = e.target.closest(".edit-btn");
     if (editBtn) {
         e.preventDefault();
-        const card = editBtn.closest(".user-card");
-        card.classList.add("editing");
+        editBtn.closest(".user-card").classList.toggle("editing");
         return;
     }
 
     const cancelBtn = e.target.closest(".cancel-edit-btn");
     if (cancelBtn) {
         e.preventDefault();
-        const card = cancelBtn.closest(".user-card");
-        card.classList.remove("editing");
+        cancelBtn.closest(".user-card").classList.remove("editing");
+        return;
+    }
+
+    const eye = e.target.closest(".pw-eye");
+    if (eye) {
+        e.preventDefault();
+        const input = document.getElementById(eye.dataset.target);
+        if (input) input.type = input.type === "password" ? "text" : "password";
     }
 });
+
+(function() {
+    const search = document.getElementById("userSearch");
+    if (!search) return;
+    search.addEventListener("input", function() {
+        const q = this.value.trim().toLowerCase();
+        document.querySelectorAll(".users-list .user-card").forEach(function(card) {
+            const name = card.getAttribute("data-name") || "";
+            card.style.display = name.indexOf(q) !== -1 ? "" : "none";
+        });
+    });
+})();
 </script>
 
 {% endblock %}

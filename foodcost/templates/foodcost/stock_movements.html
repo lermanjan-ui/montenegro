@@ -1,0 +1,148 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Движения склада{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Общий журнал движений склада. Деньги скрыты для кухни. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-text:#166534; --fc-green-soft:#DCFCE7;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1360px; margin:0 auto; padding:24px; }
+.fc-page-head{ margin-bottom:20px; }
+.fc-page-head h1{ margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:18px; }
+.kpi-label{ color:var(--fc-muted); font-size:13px; font-weight:600; margin-bottom:4px; }
+.kpi-value{ font-size:26px; font-weight:700; }
+.kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
+
+.filters{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; align-items:end; }
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input,.fc-select{ width:100%; height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; color:var(--fc-text); }
+.fc-input:focus,.fc-select:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+.filter-actions{ display:flex; gap:10px; }
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+
+.fc-table{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); overflow:hidden; }
+.t-head,.t-row{ display:grid; gap:10px; align-items:center; padding:12px 14px; }
+.cols-money{ grid-template-columns: 1.1fr 0.9fr 1.1fr 1.5fr 0.8fr 0.9fr 0.9fr 1fr 0.9fr; }
+.cols-nomoney{ grid-template-columns: 1.2fr 1fr 1.2fr 1.7fr 0.9fr 1.2fr 0.9fr; }
+.t-head{ background:var(--fc-card-soft); border-bottom:1px solid var(--fc-border); font-size:11px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; }
+.t-row{ border-bottom:1px solid var(--fc-border-soft); font-size:13px; }
+.t-row:last-child{ border-bottom:0; } .t-row:hover{ background:var(--fc-card-soft); }
+.num{ font-variant-numeric:tabular-nums; }
+.r{ text-align:right; }
+.in{ color:var(--fc-green-text); font-weight:700; }
+.out{ color:var(--fc-danger-text); font-weight:700; }
+.zero{ color:var(--fc-muted); }
+.p-name{ font-weight:600; } .p-sku{ color:var(--fc-muted-soft); font-size:11px; }
+.tg{ display:inline-block; padding:2px 9px; border-radius:var(--fc-radius-pill); font-size:11px; font-weight:600; background:var(--fc-border-soft); color:var(--fc-muted); }
+.doc-link{ color:var(--fc-info-text); text-decoration:none; font-weight:600; }
+
+.t-foot{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+.pager{ display:flex; gap:6px; align-items:center; }
+.pager a,.pager span{ min-width:36px; height:36px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--fc-border); border-radius:8px; text-decoration:none; color:var(--fc-text); font-size:14px; font-weight:600; }
+.pager .cur{ background:var(--fc-text); color:#fff; border-color:var(--fc-text); }
+.pager .disabled{ color:var(--fc-muted-soft); pointer-events:none; opacity:.5; }
+.empty{ text-align:center; padding:36px 16px; color:var(--fc-muted); font-size:14px; }
+
+@media (max-width:1100px){ .kpi-grid{ grid-template-columns:1fr 1fr; } .filters{ grid-template-columns:1fr 1fr; } .t-head{ display:none; } .cols-money,.cols-nomoney{ grid-template-columns:1fr 1fr; } }
+@media (max-width:560px){ .fc-page{ padding:16px; } .kpi-grid,.filters,.cols-money,.cols-nomoney{ grid-template-columns:1fr; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="fc-page-head"><h1>Движения склада</h1><p class="muted">Полный журнал всех движений остатков: приходы, продажи, списания, перемещения, инвентаризация.</p></div>
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Всего движений</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">по фильтру</div></div>
+        <div class="kpi"><div class="kpi-label">Приходы</div><div class="kpi-value" style="color:var(--fc-green-text);">{{ kpi_income }}</div><div class="kpi-sub">поступления + входящие</div></div>
+        <div class="kpi"><div class="kpi-label">Расходы</div><div class="kpi-value" style="color:var(--fc-danger-text);">{{ kpi_outcome }}</div><div class="kpi-sub">продажи/списания/выход</div></div>
+        <div class="kpi"><div class="kpi-label">Корректировки</div><div class="kpi-value">{{ kpi_adjust }}</div><div class="kpi-sub">инвентаризация</div></div>
+    </div>
+
+    <div class="fc-card">
+        <form method="get">
+            <div class="filters">
+                <div><label class="fc-label">Дата от</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
+                <div><label class="fc-label">Дата до</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
+                <div><label class="fc-label">Склад</label><select class="fc-select" name="warehouse"><option value="">Все</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Тип движения</label><select class="fc-select" name="type"><option value="">Все</option>{% for v,l in movement_types %}<option value="{{ v }}" {% if type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Источник</label><select class="fc-select" name="source"><option value="">Все</option>{% for v,l in source_types %}<option value="{{ v }}" {% if source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div style="grid-column:span 2;"><label class="fc-label">Поиск позиции</label><input class="fc-input" name="search" value="{{ search }}" placeholder="Товар, артикул, заготовка, комментарий"></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/stock/movements/" class="fc-btn fc-btn-secondary">Сбросить</a></div>
+            </div>
+        </form>
+    </div>
+
+    <div class="fc-card">
+        <div class="fc-table">
+            <div class="t-head {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
+                <div>Дата / время</div><div>Склад</div><div>Тип</div><div>Позиция</div><div class="r">Кол-во</div>
+                {% if show_money %}<div class="r">Себестоим.</div><div class="r">Сумма</div>{% endif %}
+                <div>Источник</div><div>Автор</div>
+            </div>
+            {% for r in rows %}
+            <div class="t-row {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
+                <div class="num">{{ r.obj.movement_datetime|date:"d.m.Y H:i" }}</div>
+                <div>{{ r.obj.warehouse.name|default:"—" }}</div>
+                <div><span class="tg">{{ r.obj.get_movement_type_display }}</span></div>
+                <div><span class="p-name">{{ r.name }}</span> <span class="muted">{{ r.unit }}</span>{% if r.sku %}<div class="p-sku">{{ r.sku }}</div>{% endif %}</div>
+                <div class="r num {{ r.qty_dir }}">{{ r.qty_display }}</div>
+                {% if show_money %}<div class="r num">{{ r.unit_cost_display }}</div><div class="r num">{{ r.total_cost_display }}</div>{% endif %}
+                <div>{% if r.doc_url %}<a class="doc-link" href="{{ r.doc_url }}">{{ r.obj.get_source_type_display }}</a>{% else %}<span class="muted">{{ r.obj.get_source_type_display|default:"—" }}</span>{% endif %}</div>
+                <div class="muted">{{ r.obj.created_by.username|default:"—" }}</div>
+            </div>
+            {% empty %}
+                <div class="empty">Движений по выбранным условиям нет.</div>
+            {% endfor %}
+        </div>
+
+        <div class="t-foot">
+            <div class="muted">{% if total_count %}Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}{% else %}Ничего не найдено{% endif %}</div>
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="pager">
+                {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{{ base_qs }}">‹</a>{% else %}<span class="disabled">‹</span>{% endif %}
+                {% for n in page_obj.paginator.page_range %}{% if n == page_obj.number %}<span class="cur">{{ n }}</span>{% elif n > page_obj.number|add:'-3' and n < page_obj.number|add:'3' %}<a href="?page={{ n }}{{ base_qs }}">{{ n }}</a>{% endif %}{% endfor %}
+                {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{{ base_qs }}">›</a>{% else %}<span class="disabled">›</span>{% endif %}
+            </div>
+            {% endif %}
+            <form method="get" style="display:flex;align-items:center;gap:8px;">
+                {% if date_from %}<input type="hidden" name="date_from" value="{{ date_from }}">{% endif %}
+                {% if date_to %}<input type="hidden" name="date_to" value="{{ date_to }}">{% endif %}
+                {% if warehouse_id %}<input type="hidden" name="warehouse" value="{{ warehouse_id }}">{% endif %}
+                {% if type %}<input type="hidden" name="type" value="{{ type }}">{% endif %}
+                {% if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
+                {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
+                <span class="muted">На странице</span>
+                <select class="fc-select" name="per_page" onchange="this.form.submit()" style="width:auto;height:36px;">
+                    <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                    <option value="200" {% if per_page == 200 %}selected{% endif %}>200</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+</div>
+</div>
+{% endblock %}

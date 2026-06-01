@@ -11,7 +11,7 @@ This page exposes THREE sections:
 Permissions:
     - login_required
     - country must be accessible to the user (delegated to get_country)
-    - SECTION_SETTINGS access required (delegated to require_section_access)
+    - SECTION_SITE access required (delegated to require_section_access)
 
 We deliberately reuse the SAME permission gate as the main /settings/ page
 because spec says "do not create a new permission system".
@@ -183,7 +183,7 @@ def homepage_settings_page(request, country_slug):
 
     access_error = require_section_access(
         request.user,
-        UserProfile.SECTION_SETTINGS,
+        UserProfile.SECTION_SITE,
     )
     if access_error:
         return access_error

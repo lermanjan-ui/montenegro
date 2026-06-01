@@ -48,5 +48,7 @@ def menu_context(request):
         "can_menu_purchases": user_has_section(request.user, UserProfile.SECTION_PURCHASES),
         "can_menu_suppliers": user_has_section(request.user, UserProfile.SECTION_SUPPLIERS),
         "can_menu_inventory": user_has_section(request.user, UserProfile.SECTION_INVENTORY),
+        "can_menu_stock": user_has_section(request.user, UserProfile.SECTION_STOCK),
+        "can_menu_transfers": user_has_section(request.user, UserProfile.SECTION_TRANSFERS),
         "can_menu_finance": user_has_section(request.user, UserProfile.SECTION_FINANCE),
     }

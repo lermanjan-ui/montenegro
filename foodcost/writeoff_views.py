@@ -13,12 +13,69 @@ from .models import (
     Product,
     Preparation,
     WriteOff,
+    Location,
+    StockMovement,
 )
 
 from .views import (
     get_country,
     require_section_access,
 )
+
+
+def _sync_writeoff_movement(writeoff, country, user):
+    """Синхронизирует движение склада со списанием.
+    Удаляет прежнее движение этого списания и, если задан склад и
+    количество > 0, создаёт новое (расход, −количество)."""
+    StockMovement.objects.filter(
+        country=country,
+        source_type=StockMovement.SOURCE_WRITEOFF,
+        source_id=writeoff.id,
+    ).delete()
+
+    if not writeoff.location_id:
+        return
+    qty = writeoff.quantity or Decimal(0)
+    if qty <= 0:
+        return
+
+    total = writeoff.cost or Decimal(0)
+    unit_cost = (total / qty) if qty else Decimal(0)
+
+    if writeoff.item_type == WriteOff.ITEM_TYPE_PRODUCT and writeoff.product_id:
+        StockMovement.objects.create(
+            country=country, warehouse_id=writeoff.location_id,
+            item_type=StockMovement.ITEM_TYPE_PRODUCT, product_id=writeoff.product_id,
+            quantity_delta=-qty,
+            movement_type=StockMovement.TYPE_WRITEOFF,
+            source_type=StockMovement.SOURCE_WRITEOFF, source_id=writeoff.id,
+            unit_cost=unit_cost, total_cost=-total,
+            comment=f"Списание: {writeoff.get_reason_display()}",
+            created_by=user,
+        )
+    elif writeoff.item_type == WriteOff.ITEM_TYPE_PREPARATION and writeoff.preparation_id:
+        StockMovement.objects.create(
+            country=country, warehouse_id=writeoff.location_id,
+            item_type=StockMovement.ITEM_TYPE_PREPARATION, preparation_id=writeoff.preparation_id,
+            quantity_delta=-qty,
+            movement_type=StockMovement.TYPE_WRITEOFF,
+            source_type=StockMovement.SOURCE_WRITEOFF, source_id=writeoff.id,
+            unit_cost=unit_cost, total_cost=-total,
+            comment=f"Списание: {writeoff.get_reason_display()}",
+            created_by=user,
+        )
+
+
+def _resolve_writeoff_location(request, country, profile):
+    """Склад списания: повару — его склад из профиля; остальным — из формы."""
+    if profile.is_kitchen_staff():
+        if profile.location_id:
+            return Location.objects.filter(id=profile.location_id, country=country).first()
+        return None
+    loc_id = request.POST.get("location_id")
+    if loc_id:
+        return Location.objects.filter(id=loc_id, country=country).first()
+    return None
 
 
 @login_required(login_url="/login/")
@@ -79,7 +136,9 @@ def writeoff_list(request, country_slug):
                         country=country,
                     )
 
+            writeoff.location = _resolve_writeoff_location(request, country, request.user.profile)
             writeoff.save()
+            _sync_writeoff_movement(writeoff, country, request.user)
 
             return redirect(f"/c/{country.slug}/writeoffs/")
             
@@ -90,6 +149,11 @@ def writeoff_list(request, country_slug):
                 country=country,
             )
 
+            StockMovement.objects.filter(
+                country=country,
+                source_type=StockMovement.SOURCE_WRITEOFF,
+                source_id=writeoff.id,
+            ).delete()
             writeoff.delete()
 
             return redirect(f"/c/{country.slug}/writeoffs/")
@@ -109,7 +173,15 @@ def writeoff_list(request, country_slug):
             writeoff.comment = request.POST.get("comment", "")
             writeoff.writeoff_date = request.POST.get("writeoff_date")
 
+            # склад может поменять только не-кухня (у повара он из профиля)
+            if not request.user.profile.is_kitchen_staff():
+                if request.POST.get("location_id"):
+                    writeoff.location = _resolve_writeoff_location(
+                        request, country, request.user.profile
+                    )
+
             writeoff.save()
+            _sync_writeoff_movement(writeoff, country, request.user)
 
             return redirect(f"/c/{country.slug}/writeoffs/")
 
@@ -128,6 +200,10 @@ def writeoff_list(request, country_slug):
     products = Product.objects.filter(country=country).order_by("name")
     preparations = Preparation.objects.filter(country=country).order_by("name")
 
+    locations = Location.objects.filter(country=country).order_by("name")
+    is_kitchen = request.user.profile.is_kitchen_staff()
+    profile_location_id = request.user.profile.location_id
+
     return render(request, "foodcost/writeoff_list.html", {
         "country": country,
         "writeoffs": writeoffs,
@@ -136,6 +212,9 @@ def writeoff_list(request, country_slug):
         "reasons": WriteOff.REASON_CHOICES,
         "today": timezone.now().date(),
         "days": days,
+        "locations": locations,
+        "is_kitchen": is_kitchen,
+        "profile_location_id": profile_location_id,
     })
 
 

@@ -372,6 +372,18 @@
                 <input type="date" name="writeoff_date" value="{{ today|date:'Y-m-d' }}">
             </div>
 
+            {% if not is_kitchen %}
+            <div>
+                <label>Склад</label>
+                <select name="location_id">
+                    <option value="">— выберите склад —</option>
+                    {% for loc in locations %}
+                        <option value="{{ loc.id }}" {% if profile_location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
             <div>
                 <label>Тип</label>
                 <select name="item_type" id="item-type-select">
