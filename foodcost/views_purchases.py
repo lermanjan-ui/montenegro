@@ -84,6 +84,15 @@ def _show_money(request):
     return not (profile and profile.is_kitchen_staff())
 
 
+def _is_superadmin(user):
+    """Суперадмин = Django is_superuser ИЛИ UserProfile.role == super_admin.
+    Только он может править уже ПОДТВЕРЖДЁННЫЙ приход."""
+    if getattr(user, "is_superuser", False):
+        return True
+    profile = getattr(user, "profile", None)
+    return bool(profile and profile.is_super_admin())
+
+
 # =========================================================================
 # СПИСОК ПРИХОДОВ
 # =========================================================================
@@ -242,14 +251,32 @@ def purchase_detail(request, country_slug, receipt_id):
 
     receipt = get_object_or_404(PurchaseReceipt, id=receipt_id, country=country)
     is_draft = receipt.status == PurchaseReceipt.STATUS_DRAFT
+    is_confirmed = receipt.status == PurchaseReceipt.STATUS_CONFIRMED
+
+    # Суперадмин может править ПОДТВЕРЖДЁННЫЙ приход «на месте»: статус
+    # остаётся confirmed, но любое изменение строк запускает атомарный
+    # пересбор движений склада и истории цен (см. _rebuild_receipt_stock).
+    is_super = _is_superadmin(request.user)
+    can_edit_confirmed = is_super and is_confirmed
+    # Можно ли вообще менять строки в этом запросе: черновик (как раньше)
+    # ИЛИ суперадмин по подтверждённому.
+    items_editable = is_draft or can_edit_confirmed
 
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # --- действия, требующие прав редактирования и статуса "черновик" ---
-        if action in ("update_header", "add_item", "remove_item",
-                      "delete", "copy", "create_supplier_inline") and not can_edit:
-            return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
+        # --- действия редактирования строк ---
+        # В черновике — обычное право can_edit. В подтверждённом приходе
+        # эти же действия разрешены ТОЛЬКО суперадмину (правка на месте).
+        editing_actions = ("update_header", "add_item", "edit_item", "remove_item",
+                           "delete", "copy", "create_supplier_inline")
+        if action in editing_actions:
+            if is_draft and not can_edit:
+                return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
+            if is_confirmed and not can_edit_confirmed:
+                return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
+            if receipt.status == PurchaseReceipt.STATUS_CANCELLED:
+                return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
 
         if action == "update_header":
             if is_draft:
@@ -284,10 +311,11 @@ def purchase_detail(request, country_slug, receipt_id):
                 receipt.save(update_fields=["supplier", "updated_at"])
             return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
 
-        if action == "add_item" and is_draft:
+        if action == "add_item" and items_editable:
             # Подхватываем несохранённые значения шапки (скрытые поля формы),
             # чтобы выбор поставщика/склада/даты не обнулялся при добавлении.
-            if "hdr_supplier" in request.POST:
+            # Для подтверждённого прихода шапку не трогаем (склад уже привязан).
+            if is_draft and "hdr_supplier" in request.POST:
                 hs = request.POST.get("hdr_supplier")
                 hw = request.POST.get("hdr_warehouse")
                 receipt.supplier = (
@@ -324,13 +352,41 @@ def purchase_detail(request, country_slug, receipt_id):
                     receipt=receipt, product=product, quantity=qty, unit_price=price,
                 )
                 _recalc_total(receipt)
+                if is_confirmed:
+                    _rebuild_receipt_stock(receipt, request.user, country,
+                                           reason="добавлена позиция")
             return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
 
-        if action == "remove_item" and is_draft:
+        if action == "remove_item" and items_editable:
             PurchaseReceiptItem.objects.filter(
                 id=request.POST.get("item_id"), receipt=receipt
             ).delete()
             _recalc_total(receipt)
+            if is_confirmed:
+                _rebuild_receipt_stock(receipt, request.user, country,
+                                       reason="удалена позиция")
+            return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
+
+        if action == "edit_item" and items_editable:
+            # Правка существующей строки: новое количество и/или новая
+            # оплаченная сумма за партию. unit_price пересчитываем сами.
+            it = PurchaseReceiptItem.objects.filter(
+                id=request.POST.get("item_id"), receipt=receipt
+            ).first()
+            if it:
+                qty = _clean_decimal(request.POST.get("quantity"))
+                line_total = _clean_decimal(request.POST.get("line_total"))
+                if qty > 0:
+                    it.quantity = qty
+                    if line_total > 0:
+                        it.unit_price = line_total / qty
+                    # если сумму не ввели — оставляем прежнюю unit_price,
+                    # total пересчитается в save() как qty × unit_price
+                    it.save()
+                    _recalc_total(receipt)
+                    if is_confirmed:
+                        _rebuild_receipt_stock(receipt, request.user, country,
+                                               reason="изменена позиция")
             return redirect(f"/c/{country.slug}/purchases/{receipt.id}/")
 
         if action == "delete" and is_draft:
@@ -372,6 +428,9 @@ def purchase_detail(request, country_slug, receipt_id):
         "qty_display": _fmt_qty(it.quantity),
         "price_display": _fmt_money(it.unit_price),
         "total_display": _fmt_money(it.total),
+        # сырые значения для формы правки (без форматирования пробелами)
+        "qty_raw": _fmt_qty(it.quantity),
+        "total_raw": str(int(it.total)) if it.total == it.total.to_integral_value() else str(it.total),
     } for it in items]
 
     logs = (
@@ -390,6 +449,9 @@ def purchase_detail(request, country_slug, receipt_id):
         "is_draft": is_draft,
         "is_confirmed": receipt.status == PurchaseReceipt.STATUS_CONFIRMED,
         "is_cancelled": receipt.status == PurchaseReceipt.STATUS_CANCELLED,
+        "is_super": is_super,
+        "can_edit_confirmed": can_edit_confirmed,
+        "items_editable": items_editable,
 
         "item_rows": item_rows,
         "items_count": len(items),
@@ -485,3 +547,92 @@ def _confirm_receipt(receipt, user, country):
         )
 
     return ""
+
+
+def _revert_receipt_stock(receipt, country):
+    """Снимает складские следы подтверждённого прихода:
+      • удаляет StockMovement этого прихода (по source_type/source_id);
+      • удаляет записи ProductPrice, созданные этим приходом
+        (точное совпадение product + date_from + price из его строк).
+    Используется как первый шаг пересбора при правке на месте.
+    ВНИМАНИЕ: вызывать только внутри transaction.atomic()."""
+    # 1) движения склада этого прихода
+    StockMovement.objects.filter(
+        country=country,
+        source_type=StockMovement.SOURCE_PURCHASE_RECEIPT,
+        source_id=receipt.id,
+    ).delete()
+
+    # 2) записи истории цен, которые создал этот приход.
+    # Прямой связи ProductPrice→приход нет, поэтому удаляем по точному
+    # совпадению (product, date_from, price) с текущими строками прихода.
+    # Это снимает ровно «свои» цены и не трогает чужие записи.
+    if receipt.receipt_date:
+        for it in receipt.items.select_related("product").all():
+            ProductPrice.objects.filter(
+                product=it.product,
+                date_from=receipt.receipt_date,
+                price=it.unit_price,
+            ).delete()
+
+
+def _rebuild_receipt_stock(receipt, user, country, reason=""):
+    """Пересобирает складские следы ПОДТВЕРЖДЁННОГО прихода после правки
+    строк «на месте» (доступно только суперадмину).
+
+    Делает всё атомарно:
+      1) откатывает прежние движения и цены этого прихода;
+      2) пересчитывает сумму документа;
+      3) заново создаёт StockMovement и ProductPrice по текущим строкам;
+      4) пишет запись в журнал (action="edited").
+
+    Статус документа НЕ меняется (остаётся confirmed)."""
+    if receipt.status != PurchaseReceipt.STATUS_CONFIRMED:
+        return
+
+    with transaction.atomic():
+        # 1) снять прежние следы
+        _revert_receipt_stock(receipt, country)
+
+        # 2) пересчитать сумму
+        items = list(receipt.items.select_related("product").all())
+        receipt.total_amount = sum((it.total for it in items), Decimal(0))
+        if receipt.is_paid and (receipt.paid_amount or 0) == 0:
+            receipt.paid_amount = receipt.total_amount
+        receipt.save(update_fields=["total_amount", "paid_amount", "updated_at"])
+
+        # 3) пересоздать движения и цены по текущим строкам
+        for it in items:
+            StockMovement.objects.create(
+                country=country,
+                warehouse=receipt.warehouse,
+                item_type=StockMovement.ITEM_TYPE_PRODUCT,
+                product=it.product,
+                quantity_delta=it.quantity,
+                movement_type=StockMovement.TYPE_RECEIPT,
+                source_type=StockMovement.SOURCE_PURCHASE_RECEIPT,
+                source_id=receipt.id,
+                unit_cost=it.unit_price,
+                total_cost=it.total,
+                comment=f"Приход {receipt.document_number} (правка)",
+                created_by=user,
+            )
+            ProductPrice.objects.create(
+                product=it.product,
+                price=it.unit_price,
+                date_from=receipt.receipt_date,
+            )
+
+        # 4) журнал
+        DocumentLog.objects.create(
+            country=country,
+            document_type=DocumentLog.DOC_PURCHASE_RECEIPT,
+            document_id=receipt.id,
+            user=user,
+            action="edited",
+            comment=(
+                f"Приход {receipt.document_number} отредактирован суперадмином"
+                + (f": {reason}" if reason else "")
+                + ". Движения склада и цены пересобраны."
+            ),
+        )

@@ -318,10 +318,17 @@ def dish_list(request, country_slug):
     sort_type = request.GET.get("sort", "name")
     category_ids = request.GET.getlist("categories")
 
+    # Спец-значение "none" в списке categories = «блюда без категории»
+    # (category_id is None). Может комбинироваться с обычными id категорий:
+    # тогда показываем и выбранные категории, и блюда без категории.
+    want_no_category = "none" in category_ids
+    real_category_ids = [c for c in category_ids if c != "none"]
+
     if category_ids:
         dishes = [
             dish for dish in dishes
-            if dish.category_id and str(dish.category_id) in category_ids
+            if (dish.category_id and str(dish.category_id) in real_category_ids)
+            or (want_no_category and not dish.category_id)
         ]
 
     if filter_type == "loss":

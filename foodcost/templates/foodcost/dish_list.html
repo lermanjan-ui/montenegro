@@ -330,6 +330,16 @@
             <input type="hidden" name="sort" value="{{ sort_type }}">
 
             <div class="category-list">
+                <label class="category-chip {% if 'none' in selected_category_ids %}active{% endif %}">
+                    <input
+                        type="checkbox"
+                        name="categories"
+                        value="none"
+                        {% if 'none' in selected_category_ids %}checked{% endif %}
+                        style="display:none;"
+                    >
+                    Без категории
+                </label>
                 {% for category in categories %}
                     <label class="category-chip {% if category.id|stringformat:'s' in selected_category_ids %}active{% endif %}">
                         <input
@@ -348,7 +358,7 @@
 
             <div class="category-actions">
                 <button type="submit">Применить</button>
-                <a class="secondary-button" href="/c/{{ country.slug }}/?filter={{ filter_type }}&sort={{ sort_type }}">
+                <a class="secondary-button" href="/c/{{ country.slug }}/">
                     Сбросить
                 </a>
             </div>

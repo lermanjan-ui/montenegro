@@ -199,12 +199,17 @@
     <!-- Товары -->
     <div class="fc-card">
         <h2>Товары</h2>
+        {% if is_confirmed and can_edit_confirmed %}
+        <div style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;">
+            ⚠️ Режим правки суперадмина. Приход уже подтверждён — при изменении строк остатки на складе и история закупочных цен будут автоматически пересобраны. Если по этим остаткам уже были списания или перемещения, проверьте текущие остатки после правки.
+        </div>
+        {% endif %}
         <table class="items">
             <thead>
                 <tr>
                     <th>Товар</th><th>Кол-во</th><th>Ед.</th>
                     {% if show_money %}<th>Цена за кг</th><th>Сумма</th>{% endif %}
-                    {% if is_draft and can_edit %}<th></th>{% endif %}
+                    {% if items_editable %}<th></th>{% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -214,9 +219,17 @@
                     <td class="num">{{ it.qty_display }}</td>
                     <td class="muted">{{ it.unit }}</td>
                     {% if show_money %}<td class="num">{{ it.price_display }}</td><td class="num"><strong>{{ it.total_display }}</strong></td>{% endif %}
-                    {% if is_draft and can_edit %}
-                    <td style="text-align:right;">
-                        <form method="post"><input type="hidden" name="action" value="remove_item"><input type="hidden" name="item_id" value="{{ it.obj.id }}">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="Удалить">✕</button></form>
+                    {% if items_editable %}
+                    <td style="text-align:right;white-space:nowrap;">
+                        <form method="post" style="display:inline-flex;gap:6px;align-items:center;">
+                            <input type="hidden" name="action" value="edit_item">
+                            <input type="hidden" name="item_id" value="{{ it.obj.id }}">
+                            {% csrf_token %}
+                            <input class="fc-input num" name="quantity" value="{{ it.qty_raw }}" title="Количество" style="width:72px;height:34px;">
+                            <input class="fc-input num" name="line_total" value="{{ it.total_raw }}" title="Оплачено за партию" placeholder="сумма" style="width:96px;height:34px;">
+                            <button type="submit" class="fc-btn fc-btn-secondary fc-btn-sm" title="Сохранить строку">💾</button>
+                        </form>
+                        <form method="post" style="display:inline;" onsubmit="return confirm('Удалить позицию из прихода?');"><input type="hidden" name="action" value="remove_item"><input type="hidden" name="item_id" value="{{ it.obj.id }}">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="Удалить">✕</button></form>
                     </td>
                     {% endif %}
                 </tr>
@@ -226,7 +239,7 @@
             </tbody>
         </table>
 
-        {% if is_draft and can_edit %}
+        {% if items_editable %}
         <form method="post" class="add-row" id="add_item_form">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_item">
