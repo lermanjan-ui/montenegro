@@ -3672,43 +3672,51 @@ setupLiveCalculation();
 })();
 </script>
 
-{% if is_super_admin %}
+{% if can_edit %}
 <div style="max-width:1280px;margin:24px auto 0;">
     <div style="background:#fffafa;border:1px solid #fecaca;border-radius:14px;padding:20px 24px;">
-        <h2 style="margin:0 0 8px;font-size:20px;color:#991b1b;">Удаление блюда</h2>
-        <p style="color:#6b7280;font-size:14px;margin:0 0 14px;">
-            Удалить блюдо «{{ dish.name }}» полностью. Рецепт (продукты, заготовки, шаги) удалится вместе с ним.
-            {% if orders_count %}
-                Блюдо встречается в {{ orders_count }} позиц. заказов — история заказов сохранится (название останется, ссылка на блюдо обнулится).
-            {% else %}
-                В заказах не используется.
-            {% endif %}
-        </p>
-
-        <button type="button" onclick="document.getElementById('dish-delete-confirm').style.display='block';this.style.display='none';"
-                style="background:white;color:#b91c1c;border:1px solid #fecaca;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
-            Удалить блюдо
-        </button>
-
-        <div id="dish-delete-confirm" style="display:none;margin-top:14px;padding:16px;background:white;border:1px solid #fecaca;border-radius:12px;">
-            <p style="margin:0 0 12px;font-weight:800;color:#111827;">
-                Точно удалить «{{ dish.name }}»? Это действие необратимо.
+        {% if dish.is_archived %}
+            <h2 style="margin:0 0 8px;font-size:20px;color:#92400e;">Блюдо в архиве</h2>
+            <p style="color:#6b7280;font-size:14px;margin:0 0 14px;">
+                Блюдо «{{ dish.name }}» убрано из меню: скрыто с сайта и из новых заказов, но сохранено в истории старых заказов и отчётах. Его можно вернуть.
             </p>
-            <div style="display:flex;gap:10px;align-items:center;">
-                <form method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_dish">
-                    <button type="submit"
-                            style="background:#b91c1c;color:white;border:0;border-radius:12px;padding:11px 18px;font-weight:900;font-size:14px;cursor:pointer;">
-                        Да, удалить
-                    </button>
-                </form>
-                <button type="button" onclick="document.getElementById('dish-delete-confirm').style.display='none';"
-                        style="background:white;color:#111827;border:1px solid #d1d5db;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
-                    Отмена
+            <form method="post" action="/c/{{ country.slug }}/dish/{{ dish.id }}/unarchive/" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit"
+                        style="background:#111827;color:white;border:0;border-radius:12px;padding:11px 18px;font-weight:900;font-size:14px;cursor:pointer;">
+                    Вернуть из архива
                 </button>
+            </form>
+        {% else %}
+            <h2 style="margin:0 0 8px;font-size:20px;color:#991b1b;">Убрать из меню</h2>
+            <p style="color:#6b7280;font-size:14px;margin:0 0 14px;">
+                Блюдо «{{ dish.name }}» уйдёт в архив: пропадёт с сайта и из новых заказов, но
+                {% if orders_count %}останется в истории {{ orders_count }} позиц. заказов{% else %}сохранится в системе{% endif %}
+                и в отчётах. Действие обратимо — блюдо можно вернуть из архива.
+            </p>
+            <button type="button" onclick="document.getElementById('dish-archive-confirm').style.display='block';this.style.display='none';"
+                    style="background:white;color:#b91c1c;border:1px solid #fecaca;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
+                Убрать из меню (в архив)
+            </button>
+            <div id="dish-archive-confirm" style="display:none;margin-top:14px;padding:16px;background:white;border:1px solid #fecaca;border-radius:12px;">
+                <p style="margin:0 0 12px;font-weight:800;color:#111827;">
+                    Убрать «{{ dish.name }}» в архив?
+                </p>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <form method="post" action="/c/{{ country.slug }}/dish/{{ dish.id }}/archive/" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit"
+                                style="background:#b91c1c;color:white;border:0;border-radius:12px;padding:11px 18px;font-weight:900;font-size:14px;cursor:pointer;">
+                            Да, в архив
+                        </button>
+                    </form>
+                    <button type="button" onclick="document.getElementById('dish-archive-confirm').style.display='none';"
+                            style="background:white;color:#111827;border:1px solid #d1d5db;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
+                        Отмена
+                    </button>
+                </div>
             </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 {% endif %}

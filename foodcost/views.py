@@ -884,22 +884,6 @@ def dish_detail(request, country_slug, dish_id):
             return _back_to_dish("#tab-upsell")
 
         # =====================================================================
-        # 🗑 Удаление блюда — ТОЛЬКО суперадмин.
-        # OrderItem.dish = SET_NULL + dish_name_snapshot, поэтому история
-        # заказов не теряется: позиции останутся с сохранённым названием.
-        # Строки рецепта (product_items / preparation_items / steps) удалятся
-        # каскадно вместе с блюдом.
-        # =====================================================================
-        if action == "delete_dish":
-            if not (request.user.is_superuser or (
-                hasattr(request.user, "profile")
-                and request.user.profile.is_super_admin()
-            )):
-                return HttpResponseForbidden("Удалять блюда может только суперадмин")
-            dish.delete()
-            return redirect(f"/c/{country.slug}/")
-
-        # =====================================================================
         # 🚦 Per-branch availability — cashier-friendly, single toggle + comment
         #
         # Backward-compatible: also accepts the older "update_stoplist" action
