@@ -92,6 +92,18 @@ def _parse_date(value):
     return None
 
 
+def _safe_int(value):
+    """Строка из формы -> int, либо None для пустого/нечислового
+    (защита от ValueError на filter(id='')) ."""
+    try:
+        s = str(value).strip()
+        if not s:
+            return None
+        return int(s)
+    except (TypeError, ValueError):
+        return None
+
+
 def _current_qty(country, warehouse_id, item_type, product_id=None, preparation_id=None):
     """Текущий остаток позиции на складе (Σ quantity_delta)."""
     if not warehouse_id:
@@ -332,7 +344,10 @@ def inventory_count(request, country_slug, inventory_id):
 
         # добавить продукт из справочника
         if action == "add_product":
-            product = Product.objects.filter(id=request.POST.get("product_id"), country=country).first()
+            pid = _safe_int(request.POST.get("product_id"))
+            if not pid:
+                return redirect(f"/c/{country.slug}/inventory/{inventory.id}/count/?noitem=1")
+            product = Product.objects.filter(id=pid, country=country).first()
             if product and not inventory.items.filter(
                 item_type=InventoryItem.ITEM_TYPE_PRODUCT, product=product
             ).exists():
@@ -349,7 +364,10 @@ def inventory_count(request, country_slug, inventory_id):
 
         # добавить заготовку из справочника
         if action == "add_preparation":
-            prep = Preparation.objects.filter(id=request.POST.get("preparation_id"), country=country).first()
+            prep_id = _safe_int(request.POST.get("preparation_id"))
+            if not prep_id:
+                return redirect(f"/c/{country.slug}/inventory/{inventory.id}/count/?noitem=1")
+            prep = Preparation.objects.filter(id=prep_id, country=country).first()
             if prep and not inventory.items.filter(
                 item_type=InventoryItem.ITEM_TYPE_PREPARATION, preparation=prep
             ).exists():
@@ -366,7 +384,9 @@ def inventory_count(request, country_slug, inventory_id):
 
         # удалить строку (случайно добавленную / ненужную)
         if action == "remove_item":
-            inventory.items.filter(id=request.POST.get("remove_id")).delete()
+            rid = _safe_int(request.POST.get("remove_id"))
+            if rid:
+                inventory.items.filter(id=rid).delete()
             return redirect(f"/c/{country.slug}/inventory/{inventory.id}/count/?removed=1")
 
         if action == "finish":
@@ -438,6 +458,7 @@ def inventory_count(request, country_slug, inventory_id):
         "finished_flag": request.GET.get("finished") == "1",
         "added_flag": request.GET.get("added") == "1",
         "removed_flag": request.GET.get("removed") == "1",
+        "noitem_flag": request.GET.get("noitem") == "1",
     })
 
 

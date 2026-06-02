@@ -93,6 +93,7 @@
     {% if saved_flag %}<div class="banner banner-green">Черновик подсчёта сохранён.</div>{% endif %}
     {% if added_flag %}<div class="banner banner-green">Позиция добавлена в подсчёт.</div>{% endif %}
     {% if removed_flag %}<div class="banner banner-info">Позиция убрана из подсчёта.</div>{% endif %}
+    {% if noitem_flag %}<div class="banner banner-info">Позиция не добавлена: выберите продукт или заготовку из выпадающего списка (начните вводить название и нажмите на подсказку).</div>{% endif %}
     {% if finished_flag %}<div class="banner banner-info">Подсчёт завершён и отправлен на проверку менеджеру.</div>{% endif %}
     {% if not editable %}<div class="banner banner-info">Подсчёт завершён. Изменение фактических остатков недоступно.</div>{% endif %}
 
@@ -126,7 +127,7 @@
                     <datalist id="dl_inv_products">{% for p in avail_products %}<option value="{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
                     <input type="hidden" name="product_id" id="add_product_sel">
                 </div>
-                <button type="submit" class="fc-btn fc-btn-secondary" onclick="invResolve('inv_search_product','dl_inv_products','add_product_sel'); document.getElementById('form_action').value='add_product';">+ Добавить продукт</button>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="return invAdd('inv_search_product','dl_inv_products','add_product_sel','add_product');">+ Добавить продукт</button>
             </div>
             {% endif %}
         </div>
@@ -156,7 +157,7 @@
                     <datalist id="dl_inv_preps">{% for p in avail_preparations %}<option value="{{ p.name }}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
                     <input type="hidden" name="preparation_id" id="add_prep_sel">
                 </div>
-                <button type="submit" class="fc-btn fc-btn-secondary" onclick="invResolve('inv_search_prep','dl_inv_preps','add_prep_sel'); document.getElementById('form_action').value='add_preparation';">+ Добавить заготовку</button>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="return invAdd('inv_search_prep','dl_inv_preps','add_prep_sel','add_preparation');">+ Добавить заготовку</button>
             </div>
             {% endif %}
         </div>
@@ -188,22 +189,50 @@
     });
 })();
 
-// Резолв id по введённому названию из datalist
+// Резолв id по введённому названию из datalist.
+// Сначала точное совпадение, затем регистронезависимое, затем единственное
+// совпадение по началу строки (на мобильных выбор не всегда совпадает точь-в-точь).
 function invResolve(inputId, listId, hiddenId){
     var inp = document.getElementById(inputId);
     var list = document.getElementById(listId);
     var hidden = document.getElementById(hiddenId);
     if (!inp || !list || !hidden) return;
     var val = (inp.value || "").trim();
+    var opts = list.options;
     var id = "";
-    for (var i=0;i<list.options.length;i++){ if (list.options[i].value === val){ id = list.options[i].getAttribute("data-id"); break; } }
+    var i;
+    for (i=0;i<opts.length;i++){ if (opts[i].value === val){ id = opts[i].getAttribute("data-id"); break; } }
+    if (!id && val){
+        var lv = val.toLowerCase();
+        for (i=0;i<opts.length;i++){ if (opts[i].value.toLowerCase() === lv){ id = opts[i].getAttribute("data-id"); break; } }
+    }
+    if (!id && val){
+        var lv2 = val.toLowerCase(); var matches = [];
+        for (i=0;i<opts.length;i++){ if (opts[i].value.toLowerCase().indexOf(lv2) === 0){ matches.push(opts[i]); } }
+        if (matches.length === 1){ id = matches[0].getAttribute("data-id"); }
+    }
     hidden.value = id;
+}
+
+// Клик по «+ Добавить»: резолвим id; если не выбрано — не отправляем, подсказываем.
+function invAdd(inputId, listId, hiddenId, action){
+    invResolve(inputId, listId, hiddenId);
+    var id = document.getElementById(hiddenId).value;
+    if (!id){
+        alert("Выберите позицию из выпадающего списка: начните вводить название и нажмите на подсказку.");
+        return false;
+    }
+    document.getElementById("form_action").value = action;
+    return true;
 }
 (function(){
     [["inv_search_product","dl_inv_products","add_product_sel"],
      ["inv_search_prep","dl_inv_preps","add_prep_sel"]].forEach(function(t){
         var inp = document.getElementById(t[0]);
-        if (inp) inp.addEventListener("input", function(){ invResolve(t[0],t[1],t[2]); });
+        if (inp){
+            inp.addEventListener("input", function(){ invResolve(t[0],t[1],t[2]); });
+            inp.addEventListener("change", function(){ invResolve(t[0],t[1],t[2]); });
+        }
     });
 })();
 </script>

@@ -1977,6 +1977,26 @@ class Order(models.Model):
             "successfully accepted by Meta. Prevents duplicate sends."
         ),
     )
+    # ===== Meta match-quality signals (captured at checkout, re-sent in CAPI) =====
+    # These raise the match quality of the server-side Purchase event by
+    # matching it to the same browser/session the Pixel saw. Sent UNHASHED
+    # in user_data per Meta spec. Populated from the order_create payload.
+    meta_fbp = models.CharField(
+        max_length=255, blank=True, default="",
+        help_text="Значение cookie _fbp от Meta Pixel (с фронта при оформлении).",
+    )
+    meta_fbc = models.CharField(
+        max_length=255, blank=True, default="",
+        help_text="Значение cookie _fbc / собранное из fbclid (с фронта при оформлении).",
+    )
+    meta_client_ip = models.CharField(
+        max_length=64, blank=True, default="",
+        help_text="IP клиента в момент оформления заказа (для user_data CAPI).",
+    )
+    meta_user_agent = models.CharField(
+        max_length=512, blank=True, default="",
+        help_text="User-Agent клиента в момент оформления заказа (для user_data CAPI).",
+    )
 
     # ===== Legacy / historical-import marker =====
     # True for orders backfilled from a previous platform's data export
