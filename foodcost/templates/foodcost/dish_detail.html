@@ -3672,4 +3672,45 @@ setupLiveCalculation();
 })();
 </script>
 
+{% if is_super_admin %}
+<div style="max-width:1280px;margin:24px auto 0;">
+    <div style="background:#fffafa;border:1px solid #fecaca;border-radius:14px;padding:20px 24px;">
+        <h2 style="margin:0 0 8px;font-size:20px;color:#991b1b;">Удаление блюда</h2>
+        <p style="color:#6b7280;font-size:14px;margin:0 0 14px;">
+            Удалить блюдо «{{ dish.name }}» полностью. Рецепт (продукты, заготовки, шаги) удалится вместе с ним.
+            {% if orders_count %}
+                Блюдо встречается в {{ orders_count }} позиц. заказов — история заказов сохранится (название останется, ссылка на блюдо обнулится).
+            {% else %}
+                В заказах не используется.
+            {% endif %}
+        </p>
+
+        <button type="button" onclick="document.getElementById('dish-delete-confirm').style.display='block';this.style.display='none';"
+                style="background:white;color:#b91c1c;border:1px solid #fecaca;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
+            Удалить блюдо
+        </button>
+
+        <div id="dish-delete-confirm" style="display:none;margin-top:14px;padding:16px;background:white;border:1px solid #fecaca;border-radius:12px;">
+            <p style="margin:0 0 12px;font-weight:800;color:#111827;">
+                Точно удалить «{{ dish.name }}»? Это действие необратимо.
+            </p>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_dish">
+                    <button type="submit"
+                            style="background:#b91c1c;color:white;border:0;border-radius:12px;padding:11px 18px;font-weight:900;font-size:14px;cursor:pointer;">
+                        Да, удалить
+                    </button>
+                </form>
+                <button type="button" onclick="document.getElementById('dish-delete-confirm').style.display='none';"
+                        style="background:white;color:#111827;border:1px solid #d1d5db;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
+                    Отмена
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

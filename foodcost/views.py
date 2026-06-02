@@ -884,6 +884,22 @@ def dish_detail(request, country_slug, dish_id):
             return _back_to_dish("#tab-upsell")
 
         # =====================================================================
+        # 🗑 Удаление блюда — ТОЛЬКО суперадмин.
+        # OrderItem.dish = SET_NULL + dish_name_snapshot, поэтому история
+        # заказов не теряется: позиции останутся с сохранённым названием.
+        # Строки рецепта (product_items / preparation_items / steps) удалятся
+        # каскадно вместе с блюдом.
+        # =====================================================================
+        if action == "delete_dish":
+            if not (request.user.is_superuser or (
+                hasattr(request.user, "profile")
+                and request.user.profile.is_super_admin()
+            )):
+                return HttpResponseForbidden("Удалять блюда может только суперадмин")
+            dish.delete()
+            return redirect(f"/c/{country.slug}/")
+
+        # =====================================================================
         # 🚦 Per-branch availability — cashier-friendly, single toggle + comment
         #
         # Backward-compatible: also accepts the older "update_stoplist" action
@@ -1365,6 +1381,16 @@ def dish_detail(request, country_slug, dish_id):
         "can_edit_dish_availability": perms["can_edit_dish_availability"],
         "can_edit_dish_stoplist": perms["can_edit_dish_stoplist"],  # back-compat
         "can_view_tech_card": perms["can_view_tech_card"],
+
+        # 🗑 Удаление блюда — только суперадмин. orders_count для блока
+        # подтверждения (история заказов не теряется: OrderItem = SET_NULL).
+        "is_super_admin": (
+            request.user.is_superuser or (
+                hasattr(request.user, "profile")
+                and request.user.profile.is_super_admin()
+            )
+        ),
+        "orders_count": OrderItem.objects.filter(dish=dish).count(),
     }
 
     return render(request, "foodcost/dish_detail.html", context)
@@ -1457,6 +1483,49 @@ def product_detail(request, country_slug, product_id):
             product.delete()
             return redirect(f"/c/{country.slug}/products/")
 
+        # Точечная замена этого продукта на другой в КОНКРЕТНОЙ строке рецепта.
+        # Количество (gross/net) сохраняем — меняем только сам продукт (FK).
+        if action == "replace_in_dish_item":
+            item = get_object_or_404(
+                DishProductItem,
+                id=request.POST.get("item_id"),
+                product=product,
+                dish__country=country,
+            )
+            new_product = get_object_or_404(
+                Product,
+                id=request.POST.get("new_product_id"),
+                country=country,
+            )
+            item.product = new_product
+            item.save()
+            item.dish.recalculate_cache()
+            return redirect(f"/c/{country.slug}/products/{product.id}/")
+
+        if action == "replace_in_preparation_item":
+            item = get_object_or_404(
+                PreparationItem,
+                id=request.POST.get("item_id"),
+                product=product,
+                preparation__country=country,
+            )
+            new_product = get_object_or_404(
+                Product,
+                id=request.POST.get("new_product_id"),
+                country=country,
+            )
+            prep = item.preparation
+            item.product = new_product
+            item.save()
+            # Себестоимость заготовки изменилась → пересчитываем её и все
+            # блюда, где она используется.
+            prep.recalculate_cache()
+            for dpi in DishPreparationItem.objects.filter(
+                preparation=prep, dish__country=country,
+            ).select_related("dish"):
+                dpi.dish.recalculate_cache()
+            return redirect(f"/c/{country.slug}/products/{product.id}/")
+
     prices = product.prices.order_by("date_from")
 
     latest_prices = list(product.prices.order_by("-date_from")[:2])
@@ -1504,6 +1573,9 @@ def product_detail(request, country_slug, product_id):
             "previous_dish_cost": previous_dish_cost,
             "foodcost": item.dish.foodcost(),
             "previous_foodcost": previous_foodcost,
+            # Точечная замена: строка DishProductItem, продукт→продукт.
+            "item_id": item.id,
+            "replace_action": "replace_in_dish_item",
         })
 
     for prep_item in preparation_items:
@@ -1569,6 +1641,7 @@ def product_detail(request, country_slug, product_id):
         "affected_dishes": affected_dishes,
         "preparation_items": preparation_items,
         "dish_items": dish_items,
+        "all_products": Product.objects.filter(country=country).exclude(id=product.id).order_by("name"),
         "can_edit": user_can_edit(request.user),
     })
 @login_required(login_url="/login/")
@@ -1720,6 +1793,86 @@ def preparation_detail(request, country_slug, prep_id):
 
             item.delete()
 
+        # Удаление ВСЕЙ заготовки — только суперадмин. Связи (used_in_*)
+        # показываются в шаблоне перед подтверждением. CASCADE уберёт её из
+        # блюд/заготовок; их себестоимость затем пересчитываем.
+        if action == "delete_preparation":
+            if not (request.user.is_superuser or (
+                hasattr(request.user, "profile")
+                and request.user.profile.is_super_admin()
+            )):
+                return HttpResponseForbidden("Удалять заготовки может только суперадмин")
+            # Соберём блюда, которые надо пересчитать ПОСЛЕ удаления:
+            # напрямую использующие эту заготовку + использующие через
+            # родительские заготовки.
+            dishes_to_recalc = set()
+            for dpi in DishPreparationItem.objects.filter(
+                preparation=preparation, dish__country=country,
+            ).select_related("dish"):
+                dishes_to_recalc.add(dpi.dish)
+            parent_preps = [
+                psi.preparation for psi in PreparationSubItem.objects.filter(
+                    sub_preparation=preparation, preparation__country=country,
+                ).select_related("preparation")
+            ]
+            preparation.delete()
+            # Пересчёт затронутых заготовок и блюд.
+            for parent in parent_preps:
+                parent.recalculate_cache()
+                for dpi in DishPreparationItem.objects.filter(
+                    preparation=parent, dish__country=country,
+                ).select_related("dish"):
+                    dishes_to_recalc.add(dpi.dish)
+            for d in dishes_to_recalc:
+                d.recalculate_cache()
+            return redirect(f"/c/{country.slug}/preparations/")
+
+        # Точечная замена ЭТОЙ заготовки на другую в конкретном месте.
+        # Количество (gross/net) сохраняем.
+        if action == "replace_in_dish":
+            # Заготовка используется в блюде (DishPreparationItem) — меняем
+            # её на другую заготовку в этой строке блюда.
+            dpi = get_object_or_404(
+                DishPreparationItem,
+                id=request.POST.get("item_id"),
+                preparation=preparation,
+                dish__country=country,
+            )
+            new_prep = get_object_or_404(
+                Preparation,
+                id=request.POST.get("new_preparation_id"),
+                country=country,
+            )
+            dpi.preparation = new_prep
+            dpi.save()
+            dpi.dish.recalculate_cache()
+            return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
+
+        if action == "replace_in_preparation":
+            # Заготовка вложена в другую заготовку (PreparationSubItem) —
+            # меняем её на другую заготовку в этой строке.
+            psi = get_object_or_404(
+                PreparationSubItem,
+                id=request.POST.get("item_id"),
+                sub_preparation=preparation,
+                preparation__country=country,
+            )
+            new_prep = get_object_or_404(
+                Preparation,
+                id=request.POST.get("new_preparation_id"),
+                country=country,
+            )
+            parent = psi.preparation
+            psi.sub_preparation = new_prep
+            psi.save()
+            # Пересчёт родительской заготовки и блюд, где она используется.
+            parent.recalculate_cache()
+            for dpi in DishPreparationItem.objects.filter(
+                preparation=parent, dish__country=country,
+            ).select_related("dish"):
+                dpi.dish.recalculate_cache()
+            return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
+
         return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
     total_gross = (
@@ -1732,6 +1885,35 @@ def preparation_detail(request, country_slug, prep_id):
         + sum(item.net for item in preparation.subitems.all())
     )
 
+    # --- Где используется эта заготовка ---
+    # 1) В блюдах напрямую (через DishPreparationItem).
+    used_in_dishes = [
+        {
+            "item_id": dpi.id,
+            "name": dpi.dish.name,
+            "url": f"/c/{country.slug}/dish/{dpi.dish.id}/",
+            "net": dpi.net,
+        }
+        for dpi in DishPreparationItem.objects.filter(
+            preparation=preparation,
+            dish__country=country,
+        ).select_related("dish")
+    ]
+
+    # 2) В других заготовках (через PreparationSubItem.sub_preparation).
+    used_in_preparations = [
+        {
+            "item_id": psi.id,
+            "name": psi.preparation.name,
+            "url": f"/c/{country.slug}/preparations/{psi.preparation.id}/",
+            "net": psi.net,
+        }
+        for psi in PreparationSubItem.objects.filter(
+            sub_preparation=preparation,
+            preparation__country=country,
+        ).select_related("preparation")
+    ]
+
     return render(request, "foodcost/preparation_detail.html", {
         "country": country,
         "preparation": preparation,
@@ -1739,6 +1921,14 @@ def preparation_detail(request, country_slug, prep_id):
         "preparations": preparations,
         "total_gross": total_gross,
         "total_net": total_net,
+        "used_in_dishes": used_in_dishes,
+        "used_in_preparations": used_in_preparations,
+        "is_super_admin": (
+            request.user.is_superuser or (
+                hasattr(request.user, "profile")
+                and request.user.profile.is_super_admin()
+            )
+        ),
         "can_edit": user_can_edit(request.user),
     })
 

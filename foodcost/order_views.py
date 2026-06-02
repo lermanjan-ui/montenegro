@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+import logging
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden
@@ -36,6 +38,9 @@ from .views import (
     require_section_access,
     user_can_edit,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def clean_decimal(value):
@@ -616,6 +621,12 @@ def order_detail(request, country_slug, order_id):
         country=country
     )
 
+    # Запоминаем, был ли заказ отменён ДО этой правки — чтобы поймать именно
+    # переход «не отменён → отменён» и отправить компенсирующий Meta Refund
+    # (см. блок после order.save()). Берём значение здесь, пока POST ещё не
+    # перезаписал order.is_cancelled.
+    was_cancelled_before = bool(order.is_cancelled)
+
     if request.method == "POST":
         
         action = request.POST.get("action")
@@ -886,7 +897,32 @@ def order_detail(request, country_slug, order_id):
         order.customer_delivery_amount = customer_delivery_amount
         order.free_customer_delivery = free_customer_delivery
         order.save()
-        
+
+        # --- Meta CAPI Refund (компенсирующее событие) ---
+        # Если заказ ТОЛЬКО ЧТО стал отменённым (переход False→True), а
+        # Purchase по нему уже был отправлен в Meta (meta_capi_sent), и Refund
+        # ещё не слали (meta_refund_sent) — отправляем Refund, чтобы Meta
+        # перестала считать его конверсией и не оптимизировалась на похожих.
+        # Любой сбой Meta НЕ должен ломать сохранение заказа — ловим всё.
+        if (
+            order.is_cancelled
+            and not was_cancelled_before
+            and getattr(order, "meta_capi_sent", False)
+            and not getattr(order, "meta_refund_sent", False)
+        ):
+            try:
+                from .meta_capi import send_meta_capi_refund
+                send_meta_capi_refund(order)
+                order.meta_refund_sent = True
+                order.save(update_fields=["meta_refund_sent"])
+            except Exception as e:
+                # Не валим сохранение заказа из-за Meta. Латч не ставим —
+                # при следующей правке отменённого заказа попробуем снова.
+                logger.warning(
+                    "[meta-capi] order %s: Refund send failed: %s",
+                    order.public_order_number, e,
+                )
+
         delivery_address = request.POST.get(
             "delivery_address",
             ""

@@ -1977,6 +1977,19 @@ class Order(models.Model):
             "successfully accepted by Meta. Prevents duplicate sends."
         ),
     )
+    # Idempotency latch for the compensating Refund event. Flipped to True
+    # after a Refund event is accepted by Meta when this order is
+    # cancelled/refunded AFTER its Purchase was already sent. Prevents
+    # re-sending the Refund on subsequent edits of the same cancelled order.
+    meta_refund_sent = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text=(
+            "True after the server-side Meta CAPI Refund event was "
+            "successfully accepted by Meta (order cancelled after Purchase "
+            "was reported). Prevents duplicate refund sends."
+        ),
+    )
     # ===== Meta match-quality signals (captured at checkout, re-sent in CAPI) =====
     # These raise the match quality of the server-side Purchase event by
     # matching it to the same browser/session the Pixel saw. Sent UNHASHED

@@ -536,6 +536,109 @@
     </div>
 </div>
 
+<div class="card">
+    <h2>Используется в</h2>
+
+    {% if used_in_dishes %}
+        <h3 style="font-size:16px;margin:0 0 10px;color:#111827;">Блюда</h3>
+        <div class="table-grid" style="margin-bottom:18px;">
+            {% for row in used_in_dishes %}
+            <div class="grid-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eef2f7;flex-wrap:wrap;">
+                <div><strong>{{ row.name }}</strong> <span class="muted">· {{ row.net }} кг</span></div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    {% if can_edit %}
+                    <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('Заменить заготовку в блюде «{{ row.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="replace_in_dish">
+                        <input type="hidden" name="item_id" value="{{ row.item_id }}">
+                        <select name="new_preparation_id" required style="min-width:160px;">
+                            <option value="">Заменить на…</option>
+                            {% for prep in preparations %}
+                                <option value="{{ prep.id }}">{{ prep.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Заменить</button>
+                    </form>
+                    {% endif %}
+                    <a class="open" href="{{ row.url }}" style="font-weight:900;text-decoration:none;color:#111827;">Открыть →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if used_in_preparations %}
+        <h3 style="font-size:16px;margin:0 0 10px;color:#111827;">Заготовки</h3>
+        <div class="table-grid" style="margin-bottom:6px;">
+            {% for row in used_in_preparations %}
+            <div class="grid-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eef2f7;flex-wrap:wrap;">
+                <div><strong>{{ row.name }}</strong> <span class="muted">· {{ row.net }} кг</span></div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    {% if can_edit %}
+                    <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('Заменить заготовку в составе «{{ row.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="replace_in_preparation">
+                        <input type="hidden" name="item_id" value="{{ row.item_id }}">
+                        <select name="new_preparation_id" required style="min-width:160px;">
+                            <option value="">Заменить на…</option>
+                            {% for prep in preparations %}
+                                <option value="{{ prep.id }}">{{ prep.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Заменить</button>
+                    </form>
+                    {% endif %}
+                    <a class="open" href="{{ row.url }}" style="font-weight:900;text-decoration:none;color:#111827;">Открыть →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if not used_in_dishes and not used_in_preparations %}
+        <p class="muted">Эта заготовка пока нигде не используется — её можно удалить без последствий.</p>
+    {% endif %}
+</div>
+
+{% if is_super_admin %}
+<div class="card" style="border-color:#fecaca;background:#fffafa;">
+    <h2 style="color:#991b1b;">Удаление заготовки</h2>
+    <p class="muted" style="margin-bottom:14px;">
+        Удалить заготовку «{{ preparation.name }}» полностью.
+        {% if used_in_dishes or used_in_preparations %}
+            Она используется в блюдах/заготовках выше — после удаления она исчезнет из их состава, а их себестоимость пересчитается.
+        {% else %}
+            Нигде не используется — удаление безопасно.
+        {% endif %}
+    </p>
+
+    <button type="button" onclick="document.getElementById('prep-delete-confirm').style.display='block';this.style.display='none';"
+            style="background:white;color:#b91c1c;border:1px solid #fecaca;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
+        Удалить заготовку
+    </button>
+
+    <div id="prep-delete-confirm" style="display:none;margin-top:14px;padding:16px;background:white;border:1px solid #fecaca;border-radius:12px;">
+        <p style="margin:0 0 12px;font-weight:800;color:#111827;">
+            Точно удалить «{{ preparation.name }}»? Это действие необратимо.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_preparation">
+                <button type="submit"
+                        style="background:#b91c1c;color:white;border:0;border-radius:12px;padding:11px 18px;font-weight:900;font-size:14px;cursor:pointer;">
+                    Да, удалить
+                </button>
+            </form>
+            <button type="button" onclick="document.getElementById('prep-delete-confirm').style.display='none';"
+                    style="background:white;color:#111827;border:1px solid #d1d5db;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
+                Отмена
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 </div>
 
 <script>
