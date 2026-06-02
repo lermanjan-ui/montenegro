@@ -2313,6 +2313,19 @@
         </div>
         {% endif %}
 
+        {% if can_edit_dish_base %}
+        <div class="fc-divider"></div>
+        <div class="fc-field span-2">
+            <label class="fc-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" name="is_combo" {% if dish.is_combo %}checked{% endif %}>
+                Это комбо (собирается из готовых блюд)
+            </label>
+            <div class="fc-field-hint">
+                Если включено — ниже появится блок «Состав комбо». Себестоимость комбо = сумма себестоимостей блюд-компонентов плюс собственные ингредиенты/упаковка, если заданы.
+            </div>
+        </div>
+        {% endif %}
+
         {% if can_view_tech_card %}
         <div class="fc-divider"></div>
         <div class="fc-field" id="tab-techcard">
@@ -2333,6 +2346,64 @@
     </form>
 </div>
 </div>{# end .fc-scope (Основные данные) #}
+
+{% if dish.is_combo %}
+<div class="fc-scope" style="max-width:1280px;margin:18px auto 0;">
+    <div class="fc-card" style="padding:22px 26px;">
+        <h2 style="margin:0 0 6px;">Состав комбо</h2>
+        <p class="fc-field-hint" style="margin:0 0 16px;">
+            Готовые блюда, входящие в это комбо. Себестоимость каждого берётся целиком (полная себестоимость блюда) и умножается на количество.
+        </p>
+
+        {% if combo_items %}
+        <div style="border:1px solid var(--fc-border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+            {% for ci in combo_items %}
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--fc-border-soft);flex-wrap:wrap;">
+                <div>
+                    <strong>{{ ci.component.name }}</strong>
+                    <span class="fc-muted">· {{ ci.quantity }} шт · себест. {{ ci.component.cached_total_cost|floatformat:2 }}</span>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <a class="fc-link" href="/c/{{ country.slug }}/dish/{{ ci.component.id }}/" style="font-weight:900;text-decoration:none;color:var(--fc-text);">Открыть →</a>
+                    {% if can_edit_dish_base %}
+                    <form method="post" style="display:inline;" onsubmit="return confirm('Убрать «{{ ci.component.name|escapejs }}» из комбо?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="remove_combo_item">
+                        <input type="hidden" name="item_id" value="{{ ci.id }}">
+                        <button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="Убрать">✕</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="fc-muted" style="margin-bottom:16px;">Пока нет компонентов. Добавьте готовые блюда ниже.</p>
+        {% endif %}
+
+        {% if can_edit_dish_base %}
+        <form method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_combo_item">
+            <div class="fc-field" style="margin:0;min-width:240px;">
+                <label class="fc-label">Блюдо</label>
+                <select class="fc-select" name="component_id" required>
+                    <option value="">Выберите блюдо…</option>
+                    {% for d in combo_available_dishes %}
+                        <option value="{{ d.id }}">{{ d.name }} (себест. {{ d.cached_total_cost|floatformat:2 }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="fc-field" style="margin:0;width:120px;">
+                <label class="fc-label">Кол-во</label>
+                <input class="fc-input" type="text" name="quantity" value="1">
+            </div>
+            <button type="submit" class="fc-btn fc-btn-primary">Добавить в комбо</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 {% endif %}{# end can_edit_dish_base or can_view_dish_finance #}
 

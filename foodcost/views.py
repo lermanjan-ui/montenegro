@@ -24,6 +24,7 @@ from .models import (
     PreparationSubItem,
     DishProductItem,
     DishPreparationItem,
+    DishComboItem,
     Employee,
     Packaging,
     DishPackagingItem,
@@ -929,6 +930,7 @@ def dish_detail(request, country_slug, dish_id):
             dish.selling_price = request.POST.get("selling_price") or 0
             dish.cooking_minutes = request.POST.get("cooking_minutes") or 0
             dish.tech_card = request.POST.get("tech_card", "")
+            dish.is_combo = bool(request.POST.get("is_combo"))
 
             category_id = request.POST.get("category_id")
             new_category_name = request.POST.get("new_category_name")
@@ -948,8 +950,37 @@ def dish_detail(request, country_slug, dish_id):
                 dish.category = None
 
             dish.save()
+            dish.recalculate_cache()
 
-        if action == "add_step":
+        # --- Состав комбо: добавить блюдо-компонент ---
+        if action == "add_combo_item":
+            if not perms["can_edit_dish_base"]:
+                return HttpResponseForbidden("Нет прав на основные данные")
+            component = get_object_or_404(
+                Dish, id=request.POST.get("component_id"), country=country,
+            )
+            # Защита: нельзя добавить само себя и нельзя вложить другое комбо.
+            if component.id != dish.id and not component.is_combo:
+                try:
+                    qty = Decimal(str(request.POST.get("quantity") or "1").replace(",", "."))
+                except Exception:
+                    qty = Decimal("1")
+                if qty <= 0:
+                    qty = Decimal("1")
+                DishComboItem.objects.create(
+                    combo=dish, component=component, quantity=qty,
+                )
+                dish.recalculate_cache()
+            return _back_to_dish()
+
+        if action == "remove_combo_item":
+            if not perms["can_edit_dish_base"]:
+                return HttpResponseForbidden("Нет прав на основные данные")
+            DishComboItem.objects.filter(
+                id=request.POST.get("item_id"), combo=dish,
+            ).delete()
+            dish.recalculate_cache()
+            return _back_to_dish()
             description = request.POST.get("description")
             step_number = request.POST.get("step_number")
 
@@ -1375,6 +1406,22 @@ def dish_detail(request, country_slug, dish_id):
             )
         ),
         "orders_count": OrderItem.objects.filter(dish=dish).count(),
+
+        # 🍱 Комбо: состав (блюда-компоненты) + доступные для добавления блюда.
+        # В компоненты можно добавить только обычные блюда (не комбо) и не
+        # само это блюдо — защита от рекурсии.
+        "combo_items": (
+            DishComboItem.objects
+            .filter(combo=dish)
+            .select_related("component")
+            .order_by("id")
+        ),
+        "combo_available_dishes": (
+            Dish.objects
+            .filter(country=country, is_combo=False, is_archived=False)
+            .exclude(id=dish.id)
+            .order_by("name")
+        ),
     }
 
     return render(request, "foodcost/dish_detail.html", context)

@@ -282,6 +282,12 @@ class Dish(models.Model):
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     tech_card = models.TextField("Техкарта приготовления", blank=True, default="")
+
+    # Комбо-позиция: блюдо, собранное из других готовых блюд (DishComboItem).
+    # Себестоимость комбо = сумма себестоимостей блюд-компонентов + СВОИ
+    # ингредиенты/упаковка/труд (если заданы). Комбо НЕ может содержать
+    # другое комбо (защита от рекурсии — на уровне выбора компонентов).
+    is_combo = models.BooleanField(default=False)
     
     cached_ingredient_cost = models.DecimalField(
         max_digits=14,
@@ -525,6 +531,16 @@ class Dish(models.Model):
     def additional_expenses_cost(self):
         return sum(item.cost for item in self.additional_expenses.all())
 
+    def combo_cost(self):
+        # Себестоимость блюд-компонентов комбо: полная себестоимость каждого
+        # компонента (cached_total_cost) × количество. Для не-комбо = 0.
+        if not self.is_combo:
+            return Decimal("0")
+        total = Decimal("0")
+        for item in self.combo_items.all():
+            total += Decimal(item.component.cached_total_cost or 0) * Decimal(item.quantity or 0)
+        return total
+
     def total_cooking_minutes(self):
         total = self.cooking_minutes
 
@@ -547,18 +563,23 @@ class Dish(models.Model):
             + self.labor_cost()
             + self.utilities_cost()
             + self.additional_expenses_cost()
+            + self.combo_cost()
         )
 
     def foodcost(self):
         if self.selling_price == 0:
             return 0
-        return (self.ingredient_cost() / self.selling_price) * 100
+        # У комбо «ингредиентная» база для фудкоста включает себестоимость
+        # блюд-компонентов (она и есть основная стоимость комбо).
+        base = self.ingredient_cost() + self.combo_cost()
+        return (base / self.selling_price) * 100
 
     def margin(self):
         return self.selling_price - self.calculate_cost()
         
     def recalculate_cache(self):
         ingredient_cost = Decimal(self.ingredient_cost())
+        combo_cost = Decimal(self.combo_cost())
         total_cost = Decimal(self.calculate_cost())
 
         selling_price = Decimal(self.selling_price or 0)
@@ -566,11 +587,14 @@ class Dish(models.Model):
         foodcost = Decimal("0")
 
         if selling_price > 0:
-            foodcost = (ingredient_cost / selling_price) * 100
+            # База фудкоста = ингредиенты + компоненты комбо (см. foodcost()).
+            foodcost = ((ingredient_cost + combo_cost) / selling_price) * 100
 
         margin = selling_price - total_cost
 
-        self.cached_ingredient_cost = ingredient_cost
+        # cached_ingredient_cost хранит ингредиентную базу с учётом комбо,
+        # чтобы списки/фильтры по фудкосту были согласованы.
+        self.cached_ingredient_cost = ingredient_cost + combo_cost
         self.cached_total_cost = total_cost
         self.cached_foodcost = foodcost
         self.cached_margin = margin
@@ -624,6 +648,26 @@ class DishPreparationItem(models.Model):
 
     def unit_label(self):
         return "кг"
+
+
+class DishComboItem(models.Model):
+    """Блюдо-компонент внутри комбо.
+
+    `combo` — блюдо-комбо (Dish.is_combo=True).
+    `component` — готовое блюдо, входящее в комбо.
+    Себестоимость = component.cached_total_cost × quantity (полная
+    себестоимость компонента; см. Dish.combo_cost).
+    """
+    combo = models.ForeignKey(
+        Dish, on_delete=models.CASCADE, related_name="combo_items"
+    )
+    component = models.ForeignKey(
+        Dish, on_delete=models.CASCADE, related_name="used_in_combos"
+    )
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+
+    def calculate_cost(self):
+        return Decimal(self.component.cached_total_cost or 0) * Decimal(self.quantity or 0)
 
 
 # 👨‍🍳 СОТРУДНИК
