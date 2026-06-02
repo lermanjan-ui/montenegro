@@ -757,12 +757,15 @@ class Employee(models.Model):
         return self.name
 
     def hourly_rate(self):
-        if self.monthly_hours == 0:
-            return 0
-        return self.monthly_salary / self.monthly_hours
+        # Возвращаем Decimal во ВСЕХ ветках. Раньше при monthly_hours == 0
+        # возвращался int 0, из-за чего minute_rate() = 0/60 = 0.0 (float),
+        # и дальше DishLaborItem.calculate_cost падал на Decimal * float.
+        if not self.monthly_hours:
+            return Decimal("0")
+        return Decimal(self.monthly_salary or 0) / Decimal(self.monthly_hours)
 
     def minute_rate(self):
-        return self.hourly_rate() / 60
+        return self.hourly_rate() / Decimal("60")
 
 
 class DishLaborItem(models.Model):
@@ -771,7 +774,7 @@ class DishLaborItem(models.Model):
     minutes = models.DecimalField(max_digits=8, decimal_places=2)
 
     def calculate_cost(self):
-        return self.minutes * self.employee.minute_rate()
+        return Decimal(self.minutes or 0) * Decimal(self.employee.minute_rate())
 
 
 # 📦 УПАКОВКА
