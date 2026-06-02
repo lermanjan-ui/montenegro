@@ -1153,11 +1153,8 @@ button[type=submit]:hover{
                     </div>
 
                     <div>
-                        {% if banner.image %}
-                            <img class="fc-thumb" src="{{ banner.image.url }}" alt="" loading="lazy"
-                                 style="width:80px;height:48px;border-radius:6px;">
-                        {% elif banner.image_url %}
-                            <img class="fc-thumb" src="{{ banner.image_url }}" alt="" loading="lazy"
+                        {% if banner.desktop_image %}
+                            <img class="fc-thumb" src="{{ banner.desktop_image }}" alt="" loading="lazy"
                                  style="width:80px;height:48px;border-radius:6px;"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
                             <span class="fc-thumb-placeholder" style="display:none;width:80px;height:48px;border-radius:6px;">—</span>
@@ -1241,51 +1238,20 @@ button[type=submit]:hover{
 
                             <div class="fc-field">
                                 <label class="fc-label">URL картинки (десктоп)</label>
-                                <input class="fc-input" name="image_url"
+                                <input class="fc-input" name="desktop_image"
                                        placeholder="https://..."
-                                       value="{{ banner.image_url }}">
+                                       value="{{ banner.desktop_image }}">
                                 <div class="fc-field-hint">1600×600, JPG/PNG/WEBP</div>
                             </div>
                             <div class="fc-field">
                                 <label class="fc-label">URL картинки (мобильный)</label>
-                                <input class="fc-input" name="mobile_image_url"
+                                <input class="fc-input" name="mobile_image"
                                        placeholder="https://..."
-                                       value="{{ banner.mobile_image_url }}">
+                                       value="{{ banner.mobile_image }}">
                                 <div class="fc-field-hint">800×800</div>
                             </div>
 
-                            <div class="fc-field">
-                                <label class="fc-label">Загрузить картинку (десктоп)</label>
-                                <input class="fc-input" name="image" type="file" accept="image/*"
-                                       style="padding:6px 10px;line-height:28px;">
-                                {% if banner.image %}
-                                    <div class="fc-field-hint">
-                                        Сейчас: <a href="{{ banner.image.url }}" target="_blank">текущее фото</a>
-                                        &nbsp;|&nbsp;
-                                        <label style="cursor:pointer;color:var(--fc-danger);">
-                                            <input type="checkbox" name="image_clear" style="vertical-align:middle;">
-                                            удалить
-                                        </label>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="fc-field">
-                                <label class="fc-label">Загрузить картинку (мобильный)</label>
-                                <input class="fc-input" name="mobile_image" type="file" accept="image/*"
-                                       style="padding:6px 10px;line-height:28px;">
-                                {% if banner.mobile_image %}
-                                    <div class="fc-field-hint">
-                                        Сейчас: <a href="{{ banner.mobile_image.url }}" target="_blank">текущее фото</a>
-                                        &nbsp;|&nbsp;
-                                        <label style="cursor:pointer;color:var(--fc-danger);">
-                                            <input type="checkbox" name="mobile_image_clear" style="vertical-align:middle;">
-                                            удалить
-                                        </label>
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="fc-field">
+                            <div class="fc-field span-2">
                                 <label class="fc-label">Действие при клике</label>
                                 <select class="fc-select" name="action_type"
                                         onchange="updateBannerActionHint(this)">
@@ -1396,24 +1362,13 @@ button[type=submit]:hover{
 
                         <div class="fc-field">
                             <label class="fc-label">URL картинки (десктоп)</label>
-                            <input class="fc-input" name="image_url" placeholder="https://example.com/banner.jpg">
+                            <input class="fc-input" name="desktop_image" placeholder="https://example.com/banner.jpg">
                             <div class="fc-field-hint">1600×600, JPG/PNG/WEBP</div>
                         </div>
                         <div class="fc-field">
                             <label class="fc-label">URL картинки (мобильный)</label>
-                            <input class="fc-input" name="mobile_image_url" placeholder="https://example.com/banner-mobile.jpg">
+                            <input class="fc-input" name="mobile_image" placeholder="https://example.com/banner-mobile.jpg">
                             <div class="fc-field-hint">800×800</div>
-                        </div>
-
-                        <div class="fc-field">
-                            <label class="fc-label">Или загрузить (десктоп)</label>
-                            <input class="fc-input" name="image" type="file" accept="image/*"
-                                   style="padding:6px 10px;line-height:28px;">
-                        </div>
-                        <div class="fc-field">
-                            <label class="fc-label">Или загрузить (мобильный)</label>
-                            <input class="fc-input" name="mobile_image" type="file" accept="image/*"
-                                   style="padding:6px 10px;line-height:28px;">
                         </div>
 
                         <div class="fc-field">
