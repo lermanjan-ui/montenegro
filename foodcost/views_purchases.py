@@ -305,7 +305,20 @@ def purchase_detail(request, country_slug, receipt_id):
                 id=request.POST.get("product_id"), country=country
             ).first()
             qty = _clean_decimal(request.POST.get("quantity"))
-            price = _clean_decimal(request.POST.get("unit_price"))
+            # Кассир вводит ФАКТ прихода (quantity) и ОПЛАЧЕННУЮ СУММУ за всю
+            # партию (line_total). Цену за единицу (unit_price) вычисляем сами:
+            # unit_price = сумма / количество. unit_price хранится как цена за
+            # кг и дальше уходит в склад/себестоимость — её смысл не меняем.
+            # Поддерживаем старое поле unit_price как запасной вариант (если
+            # форма прислала уже цену за единицу).
+            line_total = _clean_decimal(request.POST.get("line_total"))
+            if line_total <= 0:
+                # запасной путь: пришла цена за единицу (старое поле)
+                price = _clean_decimal(request.POST.get("unit_price"))
+            elif qty > 0:
+                price = line_total / qty
+            else:
+                price = Decimal("0")
             if product and qty > 0:
                 PurchaseReceiptItem.objects.create(
                     receipt=receipt, product=product, quantity=qty, unit_price=price,

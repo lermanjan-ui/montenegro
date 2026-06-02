@@ -203,7 +203,7 @@
             <thead>
                 <tr>
                     <th>Товар</th><th>Кол-во</th><th>Ед.</th>
-                    {% if show_money %}<th>Цена закупки</th><th>Сумма</th>{% endif %}
+                    {% if show_money %}<th>Цена за кг</th><th>Сумма</th>{% endif %}
                     {% if is_draft and can_edit %}<th></th>{% endif %}
                 </tr>
             </thead>
@@ -241,8 +241,10 @@
                     {% for p in products %}<option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>{% endfor %}
                 </select>
             </div>
-            <div><label class="fc-label">Количество</label><input class="fc-input num" name="quantity" placeholder="0" required></div>
-            <div><label class="fc-label">Цена закупки</label><input class="fc-input num" name="unit_price" placeholder="0"></div>
+            <div><label class="fc-label">Количество</label><input class="fc-input num" name="quantity" id="add_qty" placeholder="0" required></div>
+            <div><label class="fc-label">Оплачено за партию</label><input class="fc-input num" name="line_total" id="add_line_total" placeholder="0">
+                <div class="muted" id="add_per_kg_hint" style="font-size:12px;margin-top:4px;min-height:14px;"></div>
+            </div>
             <div><button type="submit" class="fc-btn fc-btn-secondary">+ Добавить</button></div>
         </form>
         {% endif %}
@@ -292,6 +294,25 @@
         cp("hdr_date","sync_date");
         cp("hdr_comment","sync_comment");
     });
+
+    // Живая подсказка: цена за кг = оплачено за партию / количество.
+    var qtyEl = document.getElementById("add_qty");
+    var totalEl = document.getElementById("add_line_total");
+    var hintEl = document.getElementById("add_per_kg_hint");
+    function num(v){ return parseFloat(String(v||"").replace(",",".").replace(/\s/g,"")) || 0; }
+    function recalcHint(){
+        if (!hintEl) return;
+        var q = num(qtyEl && qtyEl.value);
+        var t = num(totalEl && totalEl.value);
+        if (q > 0 && t > 0){
+            var perKg = Math.round(t / q);
+            hintEl.textContent = "≈ " + perKg.toLocaleString("ru-RU") + " за кг";
+        } else {
+            hintEl.textContent = "";
+        }
+    }
+    if (qtyEl) qtyEl.addEventListener("input", recalcHint);
+    if (totalEl) totalEl.addEventListener("input", recalcHint);
 })();
 </script>
 
