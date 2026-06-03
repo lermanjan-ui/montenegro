@@ -39,13 +39,14 @@ Design
   reuse the same selection logic.
 """
 
+import json
 import logging
 import os
 import time
+import urllib.error
+import urllib.request
 from datetime import timedelta
 from decimal import Decimal
-
-import requests
 
 from django.utils import timezone
 
@@ -150,7 +151,10 @@ def build_audience_rows(country=None):
 
 def _post_users_batch(audience_id, access_token, schema, batch):
     """POST one batch of users to the Custom Audience. Returns Meta's
-    parsed response. Raises MetaAudienceError on network/HTTP failure."""
+    parsed response. Raises MetaAudienceError on network/HTTP failure.
+
+    Uses urllib (not requests) to match meta_capi.py — the project ships
+    no `requests` dependency."""
     url = (
         f"https://graph.facebook.com/{META_API_VERSION}/"
         f"{audience_id}/users"
@@ -162,22 +166,34 @@ def _post_users_batch(audience_id, access_token, schema, batch):
         },
         "access_token": access_token,
     }
+
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
     try:
-        resp = requests.post(url, json=payload, timeout=META_API_TIMEOUT)
-    except requests.RequestException as e:
+        with urllib.request.urlopen(request, timeout=META_API_TIMEOUT) as resp:
+            raw = resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        # Meta returns the error body with a 4xx/5xx — read it for the message.
+        try:
+            body = e.read().decode("utf-8", "replace")
+            data = json.loads(body)
+            err = data.get("error", {}) if isinstance(data, dict) else {}
+            msg = err.get("message") or body[:300]
+        except Exception:
+            msg = str(e)
+        raise MetaAudienceError(f"HTTP {e.code}: {msg}") from e
+    except urllib.error.URLError as e:
         raise MetaAudienceError(f"network: {e}") from e
 
     try:
-        data = resp.json()
+        return json.loads(raw)
     except ValueError:
-        data = {"_raw": resp.text[:500]}
-
-    if resp.status_code >= 400:
-        err = data.get("error", {}) if isinstance(data, dict) else {}
-        msg = err.get("message") or resp.text[:300]
-        raise MetaAudienceError(f"HTTP {resp.status_code}: {msg}")
-
-    return data
+        return {"_raw": raw[:500]}
 
 
 def push_ltv_audience(country=None):

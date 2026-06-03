@@ -32,13 +32,14 @@ Design notes
 """
 
 import hashlib
+import json
 import logging
 import os
 import time
+import urllib.error
+import urllib.request
 import uuid
 from decimal import Decimal
-
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,42 @@ class MetaCapiNotConfigured(Exception):
 class MetaCapiError(Exception):
     """Network / HTTP error talking to graph.facebook.com — caller may
     retry on the next tick. Wraps the underlying exception's message."""
+
+
+# -- HTTP transport (urllib, no `requests` dependency) -----------------------
+
+def _post_to_meta(url, body):
+    """POST a JSON body to Meta and return the parsed response dict.
+
+    Uses urllib (the project ships no `requests` dependency). Raises
+    MetaCapiError on network/HTTP failure, mirroring the previous behavior.
+    """
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=META_API_TIMEOUT) as resp:
+            raw = resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        # Meta returns the error body with the 4xx/5xx — read it for the message.
+        try:
+            err_body = e.read().decode("utf-8", "replace")
+            data = json.loads(err_body)
+            err = data.get("error", {}) if isinstance(data, dict) else {}
+            msg = err.get("message") or err_body[:300]
+        except Exception:
+            msg = str(e)
+        raise MetaCapiError(f"HTTP {e.code}: {msg}") from e
+    except urllib.error.URLError as e:
+        raise MetaCapiError(f"network: {e}") from e
+
+    try:
+        return json.loads(raw)
+    except ValueError:
+        return {"_raw": raw[:500]}
 
 
 # -- Hashing helpers ---------------------------------------------------------
@@ -270,27 +307,7 @@ def send_meta_capi_purchase(order):
 
     url = f"https://graph.facebook.com/{META_API_VERSION}/{pixel_id}/events"
 
-    try:
-        resp = requests.post(url, json=body, timeout=META_API_TIMEOUT)
-    except requests.RequestException as e:
-        raise MetaCapiError(f"network: {e}") from e
-
-    # Meta returns 200 with JSON on accept; 4xx with `error.message` on
-    # rejection. We log the response body either way for debugging.
-    try:
-        data = resp.json()
-    except ValueError:
-        data = {"_raw": resp.text[:500]}
-
-    if resp.status_code >= 400:
-        # Common Meta error shape: {"error": {"message": "...", "code": N}}
-        err = data.get("error", {}) if isinstance(data, dict) else {}
-        msg = err.get("message") or resp.text[:300]
-        # Permissions errors (400 with code=190) are configuration — would
-        # fail every retry. Caller decides; here we just surface the message.
-        raise MetaCapiError(
-            f"HTTP {resp.status_code}: {msg}"
-        )
+    data = _post_to_meta(url, body)
 
     logger.info(
         "[meta-capi] order %s Purchase sent: %s",
@@ -388,20 +405,7 @@ def send_meta_capi_refund(order):
 
     url = f"https://graph.facebook.com/{META_API_VERSION}/{pixel_id}/events"
 
-    try:
-        resp = requests.post(url, json=body, timeout=META_API_TIMEOUT)
-    except requests.RequestException as e:
-        raise MetaCapiError(f"network: {e}") from e
-
-    try:
-        data = resp.json()
-    except ValueError:
-        data = {"_raw": resp.text[:500]}
-
-    if resp.status_code >= 400:
-        err = data.get("error", {}) if isinstance(data, dict) else {}
-        msg = err.get("message") or resp.text[:300]
-        raise MetaCapiError(f"HTTP {resp.status_code}: {msg}")
+    data = _post_to_meta(url, body)
 
     logger.info(
         "[meta-capi] order %s Refund sent: %s",
