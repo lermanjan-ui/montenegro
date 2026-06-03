@@ -1626,6 +1626,19 @@ class PromoCode(models.Model):
         auto_now_add=True
     )
 
+    # ===== Срок действия промокода =====
+    # Если обе даты пустые — без ограничения (бессрочный).
+    # valid_from пусто = действует сразу; valid_until пусто = бессрочно.
+    # Промокод применяется, только если сегодня в пределах заданных границ.
+    valid_from = models.DateField(
+        null=True, blank=True,
+        help_text="Действует с этой даты. Пусто — без нижней границы.",
+    )
+    valid_until = models.DateField(
+        null=True, blank=True,
+        help_text="Действует по эту дату включительно. Пусто — бессрочно.",
+    )
+
     # ===== UTM-метки промокода (наследуются заказом) =====
     # Если заданы — заказ, оформленный с этим промокодом, перенимает их
     # ТОЛЬКО в пустые поля (UTM, пришедшие с фронта из рекламного перехода,
@@ -1652,6 +1665,19 @@ class PromoCode(models.Model):
 
     def __str__(self):
         return self.code
+
+    def is_valid_now(self, today=None):
+        """Промокод в пределах срока действия на дату `today`.
+        Пустые границы = без ограничения. Не проверяет is_active —
+        это отдельная проверка."""
+        if today is None:
+            from django.utils import timezone
+            today = timezone.localdate()
+        if self.valid_from and today < self.valid_from:
+            return False
+        if self.valid_until and today > self.valid_until:
+            return False
+        return True
         
             
 

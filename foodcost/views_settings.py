@@ -100,6 +100,9 @@ def settings_page(request, country_slug):
                 country=country,
                 code=request.POST.get("code", "").strip(),
                 percent=request.POST.get("percent") or 0,
+                is_active=bool(request.POST.get("is_active")),
+                valid_from=(request.POST.get("valid_from") or None),
+                valid_until=(request.POST.get("valid_until") or None),
                 utm_source=(request.POST.get("utm_source") or "").strip(),
                 utm_medium=(request.POST.get("utm_medium") or "").strip(),
                 utm_campaign=(request.POST.get("utm_campaign") or "").strip(),
@@ -114,6 +117,9 @@ def settings_page(request, country_slug):
                 country=country,
             )
             item.percent = request.POST.get("percent") or 0
+            item.is_active = bool(request.POST.get("is_active"))
+            item.valid_from = request.POST.get("valid_from") or None
+            item.valid_until = request.POST.get("valid_until") or None
             item.utm_source = (request.POST.get("utm_source") or "").strip()
             item.utm_medium = (request.POST.get("utm_medium") or "").strip()
             item.utm_campaign = (request.POST.get("utm_campaign") or "").strip()

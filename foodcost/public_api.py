@@ -2133,6 +2133,15 @@ def _resolve_promo_code(country, payload, *, required=False, customer_phone=None
             status=400,
         )
 
+    # Срок действия. Пустые границы = бессрочный. Вне срока — как недействующий.
+    if not promo.is_valid_now():
+        return None, api_error(
+            "PROMO_INVALID",
+            "Срок действия промокода истёк или ещё не начался",
+            details={"promo_code": code},
+            status=400,
+        )
+
     # Usage-limit enforcement. We only run the check when the caller
     # provided a phone — for cart_calculate before the user has typed
     # their phone we let the code pass and discover the limit later at

@@ -629,6 +629,9 @@ button:hover{
                 <input name="percent" type="number" step="0.01" placeholder="%">
                 <input name="utm_source" placeholder="utm_source">
                 <input name="utm_campaign" placeholder="utm_campaign">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;white-space:nowrap;">
+                    <input type="checkbox" name="is_active" checked> Включён
+                </label>
                 <button type="submit">Добавить</button>
             </form>
 
@@ -642,6 +645,8 @@ button:hover{
                                     Скидка {{ item.percent }}%
                                     {% if item.eligible_ids %}· на {{ item.eligible_ids|length }} блюд{% else %}· на весь заказ{% endif %}
                                     {% if item.utm_campaign %}· {{ item.utm_campaign }}{% endif %}
+                                    {% if item.is_active %}· ✅ вкл{% else %}· ⛔️ выкл{% endif %}
+                                    {% if item.valid_from or item.valid_until %}· {{ item.valid_from|date:'d.m.y'|default:'…' }}–{{ item.valid_until|date:'d.m.y'|default:'∞' }}{% endif %}
                                 </div>
                             </div>
 
@@ -678,6 +683,20 @@ button:hover{
                                     <label style="font-size:12px;font-weight:800;">Скидка %
                                         <input name="percent" type="number" step="0.01" value="{{ item.percent }}" style="display:block;margin-top:4px;">
                                     </label>
+                                    <label style="font-size:12px;font-weight:800;display:flex;align-items:center;gap:8px;align-self:flex-end;">
+                                        <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}>
+                                        Включён
+                                    </label>
+                                </div>
+
+                                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                    <label style="font-size:12px;font-weight:800;">Действует с
+                                        <input name="valid_from" type="date" value="{{ item.valid_from|date:'Y-m-d' }}" style="display:block;margin-top:4px;">
+                                    </label>
+                                    <label style="font-size:12px;font-weight:800;">по
+                                        <input name="valid_until" type="date" value="{{ item.valid_until|date:'Y-m-d' }}" style="display:block;margin-top:4px;">
+                                    </label>
+                                    <span style="font-size:11px;color:#6b7280;align-self:flex-end;">пусто = без ограничения</span>
                                 </div>
 
                                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
