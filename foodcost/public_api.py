@@ -1456,6 +1456,7 @@ def _validate_and_price_cart(
     delivery_zone=None,
     fulfillment_method=Order.FULFILLMENT_DELIVERY,
     promo_code=None,
+    collect_unavailable=False,
 ):
     """
     Validate raw cart items and compute prices server-side.
@@ -1498,6 +1499,7 @@ def _validate_and_price_cart(
 
     lines = []
     line_objects = []
+    unavailable_items = []
     subtotal = Decimal("0")
 
     for index, raw_item in enumerate(items_raw):
@@ -1541,6 +1543,15 @@ def _validate_and_price_cart(
             )
 
         if not is_dish_available(dish, location=location):
+            # Мягкий режим (collect_unavailable): не падаем, а собираем
+            # недоступную позицию в список и пропускаем её из расчёта.
+            # Строгий режим (по умолчанию): как раньше — ошибка.
+            if collect_unavailable:
+                unavailable_items.append({
+                    "dish_id": dish.id,
+                    "dish_name": _display_name(dish),
+                })
+                continue
             return None, api_error(
                 "DISH_UNAVAILABLE",
                 "Dish is currently unavailable",
@@ -1673,6 +1684,16 @@ def _validate_and_price_cart(
             "addon_links": addon_links_for_line,
         })
 
+    # Мягкий режим: если после отсева недоступных не осталось ни одной
+    # позиции — оформлять/считать нечего, отдаём ALL_UNAVAILABLE со списком.
+    if collect_unavailable and not line_objects:
+        return None, api_error(
+            "ALL_UNAVAILABLE",
+            "Все товары корзины недоступны в выбранной зоне",
+            details={"unavailable_items": unavailable_items},
+            status=409,
+        )
+
     # ---- Discount (promo code) ----
     discount_amount = Decimal("0")
     discount_percent = Decimal("0")
@@ -1743,6 +1764,7 @@ def _validate_and_price_cart(
         "total": total,
         "free_delivery": free_delivery,
         "fulfillment_method": fulfillment_method,
+        "unavailable_items": unavailable_items,
     }, None
 
 
@@ -2471,6 +2493,7 @@ def cart_calculate(request):
         delivery_zone=delivery_zone,
         fulfillment_method=fulfillment_method,
         promo_code=promo,
+        collect_unavailable=True,
     )
     if err:
         return err
@@ -2491,6 +2514,9 @@ def cart_calculate(request):
         "free_delivery": bool(result["free_delivery"]),
         "fulfillment_method": result["fulfillment_method"],
         "total": _to_float(result["total"]),
+        # Недоступные в выбранной зоне позиции — исключены из расчёта.
+        # Фронт показывает «эти товары недоступны в вашей зоне».
+        "unavailable_items": result.get("unavailable_items", []),
     }
 
     if matched_zone is not None:
@@ -2695,6 +2721,7 @@ def order_create(request):
         delivery_zone=delivery_zone,
         fulfillment_method=fulfillment_method,
         promo_code=promo,
+        collect_unavailable=True,
     )
     if err:
         return err
@@ -3010,6 +3037,9 @@ def order_create(request):
             "total": _to_float(order.total_amount),
         },
         "payment": payment_block,
+        # Позиции, исключённые из заказа как недоступные в зоне (мягкий режим).
+        # Фронт показывает клиенту «эти товары не вошли в заказ».
+        "unavailable_items": result.get("unavailable_items", []),
     })
 
 
