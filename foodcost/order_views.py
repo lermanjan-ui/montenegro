@@ -549,6 +549,14 @@ def order_create(request, country_slug):
                 is_default=is_first_address,
             )
 
+        # Уведомление о новом заказе в Telegram (тред филиала). Сбой Telegram
+        # не должен ломать создание заказа — всё внутри try/except.
+        try:
+            from .shift_views import send_new_order_to_telegram
+            send_new_order_to_telegram(order)
+        except Exception:
+            pass
+
         return redirect(
             f"/c/{country.slug}/orders/"
         )

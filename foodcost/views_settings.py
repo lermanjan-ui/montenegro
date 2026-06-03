@@ -10,6 +10,7 @@ from .models import (
     PromoCode,
     DishCategory,
     OrderCancelReason,
+    Dish,
 )
 
 from .views import (
@@ -99,7 +100,30 @@ def settings_page(request, country_slug):
                 country=country,
                 code=request.POST.get("code", "").strip(),
                 percent=request.POST.get("percent") or 0,
+                utm_source=(request.POST.get("utm_source") or "").strip(),
+                utm_medium=(request.POST.get("utm_medium") or "").strip(),
+                utm_campaign=(request.POST.get("utm_campaign") or "").strip(),
+                utm_content=(request.POST.get("utm_content") or "").strip(),
+                utm_term=(request.POST.get("utm_term") or "").strip(),
             )
+
+        if action == "update_promo_code":
+            item = get_object_or_404(
+                PromoCode,
+                id=request.POST.get("item_id"),
+                country=country,
+            )
+            item.percent = request.POST.get("percent") or 0
+            item.utm_source = (request.POST.get("utm_source") or "").strip()
+            item.utm_medium = (request.POST.get("utm_medium") or "").strip()
+            item.utm_campaign = (request.POST.get("utm_campaign") or "").strip()
+            item.utm_content = (request.POST.get("utm_content") or "").strip()
+            item.utm_term = (request.POST.get("utm_term") or "").strip()
+            item.save()
+            # Блюда, на которые действует скидка. Пусто = на весь заказ.
+            dish_ids = request.POST.getlist("eligible_dishes")
+            valid_dishes = Dish.objects.filter(id__in=dish_ids, country=country)
+            item.eligible_dishes.set(valid_dishes)
             
         if action == "create_cancel_reason":
             OrderCancelReason.objects.create(
@@ -249,11 +273,15 @@ def settings_page(request, country_slug):
     payment_methods = PaymentMethod.objects.filter(country=country).order_by("name")
     order_sources = OrderSource.objects.filter(country=country).order_by("name")
     delivery_providers = DeliveryProvider.objects.filter(country=country).order_by("name")
-    promo_codes = PromoCode.objects.filter(country=country).order_by("code")
+    promo_codes = PromoCode.objects.filter(country=country).order_by("code").prefetch_related("eligible_dishes")
+    # id выбранных блюд для отметки чекбоксов в форме настройки промокода.
+    for pc in promo_codes:
+        pc.eligible_ids = set(pc.eligible_dishes.values_list("id", flat=True))
     cancel_reasons = OrderCancelReason.objects.filter(
         country=country
     ).order_by("name")
     categories = DishCategory.objects.filter(country=country).order_by("name")
+    dishes = Dish.objects.filter(country=country, is_archived=False).order_by("name")
 
     return render(request, "foodcost/settings.html", {
         "country": country,
@@ -263,4 +291,5 @@ def settings_page(request, country_slug):
         "promo_codes": promo_codes,
         "cancel_reasons": cancel_reasons,
         "categories": categories,
+        "dishes": dishes,
     })

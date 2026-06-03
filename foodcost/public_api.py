@@ -1682,8 +1682,23 @@ def _validate_and_price_cart(
         except Exception:
             discount_percent = Decimal("0")
         if discount_percent > 0:
+            # База скидки. Если у промокода задан список блюд
+            # (eligible_dishes) — скидываем ТОЛЬКО сумму подходящих позиций;
+            # иначе — весь subtotal (поведение по умолчанию).
+            eligible_ids = set(
+                promo_code.eligible_dishes.values_list("id", flat=True)
+            )
+            if eligible_ids:
+                discount_base = sum(
+                    (lo["total_price"] for lo in line_objects
+                     if lo["dish"].id in eligible_ids),
+                    Decimal("0"),
+                )
+            else:
+                discount_base = subtotal
+
             # 2 dp rounding so cashier-facing totals stay clean.
-            discount_amount = (subtotal * discount_percent / Decimal("100")).quantize(
+            discount_amount = (discount_base * discount_percent / Decimal("100")).quantize(
                 Decimal("0.01")
             )
             if discount_amount > subtotal:
@@ -2819,6 +2834,23 @@ def order_create(request):
             or ""
         ).strip()[:512]
 
+        # Атрибуция: fbclid + UTM-метки (присылает фронт из URL перехода).
+        fbclid = str(payload.get("fbclid") or "").strip()[:512]
+        utm_source = str(payload.get("utm_source") or "").strip()[:255]
+        utm_medium = str(payload.get("utm_medium") or "").strip()[:255]
+        utm_campaign = str(payload.get("utm_campaign") or "").strip()[:255]
+        utm_content = str(payload.get("utm_content") or "").strip()[:255]
+        utm_term = str(payload.get("utm_term") or "").strip()[:255]
+
+        # UTM промокода наследуются заказом ТОЛЬКО в пустые поля — метки,
+        # пришедшие с фронта (реальный рекламный переход), приоритетнее.
+        if promo is not None:
+            utm_source = utm_source or str(getattr(promo, "utm_source", "") or "").strip()[:255]
+            utm_medium = utm_medium or str(getattr(promo, "utm_medium", "") or "").strip()[:255]
+            utm_campaign = utm_campaign or str(getattr(promo, "utm_campaign", "") or "").strip()[:255]
+            utm_content = utm_content or str(getattr(promo, "utm_content", "") or "").strip()[:255]
+            utm_term = utm_term or str(getattr(promo, "utm_term", "") or "").strip()[:255]
+
         order = Order.objects.create(
             country=country,
             location=location,
@@ -2849,6 +2881,12 @@ def order_create(request):
             meta_fbc=meta_fbc,
             meta_client_ip=meta_client_ip,
             meta_user_agent=meta_user_agent,
+            fbclid=fbclid,
+            utm_source=utm_source,
+            utm_medium=utm_medium,
+            utm_campaign=utm_campaign,
+            utm_content=utm_content,
+            utm_term=utm_term,
         )
 
         # Now we have order.id → generate public_order_number deterministically.
@@ -2869,6 +2907,14 @@ def order_create(request):
                 cost_snapshot=dish_cost,
                 total_price=line["total_price"],
             )
+
+    # Уведомление о новом заказе в Telegram (в тред филиала). Сбой Telegram
+    # не должен влиять на оформление — функция сама проглатывает ошибки.
+    try:
+        from .shift_views import send_new_order_to_telegram
+        send_new_order_to_telegram(order)
+    except Exception:
+        pass
 
     # Build the payment block. For cash (and any order without an online
     # Build the payment block. Three cases:
@@ -2928,6 +2974,14 @@ def order_create(request):
             order.public_order_number or order.id,
             payment_key,
         )
+
+    # Уведомление о новом заказе в Telegram (тред филиала). Сбой Telegram
+    # не должен ломать создание заказа — всё внутри try/except.
+    try:
+        from .shift_views import send_new_order_to_telegram
+        send_new_order_to_telegram(order)
+    except Exception:
+        pass
 
     # Frontend contract: data.order = { id, order_number, status,
     # payment_status, payment_method, total } and data.payment is either

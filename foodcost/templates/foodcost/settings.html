@@ -627,6 +627,8 @@ button:hover{
                 <input type="hidden" name="action" value="create_promo_code">
                 <input name="code" placeholder="Например: F94" required>
                 <input name="percent" type="number" step="0.01" placeholder="%">
+                <input name="utm_source" placeholder="utm_source">
+                <input name="utm_campaign" placeholder="utm_campaign">
                 <button type="submit">Добавить</button>
             </form>
 
@@ -636,7 +638,11 @@ button:hover{
                         <div class="item-main">
                             <div>
                                 <div class="item-name">{{ item.code }}</div>
-                                <div class="item-meta">Скидка {{ item.percent }}%</div>
+                                <div class="item-meta">
+                                    Скидка {{ item.percent }}%
+                                    {% if item.eligible_ids %}· на {{ item.eligible_ids|length }} блюд{% else %}· на весь заказ{% endif %}
+                                    {% if item.utm_campaign %}· {{ item.utm_campaign }}{% endif %}
+                                </div>
                             </div>
 
                             <form method="post">
@@ -660,6 +666,48 @@ button:hover{
                                 </button>
                             </form>
                         </div>
+
+                        <details style="margin-top:10px;">
+                            <summary style="cursor:pointer;font-weight:800;font-size:13px;color:#374151;">Настроить (UTM и блюда)</summary>
+                            <form method="post" style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_promo_code">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                    <label style="font-size:12px;font-weight:800;">Скидка %
+                                        <input name="percent" type="number" step="0.01" value="{{ item.percent }}" style="display:block;margin-top:4px;">
+                                    </label>
+                                </div>
+
+                                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                    <input name="utm_source" placeholder="utm_source" value="{{ item.utm_source }}">
+                                    <input name="utm_medium" placeholder="utm_medium" value="{{ item.utm_medium }}">
+                                    <input name="utm_campaign" placeholder="utm_campaign" value="{{ item.utm_campaign }}">
+                                    <input name="utm_content" placeholder="utm_content" value="{{ item.utm_content }}">
+                                    <input name="utm_term" placeholder="utm_term" value="{{ item.utm_term }}">
+                                </div>
+
+                                <div>
+                                    <div style="font-size:12px;font-weight:800;margin-bottom:6px;color:#374151;">
+                                        Блюда для скидки <span style="font-weight:600;color:#6b7280;">(не выбрано — скидка на весь заказ)</span>
+                                    </div>
+                                    <div style="max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;">
+                                        {% for d in dishes %}
+                                        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+                                            <input type="checkbox" name="eligible_dishes" value="{{ d.id }}"
+                                                {% if d.id in item.eligible_ids %}checked{% endif %}>
+                                            {{ d.name }}
+                                        </label>
+                                        {% empty %}
+                                        <span class="empty">Нет блюд</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <button type="submit" style="align-self:flex-start;">Сохранить</button>
+                            </form>
+                        </details>
                     </div>
                 {% empty %}
                     <div class="empty">Пока нет промокодов</div>

@@ -168,6 +168,107 @@ def send_shift_handover_deleted_to_telegram(handover):
     except Exception:
         pass        
 
+
+def _fmt_money(value):
+    """Деньги — целыми, с пробелом-разделителем тысяч (формат в Python,
+    не humanize). 51 132 вместо 51132.00."""
+    try:
+        n = int(round(float(value or 0)))
+    except (TypeError, ValueError):
+        n = 0
+    return f"{n:,}".replace(",", " ")
+
+
+def send_new_order_to_telegram(order):
+    """Уведомление о новом заказе в Telegram — в тред филиала заказа
+    (order.location.telegram_thread_id), как у передачи смены.
+
+    Шлёт: филиал, № заказа, клиент/телефон, состав, способ оплаты,
+    доставка, промокод+скидка, итоговая сумма.
+
+    Любой сбой Telegram не должен влиять на создание заказа — всё в
+    try/except, вызывающий код тоже оборачивает вызов.
+    """
+    bot_token = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
+    chat_id = getattr(settings, "TELEGRAM_CHAT_ID", "")
+
+    if not bot_token or not chat_id:
+        return
+
+    location = getattr(order, "location", None)
+    thread_id = getattr(location, "telegram_thread_id", None) if location else None
+
+    number = order.public_order_number or str(order.id)
+
+    lines = [
+        "🆕 <b>Новый заказ</b>",
+        "",
+        f"<b>Филиал:</b> {escape(location.name) if location else '—'}",
+        f"<b>Заказ:</b> №{escape(str(number))}",
+        f"<b>Клиент:</b> {escape(order.customer_name or '—')}",
+        f"<b>Телефон:</b> {escape(order.customer_phone or '—')}",
+    ]
+
+    if order.payment_method:
+        lines.append(f"<b>Оплата:</b> {escape(order.payment_method.name)}")
+
+    if order.delivery_address:
+        lines.append(f"<b>Адрес:</b> {escape(order.delivery_address)}")
+
+    # Состав заказа
+    items = list(order.items.select_related("dish").all())
+    if items:
+        lines.append("")
+        lines.append("<b>Состав:</b>")
+        for it in items:
+            name = it.dish.name if it.dish else (it.dish_name_snapshot or "—")
+            qty = it.quantity
+            try:
+                qty = int(qty) if qty == int(qty) else qty
+            except (TypeError, ValueError):
+                pass
+            lines.append(
+                f"• {escape(str(name))} × {qty} — {_fmt_money(it.total_price)}"
+            )
+
+    # Суммы
+    lines.append("")
+    lines.append(f"<b>Сумма позиций:</b> {_fmt_money(order.subtotal_amount)}")
+
+    if order.promo_code:
+        lines.append(
+            f"<b>Промокод:</b> {escape(order.promo_code.code)} "
+            f"(−{_fmt_money(order.discount_amount)})"
+        )
+    elif order.discount_amount and float(order.discount_amount) > 0:
+        lines.append(f"<b>Скидка:</b> −{_fmt_money(order.discount_amount)}")
+
+    if order.customer_delivery_amount and float(order.customer_delivery_amount) > 0:
+        lines.append(f"<b>Доставка:</b> {_fmt_money(order.customer_delivery_amount)}")
+
+    lines.append(f"<b>Итого:</b> {_fmt_money(order.total_amount)}")
+
+    payload = {
+        "chat_id": chat_id,
+        "text": "\n".join(lines),
+        "parse_mode": "HTML",
+    }
+    # Тред филиала, если задан (как у смен). Если филиала/треда нет —
+    # уйдёт в общий чат, но по условию филиал у заказа всегда есть.
+    if thread_id:
+        payload["message_thread_id"] = thread_id
+
+    try:
+        request_obj = urllib.request.Request(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(request_obj, timeout=5)
+    except Exception:
+        pass
+
 @login_required(login_url="/login/")
 def shift_handover_list(request, country_slug):
     country = get_country(country_slug, request.user)

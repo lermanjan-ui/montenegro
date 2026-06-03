@@ -1626,6 +1626,30 @@ class PromoCode(models.Model):
         auto_now_add=True
     )
 
+    # ===== UTM-метки промокода (наследуются заказом) =====
+    # Если заданы — заказ, оформленный с этим промокодом, перенимает их
+    # ТОЛЬКО в пустые поля (UTM, пришедшие с фронта из рекламного перехода,
+    # приоритетнее — они отражают реальный источник).
+    utm_source = models.CharField(max_length=255, blank=True, default="")
+    utm_medium = models.CharField(max_length=255, blank=True, default="")
+    utm_campaign = models.CharField(max_length=255, blank=True, default="")
+    utm_content = models.CharField(max_length=255, blank=True, default="")
+    utm_term = models.CharField(max_length=255, blank=True, default="")
+
+    # ===== Ограничение скидки конкретными блюдами =====
+    # Если пусто — скидка действует на весь заказ (как раньше).
+    # Если заданы блюда — процент считается ТОЛЬКО от суммы позиций,
+    # чьё блюдо входит в этот список.
+    eligible_dishes = models.ManyToManyField(
+        "Dish",
+        blank=True,
+        related_name="promo_codes",
+        help_text=(
+            "Блюда, на которые распространяется скидка. Пусто = скидка на "
+            "весь заказ."
+        ),
+    )
+
     def __str__(self):
         return self.code
         
@@ -2057,6 +2081,21 @@ class Order(models.Model):
         max_length=512, blank=True, default="",
         help_text="User-Agent клиента в момент оформления заказа (для user_data CAPI).",
     )
+
+    # ===== Атрибуция: fbclid + UTM-метки (с фронта при оформлении) =====
+    # Захватываются фронтом из URL рекламного перехода (?fbclid=…&utm_…)
+    # и присылаются в payload order_create. Нужны для ROAS по кампаниям
+    # (выручка из заказов сопоставляется с расходами из Meta API по
+    # utm_campaign) и для сверки атрибуции с фактической выручкой CRM.
+    fbclid = models.CharField(max_length=512, blank=True, default="")
+    utm_source = models.CharField(max_length=255, blank=True, default="")
+    utm_medium = models.CharField(max_length=255, blank=True, default="")
+    utm_campaign = models.CharField(
+        max_length=255, blank=True, default="", db_index=True,
+        help_text="UTM-кампания — ключ для агрегации выручки и сопоставления с расходами Meta.",
+    )
+    utm_content = models.CharField(max_length=255, blank=True, default="")
+    utm_term = models.CharField(max_length=255, blank=True, default="")
 
     # ===== Legacy / historical-import marker =====
     # True for orders backfilled from a previous platform's data export
