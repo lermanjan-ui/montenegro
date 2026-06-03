@@ -70,6 +70,13 @@ urlpatterns = [
         views.dish_unarchive,
         name="dish_unarchive",
     ),
+    # Печатная техкарта блюда для повара (состав с граммовками + текст).
+    # HTML-страница с window.print() — «Сохранить как PDF» из браузера.
+    path(
+        "c/<slug:country_slug>/dish/<int:dish_id>/techcard/",
+        views.dish_techcard_print,
+        name="dish_techcard_print",
+    ),
 
     # продукты
     path("c/<slug:country_slug>/products/", views.product_list, name="product_list"),

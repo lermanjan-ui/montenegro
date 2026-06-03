@@ -1,0 +1,149 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Техкарта: {{ dish.name }}{% endblock %}
+
+{% block content %}
+<style>
+    .tc-page {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        color: #111827;
+        font-family: Inter, system-ui, sans-serif;
+    }
+    .tc-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+    .tc-btn {
+        border: 0;
+        border-radius: 10px;
+        padding: 11px 18px;
+        font-weight: 800;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .tc-btn-print { background: #111827; color: #fff; }
+    .tc-btn-back { background: #fff; color: #374151; border: 1px solid #d1d5db; text-decoration: none; display: inline-block; }
+
+    .tc-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 28px 32px;
+    }
+    .tc-h1 { margin: 0 0 4px; font-size: 28px; letter-spacing: -0.02em; }
+    .tc-meta { color: #6b7280; font-size: 14px; margin: 0 0 22px; }
+    .tc-h2 { font-size: 17px; margin: 22px 0 10px; }
+
+    table.tc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.tc-table th, table.tc-table td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid #eef2f7;
+    }
+    table.tc-table th {
+        background: #f3f4f6;
+        font-weight: 800;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+    table.tc-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tc-empty { color: #6b7280; font-size: 14px; margin: 4px 0 0; }
+
+    .tc-techtext {
+        white-space: pre-wrap;
+        font-size: 15px;
+        line-height: 1.55;
+        margin-top: 10px;
+    }
+
+    @media print {
+        /* Прячем всё лишнее: панель сайта и кнопки — в PDF только техкарта. */
+        .tc-toolbar { display: none !important; }
+        .tc-card { border: 0; padding: 0; }
+        .tc-page { max-width: none; }
+        @page { margin: 18mm; }
+    }
+</style>
+
+<div class="tc-page">
+
+    <div class="tc-toolbar">
+        <a class="tc-btn tc-btn-back" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">← К блюду</a>
+        <button class="tc-btn tc-btn-print" onclick="window.print()">🖨 Печать / Сохранить в PDF</button>
+    </div>
+
+    <div class="tc-card">
+        <h1 class="tc-h1">{{ dish.name }}</h1>
+        <p class="tc-meta">
+            Технологическая карта
+            {% if dish.final_weight %}· Выход: {{ dish.final_weight }} г{% endif %}
+            · {{ today }}
+        </p>
+
+        {% if dish.is_combo %}
+            <p class="tc-empty">Это комбо-позиция — она собирается из готовых блюд, отдельная техкарта не предусмотрена.</p>
+        {% else %}
+
+            <h2 class="tc-h2">Продукты</h2>
+            {% if product_items %}
+            <table class="tc-table">
+                <thead>
+                    <tr>
+                        <th>Наименование</th>
+                        <th style="text-align:right;">Брутто</th>
+                        <th style="text-align:right;">Нетто</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for it in product_items %}
+                    <tr>
+                        <td>{{ it.name }}</td>
+                        <td class="num">{{ it.gross }} {{ it.unit }}</td>
+                        <td class="num">{{ it.net }} {{ it.unit }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="tc-empty">Продукты не добавлены.</p>
+            {% endif %}
+
+            <h2 class="tc-h2">Заготовки</h2>
+            {% if preparation_items %}
+            <table class="tc-table">
+                <thead>
+                    <tr>
+                        <th>Наименование</th>
+                        <th style="text-align:right;">Брутто</th>
+                        <th style="text-align:right;">Нетто</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for it in preparation_items %}
+                    <tr>
+                        <td>{{ it.name }}</td>
+                        <td class="num">{{ it.gross }} {{ it.unit }}</td>
+                        <td class="num">{{ it.net }} {{ it.unit }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="tc-empty">Заготовки не используются.</p>
+            {% endif %}
+
+            <h2 class="tc-h2">Технология приготовления</h2>
+            {% if dish.tech_card %}
+                <div class="tc-techtext">{{ dish.tech_card }}</div>
+            {% else %}
+                <p class="tc-empty">Текст техкарты не заполнен.</p>
+            {% endif %}
+
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

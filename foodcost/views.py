@@ -1426,6 +1426,51 @@ def dish_detail(request, country_slug, dish_id):
 
     return render(request, "foodcost/dish_detail.html", context)
 
+
+@login_required(login_url="/login/")
+def dish_techcard_print(request, country_slug, dish_id):
+    """Печатная техкарта блюда для повара: состав (продукты + заготовки)
+    с брутто/нетто и текст техкарты. Отдаёт HTML-страницу с window.print()
+    — повар сохраняет как PDF / печатает из браузера.
+
+    Доступ — как у карточки блюда (кто видит блюдо, тот видит техкарту).
+    Для комбо техкарта не формируется (повар их не готовит).
+    """
+    country = get_country(country_slug, request.user)
+
+    if not user_can_view_dish_page(request.user):
+        return HttpResponseForbidden("У вас нет доступа к этому разделу")
+
+    dish = get_object_or_404(Dish, id=dish_id, country=country)
+
+    product_items = [
+        {
+            "name": it.product.name,
+            "gross": it.gross,
+            "net": it.net,
+            "unit": it.unit_label(),
+        }
+        for it in dish.product_items.select_related("product").all()
+    ]
+    preparation_items = [
+        {
+            "name": it.preparation.name,
+            "gross": it.gross,
+            "net": it.net,
+            "unit": it.unit_label(),
+        }
+        for it in dish.preparation_items.select_related("preparation").all()
+    ]
+
+    return render(request, "foodcost/dish_techcard.html", {
+        "country": country,
+        "dish": dish,
+        "product_items": product_items,
+        "preparation_items": preparation_items,
+        "today": timezone.now().date(),
+    })
+
+
 @login_required(login_url="/login/")
 def product_list(request, country_slug):
     country = get_country(country_slug, request.user)
