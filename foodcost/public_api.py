@@ -553,6 +553,15 @@ def serialize_product_card(request, dish, location=None):
         "price": _to_float(dish.selling_price),
         "old_price": None,
         "badge": dish.badge or "",
+        # Маркетинговые признаки — те же, что в detail (/products/{slug}),
+        # чтобы листинг и карточка были согласованы. Раньше листинг отдавал
+        # только badge, из-за чего фронт видел у всех is_vegetarian=false и
+        # не получал spice_level.
+        "is_new": bool(dish.is_new),
+        "is_spicy": bool(dish.is_spicy),
+        "is_vegetarian": bool(dish.is_vegetarian),
+        "is_featured": bool(dish.is_featured),
+        "spice_level": dish.spice_level or "",
         "is_available": is_dish_available(dish, location=location),
     }
 

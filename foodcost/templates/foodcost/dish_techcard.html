@@ -66,6 +66,11 @@
         .tc-card { border: 0; padding: 0; }
         .tc-page { max-width: none; }
         @page { margin: 18mm; }
+
+        /* Шапка/сайдбар базового шаблона (страна, пользователь, меню) не
+           должны попадать в PDF техкарты. */
+        .sidebar { display: none !important; }
+        .main { margin: 0 !important; padding: 0 !important; }
     }
 </style>
 
