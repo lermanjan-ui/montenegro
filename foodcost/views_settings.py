@@ -43,6 +43,16 @@ def settings_page(request, country_slug):
     if request.method == "POST":
         action = request.POST.get("action")
 
+        if action == "update_order_limits":
+            # Лимиты заказа уровня страны. 0 = без ограничения.
+            country.min_order_amount = clean_decimal(
+                request.POST.get("min_order_amount")
+            )
+            country.cash_max_amount = clean_decimal(
+                request.POST.get("cash_max_amount")
+            )
+            country.save(update_fields=["min_order_amount", "cash_max_amount"])
+
         if action == "create_payment_method":
             PaymentMethod.objects.create(
                 country=country,

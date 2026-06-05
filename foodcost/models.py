@@ -12,6 +12,21 @@ class Country(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
+    # ===== Лимиты заказа (настраиваются менеджером, отдаются фронту) =====
+    # Минимальная сумма заказа. 0 = без ограничения.
+    min_order_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Минимальная сумма заказа (UZS). 0 — без ограничения.",
+    )
+    # Максимум для оплаты наличными. Выше — только картой. 0 = без ограничения.
+    cash_max_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text=(
+            "Максимальная сумма для оплаты наличными (UZS). Выше — только "
+            "картой. 0 — без ограничения."
+        ),
+    )
+
     def __str__(self):
         return self.name
 
@@ -801,9 +816,26 @@ class Employee(models.Model):
         return self.name
 
     def hourly_rate(self):
-        # Возвращаем Decimal во ВСЕХ ветках. Раньше при monthly_hours == 0
-        # возвращался int 0, из-за чего minute_rate() = 0/60 = 0.0 (float),
-        # и дальше DishLaborItem.calculate_cost падал на Decimal * float.
+        # Часовая ставка зависит от типа оплаты (pay_type). Возвращаем Decimal
+        # во ВСЕХ ветках, иначе DishLaborItem.calculate_cost падает/обнуляется
+        # на Decimal * float.
+        #
+        #   hourly — ставка задана напрямую (hourly_rate_amount).
+        #   shift  — оплата за смену делится на часы смены:
+        #            shift_fixed_amount / default_shift_hours
+        #            (напр. 250000 за 8 ч → 31250/час).
+        #   salary — месячный оклад делится на месячные часы:
+        #            monthly_salary / monthly_hours.
+        if self.pay_type == self.PAY_TYPE_HOURLY:
+            return Decimal(self.hourly_rate_amount or 0)
+
+        if self.pay_type == self.PAY_TYPE_SHIFT:
+            hours = Decimal(self.default_shift_hours or 0)
+            if hours <= 0:
+                return Decimal("0")
+            return Decimal(self.shift_fixed_amount or 0) / hours
+
+        # PAY_TYPE_SALARY (и любой иной случай) — по месячному окладу.
         if not self.monthly_hours:
             return Decimal("0")
         return Decimal(self.monthly_salary or 0) / Decimal(self.monthly_hours)

@@ -482,6 +482,11 @@ h1{
 		    Все заказы
 		</a>
 
+        <div id="sound-hint"
+            style="display:none;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#6b7280;white-space:nowrap;">
+            🔔 Кликните в любом месте, чтобы включить звук уведомлений
+        </div>
+
     </div>
 
   <div class="stats-grid">
@@ -755,5 +760,119 @@ h1{
     </div>
 
 </div>
+
+<script>
+(function () {
+    var COUNTRY_SLUG = "{{ country.slug }}";
+    var POLL_MS = 15000;          // опрос раз в 15 секунд
+    var lastLatestId = null;      // последний известный max id заказа
+    var audioCtx = null;
+
+    var hint = document.getElementById("sound-hint");
+    var soundUnlocked = false;    // станет true после первого клика по странице
+
+    // --- Мигание заголовка вкладки при новом заказе ---
+    var originalTitle = document.title;
+    var blinkTimer = null;
+    var blinkOn = false;
+
+    function startBlink() {
+        if (blinkTimer) return;  // уже мигает
+        blinkTimer = setInterval(function () {
+            blinkOn = !blinkOn;
+            document.title = blinkOn ? "🔴 Новый заказ!" : originalTitle;
+        }, 800);
+    }
+
+    function stopBlink() {
+        if (blinkTimer) {
+            clearInterval(blinkTimer);
+            blinkTimer = null;
+        }
+        document.title = originalTitle;
+    }
+
+    window.addEventListener("focus", stopBlink);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) { stopBlink(); }
+    });
+
+    // --- Разблокировка звука по первому любому клику (как у Яндекса) ---
+    // Браузер запрещает автоплей звука до взаимодействия со страницей.
+    // Поэтому не требуем спец-кнопку: ловим ПЕРВЫЙ любой клик оператора
+    // (он всё равно кликает, работая со страницей) и тихо разблокируем
+    // аудио. Дальше звук при новом заказе играет сам.
+    function unlockSound() {
+        if (soundUnlocked) return;
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === "suspended") { audioCtx.resume(); }
+            soundUnlocked = true;
+            if (hint) { hint.style.display = "none"; }
+        } catch (e) { /* не критично */ }
+    }
+
+    // Любой клик по странице гасит мигание И разблокирует звук.
+    document.addEventListener("click", function () {
+        stopBlink();
+        unlockSound();
+    });
+
+    // Если оператор ещё не кликал — мягко подсказать (звук пока заблокирован
+    // браузером). Подсказка исчезнет на первом клике.
+    if (hint) {
+        setTimeout(function () {
+            if (!soundUnlocked) { hint.style.display = "inline-flex"; }
+        }, 2000);
+    }
+
+    function beep() {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            [0, 0.18].forEach(function (offset) {
+                var osc = audioCtx.createOscillator();
+                var gain = audioCtx.createGain();
+                osc.type = "sine";
+                osc.frequency.value = 880;
+                gain.gain.value = 0.25;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                var t = audioCtx.currentTime + offset;
+                osc.start(t);
+                osc.stop(t + 0.15);
+            });
+        } catch (e) { /* звук не критичен */ }
+    }
+
+    function poll() {
+        fetch("/c/" + COUNTRY_SLUG + "/orders/count/", {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            credentials: "same-origin"
+        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data) return;
+            var latest = data.latest_id || 0;
+            if (lastLatestId === null) {
+                lastLatestId = latest;   // первый замер — просто запомнить
+                return;
+            }
+            if (latest > lastLatestId) {
+                lastLatestId = latest;
+                if (soundUnlocked) { beep(); }
+                startBlink();   // мигание заголовка — независимо от звука
+            }
+        })
+        .catch(function () { /* сеть моргнула — игнор */ });
+    }
+
+    setInterval(poll, POLL_MS);
+    poll();
+})();
+</script>
 
 {% endblock %}

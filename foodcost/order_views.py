@@ -182,9 +182,36 @@ def order_list(request, country_slug):
         "locations_summary": locations_summary,
         "cancelled_orders_count": cancelled_orders.count(),
     })
-    
-    
-    
+
+
+@login_required(login_url="/login/")
+def orders_count(request, country_slug):
+    """Лёгкий JSON-эндпоинт для звукового уведомления о новых заказах.
+
+    Возвращает {"count": N, "latest_id": X} по заказам за сегодня (та же
+    выборка, что order_list: страна + order_date сегодня). Страница заказов
+    опрашивает его раз в ~15 сек; если latest_id вырос — пришёл новый заказ
+    и фронт играет бип. Лёгкий — без select_related и сериализации.
+    """
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(
+        request.user,
+        UserProfile.SECTION_ORDERS,
+    )
+    if access_error:
+        return access_error
+
+    today = timezone.localdate()
+    qs = Order.objects.filter(country=country, order_date__date=today)
+
+    agg = qs.aggregate(n=Count("id"), last=Max("id"))
+    return JsonResponse({
+        "count": agg["n"] or 0,
+        "latest_id": agg["last"] or 0,
+    })
+
+
 @login_required(login_url="/login/")
 def order_all_list(request, country_slug):
 

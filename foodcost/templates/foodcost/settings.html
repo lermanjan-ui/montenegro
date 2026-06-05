@@ -416,6 +416,35 @@ button:hover{
     <div class="settings-grid">
 
         <div class="settings-card">
+            <div class="settings-title">Лимиты заказа</div>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_order_limits">
+
+                <label style="display:block;font-size:13px;font-weight:800;margin-bottom:6px;">
+                    Минимальная сумма заказа (UZS)
+                    <input name="min_order_amount" type="number" step="0.01" min="0"
+                        value="{{ country.min_order_amount|floatformat:'-2' }}"
+                        style="display:block;margin-top:4px;width:100%;">
+                </label>
+
+                <label style="display:block;font-size:13px;font-weight:800;margin:12px 0 6px;">
+                    Максимум для оплаты наличными (UZS)
+                    <input name="cash_max_amount" type="number" step="0.01" min="0"
+                        value="{{ country.cash_max_amount|floatformat:'-2' }}"
+                        style="display:block;margin-top:4px;width:100%;">
+                </label>
+
+                <div class="muted" style="font-size:12px;margin-bottom:10px;">
+                    0 — без ограничения. Выше суммы наличными — только картой.
+                </div>
+
+                <button type="submit">Сохранить</button>
+            </form>
+        </div>
+
+        <div class="settings-card">
             <div class="settings-title">Способы оплаты</div>
 
             <form method="post">

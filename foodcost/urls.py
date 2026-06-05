@@ -135,6 +135,14 @@ urlpatterns = [
         order_views.order_list,
         name="order_list"
     ),
+
+    # Лёгкий JSON для звукового уведомления о новых заказах (поллинг со
+    # страницы /orders/). Отдаёт {count, latest_id} за сегодня.
+    path(
+        "c/<slug:country_slug>/orders/count/",
+        order_views.orders_count,
+        name="orders_count"
+    ),
     
     path(
         "c/<slug:country_slug>/orders/all/",

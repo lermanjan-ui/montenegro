@@ -7,8 +7,10 @@ Lookalike that optimizes toward the most valuable customers.
 
 LTV definition (agreed with owner)
 ==================================
-LTV(customer) = sum(Order.net_revenue) over orders that are
-    payment_status == "paid" AND is_cancelled == False.
+LTV(customer) = sum(Order.net_revenue) over all NON-cancelled orders
+    (is_cancelled == False) excluding clearly failed statuses
+    (cancelled / failed / expired / refunded). paid, cash AND pending
+    all count — by owner's choice any non-cancelled order contributes.
 
 We send PHONE (SHA-256) + LOOKALIKE_VALUE (the LTV). Customer has no email
 on raccoon.uz (phone is the primary identifier), so we only send phone.
@@ -110,11 +112,21 @@ def build_audience_rows(country=None):
         if not phone_norm:
             continue
 
+        # Все заказы клиента, КРОМЕ отменённых/несостоявшихся. Включаем
+        # paid, cash и pending (по выбору владельца — любой неотменённый
+        # заказ считается вкладом в LTV). Явный брак (отмена/возврат/сбой/
+        # истёк) исключаем — это не выручка.
         paid_orders = list(
             Order.objects.filter(
                 customer=customer,
-                payment_status=Order.PAYMENT_STATUS_PAID,
                 is_cancelled=False,
+            ).exclude(
+                payment_status__in=[
+                    Order.PAYMENT_STATUS_CANCELLED,
+                    Order.PAYMENT_STATUS_FAILED,
+                    Order.PAYMENT_STATUS_EXPIRED,
+                    Order.PAYMENT_STATUS_REFUNDED,
+                ]
             ).only("net_revenue", "order_date")
         )
         if not paid_orders:

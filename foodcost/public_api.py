@@ -2526,6 +2526,11 @@ def cart_calculate(request):
         # Недоступные в выбранной зоне позиции — исключены из расчёта.
         # Фронт показывает «эти товары недоступны в вашей зоне».
         "unavailable_items": result.get("unavailable_items", []),
+        # Лимиты заказа (настраиваются менеджером в ERP). 0 = без ограничения.
+        # Фронт: сумма < min_order_amount → блокировать оформление;
+        # сумма > cash_max_amount → убрать оплату наличными.
+        "min_order_amount": _to_float(country.min_order_amount),
+        "cash_max_amount": _to_float(country.cash_max_amount),
     }
 
     if matched_zone is not None:
