@@ -71,6 +71,13 @@ urlpatterns = [
         views.dish_unarchive,
         name="dish_unarchive",
     ),
+    # Переключение видимости блюда на сайте (is_visible_on_site) прямо из
+    # списка блюд, без перехода в карточку. POST-only, отвечает JSON.
+    path(
+        "c/<slug:country_slug>/dish/<int:dish_id>/toggle-visibility/",
+        views.dish_toggle_visibility,
+        name="dish_toggle_visibility",
+    ),
     # Печатная техкарта блюда для повара (состав с граммовками + текст).
     # HTML-страница с window.print() — «Сохранить как PDF» из браузера.
     path(
