@@ -15,6 +15,7 @@ from . import views_inventory
 from . import views_autowriteoff
 from . import public_api
 from . import app_auth
+from . import app_account
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -401,6 +402,20 @@ urlpatterns = [
     path("api/app/auth/refresh/", app_auth.auth_refresh, name="app_auth_refresh_s"),
     path("api/app/auth/logout", app_auth.auth_logout, name="app_auth_logout"),
     path("api/app/auth/logout/", app_auth.auth_logout, name="app_auth_logout_s"),
+
+    # =========================================================================
+    # 👤 APP ACCOUNT — профиль, история заказов, адреса (нужен Bearer-токен)
+    # =========================================================================
+    path("api/app/profile", app_account.profile, name="app_profile"),
+    path("api/app/profile/", app_account.profile, name="app_profile_s"),
+    path("api/app/orders", app_account.orders_list, name="app_orders"),
+    path("api/app/orders/", app_account.orders_list, name="app_orders_s"),
+    path("api/app/orders/<str:public_order_number>", app_account.order_detail, name="app_order_detail"),
+    path("api/app/orders/<str:public_order_number>/", app_account.order_detail, name="app_order_detail_s"),
+    path("api/app/addresses", app_account.addresses, name="app_addresses"),
+    path("api/app/addresses/", app_account.addresses, name="app_addresses_s"),
+    path("api/app/addresses/<int:address_id>", app_account.address_detail, name="app_address_detail"),
+    path("api/app/addresses/<int:address_id>/", app_account.address_detail, name="app_address_detail_s"),
 
     # =========================================================================
     # 🗺  PUBLIC API (Part 8) — delivery zone check by coordinates

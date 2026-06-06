@@ -2740,6 +2740,19 @@ def order_create(request):
     delivery_address = str(payload.get("delivery_address") or "").strip()
     customer_comment = str(payload.get("comment") or "").strip()
 
+    # ---- Привязка к вошедшему клиенту приложения (если есть токен) ----
+    # Если запрос пришёл с Authorization: Bearer <token>, берём клиента из
+    # токена. Тогда имя/телефон можно не передавать (подставим из аккаунта),
+    # и заказ привяжется именно к этому клиенту (для истории в приложении).
+    # Гостевой заказ (без токена) работает как раньше.
+    from . import app_auth  # локальный импорт — избегаем кольцевого import
+    token_customer = app_auth.customer_from_request(request)
+    if token_customer is not None:
+        if not customer_phone:
+            customer_phone = (token_customer.phone or "").strip()
+        if not customer_name:
+            customer_name = (token_customer.name or "").strip()
+
     # ---- Courier-facing extras (Part 9 — delivery checkout fields) ----
     # The website sends courier_landmark / courier_comment / leave_at_door
     # at the top level. We also accept legacy alias keys so partial
@@ -2854,7 +2867,14 @@ def order_create(request):
         return err
 
     source = _get_or_create_website_source(country)
-    customer = _get_or_create_website_customer(country, customer_name, customer_phone)
+    if token_customer is not None:
+        customer = token_customer
+        # Если у клиента в профиле пусто, а в заказе указали имя — сохраним.
+        if customer_name and not (customer.name or "").strip():
+            customer.name = customer_name
+            customer.save(update_fields=["name"])
+    else:
+        customer = _get_or_create_website_customer(country, customer_name, customer_phone)
 
     # Decide initial payment_status from the chosen method:
     #   - cash               → CASH        (will be paid on hand-off)
