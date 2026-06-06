@@ -63,6 +63,7 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.db.models import Min, Q
 from django.http import JsonResponse
+from . import promotions_engine
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -533,8 +534,45 @@ def _primary_category_for_card(dish):
     return None
 
 
+def _specs_for(request, country_id):
+    """Активные акции страны, кэшируются на request (без N+1 в листинге)."""
+    cache = getattr(request, "_promo_specs_cache", None) if request is not None else None
+    if cache is None:
+        cache = {}
+        if request is not None:
+            setattr(request, "_promo_specs_cache", cache)
+    if country_id not in cache:
+        cache[country_id] = promotions_engine.load_active_promotions(country_id)
+    return cache[country_id]
+
+
+def _promo_display(request, dish):
+    """Поля акции для карточки товара. При любой ошибке — цена как есть."""
+    try:
+        specs = _specs_for(request, dish.country_id)
+        disp = promotions_engine.display_for_dish(specs, dish.id, dish.selling_price)
+        return {
+            "price": _to_float(disp["price"]),
+            "old_price": (
+                _to_float(disp["old_price"]) if disp["old_price"] is not None else None
+            ),
+            "savings_label": disp["savings_label"],
+            "promo_hint": disp["promo_hint"],
+            "badges": disp["badges"],
+        }
+    except Exception:
+        return {
+            "price": _to_float(dish.selling_price),
+            "old_price": None,
+            "savings_label": None,
+            "promo_hint": None,
+            "badges": [],
+        }
+
+
 def serialize_product_card(request, dish, location=None):
     primary_cat = _primary_category_for_card(dish)
+    _promo_disp = _promo_display(request, dish)
     return {
         "id": dish.id,
         "category_id": primary_cat.id if primary_cat else None,
@@ -550,9 +588,12 @@ def serialize_product_card(request, dish, location=None):
         ),
         "weight": _format_weight(dish),
         "cooking_time": _format_cooking_time(dish),
-        "price": _to_float(dish.selling_price),
-        "old_price": None,
+        "price": _promo_disp["price"],
+        "old_price": _promo_disp["old_price"],
         "badge": dish.badge or "",
+        "badges": _promo_disp["badges"],
+        "savings_label": _promo_disp["savings_label"],
+        "promo_hint": _promo_disp["promo_hint"],
         # Маркетинговые признаки — те же, что в detail (/products/{slug}),
         # чтобы листинг и карточка были согласованы. Раньше листинг отдавал
         # только badge, из-за чего фронт видел у всех is_vegetarian=false и
@@ -841,6 +882,7 @@ def serialize_product_detail(request, dish, location=None):
     """
     primary_cat = _primary_category_for_card(dish)
     addons_payload = _build_dish_addons(request, dish, location=location)
+    _promo_disp = _promo_display(request, dish)
 
     return {
         "id": dish.id,
@@ -867,9 +909,12 @@ def serialize_product_detail(request, dish, location=None):
         "final_weight_kg": _to_float(getattr(dish, "final_weight", None)),
         "cooking_time": _format_cooking_time(dish),
         "spice_level": dish.spice_level or "",
-        "price": _to_float(dish.selling_price),
-        "old_price": None,
+        "price": _promo_disp["price"],
+        "old_price": _promo_disp["old_price"],
         "badge": dish.badge or "",
+        "badges": _promo_disp["badges"],
+        "savings_label": _promo_disp["savings_label"],
+        "promo_hint": _promo_disp["promo_hint"],
         "is_new": bool(dish.is_new),
         "is_featured": bool(dish.is_featured),
         "is_spicy": bool(dish.is_spicy),
@@ -1670,19 +1715,6 @@ def _validate_and_price_cart(
         line_total = per_unit * Decimal(quantity)
         subtotal += line_total
 
-        lines.append({
-            "dish": {
-                "id": dish.id,
-                "name": _display_name(dish),
-                "slug": dish.slug or "",
-            },
-            "quantity": quantity,
-            "base_price": _to_float(base_price),
-            "addons": addons_payload,
-            "addons_price": _to_float(addons_price),
-            "total_price": _to_float(line_total),
-        })
-
         line_objects.append({
             "dish": dish,
             "quantity": quantity,
@@ -1691,6 +1723,7 @@ def _validate_and_price_cart(
             "per_unit": per_unit,
             "total_price": line_total,
             "addon_links": addon_links_for_line,
+            "addons_payload": addons_payload,
         })
 
     # Мягкий режим: если после отсева недоступных не осталось ни одной
@@ -1703,6 +1736,49 @@ def _validate_and_price_cart(
             status=409,
         )
 
+    # ---- Автоматические акции: скидки %/суммой, N+M, подарки ----
+    # Тот же расчёт идёт и в корзине, и в заказе (общая функция), поэтому
+    # цены везде совпадают. Сбой движка не должен ломать оформление — при
+    # ошибке работаем как раньше (без авто-акций).
+    try:
+        promo_specs = promotions_engine.load_active_promotions(country.id)
+        promo_outcome = promotions_engine.apply_to_cart(promo_specs, line_objects)
+    except Exception:
+        promo_outcome = {"promotions": [], "gifts": [], "auto_discount": Decimal("0")}
+        for lo in line_objects:
+            lo.setdefault("per_unit_after", lo["per_unit"])
+            lo.setdefault("line_total_after", lo["total_price"])
+            lo.setdefault("free_quantity", 0)
+            lo.setdefault("promo_id", None)
+            lo.setdefault("promo_label", None)
+
+    promotions_summary = promo_outcome["promotions"]
+    gifts = promo_outcome["gifts"]
+    auto_discount = promo_outcome["auto_discount"]
+
+    # Итог акций -> строки (per_unit/total_price с учётом акций) + lines.
+    for lo in line_objects:
+        lo["per_unit"] = lo["per_unit_after"]
+        lo["total_price"] = lo["line_total_after"]
+        lines.append({
+            "dish": {
+                "id": lo["dish"].id,
+                "name": _display_name(lo["dish"]),
+                "slug": lo["dish"].slug or "",
+            },
+            "dish_id": lo["dish"].id,
+            "quantity": lo["quantity"],
+            "base_price": _to_float(lo["base_price"]),
+            "addons": lo["addons_payload"],
+            "addons_price": _to_float(lo["addons_price"]),
+            "unit_price": _to_float(lo["per_unit_after"]),
+            "line_total": _to_float(lo["line_total_after"]),
+            "total_price": _to_float(lo["line_total_after"]),
+            "free_quantity": lo["free_quantity"],
+            "promo_id": lo["promo_id"],
+            "promo_label": lo["promo_label"],
+        })
+
     # ---- Discount (promo code) ----
     discount_amount = Decimal("0")
     discount_percent = Decimal("0")
@@ -1712,20 +1788,29 @@ def _validate_and_price_cart(
         except Exception:
             discount_percent = Decimal("0")
         if discount_percent > 0:
-            # База скидки. Если у промокода задан список блюд
-            # (eligible_dishes) — скидываем ТОЛЬКО сумму подходящих позиций;
-            # иначе — весь subtotal (поведение по умолчанию).
-            eligible_ids = set(
-                promo_code.eligible_dishes.values_list("id", flat=True)
-            )
-            if eligible_ids:
+            # База скидки с учётом scope промокода:
+            #   all     — весь заказ
+            #   include — только eligible_dishes
+            #   exclude — всё, КРОМЕ eligible_dishes
+            #   auto    — старое поведение (пусто=всё, иначе=include)
+            scope, eligible_ids = _promo_effective_scope(promo_code)
+            if scope == "all":
+                discount_base = sum(
+                    (lo["total_price"] for lo in line_objects),
+                    Decimal("0"),
+                )
+            elif scope == "exclude":
+                discount_base = sum(
+                    (lo["total_price"] for lo in line_objects
+                     if lo["dish"].id not in eligible_ids),
+                    Decimal("0"),
+                )
+            else:
                 discount_base = sum(
                     (lo["total_price"] for lo in line_objects
                      if lo["dish"].id in eligible_ids),
                     Decimal("0"),
                 )
-            else:
-                discount_base = subtotal
 
             # 2 dp rounding so cashier-facing totals stay clean.
             discount_amount = (discount_base * discount_percent / Decimal("100")).quantize(
@@ -1734,6 +1819,10 @@ def _validate_and_price_cart(
             if discount_amount > subtotal:
                 discount_amount = subtotal
 
+    # Объединяем скидку промокода с автоматическими акциями (клампим суммой).
+    discount_amount = discount_amount + auto_discount
+    if discount_amount > subtotal:
+        discount_amount = subtotal
     discounted_subtotal = subtotal - discount_amount
 
     # ---- Delivery ----
@@ -1774,6 +1863,9 @@ def _validate_and_price_cart(
         "free_delivery": free_delivery,
         "fulfillment_method": fulfillment_method,
         "unavailable_items": unavailable_items,
+        "promotions": promotions_summary,
+        "gifts": gifts,
+        "auto_discount": auto_discount,
     }, None
 
 
@@ -2109,6 +2201,15 @@ def _resolve_fulfillment_method(payload):
     if raw == Order.FULFILLMENT_PICKUP:
         return Order.FULFILLMENT_PICKUP
     return Order.FULFILLMENT_DELIVERY
+
+
+def _promo_effective_scope(promo):
+    """Нормализует scope промокода. auto -> all/include по eligible_dishes."""
+    scope = (getattr(promo, "scope", "auto") or "auto")
+    eligible_ids = set(promo.eligible_dishes.values_list("id", flat=True))
+    if scope == "auto":
+        scope = "include" if eligible_ids else "all"
+    return scope, eligible_ids
 
 
 def _resolve_promo_code(country, payload, *, required=False, customer_phone=None):
@@ -2531,6 +2632,9 @@ def cart_calculate(request):
         # сумма > cash_max_amount → убрать оплату наличными.
         "min_order_amount": _to_float(country.min_order_amount),
         "cash_max_amount": _to_float(country.cash_max_amount),
+        # Акции: применённые/доступные акции и автоподарки (контракт фронта).
+        "promotions": result.get("promotions", []),
+        "gifts": result.get("gifts", []),
     }
 
     if matched_zone is not None:
@@ -2958,6 +3062,27 @@ def order_create(request):
                 total_price=line["total_price"],
             )
 
+        # Подарочные позиции акций — бэк добавляет сам, цена 0. Любые
+        # «подарки» от клиента игнорируются: источник истины — этот список.
+        for gift in result.get("gifts", []):
+            gift_dish = Dish.objects.filter(
+                id=gift.get("dish_id"), country=country
+            ).first()
+            if gift_dish is None:
+                continue
+            try:
+                gift_cost = Decimal(str(gift_dish.calculate_cost() or 0))
+            except Exception:
+                gift_cost = Decimal("0")
+            OrderItem.objects.create(
+                order=order,
+                dish=gift_dish,
+                quantity=Decimal(gift.get("quantity") or 1),
+                price_snapshot=Decimal("0"),
+                cost_snapshot=gift_cost,
+                total_price=Decimal("0"),
+            )
+
     # Уведомление о новом заказе в Telegram (в тред филиала). Сбой Telegram
     # не должен влиять на оформление — функция сама проглатывает ошибки.
     try:
@@ -3192,25 +3317,68 @@ def promo_check(request):
             "code": raw_code,
         })
 
+    scope, eligible_ids = _promo_effective_scope(promo)
+    percent = _money(promo.percent)
+
     response = {
         "valid": True,
+        "is_valid": True,
         "code": promo.code,
-        "percent": _to_float(promo.percent),
+        "percent": _to_float(percent),
+        "scope": scope,
+        "eligible_dish_ids": sorted(eligible_ids),
+        "message": None,
     }
 
-    # Optional subtotal preview.
+    raw_items = payload.get("items")
     raw_subtotal = payload.get("subtotal")
-    if raw_subtotal is not None:
+
+    if isinstance(raw_items, list) and raw_items:
+        # Точный расчёт по составу корзины с учётом scope.
+        base = Decimal("0")
+        applied_ids = []
+        for it in raw_items:
+            if not isinstance(it, dict):
+                continue
+            did = _coerce_int(it.get("dish_id"))
+            qty = _coerce_int(it.get("quantity"), default=1) or 1
+            if not did:
+                continue
+            dish = (
+                Dish.objects.filter(id=did, country=country)
+                .only("id", "selling_price")
+                .first()
+            )
+            if dish is None:
+                continue
+            in_scope = (
+                scope == "all"
+                or (scope == "include" and did in eligible_ids)
+                or (scope == "exclude" and did not in eligible_ids)
+            )
+            if in_scope:
+                base += _money(dish.selling_price) * Decimal(qty)
+                applied_ids.append(did)
+        discount = (base * percent / Decimal("100")).quantize(Decimal("0.01"))
+        response["discount_amount"] = _to_float(discount)
+        response["applied_dish_ids"] = applied_ids
+    elif raw_subtotal is not None and scope == "all":
         subtotal = _money(raw_subtotal)
         if subtotal < 0:
             subtotal = Decimal("0")
-        percent = _money(promo.percent)
         discount = (subtotal * percent / Decimal("100")).quantize(Decimal("0.01"))
         if discount > subtotal:
             discount = subtotal
         response["subtotal"] = _to_float(subtotal)
         response["discount_amount"] = _to_float(discount)
         response["total_after_discount"] = _to_float(subtotal - discount)
+    elif raw_subtotal is not None:
+        # Код ограничен блюдами — по одной сумме точную скидку не посчитать.
+        response["subtotal"] = _to_float(_money(raw_subtotal))
+        response["message"] = (
+            "Скидка действует только на часть блюд — точная сумма "
+            "рассчитывается в корзине."
+        )
 
     return api_success(response)
 

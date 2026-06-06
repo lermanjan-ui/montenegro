@@ -3,6 +3,7 @@ from . import views
 from . import views_employees
 from . import order_views
 from . import views_settings
+from . import promotions_views
 from . import views_homepage
 from . import writeoff_views
 from . import shift_views
@@ -190,6 +191,20 @@ urlpatterns = [
         "c/<slug:country_slug>/settings/",
         views_settings.settings_page,
         name="settings_page"
+    ),
+
+    # Категории блюд — отдельная страница (раньше блок в настройках).
+    path(
+        "c/<slug:country_slug>/dish-categories/",
+        views_settings.dish_categories_page,
+        name="dish_categories_page"
+    ),
+
+    # Маркетинговые акции — отдельная страница управления.
+    path(
+        "c/<slug:country_slug>/promotions/",
+        promotions_views.promotions_page,
+        name="promotions_page"
     ),
 
     path(

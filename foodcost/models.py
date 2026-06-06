@@ -816,26 +816,9 @@ class Employee(models.Model):
         return self.name
 
     def hourly_rate(self):
-        # Часовая ставка зависит от типа оплаты (pay_type). Возвращаем Decimal
-        # во ВСЕХ ветках, иначе DishLaborItem.calculate_cost падает/обнуляется
-        # на Decimal * float.
-        #
-        #   hourly — ставка задана напрямую (hourly_rate_amount).
-        #   shift  — оплата за смену делится на часы смены:
-        #            shift_fixed_amount / default_shift_hours
-        #            (напр. 250000 за 8 ч → 31250/час).
-        #   salary — месячный оклад делится на месячные часы:
-        #            monthly_salary / monthly_hours.
-        if self.pay_type == self.PAY_TYPE_HOURLY:
-            return Decimal(self.hourly_rate_amount or 0)
-
-        if self.pay_type == self.PAY_TYPE_SHIFT:
-            hours = Decimal(self.default_shift_hours or 0)
-            if hours <= 0:
-                return Decimal("0")
-            return Decimal(self.shift_fixed_amount or 0) / hours
-
-        # PAY_TYPE_SALARY (и любой иной случай) — по месячному окладу.
+        # Возвращаем Decimal во ВСЕХ ветках. Раньше при monthly_hours == 0
+        # возвращался int 0, из-за чего minute_rate() = 0/60 = 0.0 (float),
+        # и дальше DishLaborItem.calculate_cost падал на Decimal * float.
         if not self.monthly_hours:
             return Decimal("0")
         return Decimal(self.monthly_salary or 0) / Decimal(self.monthly_hours)
@@ -1618,6 +1601,18 @@ class PromoCode(models.Model):
         (USAGE_LIMIT_FIRST_ORDER, "Только первый заказ"),
     ]
 
+    # Режим действия скидки относительно eligible_dishes (ниже).
+    SCOPE_AUTO = "auto"
+    SCOPE_ALL = "all"
+    SCOPE_INCLUDE = "include"
+    SCOPE_EXCLUDE = "exclude"
+    SCOPE_CHOICES = [
+        (SCOPE_AUTO, "Авто (как раньше)"),
+        (SCOPE_ALL, "На весь заказ"),
+        (SCOPE_INCLUDE, "Только выбранные блюда"),
+        (SCOPE_EXCLUDE, "Все блюда, кроме выбранных"),
+    ]
+
     country = models.ForeignKey(
         Country,
         on_delete=models.CASCADE,
@@ -1693,6 +1688,14 @@ class PromoCode(models.Model):
             "Блюда, на которые распространяется скидка. Пусто = скидка на "
             "весь заказ."
         ),
+    )
+
+    # auto    — старое поведение: пусто=на всё, иначе=только выбранные
+    # all     — на весь заказ (eligible_dishes игнорируются)
+    # include — только на eligible_dishes
+    # exclude — на всё, КРОМЕ eligible_dishes
+    scope = models.CharField(
+        max_length=10, choices=SCOPE_CHOICES, default=SCOPE_AUTO,
     )
 
     def __str__(self):
@@ -4058,3 +4061,163 @@ class DocumentLog(models.Model):
 
     def __str__(self):
         return f"{self.get_document_type_display()} #{self.document_id} — {self.action}"
+
+
+# 🎯 МАРКЕТИНГОВЫЕ АКЦИИ
+# Покрывает 4 автоматических типа из контракта фронта:
+#   percent_off  — скидка % на товар
+#   amount_off   — скидка суммой на товар
+#   buy_x_pay_y  — «N по цене M» (часть единиц бесплатна в корзине)
+#   gift         — подарок при сумме/наборе товаров
+# Тип promo_code НЕ здесь — для кодов используется существующая модель
+# PromoCode (отдельная админка). Расчёт денег по этим акциям делается на
+# этапах 2-4 (в public_api). Эта модель — только хранение конфигурации.
+class Promotion(models.Model):
+    TYPE_PERCENT_OFF = "percent_off"
+    TYPE_AMOUNT_OFF = "amount_off"
+    TYPE_BUY_X_PAY_Y = "buy_x_pay_y"
+    TYPE_GIFT = "gift"
+    TYPE_CHOICES = [
+        (TYPE_PERCENT_OFF, "Скидка %"),
+        (TYPE_AMOUNT_OFF, "Скидка суммой"),
+        (TYPE_BUY_X_PAY_Y, "N по цене M"),
+        (TYPE_GIFT, "Подарок"),
+    ]
+
+    STYLE_CHOICES = [
+        ("red", "Красный"),
+        ("purple", "Фиолетовый"),
+        ("green", "Зелёный"),
+        ("gray", "Серый"),
+    ]
+
+    SCOPE_ALL = "all"
+    SCOPE_INCLUDE = "include"
+    SCOPE_EXCLUDE = "exclude"
+    SCOPE_CHOICES = [
+        (SCOPE_ALL, "Все блюда"),
+        (SCOPE_INCLUDE, "Только выбранные"),
+        (SCOPE_EXCLUDE, "Все, кроме выбранных"),
+    ]
+
+    country = models.ForeignKey(
+        "Country",
+        on_delete=models.CASCADE,
+        related_name="promotions",
+        null=True,
+        blank=True,
+    )
+
+    # ---- общие поля ----
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    label = models.CharField(
+        max_length=255,
+        help_text="Текст бейджа/акции, который видит покупатель (напр. «2 по цене 1»).",
+    )
+    style = models.CharField(max_length=10, choices=STYLE_CHOICES, default="gray")
+
+    is_active = models.BooleanField(default=True)
+    date_from = models.DateField(null=True, blank=True)
+    date_to = models.DateField(null=True, blank=True)
+
+    # «Счастливые часы»: окно по времени суток. Пусто — без ограничения.
+    # Если time_from > time_to — окно ночное (через полночь).
+    time_from = models.TimeField(null=True, blank=True)
+    time_to = models.TimeField(null=True, blank=True)
+
+    # ---- стекинг (совместимость акций) ----
+    stackable = models.BooleanField(
+        default=False,
+        help_text="Можно ли сочетать с другими акциями.",
+    )
+    priority = models.IntegerField(
+        default=0,
+        help_text="Чем больше, тем раньше применяется при конфликте.",
+    )
+    excludes = models.ManyToManyField(
+        "self",
+        blank=True,
+        help_text="Акции, с которыми эта НЕ сочетается.",
+    )
+
+    # ---- на какие блюда (percent_off / amount_off / buy_x_pay_y) ----
+    scope_type = models.CharField(
+        max_length=10, choices=SCOPE_CHOICES, default=SCOPE_ALL,
+    )
+    scope_dishes = models.ManyToManyField(
+        "Dish", blank=True, related_name="promotions_scope",
+    )
+
+    # ---- параметры percent_off / amount_off ----
+    percent = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        help_text="Для «Скидка %»: процент (напр. 15).",
+    )
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        help_text="Для «Скидка суммой»: сумма скидки (UZS).",
+    )
+
+    # ---- параметры buy_x_pay_y ----
+    buy_quantity = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Сколько нужно купить (для «3 по цене 2» = 3).",
+    )
+    pay_quantity = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Сколько оплачивается (для «3 по цене 2» = 2).",
+    )
+
+    # ---- параметры gift (подарок) ----
+    threshold_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        help_text="Подарок при сумме корзины от (UZS). Пусто — не по сумме.",
+    )
+    required_dishes = models.ManyToManyField(
+        "Dish", blank=True, related_name="promotions_required",
+        help_text="Подарок при наличии этих блюд в корзине.",
+    )
+    gift_dish = models.ForeignKey(
+        "Dish",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="promotions_as_gift",
+        help_text="Какое блюдо дарим.",
+    )
+    gift_quantity = models.PositiveIntegerField(default=1)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-priority", "id"]
+
+    def __str__(self):
+        return f"{self.label} ({self.get_type_display()})"
+
+    def is_live_now(self):
+        """Активна ли акция сейчас (вкл + в пределах дат)."""
+        if not self.is_active:
+            return False
+        today = timezone.localdate()
+        if self.date_from and today < self.date_from:
+            return False
+        if self.date_to and today > self.date_to:
+            return False
+        # «Счастливые часы»: окно по времени суток.
+        if self.time_from or self.time_to:
+            now_t = timezone.localtime().time()
+            tf = self.time_from
+            tt = self.time_to
+            if tf and tt:
+                if tf <= tt:
+                    if not (tf <= now_t <= tt):
+                        return False
+                else:
+                    if not (now_t >= tf or now_t <= tt):
+                        return False
+            elif tf and now_t < tf:
+                return False
+            elif tt and now_t > tt:
+                return False
+        return True

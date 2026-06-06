@@ -298,7 +298,7 @@ def dish_list(request, country_slug):
         .only(
             "id", "name", "final_weight", "selling_price",
             "cached_total_cost", "cached_foodcost", "cached_margin",
-            "is_archived", "category_id",
+            "is_archived", "is_visible_on_site", "category_id",
             "category__id", "category__name",
         )
     )
@@ -306,6 +306,17 @@ def dish_list(request, country_slug):
         dish_qs = base_dish_qs.filter(is_archived=True)
     else:
         dish_qs = base_dish_qs.filter(is_archived=False)
+
+    # Поиск по названию (?q=) и фильтр по видимости на сайте (?site=)
+    search_query = request.GET.get("q", "").strip()
+    if search_query:
+        dish_qs = dish_qs.filter(name__icontains=search_query)
+
+    site_filter = request.GET.get("site", "all")
+    if site_filter == "visible":
+        dish_qs = dish_qs.filter(is_visible_on_site=True)
+    elif site_filter == "hidden":
+        dish_qs = dish_qs.filter(is_visible_on_site=False)
 
     dishes = list(dish_qs)
     categories = DishCategory.objects.filter(country=country)
@@ -345,11 +356,15 @@ def dish_list(request, country_slug):
         ]
 
     if sort_type == "margin":
-        dishes.sort(key=lambda dish: dish.cached_margin, reverse=True)
+        dishes.sort(key=lambda dish: dish.cached_margin or 0, reverse=True)
     elif sort_type == "foodcost":
-        dishes.sort(key=lambda dish: dish.cached_foodcost, reverse=True)
+        dishes.sort(key=lambda dish: dish.cached_foodcost or 0, reverse=True)
     elif sort_type == "cost":
-        dishes.sort(key=lambda dish: dish.cached_total_cost, reverse=True)
+        dishes.sort(key=lambda dish: dish.cached_total_cost or 0, reverse=True)
+    elif sort_type == "price_desc":
+        dishes.sort(key=lambda dish: dish.selling_price or 0, reverse=True)
+    elif sort_type == "price_asc":
+        dishes.sort(key=lambda dish: dish.selling_price or 0)
     else:
         dishes.sort(key=lambda dish: dish.name.lower())
 
@@ -360,6 +375,8 @@ def dish_list(request, country_slug):
         "selected_category_ids": category_ids,
         "filter_type": filter_type,
         "sort_type": sort_type,
+        "q": search_query,
+        "site_filter": site_filter,
         "can_edit": user_can_edit(request.user),
         "show_archived": show_archived,
         "archived_count": archived_count,
@@ -429,6 +446,49 @@ def dish_unarchive(request, country_slug, dish_id):
         dish.save(update_fields=["is_archived", "archived_at", "archived_by"])
 
     return redirect(f"/c/{country.slug}/dish/{dish_id}/")
+
+
+@login_required(login_url="/login/")
+def dish_toggle_visibility(request, country_slug, dish_id):
+    """
+    Переключение видимости блюда на сайте (is_visible_on_site) прямо из
+    списка блюд, без перехода в карточку. POST-only, отвечает JSON.
+    """
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(request.user, UserProfile.SECTION_DISHES)
+    if access_error:
+        return access_error
+
+    if not user_can_edit(request.user):
+        return JsonResponse(
+            {"ok": False, "error": "Нет прав на изменение"},
+            status=403,
+        )
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"ok": False, "error": "Только POST"},
+            status=405,
+        )
+
+    dish = get_object_or_404(Dish, id=dish_id, country=country)
+
+    # Архивное блюдо нельзя показывать на сайте — сначала вернуть из архива.
+    if dish.is_archived and not dish.is_visible_on_site:
+        return JsonResponse(
+            {
+                "ok": False,
+                "visible": False,
+                "error": "Блюдо в архиве — сначала верните его из архива.",
+            },
+            status=400,
+        )
+
+    dish.is_visible_on_site = not dish.is_visible_on_site
+    dish.save(update_fields=["is_visible_on_site"])
+
+    return JsonResponse({"ok": True, "visible": dish.is_visible_on_site})
 
 
 @login_required(login_url="/login/")

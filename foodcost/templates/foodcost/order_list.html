@@ -462,6 +462,31 @@ h1{
         border-radius:10px;
     }
 }
+
+/* ===== Подсветка только что пришедшего заказа (подставлен без перезагрузки) ===== */
+.order-row-new{
+    border-color:#fdba74 !important;
+    background:#fff7ed !important;
+    animation:fcRowPulse 1.1s ease-in-out 3;
+}
+
+@keyframes fcRowPulse{
+    0%,100%{ box-shadow:0 0 0 3px rgba(234,88,12,0.10); }
+    50%{ box-shadow:0 0 0 6px rgba(234,88,12,0.22); }
+}
+
+.row-new-badge{
+    display:inline-block;
+    margin-top:6px;
+    padding:3px 9px;
+    border-radius:999px;
+    background:#ea580c;
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.02em;
+}
+
 </style>
 
 <div class="page">
@@ -764,12 +789,15 @@ h1{
 <script>
 (function () {
     var COUNTRY_SLUG = "{{ country.slug }}";
-    var POLL_MS = 15000;          // опрос раз в 15 секунд
-    var lastLatestId = null;      // последний известный max id заказа
+    var POLL_MS = 5000;          // опрос новых заказов раз в 5 секунд
+    var ALARM_MS = 5000;         // повтор сирены раз в 5 секунд
+
+    var lastSeenId = null;       // последний известный max id заказа
     var audioCtx = null;
+    var soundUnlocked = false;   // станет true после первого клика по странице
+    var alarmActive = false;     // сирена активна, пока не открыт заказ
 
     var hint = document.getElementById("sound-hint");
-    var soundUnlocked = false;    // станет true после первого клика по странице
 
     // --- Мигание заголовка вкладки при новом заказе ---
     var originalTitle = document.title;
@@ -777,18 +805,15 @@ h1{
     var blinkOn = false;
 
     function startBlink() {
-        if (blinkTimer) return;  // уже мигает
+        if (blinkTimer) return;
         blinkTimer = setInterval(function () {
             blinkOn = !blinkOn;
             document.title = blinkOn ? "🔴 Новый заказ!" : originalTitle;
-        }, 800);
+        }, 700);
     }
 
     function stopBlink() {
-        if (blinkTimer) {
-            clearInterval(blinkTimer);
-            blinkTimer = null;
-        }
+        if (blinkTimer) { clearInterval(blinkTimer); blinkTimer = null; }
         document.title = originalTitle;
     }
 
@@ -797,59 +822,164 @@ h1{
         if (!document.hidden) { stopBlink(); }
     });
 
-    // --- Разблокировка звука по первому любому клику (как у Яндекса) ---
-    // Браузер запрещает автоплей звука до взаимодействия со страницей.
-    // Поэтому не требуем спец-кнопку: ловим ПЕРВЫЙ любой клик оператора
-    // (он всё равно кликает, работая со страницей) и тихо разблокируем
-    // аудио. Дальше звук при новом заказе играет сам.
+    // --- Аудио ---
+    function ensureCtx() {
+        if (!audioCtx) {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch (e) { audioCtx = null; }
+        }
+        return audioCtx;
+    }
+
+    // Разблокировка звука по первому любому клику (браузер запрещает
+    // автоплей звука до взаимодействия со страницей).
     function unlockSound() {
         if (soundUnlocked) return;
         try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === "suspended") { audioCtx.resume(); }
+            ensureCtx();
+            if (audioCtx && audioCtx.state === "suspended") { audioCtx.resume(); }
             soundUnlocked = true;
             if (hint) { hint.style.display = "none"; }
+            if (alarmActive) { playAlarm(); }   // если заказ уже ждёт — сразу сигнал
         } catch (e) { /* не критично */ }
     }
 
-    // Любой клик по странице гасит мигание И разблокирует звук.
-    document.addEventListener("click", function () {
-        stopBlink();
-        unlockSound();
-    });
+    document.addEventListener("click", function () { unlockSound(); });
 
-    // Если оператор ещё не кликал — мягко подсказать (звук пока заблокирован
-    // браузером). Подсказка исчезнет на первом клике.
     if (hint) {
         setTimeout(function () {
             if (!soundUnlocked) { hint.style.display = "inline-flex"; }
         }, 2000);
     }
 
-    function beep() {
+    // Громкая длинная сирена (~1.1 сек): чередование тонов с плавными
+    // нарастаниями, чтобы не было щелчков. Заметно громче прежних пиков.
+    function playAlarm() {
+        if (!ensureCtx()) return;
         try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            [0, 0.18].forEach(function (offset) {
+            if (audioCtx.state === "suspended") { audioCtx.resume(); }
+            var now = audioCtx.currentTime;
+            var pattern = [
+                { f: 988,  t: 0.00, d: 0.20 },
+                { f: 784,  t: 0.24, d: 0.20 },
+                { f: 988,  t: 0.48, d: 0.20 },
+                { f: 784,  t: 0.72, d: 0.20 },
+                { f: 1047, t: 0.96, d: 0.34 }
+            ];
+            for (var i = 0; i < pattern.length; i++) {
+                var p = pattern[i];
                 var osc = audioCtx.createOscillator();
                 var gain = audioCtx.createGain();
-                osc.type = "sine";
-                osc.frequency.value = 880;
-                gain.gain.value = 0.25;
+                osc.type = "triangle";
+                osc.frequency.value = p.f;
+                var s = now + p.t;
+                var e = s + p.d;
+                gain.gain.setValueAtTime(0.0001, s);
+                gain.gain.exponentialRampToValueAtTime(0.6, s + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, e);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                var t = audioCtx.currentTime + offset;
-                osc.start(t);
-                osc.stop(t + 0.15);
-            });
+                osc.start(s);
+                osc.stop(e + 0.03);
+            }
         } catch (e) { /* звук не критичен */ }
     }
 
+    function startAlarm() {
+        alarmActive = true;
+        startBlink();
+        if (soundUnlocked) { playAlarm(); }
+    }
+
+    function stopAlarm() {
+        alarmActive = false;
+        stopBlink();
+    }
+
+    // Повтор сирены раз в 5 секунд, пока заказ не открыт.
+    setInterval(function () {
+        if (alarmActive && soundUnlocked) { playAlarm(); }
+    }, ALARM_MS);
+
+    // Открытие любого заказа (ссылка вида /orders/123/) гасит сирену.
+    document.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest("a") : null;
+        if (a) {
+            var href = a.getAttribute("href") || "";
+            if (/\/orders\/\d+\/?$/.test(href)) { stopAlarm(); }
+        }
+    });
+
+    // --- Подстановка нового заказа в список без перезагрузки ---
+    function esc(v) {
+        var d = document.createElement("div");
+        d.textContent = (v == null) ? "" : String(v);
+        return d.innerHTML;
+    }
+
+    function buildRow(o) {
+        var row = document.createElement("div");
+        row.className = "order-row order-row-new" + (o.is_cancelled ? " cancelled-row" : "");
+        row.setAttribute("data-order-id", o.id);
+
+        var c1 = document.createElement("div");
+        c1.innerHTML = '<div class="order-id">#' + esc(o.id) + '</div>';
+
+        var c2 = document.createElement("div");
+        var h2 = '<div class="client-name">' + esc(o.customer_name) + '</div>'
+               + '<div class="client-phone">' + esc(o.customer_phone) + '</div>';
+        if (o.delivery_landmark) {
+            h2 += '<div class="client-landmark" title="' + esc(o.delivery_landmark) + '">Ориентир: ' + esc(o.delivery_landmark) + '</div>';
+        }
+        if (o.leave_at_door) {
+            h2 += '<div class="door-badge">🚪 Оставить у двери</div>';
+        }
+        h2 += '<span class="row-new-badge">Новый</span>';
+        c2.innerHTML = h2;
+
+        var c3 = document.createElement("div");
+        c3.innerHTML = '<div class="payment-badge">' + (o.payment_method ? esc(o.payment_method) : "—") + '</div>';
+
+        var c4 = document.createElement("div");
+        var h4 = '<div class="order-sum">' + esc(o.total_display);
+        if (o.is_cancelled) { h4 += '<div class="cancel-badge">Отменен</div>'; }
+        h4 += '</div>';
+        c4.innerHTML = h4;
+
+        var c5 = document.createElement("div");
+        c5.innerHTML = '<div class="order-time">' + (o.location ? esc(o.location) : "—") + '</div>';
+
+        var c6 = document.createElement("div");
+        c6.innerHTML = '<a href="' + esc(o.url) + '" class="create-btn" style="padding:10px 14px;font-size:14px;">Открыть</a>';
+
+        row.appendChild(c1); row.appendChild(c2); row.appendChild(c3);
+        row.appendChild(c4); row.appendChild(c5); row.appendChild(c6);
+        return row;
+    }
+
+    function injectOrders(list) {
+        if (!list || !list.length) return;
+        var card = document.querySelector(".orders-card");
+        if (!card) return;
+        var table = card.querySelector(".orders-table");
+        if (!table) {
+            var empty = card.querySelector(".empty");
+            if (empty && empty.parentNode) { empty.parentNode.removeChild(empty); }
+            table = document.createElement("div");
+            table.className = "orders-table";
+            card.appendChild(table);
+        }
+        for (var i = 0; i < list.length; i++) {
+            var o = list[i];
+            if (table.querySelector('[data-order-id="' + o.id + '"]')) continue;
+            table.insertBefore(buildRow(o), table.firstChild);  // новейший сверху
+        }
+    }
+
     function poll() {
-        fetch("/c/" + COUNTRY_SLUG + "/orders/count/", {
+        var url = "/c/" + COUNTRY_SLUG + "/orders/count/";
+        if (lastSeenId !== null) { url += "?after=" + lastSeenId; }
+        fetch(url, {
             headers: { "X-Requested-With": "XMLHttpRequest" },
             credentials: "same-origin"
         })
@@ -857,15 +987,12 @@ h1{
         .then(function (data) {
             if (!data) return;
             var latest = data.latest_id || 0;
-            if (lastLatestId === null) {
-                lastLatestId = latest;   // первый замер — просто запомнить
-                return;
+            if (lastSeenId === null) { lastSeenId = latest; return; }  // первый замер
+            if (data.orders && data.orders.length) {
+                injectOrders(data.orders);
+                startAlarm();
             }
-            if (latest > lastLatestId) {
-                lastLatestId = latest;
-                if (soundUnlocked) { beep(); }
-                startBlink();   // мигание заголовка — независимо от звука
-            }
+            if (latest > lastSeenId) { lastSeenId = latest; }
         })
         .catch(function () { /* сеть моргнула — игнор */ });
     }

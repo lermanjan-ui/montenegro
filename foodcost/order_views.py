@@ -206,10 +206,46 @@ def orders_count(request, country_slug):
     qs = Order.objects.filter(country=country, order_date__date=today)
 
     agg = qs.aggregate(n=Count("id"), last=Max("id"))
-    return JsonResponse({
+    payload = {
         "count": agg["n"] or 0,
         "latest_id": agg["last"] or 0,
-    })
+    }
+
+    # Если фронт прислал ?after=<id> — дополнительно отдаём САМИ новые заказы
+    # (id > after) за сегодня, чтобы страница могла подставить их в список без
+    # перезагрузки (звук при перезагрузке глушится браузером, поэтому не
+    # перезагружаем). Без параметра эндпоинт работает как раньше.
+    after_raw = request.GET.get("after")
+    if after_raw is not None:
+        try:
+            after = int(after_raw)
+        except (TypeError, ValueError):
+            after = 0
+
+        new_qs = (
+            qs.filter(id__gt=after)
+            .select_related("location", "payment_method")
+            .order_by("id")
+        )
+
+        orders_data = []
+        for o in new_qs:
+            orders_data.append({
+                "id": o.id,
+                "is_cancelled": bool(o.is_cancelled),
+                "customer_name": o.customer_name or "",
+                "customer_phone": o.customer_phone or "",
+                "delivery_landmark": getattr(o, "delivery_landmark", "") or "",
+                "leave_at_door": bool(getattr(o, "leave_at_door", False)),
+                "payment_method": o.payment_method.name if o.payment_method else "",
+                "total_display": _fmt_money(o.total_amount),
+                "location": o.location.name if o.location else "",
+                "url": f"/c/{country.slug}/orders/{o.id}/",
+            })
+
+        payload["orders"] = orders_data
+
+    return JsonResponse(payload)
 
 
 @login_required(login_url="/login/")

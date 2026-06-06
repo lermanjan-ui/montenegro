@@ -1,0 +1,722 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Акции{% endblock %}
+
+{% block content %}
+<style>
+.promo-page{
+    max-width:1100px;
+    margin:0 auto;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--fc-text,#111827);
+}
+
+.promo-page h1{
+    margin:0;
+    font-size:30px;
+    font-weight:950;
+    letter-spacing:-0.03em;
+}
+
+.promo-subtitle{
+    color:#6b7280;
+    margin-top:6px;
+    font-size:14px;
+    font-weight:600;
+}
+
+.promo-card{
+    background:var(--fc-card,#fff);
+    border:1px solid var(--fc-border,#E5E7EB);
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 8px 24px rgba(15,23,42,0.045);
+    margin-top:18px;
+}
+
+.promo-card-title{
+    font-size:18px;
+    font-weight:950;
+    margin-bottom:16px;
+}
+
+.promo-page label.fld{
+    display:block;
+    font-size:11px;
+    font-weight:900;
+    color:#6b7280;
+    letter-spacing:.02em;
+    margin-bottom:5px;
+    text-transform:uppercase;
+}
+
+.promo-page input[type=text],
+.promo-page input[type=url],
+.promo-page input[type=number],
+.promo-page input[type=date],
+.promo-page select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--fc-border,#E5E7EB);
+    border-radius:11px;
+    font-size:14px;
+    font-family:inherit;
+    box-sizing:border-box;
+    background:var(--fc-card,#fff);
+    color:var(--fc-text,#111827);
+}
+
+.promo-page select[multiple]{
+    min-height:130px;
+    padding:6px;
+}
+
+.promo-page input:focus,
+.promo-page select:focus{
+    outline:none;
+    border-color:var(--fc-text,#111827);
+    box-shadow:0 0 0 3px rgba(17,24,39,.06);
+}
+
+.promo-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+}
+
+.promo-grid .span-2{ grid-column:1 / -1; }
+
+.promo-hint{
+    color:#6b7280;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.4;
+    margin-top:4px;
+}
+
+.promo-check{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:850;
+    color:#374151;
+}
+
+.promo-check input{
+    width:auto;
+    margin:0;
+    accent-color:var(--fc-green,#16A34A);
+}
+
+.promo-btn{
+    background:var(--fc-text,#111827);
+    color:#fff;
+    border:0;
+    border-radius:11px;
+    padding:10px 16px;
+    font-weight:900;
+    font-size:14px;
+    font-family:inherit;
+    cursor:pointer;
+}
+
+.promo-btn:hover{ background:#020617; }
+
+.promo-btn-light{
+    background:var(--fc-card,#fff);
+    color:var(--fc-text,#111827);
+    border:1px solid var(--fc-border,#E5E7EB);
+    border-radius:11px;
+    padding:9px 14px;
+    font-weight:900;
+    font-size:13px;
+    cursor:pointer;
+}
+
+.promo-btn-danger{
+    background:#fff;
+    color:var(--fc-danger,#EF4444);
+    border:1px solid #fecaca;
+    border-radius:11px;
+    padding:9px 14px;
+    font-weight:900;
+    font-size:13px;
+    cursor:pointer;
+}
+
+.promo-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:16px;
+}
+
+.promo-item-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+}
+
+.promo-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    line-height:1;
+    white-space:nowrap;
+}
+
+.promo-badge.red{ background:#fee2e2; color:#b91c1c; }
+.promo-badge.purple{ background:#f3e8ff; color:#7e22ce; }
+.promo-badge.green{ background:#dcfce7; color:#15803d; }
+.promo-badge.gray{ background:#f1f5f9; color:#475569; }
+
+.promo-state-on{ color:#15803d; font-weight:900; font-size:12px; }
+.promo-state-off{ color:#b91c1c; font-weight:900; font-size:12px; }
+
+.promo-empty{
+    color:#6b7280;
+    font-size:14px;
+    font-weight:800;
+    padding:10px 0;
+}
+
+@media (max-width:760px){
+    .promo-grid{ grid-template-columns:1fr; }
+    .promo-card{ padding:16px; border-radius:18px; }
+}
+</style>
+
+<div class="promo-page">
+
+    <h1>Акции</h1>
+    <div class="promo-subtitle">
+        Маркетинговые акции: скидки, «N по цене M» и подарки. Промокоды настраиваются
+        отдельно на странице настроек.
+    </div>
+
+    {# ===== Создание новой акции ===== #}
+    {% if can_edit %}
+    <div class="promo-card">
+        <div class="promo-card-title">Новая акция</div>
+
+        <form method="post" data-promo-form>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_promotion">
+
+            <div class="promo-grid">
+                <div>
+                    <label class="fld">Тип акции</label>
+                    <select name="type" class="promo-type">
+                        <option value="percent_off">Скидка %</option>
+                        <option value="amount_off">Скидка суммой</option>
+                        <option value="buy_x_pay_y">N по цене M</option>
+                        <option value="gift">Подарок</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="fld">Текст для покупателя (бейдж)</label>
+                    <input type="text" name="label" placeholder="Например: 2 по цене 1" required>
+                </div>
+
+                <div>
+                    <label class="fld">Цвет бейджа</label>
+                    <select name="style">
+                        <option value="gray">Серый</option>
+                        <option value="red">Красный</option>
+                        <option value="purple">Фиолетовый</option>
+                        <option value="green">Зелёный</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="promo-check" style="margin-top:24px;">
+                        <input type="checkbox" name="is_active" value="1" checked>
+                        Акция включена
+                    </label>
+                </div>
+
+                <div>
+                    <label class="fld">Действует с</label>
+                    <input type="date" name="date_from">
+                </div>
+
+                <div>
+                    <label class="fld">Действует по</label>
+                    <input type="date" name="date_to">
+                </div>
+
+                <div>
+                    <label class="fld">Часы с (счастливые часы)</label>
+                    <input type="time" name="time_from">
+                </div>
+                <div>
+                    <label class="fld">Часы по</label>
+                    <input type="time" name="time_to">
+                </div>
+
+                {# скидка % #}
+                <div data-for-type="percent_off">
+                    <label class="fld">Процент скидки</label>
+                    <input type="number" name="percent" min="0" max="100" step="0.01" placeholder="15">
+                </div>
+
+                {# скидка суммой #}
+                <div data-for-type="amount_off">
+                    <label class="fld">Сумма скидки (UZS)</label>
+                    <input type="number" name="amount" min="0" step="1" placeholder="12000">
+                </div>
+
+                {# N по цене M #}
+                <div data-for-type="buy_x_pay_y">
+                    <label class="fld">Купить (N)</label>
+                    <input type="number" name="buy_quantity" min="1" step="1" placeholder="2">
+                </div>
+                <div data-for-type="buy_x_pay_y">
+                    <label class="fld">Оплатить (M)</label>
+                    <input type="number" name="pay_quantity" min="1" step="1" placeholder="1">
+                </div>
+
+                {# подарок #}
+                <div data-for-type="gift">
+                    <label class="fld">Подарок при сумме от (UZS)</label>
+                    <input type="number" name="threshold_amount" min="0" step="1" placeholder="200000">
+                    <div class="promo-hint">Пусто — подарок не по сумме, а по набору блюд (ниже).</div>
+                </div>
+                <div data-for-type="gift">
+                    <label class="fld">Что дарим</label>
+                    <select name="gift_dish">
+                        <option value="">— выберите блюдо —</option>
+                        {% for dish in dishes %}
+                            <option value="{{ dish.id }}">{{ dish.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div data-for-type="gift">
+                    <label class="fld">Кол-во подарков</label>
+                    <input type="number" name="gift_quantity" min="1" step="1" value="1">
+                </div>
+                <div data-for-type="gift" class="span-2">
+                    <label class="fld">Подарок при наличии блюд (набор)</label>
+                    <select name="required_dishes" multiple>
+                        {% for dish in dishes %}
+                            <option value="{{ dish.id }}">{{ dish.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="promo-hint">Удерживайте Ctrl/Cmd для выбора нескольких. Пусто — не по набору.</div>
+                </div>
+
+                {# область действия (для скидок и N+M) #}
+                <div class="span-2" data-for-type="percent_off amount_off buy_x_pay_y" data-scope-wrap>
+                    <label class="fld">На какие блюда</label>
+                    <select name="scope_type" class="promo-scope-type">
+                        <option value="all">Все блюда</option>
+                        <option value="include">Только выбранные</option>
+                        <option value="exclude">Все, кроме выбранных</option>
+                    </select>
+                    <div data-scope-dishes style="margin-top:10px;">
+                        <label class="fld">Блюда</label>
+                        <select name="scope_dishes" multiple>
+                            {% for dish in dishes %}
+                                <option value="{{ dish.id }}">{{ dish.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                {# стекинг #}
+                <div>
+                    <label class="promo-check" style="margin-top:24px;">
+                        <input type="checkbox" name="stackable" value="1">
+                        Сочетается с другими акциями
+                    </label>
+                </div>
+                <div>
+                    <label class="fld">Приоритет</label>
+                    <input type="number" name="priority" step="1" value="0">
+                    <div class="promo-hint">Чем больше, тем раньше применяется при конфликте.</div>
+                </div>
+            </div>
+
+            <div class="promo-actions">
+                <button type="submit" class="promo-btn">Создать акцию</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    {# ===== Список акций ===== #}
+    {% for promo in promotions %}
+    <div class="promo-card">
+        <div class="promo-item-head">
+            <div>
+                <span class="promo-badge {{ promo.style }}">{{ promo.label }}</span>
+                <div style="margin-top:8px;font-size:13px;color:#6b7280;font-weight:800;">
+                    {{ promo.get_type_display }}
+                    · {% if promo.is_active %}<span class="promo-state-on">включена</span>{% else %}<span class="promo-state-off">выключена</span>{% endif %}
+                    · приоритет {{ promo.priority }}
+                </div>
+            </div>
+
+            {% if can_edit %}
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_promotion">
+                    <input type="hidden" name="item_id" value="{{ promo.id }}">
+                    <button type="submit" class="promo-btn-light">
+                        {% if promo.is_active %}Выключить{% else %}Включить{% endif %}
+                    </button>
+                </form>
+                <form method="post" onsubmit="return confirm('Удалить акцию?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_promotion">
+                    <input type="hidden" name="item_id" value="{{ promo.id }}">
+                    <button type="submit" class="promo-btn-danger">Удалить</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if can_edit %}
+        <form method="post" data-promo-form>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_promotion">
+            <input type="hidden" name="item_id" value="{{ promo.id }}">
+
+            <div class="promo-grid">
+                <div>
+                    <label class="fld">Тип акции</label>
+                    <select name="type" class="promo-type">
+                        <option value="percent_off" {% if promo.type == "percent_off" %}selected{% endif %}>Скидка %</option>
+                        <option value="amount_off" {% if promo.type == "amount_off" %}selected{% endif %}>Скидка суммой</option>
+                        <option value="buy_x_pay_y" {% if promo.type == "buy_x_pay_y" %}selected{% endif %}>N по цене M</option>
+                        <option value="gift" {% if promo.type == "gift" %}selected{% endif %}>Подарок</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="fld">Текст для покупателя (бейдж)</label>
+                    <input type="text" name="label" value="{{ promo.label }}" required>
+                </div>
+
+                <div>
+                    <label class="fld">Цвет бейджа</label>
+                    <select name="style">
+                        <option value="gray" {% if promo.style == "gray" %}selected{% endif %}>Серый</option>
+                        <option value="red" {% if promo.style == "red" %}selected{% endif %}>Красный</option>
+                        <option value="purple" {% if promo.style == "purple" %}selected{% endif %}>Фиолетовый</option>
+                        <option value="green" {% if promo.style == "green" %}selected{% endif %}>Зелёный</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="promo-check" style="margin-top:24px;">
+                        <input type="checkbox" name="is_active" value="1" {% if promo.is_active %}checked{% endif %}>
+                        Акция включена
+                    </label>
+                </div>
+
+                <div>
+                    <label class="fld">Действует с</label>
+                    <input type="date" name="date_from" value="{{ promo.date_from|date:'Y-m-d' }}">
+                </div>
+
+                <div>
+                    <label class="fld">Действует по</label>
+                    <input type="date" name="date_to" value="{{ promo.date_to|date:'Y-m-d' }}">
+                </div>
+
+                <div>
+                    <label class="fld">Часы с (счастливые часы)</label>
+                    <input type="time" name="time_from" value="{{ promo.time_from|time:'H:i' }}">
+                </div>
+                <div>
+                    <label class="fld">Часы по</label>
+                    <input type="time" name="time_to" value="{{ promo.time_to|time:'H:i' }}">
+                </div>
+
+                <div data-for-type="percent_off">
+                    <label class="fld">Процент скидки</label>
+                    <input type="number" name="percent" min="0" max="100" step="0.01" value="{{ promo.percent|default_if_none:'' }}">
+                </div>
+
+                <div data-for-type="amount_off">
+                    <label class="fld">Сумма скидки (UZS)</label>
+                    <input type="number" name="amount" min="0" step="1" value="{{ promo.amount|default_if_none:'' }}">
+                </div>
+
+                <div data-for-type="buy_x_pay_y">
+                    <label class="fld">Купить (N)</label>
+                    <input type="number" name="buy_quantity" min="1" step="1" value="{{ promo.buy_quantity|default_if_none:'' }}">
+                </div>
+                <div data-for-type="buy_x_pay_y">
+                    <label class="fld">Оплатить (M)</label>
+                    <input type="number" name="pay_quantity" min="1" step="1" value="{{ promo.pay_quantity|default_if_none:'' }}">
+                </div>
+
+                <div data-for-type="gift">
+                    <label class="fld">Подарок при сумме от (UZS)</label>
+                    <input type="number" name="threshold_amount" min="0" step="1" value="{{ promo.threshold_amount|default_if_none:'' }}">
+                </div>
+                <div data-for-type="gift">
+                    <label class="fld">Что дарим</label>
+                    <select name="gift_dish">
+                        <option value="">— выберите блюдо —</option>
+                        {% for dish in dishes %}
+                            <option value="{{ dish.id }}" {% if dish.id == promo.gift_dish_id %}selected{% endif %}>{{ dish.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div data-for-type="gift">
+                    <label class="fld">Кол-во подарков</label>
+                    <input type="number" name="gift_quantity" min="1" step="1" value="{{ promo.gift_quantity }}">
+                </div>
+                <div data-for-type="gift" class="span-2">
+                    <label class="fld">Подарок при наличии блюд (набор)</label>
+                    <select name="required_dishes" multiple>
+                        {% for dish in dishes %}
+                            <option value="{{ dish.id }}" {% if dish in promo.required_dishes.all %}selected{% endif %}>{{ dish.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="span-2" data-for-type="percent_off amount_off buy_x_pay_y" data-scope-wrap>
+                    <label class="fld">На какие блюда</label>
+                    <select name="scope_type" class="promo-scope-type">
+                        <option value="all" {% if promo.scope_type == "all" %}selected{% endif %}>Все блюда</option>
+                        <option value="include" {% if promo.scope_type == "include" %}selected{% endif %}>Только выбранные</option>
+                        <option value="exclude" {% if promo.scope_type == "exclude" %}selected{% endif %}>Все, кроме выбранных</option>
+                    </select>
+                    <div data-scope-dishes style="margin-top:10px;">
+                        <label class="fld">Блюда</label>
+                        <select name="scope_dishes" multiple>
+                            {% for dish in dishes %}
+                                <option value="{{ dish.id }}" {% if dish in promo.scope_dishes.all %}selected{% endif %}>{{ dish.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="promo-check" style="margin-top:24px;">
+                        <input type="checkbox" name="stackable" value="1" {% if promo.stackable %}checked{% endif %}>
+                        Сочетается с другими акциями
+                    </label>
+                </div>
+                <div>
+                    <label class="fld">Приоритет</label>
+                    <input type="number" name="priority" step="1" value="{{ promo.priority }}">
+                </div>
+
+                <div class="span-2">
+                    <label class="fld">Не сочетается с акциями</label>
+                    <select name="excludes" multiple>
+                        {% for other in promotions %}
+                            {% if other.id != promo.id %}
+                                <option value="{{ other.id }}" {% if other in promo.excludes.all %}selected{% endif %}>{{ other.label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="promo-actions">
+                <button type="submit" class="promo-btn">Сохранить</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="promo-card">
+        <div class="promo-empty">Акций пока нет. Создайте первую выше.</div>
+    </div>
+    {% endfor %}
+
+    {# ===== Промокоды (перенесены со страницы настроек) ===== #}
+    <div class="promo-card">
+        <div class="promo-card-title">Промокоды</div>
+
+        {% if can_edit %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_promo_code">
+            <div class="promo-grid">
+                <div>
+                    <label class="fld">Код</label>
+                    <input type="text" name="code" placeholder="Например: F94" required>
+                </div>
+                <div>
+                    <label class="fld">Скидка %</label>
+                    <input type="number" name="percent" step="0.01" min="0" placeholder="10">
+                </div>
+                <div>
+                    <label class="fld">utm_source</label>
+                    <input type="text" name="utm_source" placeholder="utm_source">
+                </div>
+                <div>
+                    <label class="fld">utm_campaign</label>
+                    <input type="text" name="utm_campaign" placeholder="utm_campaign">
+                </div>
+                <div>
+                    <label class="promo-check" style="margin-top:24px;">
+                        <input type="checkbox" name="is_active" value="1" checked>
+                        Включён
+                    </label>
+                </div>
+            </div>
+            <div class="promo-actions">
+                <button type="submit" class="promo-btn">Добавить промокод</button>
+            </div>
+        </form>
+        {% endif %}
+
+        <div style="margin-top:18px;display:flex;flex-direction:column;gap:14px;">
+            {% for item in promo_codes %}
+            <div style="border:1px solid var(--fc-border,#E5E7EB);border-radius:14px;padding:14px;">
+                <div class="promo-item-head" style="margin-bottom:0;">
+                    <div>
+                        <div style="font-weight:950;font-size:16px;">{{ item.code }}</div>
+                        <div style="margin-top:6px;font-size:13px;color:#6b7280;font-weight:800;">
+                            Скидка {{ item.percent }}%
+                            {% if item.eligible_ids %}· на {{ item.eligible_ids|length }} блюд{% else %}· на весь заказ{% endif %}
+                            {% if item.utm_campaign %}· {{ item.utm_campaign }}{% endif %}
+                            · {% if item.is_active %}<span class="promo-state-on">включён</span>{% else %}<span class="promo-state-off">выключен</span>{% endif %}
+                            {% if item.valid_from or item.valid_until %}· {{ item.valid_from|date:'d.m.y'|default:'…' }}–{{ item.valid_until|date:'d.m.y'|default:'∞' }}{% endif %}
+                        </div>
+                    </div>
+                    {% if can_edit %}
+                    <form method="post" onsubmit="return confirm('Удалить промокод?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_promo_code">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        <button type="submit" class="promo-btn-danger">Удалить</button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                {% if can_edit %}
+                <details style="margin-top:12px;">
+                    <summary style="cursor:pointer;font-weight:900;font-size:13px;color:#374151;">Настроить (срок, UTM, блюда)</summary>
+                    <form method="post" style="margin-top:12px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_promo_code">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                        <div class="promo-grid">
+                            <div>
+                                <label class="fld">Скидка %</label>
+                                <input type="number" name="percent" step="0.01" min="0" value="{{ item.percent }}">
+                            </div>
+                            <div>
+                                <label class="promo-check" style="margin-top:24px;">
+                                    <input type="checkbox" name="is_active" value="1" {% if item.is_active %}checked{% endif %}>
+                                    Включён
+                                </label>
+                            </div>
+                            <div>
+                                <label class="fld">Действует с</label>
+                                <input type="date" name="valid_from" value="{{ item.valid_from|date:'Y-m-d' }}">
+                            </div>
+                            <div>
+                                <label class="fld">по</label>
+                                <input type="date" name="valid_until" value="{{ item.valid_until|date:'Y-m-d' }}">
+                            </div>
+                            <div>
+                                <label class="fld">utm_source</label>
+                                <input type="text" name="utm_source" value="{{ item.utm_source }}">
+                            </div>
+                            <div>
+                                <label class="fld">utm_medium</label>
+                                <input type="text" name="utm_medium" value="{{ item.utm_medium }}">
+                            </div>
+                            <div>
+                                <label class="fld">utm_campaign</label>
+                                <input type="text" name="utm_campaign" value="{{ item.utm_campaign }}">
+                            </div>
+                            <div>
+                                <label class="fld">utm_content</label>
+                                <input type="text" name="utm_content" value="{{ item.utm_content }}">
+                            </div>
+                            <div>
+                                <label class="fld">utm_term</label>
+                                <input type="text" name="utm_term" value="{{ item.utm_term }}">
+                            </div>
+                            <div class="span-2">
+                                <label class="fld">Режим скидки</label>
+                                <select name="scope">
+                                    <option value="auto" {% if item.scope == "auto" %}selected{% endif %}>Авто (как раньше)</option>
+                                    <option value="all" {% if item.scope == "all" %}selected{% endif %}>На весь заказ</option>
+                                    <option value="include" {% if item.scope == "include" %}selected{% endif %}>Только выбранные блюда</option>
+                                    <option value="exclude" {% if item.scope == "exclude" %}selected{% endif %}>Все, кроме выбранных</option>
+                                </select>
+                                <div class="promo-hint">«Только выбранные» и «Все, кроме» используют список блюд ниже.</div>
+                            </div>
+                            <div class="span-2">
+                                <label class="fld">Блюда для скидки (пусто — на весь заказ)</label>
+                                <select name="eligible_dishes" multiple>
+                                    {% for d in dishes %}
+                                        <option value="{{ d.id }}" {% if d.id in item.eligible_ids %}selected{% endif %}>{{ d.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="promo-actions">
+                            <button type="submit" class="promo-btn">Сохранить</button>
+                        </div>
+                    </form>
+                </details>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="promo-empty">Пока нет промокодов</div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    function initPromoForm(form) {
+        var typeSel = form.querySelector(".promo-type");
+        var scopeSel = form.querySelector(".promo-scope-type");
+        if (!typeSel) return;
+
+        function applyScope() {
+            var sd = form.querySelector("[data-scope-dishes]");
+            if (!sd) return;
+            var wrap = form.querySelector("[data-scope-wrap]");
+            var wrapVisible = wrap && wrap.style.display !== "none";
+            var val = scopeSel ? scopeSel.value : "all";
+            sd.style.display = (wrapVisible && val !== "all") ? "" : "none";
+        }
+
+        function applyType() {
+            var t = typeSel.value;
+            form.querySelectorAll("[data-for-type]").forEach(function (el) {
+                var types = el.getAttribute("data-for-type").split(" ");
+                el.style.display = (types.indexOf(t) !== -1) ? "" : "none";
+            });
+            applyScope();
+        }
+
+        typeSel.addEventListener("change", applyType);
+        if (scopeSel) { scopeSel.addEventListener("change", applyScope); }
+        applyType();
+    }
+
+    document.querySelectorAll("[data-promo-form]").forEach(initPromoForm);
+})();
+</script>
+
+{% endblock %}
