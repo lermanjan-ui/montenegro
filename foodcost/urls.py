@@ -14,6 +14,7 @@ from . import views_transfers
 from . import views_inventory
 from . import views_autowriteoff
 from . import public_api
+from . import app_auth
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -388,6 +389,18 @@ urlpatterns = [
         public_api.customers_lookup,
         name="public_customers_lookup",
     ),
+
+    # =========================================================================
+    # 🔐 APP AUTH — вход по SMS (OTP) + токены для мобильного приложения
+    # =========================================================================
+    path("api/app/auth/request-code", app_auth.auth_request_code, name="app_auth_request_code"),
+    path("api/app/auth/request-code/", app_auth.auth_request_code, name="app_auth_request_code_s"),
+    path("api/app/auth/verify-code", app_auth.auth_verify_code, name="app_auth_verify_code"),
+    path("api/app/auth/verify-code/", app_auth.auth_verify_code, name="app_auth_verify_code_s"),
+    path("api/app/auth/refresh", app_auth.auth_refresh, name="app_auth_refresh"),
+    path("api/app/auth/refresh/", app_auth.auth_refresh, name="app_auth_refresh_s"),
+    path("api/app/auth/logout", app_auth.auth_logout, name="app_auth_logout"),
+    path("api/app/auth/logout/", app_auth.auth_logout, name="app_auth_logout_s"),
 
     # =========================================================================
     # 🗺  PUBLIC API (Part 8) — delivery zone check by coordinates

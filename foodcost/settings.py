@@ -107,6 +107,42 @@ import os
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
+# 💳 Платёжные шлюзы (значения — в переменных окружения Render). Пусто = выкл.
+PAYME_MERCHANT_ID = os.environ.get("PAYME_MERCHANT_ID", "")
+PAYME_SECRET_KEY = os.environ.get("PAYME_SECRET_KEY", "")
+PAYME_CHECKOUT_URL = os.environ.get("PAYME_CHECKOUT_URL", "https://checkout.paycom.uz")
+PAYME_ACCOUNT_FIELD = os.environ.get("PAYME_ACCOUNT_FIELD", "order_id")
+PAYME_SUCCESS_URL = os.environ.get("PAYME_SUCCESS_URL", "")
+
+CLICK_SERVICE_ID = os.environ.get("CLICK_SERVICE_ID", "")
+CLICK_MERCHANT_ID = os.environ.get("CLICK_MERCHANT_ID", "")
+CLICK_SECRET_KEY = os.environ.get("CLICK_SECRET_KEY", "")
+CLICK_MERCHANT_USER_ID = os.environ.get("CLICK_MERCHANT_USER_ID", "")
+CLICK_SUCCESS_URL = os.environ.get("CLICK_SUCCESS_URL", "")
+
+# 📲 Eskiz (SMS для входа по коду). Значения — в переменных Render.
+ESKIZ_EMAIL = os.environ.get("ESKIZ_EMAIL", "")
+ESKIZ_PASSWORD = os.environ.get("ESKIZ_PASSWORD", "")
+ESKIZ_BASE_URL = os.environ.get("ESKIZ_BASE_URL", "https://notify.eskiz.uz/api")
+ESKIZ_FROM = os.environ.get("ESKIZ_FROM", "4546")  # 4546 — тестовый отправитель Eskiz
+# Текст SMS с кодом. ДОЛЖЕН совпадать с одобренным шаблоном Eskiz. {code} — подстановка.
+ESKIZ_OTP_TEMPLATE = os.environ.get(
+    "ESKIZ_OTP_TEMPLATE",
+    "Код верификации для входа в мобильное приложение Raccoon: {code}",
+)
+
+# 🔢 OTP и токены приложения
+OTP_CODE_TTL_SECONDS = int(os.environ.get("OTP_CODE_TTL_SECONDS", "300"))
+# Длина кода = числу нулей в одобренном шаблоне Eskiz («для входа» = 4).
+OTP_CODE_LENGTH = int(os.environ.get("OTP_CODE_LENGTH", "4"))
+OTP_RESEND_COOLDOWN_SECONDS = int(os.environ.get("OTP_RESEND_COOLDOWN_SECONDS", "60"))
+OTP_MAX_PER_HOUR = int(os.environ.get("OTP_MAX_PER_HOUR", "5"))
+OTP_MAX_ATTEMPTS = int(os.environ.get("OTP_MAX_ATTEMPTS", "5"))
+APP_ACCESS_TOKEN_TTL_DAYS = int(os.environ.get("APP_ACCESS_TOKEN_TTL_DAYS", "30"))
+APP_REFRESH_TOKEN_TTL_DAYS = int(os.environ.get("APP_REFRESH_TOKEN_TTL_DAYS", "180"))
+# ВНИМАНИЕ: только для теста на стейдже (вернёт код в ответе). НЕ включать на проде!
+OTP_EXPOSE_CODE_FOR_TESTING = os.environ.get("OTP_EXPOSE_CODE_FOR_TESTING", "") == "1"
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

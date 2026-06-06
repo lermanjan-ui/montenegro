@@ -4226,3 +4226,43 @@ class Promotion(models.Model):
             elif tt and now_t > tt:
                 return False
         return True
+
+
+class OtpCode(models.Model):
+    """Одноразовый код для входа по SMS. Хранится ХЕШ кода, не сам код."""
+
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="otp_codes"
+    )
+    phone = models.CharField(max_length=30, db_index=True)
+    code_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["phone", "created_at"])]
+
+    def __str__(self):
+        return f"OTP {self.phone}"
+
+
+class CustomerToken(models.Model):
+    """Токен доступа приложения (опаковый). Хранятся ХЕШИ токенов."""
+
+    customer = models.ForeignKey(
+        Customer, on_delete=models.CASCADE, related_name="auth_tokens"
+    )
+    access_hash = models.CharField(max_length=128, db_index=True)
+    refresh_hash = models.CharField(max_length=128, db_index=True)
+    access_expires_at = models.DateTimeField()
+    refresh_expires_at = models.DateTimeField()
+    platform = models.CharField(max_length=20, blank=True, default="")
+    device_name = models.CharField(max_length=120, blank=True, default="")
+    revoked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"token c{self.customer_id}"
