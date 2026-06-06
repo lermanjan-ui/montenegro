@@ -188,6 +188,17 @@
     padding:10px 0;
 }
 
+.dish-multi-search{
+    width:100%;
+    margin-bottom:6px;
+    padding:8px 10px;
+    border:1px solid var(--fc-border,#E5E7EB);
+    border-radius:9px;
+    font-size:13px;
+    font-family:inherit;
+    box-sizing:border-box;
+}
+
 @media (max-width:760px){
     .promo-grid{ grid-template-columns:1fr; }
     .promo-card{ padding:16px; border-radius:18px; }
@@ -716,6 +727,21 @@
     }
 
     document.querySelectorAll("[data-promo-form]").forEach(initPromoForm);
+
+    // Поиск по спискам блюд: над каждым мультисписком — поле фильтра.
+    document.querySelectorAll(".promo-page select[multiple]").forEach(function (sel) {
+        var search = document.createElement("input");
+        search.type = "text";
+        search.placeholder = "Поиск блюда…";
+        search.className = "dish-multi-search";
+        sel.parentNode.insertBefore(search, sel);
+        search.addEventListener("input", function () {
+            var q = this.value.trim().toLowerCase();
+            Array.prototype.forEach.call(sel.options, function (opt) {
+                opt.hidden = q !== "" && opt.text.toLowerCase().indexOf(q) === -1;
+            });
+        });
+    });
 })();
 </script>
 

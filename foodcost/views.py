@@ -988,6 +988,7 @@ def dish_detail(request, country_slug, dish_id):
             dish.name = request.POST.get("name") or dish.name
             dish.final_weight = request.POST.get("final_weight") or 0
             dish.selling_price = request.POST.get("selling_price") or 0
+            dish.old_price = request.POST.get("old_price") or None
             dish.cooking_minutes = request.POST.get("cooking_minutes") or 0
             dish.tech_card = request.POST.get("tech_card", "")
             dish.is_combo = bool(request.POST.get("is_combo"))

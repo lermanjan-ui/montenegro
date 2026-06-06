@@ -2297,6 +2297,13 @@
             </div>
 
             <div class="fc-field">
+                <label class="fc-label">Старая цена (зачёркнутая, для сайта)</label>
+                <input class="fc-input" type="text" name="old_price" value="{{ dish.old_price|default_if_none:'' }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Необязательно. Покажет «было/стало»: зачёркнутую старую цену и текущую «Цену продажи». Списывается «Цена продажи».</div>
+            </div>
+
+            <div class="fc-field">
                 <label class="fc-label">Время блюда, мин</label>
                 <input class="fc-input" type="text" name="cooking_minutes" value="{{ dish.cooking_minutes }}"
                        {% if not can_edit_dish_base %}readonly{% endif %}>

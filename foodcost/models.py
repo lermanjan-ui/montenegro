@@ -294,6 +294,11 @@ class Dish(models.Model):
 
     final_weight = models.DecimalField(max_digits=10, decimal_places=3)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    # Старая (зачёркнутая) цена для витрины. На списание НЕ влияет — платят
+    # selling_price. Показывается как «было», если задана и больше текущей.
+    old_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+    )
     cooking_minutes = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     tech_card = models.TextField("Техкарта приготовления", blank=True, default="")

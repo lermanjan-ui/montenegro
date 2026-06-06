@@ -547,10 +547,14 @@ def _specs_for(request, country_id):
 
 
 def _promo_display(request, dish):
-    """Поля акции для карточки товара. При любой ошибке — цена как есть."""
+    """Поля акции для карточки товара (с учётом ручной старой цены
+    dish.old_price). При любой ошибке — цена как есть."""
+    manual_old = getattr(dish, "old_price", None)
     try:
         specs = _specs_for(request, dish.country_id)
-        disp = promotions_engine.display_for_dish(specs, dish.id, dish.selling_price)
+        disp = promotions_engine.display_for_dish(
+            specs, dish.id, dish.selling_price, compare_at=manual_old
+        )
         return {
             "price": _to_float(disp["price"]),
             "old_price": (
@@ -561,10 +565,15 @@ def _promo_display(request, dish):
             "badges": disp["badges"],
         }
     except Exception:
+        show_old = manual_old is not None and manual_old > dish.selling_price
+        savings = None
+        if show_old:
+            diff = int(manual_old - dish.selling_price)
+            savings = f"Экономия {diff:,} сум".replace(",", "\u00a0")
         return {
             "price": _to_float(dish.selling_price),
-            "old_price": None,
-            "savings_label": None,
+            "old_price": _to_float(manual_old) if show_old else None,
+            "savings_label": savings,
             "promo_hint": None,
             "badges": [],
         }

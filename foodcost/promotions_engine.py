@@ -291,7 +291,7 @@ def apply_to_cart(specs, line_objects):
 #  base_price — цена блюда (selling_price). Возвращает price/old_price/
 #  savings_label/promo_hint/badges.
 # ---------------------------------------------------------------------------
-def display_for_dish(specs, dish_id, base_price):
+def display_for_dish(specs, dish_id, base_price, compare_at=None):
     base = _q(base_price)
     chosen = _choose_for_dish(specs, dish_id)
 
@@ -305,11 +305,18 @@ def display_for_dish(specs, dish_id, base_price):
             cur = Decimal("0")
 
     price = cur
+    # «Было»: максимум из текущей цены и заданной вручную старой цены.
+    was = base
+    if compare_at is not None:
+        ca = _q(compare_at)
+        if ca > was:
+            was = ca
+
     old_price = None
     savings_label = None
-    if price < base:
-        old_price = base
-        savings_label = f"Экономия {_fmt_int(base - price)} сум"
+    if price < was:
+        old_price = was
+        savings_label = f"Экономия {_fmt_int(was - price)} сум"
 
     # подсказка для N+M
     promo_hint = None
