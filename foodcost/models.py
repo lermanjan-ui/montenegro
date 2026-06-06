@@ -1787,10 +1787,9 @@ class Order(models.Model):
     STATUS_CANCELLED = "cancelled"
 
     STATUS_CHOICES = [
-        (STATUS_NEW, "Новый"),
+        (STATUS_NEW, "Принят"),
         (STATUS_AWAITING_PAYMENT, "Ожидает оплаты"),
         (STATUS_PAYMENT_FAILED, "Оплата не прошла"),
-        (STATUS_COOKING, "Готовится"),
         (STATUS_DELIVERY, "Доставка"),
         (STATUS_DONE, "Завершен"),
         (STATUS_CANCELLED, "Отменен"),
@@ -4266,3 +4265,66 @@ class CustomerToken(models.Model):
 
     def __str__(self):
         return f"token c{self.customer_id}"
+
+
+class DeviceToken(models.Model):
+    """Токен устройства (FCM) для push-уведомлений клиенту."""
+
+    customer = models.ForeignKey(
+        Customer, on_delete=models.CASCADE, related_name="device_tokens"
+    )
+    token = models.CharField(max_length=255, unique=True, db_index=True)
+    platform = models.CharField(max_length=20, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"device c{self.customer_id} {self.platform}"
+
+
+# =============================================================================
+# 🔔 Push при смене статуса заказа (надёжно — через сигналы, ловит ЛЮБОЕ место
+# смены статуса: админка, ERP-экраны, API). Ошибки push никогда не ломают
+# сохранение заказа.
+# =============================================================================
+from django.db.models.signals import pre_save, post_save  # noqa: E402
+from django.dispatch import receiver  # noqa: E402
+
+# Статусы, при переходе в которые шлём push клиенту.
+_PUSH_STATUSES = {"new", "delivery"}
+
+
+@receiver(pre_save, sender=Order)
+def _order_capture_old_status(sender, instance, **kwargs):
+    if not instance.pk:
+        instance._old_status = None
+        return
+    try:
+        instance._old_status = (
+            sender.objects.filter(pk=instance.pk)
+            .values_list("status", flat=True)
+            .first()
+        )
+    except Exception:
+        instance._old_status = None
+
+
+@receiver(post_save, sender=Order)
+def _order_push_on_status_change(sender, instance, created, **kwargs):
+    # «Принят» (new) ставится автоматически при создании заказа — шлём push и
+    # на создании. Остальные (delivery) — при смене статуса.
+    if instance.status not in _PUSH_STATUSES:
+        return
+    if created:
+        fire = True
+    else:
+        old = getattr(instance, "_old_status", None)
+        fire = old is not None and old != instance.status
+    if not fire:
+        return
+    try:
+        from . import push_fcm
+        push_fcm.notify_order_status(instance)
+    except Exception:
+        pass

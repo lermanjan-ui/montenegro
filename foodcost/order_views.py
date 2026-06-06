@@ -791,6 +791,13 @@ def order_detail(request, country_slug, order_id):
         order.payment_method = payment_method
         order.promo_code = promo_code
 
+        # Смена статуса заказа менеджером. «Принят» ставится автоматически при
+        # поступлении заказа; отмена — отдельной функцией. Здесь менеджер
+        # вручную переводит в Доставку или Завершен.
+        _status_in = (request.POST.get("status") or "").strip()
+        if _status_in in (Order.STATUS_DELIVERY, Order.STATUS_DONE):
+            order.status = _status_in
+
         order.customer_name = request.POST.get(
             "customer_name",
             ""

@@ -143,6 +143,12 @@ APP_REFRESH_TOKEN_TTL_DAYS = int(os.environ.get("APP_REFRESH_TOKEN_TTL_DAYS", "1
 # ВНИМАНИЕ: только для теста на стейдже (вернёт код в ответе). НЕ включать на проде!
 OTP_EXPOSE_CODE_FOR_TESTING = os.environ.get("OTP_EXPOSE_CODE_FOR_TESTING", "") == "1"
 
+# 🔔 Firebase (push). Путь к JSON сервис-аккаунта — Render Secret File,
+# например /etc/secrets/firebase.json (или используйте GOOGLE_APPLICATION_CREDENTIALS).
+# Пусто = push выключен.
+FIREBASE_CREDENTIALS_FILE = os.environ.get("FIREBASE_CREDENTIALS_FILE", "")
+FCM_ENABLED = os.environ.get("FCM_ENABLED", "1") == "1"
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

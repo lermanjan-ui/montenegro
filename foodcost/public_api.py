@@ -1258,7 +1258,7 @@ def search(request):
 # operator later introduces "accepted" as a custom status, but newly-created
 # orders use the model's default ("new").
 PUBLIC_STATUS_LABELS = {
-    "new":       "Новый",
+    "new":       "Принят",
     "accepted":  "Принят",
     "cooking":   "Готовится",
     "delivery":  "В доставке",

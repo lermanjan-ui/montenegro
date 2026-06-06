@@ -16,6 +16,7 @@ from . import views_autowriteoff
 from . import public_api
 from . import app_auth
 from . import app_account
+from . import app_push
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -416,6 +417,14 @@ urlpatterns = [
     path("api/app/addresses/", app_account.addresses, name="app_addresses_s"),
     path("api/app/addresses/<int:address_id>", app_account.address_detail, name="app_address_detail"),
     path("api/app/addresses/<int:address_id>/", app_account.address_detail, name="app_address_detail_s"),
+
+    # =========================================================================
+    # 🔔 APP PUSH — регистрация токена устройства (FCM), нужен Bearer-токен
+    # =========================================================================
+    path("api/app/push/register", app_push.push_register, name="app_push_register"),
+    path("api/app/push/register/", app_push.push_register, name="app_push_register_s"),
+    path("api/app/push/unregister", app_push.push_unregister, name="app_push_unregister"),
+    path("api/app/push/unregister/", app_push.push_unregister, name="app_push_unregister_s"),
 
     # =========================================================================
     # 🗺  PUBLIC API (Part 8) — delivery zone check by coordinates
