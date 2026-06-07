@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import views_techcards
+from . import views_finance
 from . import views_employees
 from . import order_views
 from . import views_settings
@@ -18,6 +19,7 @@ from . import public_api
 from . import app_auth
 from . import app_account
 from . import app_push
+from . import app_favorites
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -120,6 +122,7 @@ urlpatterns = [
 
     # коммуналка
     path("c/<slug:country_slug>/utilities/", views.utilities_list, name="utilities_list"),
+    path("c/<slug:country_slug>/finance/expenses/", views_finance.finance_expenses, name="finance_expenses"),
 
     # списания
 
@@ -436,6 +439,13 @@ urlpatterns = [
     path("api/app/push/register/", app_push.push_register, name="app_push_register_s"),
     path("api/app/push/unregister", app_push.push_unregister, name="app_push_unregister"),
     path("api/app/push/unregister/", app_push.push_unregister, name="app_push_unregister_s"),
+    # ⭐️ Избранное
+    path("api/app/favorites", app_favorites.favorites, name="app_favorites"),
+    path("api/app/favorites/", app_favorites.favorites, name="app_favorites_s"),
+    path("api/app/favorites/ids", app_favorites.favorite_ids, name="app_favorites_ids"),
+    path("api/app/favorites/ids/", app_favorites.favorite_ids, name="app_favorites_ids_s"),
+    path("api/app/favorites/<int:dish_id>", app_favorites.favorite_detail, name="app_favorite_detail"),
+    path("api/app/favorites/<int:dish_id>/", app_favorites.favorite_detail, name="app_favorite_detail_s"),
 
     # =========================================================================
     # 🗺  PUBLIC API (Part 8) — delivery zone check by coordinates

@@ -2268,18 +2268,75 @@ class OrderItem(models.Model):
         
         
         
+class ExpenseDebtor(models.Model):
+    """Должники для расходов с источником «Долг». Список ведёт супер-админ."""
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="expense_debtors"
+    )
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class FinancialExpense(models.Model):
 
     EXPENSE_RENT = "rent"
     EXPENSE_UTILITIES = "utilities"
     EXPENSE_MARKETING = "marketing"
     EXPENSE_OTHER = "other"
+    EXPENSE_REPRESENTATION = "representation"
+    EXPENSE_EQUIPMENT = "equipment"
+    EXPENSE_CONSTRUCTION = "construction"
+    EXPENSE_INVENTORY = "inventory_items"
+    EXPENSE_PURCHASE = "purchase"
+    EXPENSE_LEGAL = "legal"
+    EXPENSE_SALARY = "salary"
+    EXPENSE_FREIGHT = "freight"
+    EXPENSE_FUEL = "fuel"
+    EXPENSE_HOSTING = "hosting"
+    EXPENSE_CORP_CAR = "corp_car"
+    EXPENSE_KITCHEN_SECONDARY = "kitchen_secondary"
+    EXPENSE_PACKAGING = "packaging"
+    EXPENSE_DEVELOPMENT = "development"
+    EXPENSE_MERCH = "merch"
 
     EXPENSE_TYPES = [
-        (EXPENSE_RENT, "Аренда"),
-        (EXPENSE_UTILITIES, "Коммуналка"),
-        (EXPENSE_MARKETING, "Реклама"),
-        (EXPENSE_OTHER, "Прочее"),
+        (EXPENSE_RENT, "Аренда Махаля (ЖКХ)"),
+        (EXPENSE_REPRESENTATION, "Представительские"),
+        (EXPENSE_EQUIPMENT, "Оборудование"),
+        (EXPENSE_CONSTRUCTION, "Стройка"),
+        (EXPENSE_INVENTORY, "Инвентарь"),
+        (EXPENSE_PURCHASE, "Закупка"),
+        (EXPENSE_LEGAL, "Юридические услуги"),
+        (EXPENSE_SALARY, "Персонал (зп)"),
+        (EXPENSE_FREIGHT, "Груз. перевозки"),
+        (EXPENSE_FUEL, "Топливо"),
+        (EXPENSE_HOSTING, "Хостинг/домен/телефония"),
+        (EXPENSE_CORP_CAR, "Затраты на корп авто (ремонт)"),
+        (EXPENSE_KITCHEN_SECONDARY, "Вторичка для кухни (химия + пром)"),
+        (EXPENSE_PACKAGING, "Упаковка"),
+        (EXPENSE_MARKETING, "Маркетинг (реклама)"),
+        (EXPENSE_DEVELOPMENT, "Разработка и поддержка"),
+        (EXPENSE_MERCH, "Мерч"),
+        (EXPENSE_OTHER, "Прочие"),
+        (EXPENSE_UTILITIES, "Коммуналка (старое)"),
+    ]
+
+    SOURCE_CASH = "cash_register"
+    SOURCE_SETTLEMENT = "settlement_account"
+    SOURCE_COMPANY = "company_account"
+    SOURCE_DEBT = "debt"
+    SOURCE_CHOICES = [
+        (SOURCE_CASH, "Касса точки"),
+        (SOURCE_SETTLEMENT, "Расчётный счёт"),
+        (SOURCE_COMPANY, "Счёт компании"),
+        (SOURCE_DEBT, "Долг"),
     ]
 
     country = models.ForeignKey(
@@ -2302,7 +2359,9 @@ class FinancialExpense(models.Model):
     )
 
     name = models.CharField(
-        max_length=255
+        max_length=255,
+        blank=True,
+        default=""
     )
 
     amount = models.DecimalField(
@@ -2315,6 +2374,23 @@ class FinancialExpense(models.Model):
 
     comment = models.TextField(
         blank=True
+    )
+
+    source = models.CharField(
+        max_length=30, choices=SOURCE_CHOICES, blank=True, default=""
+    )
+    legal_entity = models.CharField(max_length=255, blank=True, default="")
+    debtor = models.ForeignKey(
+        "ExpenseDebtor", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="expenses",
+    )
+    purchase_receipt = models.ForeignKey(
+        "PurchaseReceipt", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="financial_expenses",
+    )
+    created_by = models.ForeignKey(
+        "auth.User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="created_financial_expenses",
     )
 
     created_at = models.DateTimeField(
@@ -4328,5 +4404,30 @@ def _order_push_on_status_change(sender, instance, created, **kwargs):
     try:
         from . import push_fcm
         push_fcm.notify_order_status(instance)
+    except Exception:
+        pass
+
+
+@receiver(post_save, sender=PurchaseReceipt)
+def _purchase_to_expense(sender, instance, **kwargs):
+    """Подтверждённый приход → авто-расход (тип «Закупка»), без дублей.
+    Отмена/черновик — убирает ранее созданный авто-расход."""
+    try:
+        from django.utils import timezone as _tz
+        if instance.status != PurchaseReceipt.STATUS_CONFIRMED:
+            FinancialExpense.objects.filter(purchase_receipt=instance).delete()
+            return
+        FinancialExpense.objects.update_or_create(
+            purchase_receipt=instance,
+            defaults={
+                "country": instance.country,
+                "location": instance.warehouse,
+                "expense_type": FinancialExpense.EXPENSE_PURCHASE,
+                "name": ("Приход " + (instance.document_number or "")).strip(),
+                "amount": instance.total_amount or 0,
+                "expense_date": instance.receipt_date or _tz.now().date(),
+                "comment": "Авто из прихода",
+            },
+        )
     except Exception:
         pass

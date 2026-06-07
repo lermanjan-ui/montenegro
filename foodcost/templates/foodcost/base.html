@@ -472,13 +472,6 @@
 			        Главная
 			    </a>
 
-			    {% if can_view_techcards %}
-			    <a class="side-link {% if '/techcards/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/techcards/">
-			        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M6 3h9l3 3v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M8 9h7M8 13h7M8 17h4"/></svg>
-			        Техкарты
-			    </a>
-			    {% endif %}
-
 			    {% if can_menu_orders %}
 			    <details class="menu-section" {% if '/orders/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
@@ -735,7 +728,12 @@
 
 				    <div class="menu-items">
 
-				        {% if can_menu_utilities %}
+				        {% if can_menu_finance %}
+                            <a class="side-link {% if '/finance/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/finance/expenses/">
+                                Расходы
+                            </a>
+                        {% endif %}
+                        {% if can_menu_utilities %}
 
 				            <a class="side-link {% if '/utilities/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/utilities/">
 				                Коммуналка
@@ -769,8 +767,8 @@
 			    </details>
 			    {% endif %}
 
-			    {% if can_menu_employees or can_menu_schedule or can_menu_shifts %}
-			    <details class="menu-section" {% if '/employees/' in request.path or '/schedule/' in request.path or '/shifts/' in request.path %}open{% endif %}>
+			    {% if can_menu_employees or can_menu_schedule or can_menu_shifts or can_view_techcards %}
+			    <details class="menu-section" {% if '/employees/' in request.path or '/schedule/' in request.path or '/shifts/' in request.path or '/techcards/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
 			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
@@ -785,7 +783,12 @@
 			        </summary>
 
 			        <div class="menu-items">
-			            {% if can_menu_employees %}
+			            {% if can_view_techcards %}
+            <a class="side-link {% if '/techcards/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/techcards/">
+                Техкарты
+            </a>
+            {% endif %}
+            {% if can_menu_employees %}
 			            <a class="side-link {% if '/employees/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/employees/">
 			                Сотрудники
 			            </a>

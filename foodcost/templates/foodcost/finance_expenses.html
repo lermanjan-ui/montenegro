@@ -1,0 +1,244 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Расходы{% endblock %}
+{% block content %}
+<div style="max-width:1080px;margin:0 auto;">
+  <h1 style="font-size:22px;font-weight:800;margin:0 0 16px;">Расходы</h1>
+
+  <!-- ===== Форма добавления расхода ===== -->
+  <div style="border:1px solid #E5E7EB;border-radius:14px;background:#fff;padding:18px;margin-bottom:22px;">
+    <div style="font-weight:800;font-size:16px;margin:0 0 14px;">Добавить расход</div>
+    <form method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_expense">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;">
+
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;">
+          Филиал
+          <select name="location"
+                  style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;background:#fff;">
+            <option value="general">Общий</option>
+            {% for loc in locations %}
+              <option value="{{ loc.id }}">{{ loc.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;">
+          Дата
+          <input type="date" name="expense_date" value="{{ today }}" required
+                 style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;">
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;">
+          Сумма
+          <input type="number" name="amount" step="0.01" min="0" required placeholder="0"
+                 style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;">
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;">
+          Тип расхода
+          <select name="expense_type" required
+                  style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;background:#fff;">
+            <option value="" disabled selected>— выберите —</option>
+            {% for key, label in form_types %}
+              <option value="{{ key }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;">
+          Источник
+          <select name="source" id="fe-source"
+                  style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;background:#fff;">
+            <option value="">— не указан —</option>
+            {% for key, label in sources %}
+              <option value="{{ key }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <!-- Долг: от кого (показывается при источнике «Долг») -->
+        <label id="fe-debt-row" style="display:none;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;">
+          Должник (от кого)
+          <select name="debtor"
+                  style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;background:#fff;">
+            <option value="">—</option>
+            {% for d in active_debtors %}
+              <option value="{{ d.id }}">{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <!-- Юр-лицо (показывается при источнике «Счёт компании») -->
+        <label id="fe-company-row" style="display:none;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;">
+          Юр-лицо
+          <input type="text" name="legal_entity" placeholder="Напр. ООО Раккун"
+                 style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;">
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:13px;color:#6B7280;grid-column:1 / -1;">
+          Комментарий
+          <input type="text" name="comment" placeholder="необязательно"
+                 style="padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;">
+        </label>
+      </div>
+
+      <div style="margin-top:14px;">
+        <button type="submit"
+                style="padding:11px 22px;border:0;border-radius:10px;background:#16A34A;color:#fff;font-weight:700;cursor:pointer;font-size:15px;">
+          Добавить расход
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== Фильтры ===== -->
+  <form method="get" action=""
+        style="border:1px solid #E5E7EB;border-radius:14px;background:#fff;padding:14px 16px;margin-bottom:16px;
+               display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#6B7280;">
+      С даты
+      <input type="date" name="date_from" value="{{ f_from }}"
+             style="padding:9px 11px;border:1px solid #E5E7EB;border-radius:9px;font-size:14px;">
+    </label>
+    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#6B7280;">
+      По дату
+      <input type="date" name="date_to" value="{{ f_to }}"
+             style="padding:9px 11px;border:1px solid #E5E7EB;border-radius:9px;font-size:14px;">
+    </label>
+    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#6B7280;">
+      Тип
+      <select name="type" style="padding:9px 11px;border:1px solid #E5E7EB;border-radius:9px;font-size:14px;background:#fff;">
+        <option value="">Все типы</option>
+        {% for key, label in all_types %}
+          <option value="{{ key }}" {% if f_type == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#6B7280;">
+      Филиал
+      <select name="location" style="padding:9px 11px;border:1px solid #E5E7EB;border-radius:9px;font-size:14px;background:#fff;">
+        <option value="">Все</option>
+        <option value="general" {% if f_location == "general" %}selected{% endif %}>Общий</option>
+        {% for loc in locations %}
+          <option value="{{ loc.id }}" {% if f_location == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#6B7280;">
+      Источник
+      <select name="source" style="padding:9px 11px;border:1px solid #E5E7EB;border-radius:9px;font-size:14px;background:#fff;">
+        <option value="">Все</option>
+        {% for key, label in sources %}
+          <option value="{{ key }}" {% if f_source == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit"
+            style="padding:10px 18px;border:0;border-radius:9px;background:#111827;color:#fff;font-weight:700;cursor:pointer;font-size:14px;">
+      Фильтр
+    </button>
+    <a href="/c/{{ country.slug }}/finance/expenses/"
+       style="color:#6B7280;text-decoration:none;font-size:14px;padding:10px 4px;">Сбросить</a>
+  </form>
+
+  <!-- ===== Итого ===== -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:0 4px 10px;color:#6B7280;font-size:14px;">
+    <span>Записей: {{ count }}</span>
+    <span>Итого: <b style="color:#111827;font-size:16px;">{{ total|floatformat:0 }}</b> сум</span>
+  </div>
+
+  <!-- ===== Таблица расходов ===== -->
+  <div style="border:1px solid #E5E7EB;border-radius:14px;background:#fff;overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;min-width:760px;">
+        <thead>
+          <tr style="background:#F5F7FA;color:#6B7280;text-align:left;">
+            <th style="padding:11px 14px;font-weight:600;">Дата</th>
+            <th style="padding:11px 14px;font-weight:600;">Филиал</th>
+            <th style="padding:11px 14px;font-weight:600;">Тип</th>
+            <th style="padding:11px 14px;font-weight:600;text-align:right;">Сумма</th>
+            <th style="padding:11px 14px;font-weight:600;">Источник</th>
+            <th style="padding:11px 14px;font-weight:600;">Детали</th>
+            <th style="padding:11px 14px;font-weight:600;">Комментарий</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr style="border-top:1px solid #EEF1F5;">
+              <td style="padding:11px 14px;white-space:nowrap;">{{ row.obj.expense_date|date:"d.m.Y" }}</td>
+              <td style="padding:11px 14px;">{{ row.location_label }}</td>
+              <td style="padding:11px 14px;">
+                {{ row.type_label }}
+                {% if row.is_auto %}
+                  <span style="margin-left:6px;font-size:11px;background:#ECFDF5;color:#16A34A;border:1px solid #A7F3D0;border-radius:6px;padding:1px 6px;">авто</span>
+                {% endif %}
+              </td>
+              <td style="padding:11px 14px;text-align:right;white-space:nowrap;font-weight:600;">{{ row.obj.amount|floatformat:0 }}</td>
+              <td style="padding:11px 14px;white-space:nowrap;">{{ row.source_label }}</td>
+              <td style="padding:11px 14px;">{{ row.extra }}</td>
+              <td style="padding:11px 14px;color:#6B7280;">{{ row.obj.comment }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" style="padding:28px;text-align:center;color:#6B7280;">Расходов не найдено.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if is_super %}
+  <!-- ===== Управление должниками (только супер-админ) ===== -->
+  <div style="border:1px solid #E5E7EB;border-radius:14px;background:#fff;padding:18px;margin-top:22px;">
+    <div style="font-weight:800;font-size:16px;margin:0 0 6px;">Должники</div>
+    <div style="color:#6B7280;font-size:13px;margin:0 0 14px;">Список для источника «Долг». Управляет супер-админ.</div>
+
+    <form method="post" action="" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_debtor">
+      <input type="text" name="debtor_name" placeholder="Имя должника" required
+             style="flex:1;min-width:220px;max-width:360px;padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;">
+      <button type="submit"
+              style="padding:10px 18px;border:0;border-radius:10px;background:#16A34A;color:#fff;font-weight:700;cursor:pointer;">
+        Добавить
+      </button>
+    </form>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      {% for d in all_debtors %}
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border:1px solid #E5E7EB;border-radius:10px;">
+          <span style="font-weight:600;{% if not d.is_active %}color:#9CA3AF;text-decoration:line-through;{% endif %}">{{ d.name }}</span>
+          <form method="post" action="" style="margin:0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="toggle_debtor">
+            <input type="hidden" name="debtor_id" value="{{ d.id }}">
+            <button type="submit"
+                    style="padding:6px 12px;border:1px solid #E5E7EB;border-radius:8px;background:#fff;color:#6B7280;cursor:pointer;font-size:13px;">
+              {% if d.is_active %}Скрыть{% else %}Вернуть{% endif %}
+            </button>
+          </form>
+        </div>
+      {% empty %}
+        <div style="color:#6B7280;font-size:14px;">Должников пока нет.</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  var DEBT = "{{ SOURCE_DEBT }}";
+  var COMPANY = "{{ SOURCE_COMPANY }}";
+  var sel = document.getElementById('fe-source');
+  var debtRow = document.getElementById('fe-debt-row');
+  var compRow = document.getElementById('fe-company-row');
+  function upd(){
+    var v = sel ? sel.value : "";
+    if (debtRow) debtRow.style.display = (v === DEBT) ? "flex" : "none";
+    if (compRow) compRow.style.display = (v === COMPANY) ? "flex" : "none";
+  }
+  if (sel){ sel.addEventListener('change', upd); upd(); }
+})();
+</script>
+{% endblock %}
