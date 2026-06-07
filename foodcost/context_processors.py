@@ -14,6 +14,26 @@ def user_has_section(user, section):
     return user.profile.can_access_section(section)
 
 
+def _can_view_techcards(user):
+    """Кто может смотреть техкарты: те же, кто видит карточку блюда
+    (логика как в views.user_can_view_dish_page) — включая кухонный персонал."""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    profile = getattr(user, "profile", None)
+    if profile is None:
+        return False
+    return (
+        profile.can_access_section(UserProfile.SECTION_DISHES)
+        or profile.can_access_section(UserProfile.SECTION_ORDERS)
+        or profile.can_access_section(UserProfile.SECTION_ALL_ORDERS)
+        or profile.can_access_section(UserProfile.SECTION_SHIFT_HANDOVER)
+        or profile.is_kitchen_staff()
+        or profile.can_access_section(UserProfile.SECTION_TECHCARDS)
+    )
+
+
 def menu_context(request):
     if not request.user.is_authenticated:
         return {}
@@ -32,6 +52,7 @@ def menu_context(request):
         "is_employee": is_employee,
 
         "can_menu_dishes": user_has_section(request.user, UserProfile.SECTION_DISHES),
+        "can_view_techcards": _can_view_techcards(request.user),
         "can_menu_products": user_has_section(request.user, UserProfile.SECTION_PRODUCTS),
         "can_menu_preparations": user_has_section(request.user, UserProfile.SECTION_PREPARATIONS),
         "can_menu_employees": user_has_section(request.user, UserProfile.SECTION_EMPLOYEES),

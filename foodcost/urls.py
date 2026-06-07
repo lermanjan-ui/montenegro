@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_techcards
 from . import views_employees
 from . import order_views
 from . import views_settings
@@ -90,12 +91,12 @@ urlpatterns = [
     ),
     path(
         "c/<slug:country_slug>/techcards/",
-        views.techcards_list,
+        views_techcards.techcards_list,
         name="techcards_list",
     ),
     path(
         "c/<slug:country_slug>/techcards/<int:dish_id>/",
-        views.techcard_view,
+        views_techcards.techcard_view,
         name="techcard_view",
     ),
 

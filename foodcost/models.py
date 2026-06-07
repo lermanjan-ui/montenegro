@@ -1010,6 +1010,7 @@ class UserProfile(models.Model):
     SECTION_FINANCE = "finance"
     SECTION_SCHEDULE = "schedule"
     SECTION_SHIFTS = "shifts"
+    SECTION_TECHCARDS = "techcards"
 
     SECTION_CHOICES = [
         (SECTION_DISHES, "Блюда"),
@@ -1037,6 +1038,7 @@ class UserProfile(models.Model):
         (SECTION_FINANCE, "Финансы"),
         (SECTION_SCHEDULE, "График смен"),
         (SECTION_SHIFTS, "Журнал смен"),
+        (SECTION_TECHCARDS, "Техкарты"),
     ]
 
     user = models.OneToOneField(
