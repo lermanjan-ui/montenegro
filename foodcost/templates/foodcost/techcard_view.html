@@ -44,14 +44,19 @@
     </table>
   {% endif %}
 
+  {% if dish.tech_card %}
+    <div class="tc-h">Техкарта приготовления</div>
+    <div style="line-height:1.7;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:14px 16px;margin-bottom:22px;">{{ dish.tech_card|linebreaksbr }}</div>
+  {% endif %}
+
   {% if steps %}
-    <div class="tc-h">Приготовление</div>
+    <div class="tc-h">Приготовление (шаги)</div>
     <ol style="padding-left:20px;line-height:1.65;margin:0 0 10px;">
       {% for s in steps %}<li style="margin-bottom:8px;">{{ s.description }}</li>{% endfor %}
     </ol>
   {% endif %}
 
-  {% if not product_items and not preparation_items and not steps %}
+  {% if not product_items and not preparation_items and not steps and not dish.tech_card %}
     <div style="color:#6B7280;">Для этого блюда техкарта пока не заполнена.</div>
   {% endif %}
 </div>
