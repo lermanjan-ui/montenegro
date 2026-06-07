@@ -472,6 +472,13 @@
 			        Главная
 			    </a>
 
+			    {% if can_view_techcards %}
+			    <a class="side-link {% if '/techcards/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/techcards/">
+			        <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path d="M6 3h9l3 3v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M8 9h7M8 13h7M8 17h4"/></svg>
+			        Техкарты
+			    </a>
+			    {% endif %}
+
 			    {% if can_menu_orders %}
 			    <details class="menu-section" {% if '/orders/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
@@ -589,7 +596,7 @@
 			{% endif %}
 			   
 			    {% if can_menu_dishes or can_menu_products or can_menu_preparations or can_menu_packaging %}
-			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/promotions/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path %}open{% endif %}>
+			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
 			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
@@ -611,10 +618,6 @@
 			            <a class="side-link {% if '/dish-categories/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dish-categories/">
 			                Категории блюд
 			            </a>
-
-			    <a class="side-link {% if '/promotions/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/promotions/">
-			        Акции
-			    </a>
 			            {% endif %}
 
 			            {% if can_menu_products %}

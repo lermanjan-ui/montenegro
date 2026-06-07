@@ -1,0 +1,41 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Техкарты{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <h1 style="font-size:22px;font-weight:800;margin:0 0 16px;">Техкарты</h1>
+
+  <form method="get" style="margin-bottom:22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <input type="text" name="q" value="{{ query }}" placeholder="Поиск по названию блюда…"
+           autocomplete="off"
+           style="flex:1;min-width:220px;max-width:440px;padding:11px 14px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;">
+    <button type="submit"
+            style="padding:11px 18px;border:0;border-radius:10px;background:#16A34A;color:#fff;font-weight:700;cursor:pointer;">
+      Найти
+    </button>
+    {% if query %}
+      <a href="/c/{{ country.slug }}/techcards/" style="color:#6B7280;text-decoration:none;">Сбросить</a>
+    {% endif %}
+  </form>
+
+  {% if sections %}
+    {% for sec in sections %}
+      <div style="margin-bottom:24px;">
+        <div style="font-weight:800;font-size:16px;margin:0 0 10px;color:#111827;">{{ sec.name }}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          {% for dish in sec.dishes %}
+            <a href="/c/{{ country.slug }}/techcards/{{ dish.id }}/"
+               style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;border:1px solid #E5E7EB;border-radius:12px;background:#fff;text-decoration:none;color:#111827;">
+              <span style="font-weight:600;">{{ dish.name }}</span>
+              <span style="color:#16A34A;font-size:14px;white-space:nowrap;">Открыть →</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div style="color:#6B7280;padding:28px;text-align:center;border:1px dashed #E5E7EB;border-radius:12px;">
+      {% if query %}Ничего не найдено по запросу «{{ query }}».{% else %}Техкарты пока не найдены.{% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

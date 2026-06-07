@@ -1,0 +1,63 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Техкарта — {{ dish.name }}{% endblock %}
+{% block content %}
+<style>
+  .tc-protect, .tc-protect * {
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+  }
+  .tc-table { width:100%; border-collapse:collapse; margin-bottom:22px; }
+  .tc-table th { text-align:left; color:#6B7280; font-size:13px; font-weight:600; padding:6px 8px; }
+  .tc-table td { padding:9px 8px; border-top:1px solid #E5E7EB; }
+  .tc-h { font-weight:800; margin:0 0 8px; font-size:16px; }
+  @media print {
+    body * { visibility: hidden !important; }
+    body::before { content: "Печать техкарты запрещена"; visibility: visible; font-size:18px; }
+  }
+</style>
+
+<div class="tc-protect" style="max-width:820px;margin:0 auto;">
+  <a href="/c/{{ country.slug }}/techcards/" style="color:#6B7280;text-decoration:none;font-size:14px;">← К списку техкарт</a>
+  <h1 style="font-size:23px;font-weight:800;margin:10px 0 2px;">{{ dish.name }}</h1>
+  <div style="color:#9CA3AF;font-size:13px;margin-bottom:20px;">Только просмотр</div>
+
+  {% if product_items %}
+    <div class="tc-h">Продукты</div>
+    <table class="tc-table">
+      <thead><tr><th>Наименование</th><th>Брутто</th><th>Нетто</th><th>Ед.</th></tr></thead>
+      <tbody>
+        {% for it in product_items %}
+          <tr><td>{{ it.name }}</td><td>{{ it.gross }}</td><td>{{ it.net }}</td><td>{{ it.unit }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if preparation_items %}
+    <div class="tc-h">Заготовки</div>
+    <table class="tc-table">
+      <thead><tr><th>Наименование</th><th>Брутто</th><th>Нетто</th><th>Ед.</th></tr></thead>
+      <tbody>
+        {% for it in preparation_items %}
+          <tr><td>{{ it.name }}</td><td>{{ it.gross }}</td><td>{{ it.net }}</td><td>{{ it.unit }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if steps %}
+    <div class="tc-h">Приготовление</div>
+    <ol style="padding-left:20px;line-height:1.65;margin:0 0 10px;">
+      {% for s in steps %}<li style="margin-bottom:8px;">{{ s.description }}</li>{% endfor %}
+    </ol>
+  {% endif %}
+
+  {% if not product_items and not preparation_items and not steps %}
+    <div style="color:#6B7280;">Для этого блюда техкарта пока не заполнена.</div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('copy', function (e) { e.preventDefault(); });
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+</script>
+{% endblock %}
