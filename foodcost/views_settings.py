@@ -19,6 +19,17 @@ from .views import (
 )
 
 
+def _parse_rating(raw):
+    """Рейтинг: пусто/мусор -> None (не 0), иначе Decimal."""
+    raw = (raw or "").strip().replace(",", ".")
+    if not raw:
+        return None
+    try:
+        return Decimal(raw)
+    except Exception:
+        return None
+
+
 def clean_decimal(value):
     if value is None or value == "":
         return Decimal("0")
@@ -105,6 +116,41 @@ def settings_page(request, country_slug):
             )
             item.delete()
 
+        if action == "create_promo_code":
+            PromoCode.objects.create(
+                country=country,
+                code=request.POST.get("code", "").strip(),
+                percent=request.POST.get("percent") or 0,
+                is_active=bool(request.POST.get("is_active")),
+                valid_from=(request.POST.get("valid_from") or None),
+                valid_until=(request.POST.get("valid_until") or None),
+                utm_source=(request.POST.get("utm_source") or "").strip(),
+                utm_medium=(request.POST.get("utm_medium") or "").strip(),
+                utm_campaign=(request.POST.get("utm_campaign") or "").strip(),
+                utm_content=(request.POST.get("utm_content") or "").strip(),
+                utm_term=(request.POST.get("utm_term") or "").strip(),
+            )
+
+        if action == "update_promo_code":
+            item = get_object_or_404(
+                PromoCode,
+                id=request.POST.get("item_id"),
+                country=country,
+            )
+            item.percent = request.POST.get("percent") or 0
+            item.is_active = bool(request.POST.get("is_active"))
+            item.valid_from = request.POST.get("valid_from") or None
+            item.valid_until = request.POST.get("valid_until") or None
+            item.utm_source = (request.POST.get("utm_source") or "").strip()
+            item.utm_medium = (request.POST.get("utm_medium") or "").strip()
+            item.utm_campaign = (request.POST.get("utm_campaign") or "").strip()
+            item.utm_content = (request.POST.get("utm_content") or "").strip()
+            item.utm_term = (request.POST.get("utm_term") or "").strip()
+            item.save()
+            # Блюда, на которые действует скидка. Пусто = на весь заказ.
+            dish_ids = request.POST.getlist("eligible_dishes")
+            valid_dishes = Dish.objects.filter(id__in=dish_ids, country=country)
+            item.eligible_dishes.set(valid_dishes)
             
         if action == "create_cancel_reason":
             OrderCancelReason.objects.create(
@@ -112,6 +158,13 @@ def settings_page(request, country_slug):
                 name=request.POST.get("name", "").strip(),
             )
 
+        if action == "delete_promo_code":
+            item = get_object_or_404(
+                PromoCode,
+                id=request.POST.get("item_id"),
+                country=country,
+            )
+            item.delete()
             
         if action == "delete_cancel_reason":
             item = get_object_or_404(
@@ -157,16 +210,23 @@ def settings_page(request, country_slug):
     payment_methods = PaymentMethod.objects.filter(country=country).order_by("name")
     order_sources = OrderSource.objects.filter(country=country).order_by("name")
     delivery_providers = DeliveryProvider.objects.filter(country=country).order_by("name")
+    promo_codes = PromoCode.objects.filter(country=country).order_by("code").prefetch_related("eligible_dishes")
+    # id выбранных блюд для отметки чекбоксов в форме настройки промокода.
+    for pc in promo_codes:
+        pc.eligible_ids = set(pc.eligible_dishes.values_list("id", flat=True))
     cancel_reasons = OrderCancelReason.objects.filter(
         country=country
     ).order_by("name")
+    dishes = Dish.objects.filter(country=country, is_archived=False).order_by("name")
 
     return render(request, "foodcost/settings.html", {
         "country": country,
         "payment_methods": payment_methods,
         "order_sources": order_sources,
         "delivery_providers": delivery_providers,
+        "promo_codes": promo_codes,
         "cancel_reasons": cancel_reasons,
+        "dishes": dishes,
     })
 
 
@@ -197,12 +257,22 @@ def dish_categories_page(request, country_slug):
                         request.POST.get("is_visible_on_site")
                     ),
                     photo_url=(request.POST.get("photo_url") or "").strip(),
+                    in_home_block_1=bool(request.POST.get("in_home_block_1")),
+                    in_home_block_2=bool(request.POST.get("in_home_block_2")),
+                    logo_url=(request.POST.get("logo_url") or "").strip(),
+                    subtitle=(request.POST.get("subtitle") or "").strip()[:255],
+                    rating=_parse_rating(request.POST.get("rating")),
                 )
 
                 uploaded_photo = request.FILES.get("photo")
                 if uploaded_photo:
                     category.photo = uploaded_photo
                     category.save(update_fields=["photo"])
+
+                uploaded_logo = request.FILES.get("logo")
+                if uploaded_logo:
+                    category.logo = uploaded_logo
+                    category.save(update_fields=["logo"])
 
         if action == "update_category":
             item = get_object_or_404(
@@ -226,7 +296,19 @@ def dish_categories_page(request, country_slug):
                 request.POST.get("is_visible_on_site")
             )
 
+            item.in_home_block_1 = bool(request.POST.get("in_home_block_1"))
+            item.in_home_block_2 = bool(request.POST.get("in_home_block_2"))
+            try:
+                item.home_block_2_sort_order = int(
+                    request.POST.get("home_block_2_sort_order") or 0
+                )
+            except (TypeError, ValueError):
+                item.home_block_2_sort_order = 0
+
             item.photo_url = (request.POST.get("photo_url") or "").strip()
+            item.logo_url = (request.POST.get("logo_url") or "").strip()
+            item.subtitle = (request.POST.get("subtitle") or "").strip()[:255]
+            item.rating = _parse_rating(request.POST.get("rating"))
 
             uploaded_photo = request.FILES.get("photo")
             if uploaded_photo:
@@ -237,6 +319,16 @@ def dish_categories_page(request, country_slug):
                 if item.photo:
                     item.photo.delete(save=False)
                 item.photo = None
+
+            uploaded_logo = request.FILES.get("logo")
+            if uploaded_logo:
+                if item.logo:
+                    item.logo.delete(save=False)
+                item.logo = uploaded_logo
+            elif request.POST.get("logo_clear"):
+                if item.logo:
+                    item.logo.delete(save=False)
+                item.logo = None
 
             item.save()
 

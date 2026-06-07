@@ -368,6 +368,18 @@ textarea{
 
        {% csrf_token %}
 
+       <div style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E7EB;border-radius:14px;background:#fff;">
+         <label style="font-weight:800;display:block;margin-bottom:8px;">Статус заказа</label>
+         <select name="status" class="fc-select" style="min-width:220px;">
+           <option value="">— не менять —</option>
+           <option value="delivery" {% if order.status == "delivery" %}selected{% endif %}>Доставка</option>
+           <option value="done" {% if order.status == "done" %}selected{% endif %}>Завершен</option>
+         </select>
+         <div style="margin-top:8px;color:#6B7280;font-size:13px;">
+           Текущий статус: <b>{{ order.get_status_display }}</b>
+         </div>
+       </div>
+
        {% include "foodcost/includes/order_form.html" %}
 
    </form>

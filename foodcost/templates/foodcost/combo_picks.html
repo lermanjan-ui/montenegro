@@ -1,0 +1,60 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Комбо на главной{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <h1 style="font-size:22px;font-weight:800;margin:0 0 6px;">Комбо на главной</h1>
+  <div style="color:#6B7280;font-size:14px;margin:0 0 16px;">
+    Отмеченные блюда показываются на главной сайта в блоке «Комбо с фудкорта»
+    (как «Хиты»). Сейчас отмечено: <b>{{ selected_count }}</b>.
+  </div>
+
+  <form method="get" style="margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Поиск по названию блюда…"
+           autocomplete="off"
+           style="flex:1;min-width:220px;max-width:440px;padding:11px 14px;border:1px solid #E5E7EB;border-radius:10px;font-size:15px;">
+    <button type="submit"
+            style="padding:11px 18px;border:0;border-radius:10px;background:#111827;color:#fff;font-weight:700;cursor:pointer;">
+      Найти
+    </button>
+    {% if q %}
+      <a href="/c/{{ country.slug }}/combo-picks/" style="color:#6B7280;text-decoration:none;">Сбросить</a>
+    {% endif %}
+  </form>
+
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    {% for dish in dishes %}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 15px;border:1px solid {% if dish.show_in_combo_block %}#A7F3D0{% else %}#E5E7EB{% endif %};border-radius:12px;background:{% if dish.show_in_combo_block %}#ECFDF5{% else %}#fff{% endif %};">
+        <div style="min-width:0;">
+          <div style="font-weight:600;color:#111827;">{{ dish.name }}</div>
+          <div style="color:#6B7280;font-size:13px;margin-top:2px;">
+            {{ dish.selling_price|floatformat:0 }} сум
+            {% if not dish.is_visible_on_site %}
+              · <span style="color:#EF4444;">скрыто на сайте</span>
+            {% endif %}
+          </div>
+        </div>
+        <form method="post" style="margin:0;">
+          {% csrf_token %}
+          <input type="hidden" name="dish_id" value="{{ dish.id }}">
+          <input type="hidden" name="q" value="{{ q }}">
+          {% if dish.show_in_combo_block %}
+            <button type="submit"
+                    style="padding:8px 16px;border:1px solid #E5E7EB;border-radius:9px;background:#fff;color:#6B7280;cursor:pointer;font-size:14px;white-space:nowrap;">
+              Убрать из Комбо
+            </button>
+          {% else %}
+            <button type="submit"
+                    style="padding:8px 16px;border:0;border-radius:9px;background:#16A34A;color:#fff;font-weight:700;cursor:pointer;font-size:14px;white-space:nowrap;">
+              В Комбо
+            </button>
+          {% endif %}
+        </form>
+      </div>
+    {% empty %}
+      <div style="color:#6B7280;padding:28px;text-align:center;border:1px dashed #E5E7EB;border-radius:12px;">
+        {% if q %}Ничего не найдено по запросу «{{ q }}».{% else %}Блюд пока нет.{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

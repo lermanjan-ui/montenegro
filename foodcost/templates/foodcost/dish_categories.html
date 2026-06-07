@@ -4,168 +4,213 @@
 
 {% block content %}
 <style>
-.cats-page{
+.page{
     max-width:1280px;
     margin:0 auto;
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-    color:var(--fc-text,#111827);
 }
 
-.cats-page h1{
+h1{
     margin:0;
     font-size:30px;
-    font-weight:950;
-    color:var(--fc-text,#111827);
+    color:#111827;
     letter-spacing:-0.03em;
 }
 
-.cats-subtitle{
+.muted{
     color:#6b7280;
     margin-top:6px;
     font-size:14px;
-    font-weight:600;
 }
 
-.cats-card{
-    background:var(--fc-card,#fff);
-    border:1px solid var(--fc-border,#E5E7EB);
+.settings-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+    margin-top:20px;
+}
+
+.settings-card{
+    background:white;
+    border:1px solid #e5e7eb;
     border-radius:20px;
-    padding:20px;
+    padding:18px;
     box-shadow:0 8px 24px rgba(15,23,42,0.045);
 }
 
-.cats-card-title{
+.settings-title{
     font-size:18px;
     font-weight:950;
-    color:var(--fc-text,#111827);
-    margin-bottom:16px;
+    color:#111827;
+    margin-bottom:14px;
 }
 
-/* ===== Поля и кнопки (UI Kit v2) ===== */
-.cats-page input[type=text],
-.cats-page input[type=url],
-.cats-page input[type=number],
-.cats-page input:not([type]){
+.add-form{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
+    margin-bottom:14px;
+    align-items:center;
+}
+
+.promo-form{
+    grid-template-columns:minmax(0,1fr) 110px auto;
+}
+
+input{
     width:100%;
     padding:10px 12px;
-    border:1px solid var(--fc-border,#E5E7EB);
+    border:1px solid #d1d5db;
     border-radius:11px;
-    font-size:14px;
-    font-family:inherit;
+    font-size:13px;
     box-sizing:border-box;
-    background:var(--fc-card,#fff);
-    color:var(--fc-text,#111827);
+    background:white;
 }
 
-.cats-page input[type=text]:focus,
-.cats-page input[type=url]:focus,
-.cats-page input[type=number]:focus,
-.cats-page input:not([type]):focus{
+input:focus{
     outline:none;
-    border-color:var(--fc-text,#111827);
+    border-color:#111827;
     box-shadow:0 0 0 3px rgba(17,24,39,.06);
 }
 
-.cats-btn{
-    background:var(--fc-text,#111827);
-    color:#fff;
+button{
+    background:#111827;
+    color:white;
     border:0;
     border-radius:11px;
-    padding:10px 16px;
+    padding:10px 14px;
     font-weight:900;
-    font-size:14px;
-    font-family:inherit;
+    font-size:13px;
     cursor:pointer;
     white-space:nowrap;
 }
 
-.cats-btn:hover{
+button:hover{
     background:#020617;
 }
 
-.cats-field-label{
-    display:block;
-    font-size:11px;
-    font-weight:900;
-    color:#6b7280;
-    letter-spacing:.02em;
-    margin-bottom:5px;
-    text-transform:uppercase;
-}
-
-.cats-hint{
-    color:#6b7280;
-    font-size:11px;
-    font-weight:700;
-    line-height:1.4;
-    margin-top:4px;
-}
-
-.cats-checkbox-row{
+.checkbox-row{
     display:flex;
     align-items:center;
     gap:8px;
     font-size:13px;
     font-weight:850;
     color:#374151;
-}
-
-.cats-checkbox-row input{
-    width:auto;
-    margin:0;
-    accent-color:var(--fc-green,#16A34A);
-}
-
-/* ===== Форма добавления ===== */
-.cats-add-name-row{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) auto;
-    gap:10px;
-    align-items:end;
-    margin-bottom:16px;
-}
-
-.cats-add-grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:18px;
-    align-items:start;
-}
-
-.cats-add-col{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-}
-
-/* ===== Сетка карточек категорий ===== */
-.cats-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(380px,1fr));
-    gap:16px;
-    margin-top:20px;
-}
-
-.cats-item{
-    display:flex;
-    flex-direction:column;
-}
-
-.cats-item-head{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:12px;
     margin-bottom:14px;
 }
 
-.cats-item-name{
-    font-weight:950;
-    color:var(--fc-text,#111827);
-    font-size:16px;
+.checkbox-row input{
+    width:auto;
 }
 
-.cats-status-badge{
+.items-list{
+    display:grid;
+    gap:10px;
+}
+
+.item-row{
+    border:1px solid #eef2f7;
+    border-radius:15px;
+    padding:12px;
+    background:#fbfcfd;
+}
+
+.item-main{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.item-name{
+    font-weight:950;
+    color:#111827;
+    font-size:15px;
+}
+
+.item-meta{
+    color:#6b7280;
+    font-size:12px;
+    margin-top:3px;
+    font-weight:700;
+}
+
+.item-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.icon-delete-btn{
+    width:36px;
+    height:36px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    border-radius:11px;
+    background:white;
+    color:#374151;
+    border:1px solid #d1d5db;
+}
+
+.icon-delete-btn:hover{
+    background:#f9fafb;
+    color:#111827;
+}
+
+.icon-delete-btn svg{
+    width:17px;
+    height:17px;
+    stroke:currentColor;
+}
+
+.source-edit-form{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 120px auto;
+    gap:10px;
+    margin-top:12px;
+    align-items:center;
+}
+
+.category-edit-form{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+}
+
+/* ===== Категории блюд — expanded edit form (Part: settings UX) ===== */
+.cat-edit-form{
+    display:grid;
+    gap:10px;
+    margin-top:12px;
+}
+
+.cat-edit-row{
+    display:grid;
+    gap:10px;
+    align-items:center;
+}
+
+.cat-edit-row-fields{
+    grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,1fr);
+}
+
+.cat-edit-row-controls{
+    grid-template-columns:120px minmax(0,1fr) auto;
+}
+
+.cat-field-label{
+    display:block;
+    font-size:11px;
+    font-weight:900;
+    color:#6b7280;
+    letter-spacing:.02em;
+    margin-bottom:4px;
+    text-transform:uppercase;
+}
+
+.cat-status-badge{
     display:inline-flex;
     align-items:center;
     gap:6px;
@@ -176,82 +221,54 @@
     line-height:1;
     letter-spacing:.01em;
     white-space:nowrap;
-    margin-top:8px;
+    margin-top:6px;
 }
 
-.cats-status-on{
+.cat-status-on{
     background:#dcfce7;
     color:#15803d;
 }
 
-.cats-status-off{
+.cat-status-off{
     background:#f1f5f9;
     color:#475569;
 }
 
-.cats-status-dot{
+.cat-status-dot{
     width:6px;
     height:6px;
     border-radius:50%;
     background:currentColor;
 }
 
-.cats-delete-btn{
-    width:36px;
-    height:36px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:0;
-    border-radius:11px;
-    background:var(--fc-card,#fff);
-    color:#6b7280;
-    border:1px solid var(--fc-border,#E5E7EB);
-    cursor:pointer;
-    flex-shrink:0;
-}
-
-.cats-delete-btn:hover{
-    background:#fef2f2;
-    color:var(--fc-danger,#EF4444);
-    border-color:#fecaca;
-}
-
-.cats-delete-btn svg{
-    width:17px;
-    height:17px;
-    stroke:currentColor;
-}
-
-.cats-edit-form{
+.cat-visibility-toggle{
     display:flex;
-    flex-direction:column;
-    gap:14px;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:850;
+    color:#374151;
+    padding:0 4px;
 }
 
-.cats-edit-fields{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:12px;
+.cat-visibility-toggle input{
+    width:auto;
+    margin:0;
+    accent-color:#2563ff;
 }
 
-.cats-edit-fields .cats-span-2{
-    grid-column:1 / -1;
-}
-
-/* ===== Фото ===== */
-.cats-photo-row{
+.cat-photo-row{
     display:grid;
     grid-template-columns:88px minmax(0,1fr);
     gap:14px;
     align-items:flex-start;
 }
 
-.cats-photo-preview{
+.cat-photo-preview{
     width:88px;
     height:88px;
     border-radius:14px;
-    border:1px solid var(--fc-border,#E5E7EB);
+    border:1px solid #e5e7eb;
     background:#f9fafb;
     overflow:hidden;
     display:flex;
@@ -260,14 +277,14 @@
     flex-shrink:0;
 }
 
-.cats-photo-preview img{
+.cat-photo-preview img{
     width:100%;
     height:100%;
     object-fit:cover;
     display:block;
 }
 
-.cats-photo-empty{
+.cat-photo-empty{
     color:#94a3b8;
     font-size:11px;
     font-weight:800;
@@ -276,314 +293,404 @@
     padding:6px;
 }
 
-.cats-photo-controls{
+.cat-photo-controls{
     display:flex;
     flex-direction:column;
     gap:8px;
     min-width:0;
 }
 
-.cats-photo-file{
+.cat-photo-file{
     font-size:12px;
 }
 
-.cats-photo-file::-webkit-file-upload-button,
-.cats-photo-file::file-selector-button{
+.cat-photo-file::-webkit-file-upload-button,
+.cat-photo-file::file-selector-button{
     background:#f3f4f6;
-    border:1px solid var(--fc-border,#E5E7EB);
+    border:1px solid #d1d5db;
     border-radius:9px;
     padding:6px 10px;
     font-weight:850;
     font-size:12px;
-    color:var(--fc-text,#111827);
+    color:#111827;
     cursor:pointer;
     margin-right:8px;
 }
 
-.cats-photo-clear{
+.cat-photo-clear{
     display:inline-flex;
     align-items:center;
     gap:6px;
     font-size:12px;
     font-weight:800;
-    color:var(--fc-danger,#EF4444);
+    color:#b91c1c;
 }
 
-.cats-photo-clear input{
+.cat-photo-clear input{
     width:auto;
     margin:0;
-    accent-color:var(--fc-danger,#EF4444);
+    accent-color:#b91c1c;
 }
 
-.cats-edit-controls{
-    display:grid;
-    grid-template-columns:120px minmax(0,1fr) auto;
-    gap:12px;
-    align-items:end;
-}
-
-.cats-empty{
+.cat-photo-hint{
     color:#6b7280;
-    font-size:14px;
-    font-weight:800;
-    padding:14px 0;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.4;
 }
 
-/* ===== Адаптив ===== */
-@media (max-width:760px){
-    .cats-page h1{ font-size:26px; }
+@media (max-width:700px){
+    .cat-photo-row{
+        grid-template-columns:1fr;
+    }
 
-    .cats-card{ padding:16px; border-radius:18px; }
+    .cat-photo-preview{
+        width:100%;
+        height:140px;
+    }
+}
 
-    .cats-add-grid{ grid-template-columns:1fr; }
+.empty{
+    color:#6b7280;
+    font-size:13px;
+    padding:10px 0;
+    font-weight:800;
+}
 
-    .cats-grid{ grid-template-columns:1fr; }
+.full-width{
+    grid-column:1 / -1;
+}
 
-    .cats-edit-fields{ grid-template-columns:1fr; }
+@media (max-width:1000px){
+    .settings-grid{
+        grid-template-columns:1fr;
+    }
+}
 
-    .cats-edit-controls{ grid-template-columns:1fr; }
+@media (max-width:700px){
+    .page{
+        max-width:100%;
+    }
 
-    .cats-photo-row{ grid-template-columns:1fr; }
+    h1{
+        font-size:28px;
+    }
 
-    .cats-photo-preview{ width:100%; height:140px; }
+    .settings-card{
+        padding:15px;
+        border-radius:18px;
+    }
 
-    .cats-add-name-row{ grid-template-columns:1fr; }
+    .add-form,
+    .promo-form,
+    .source-edit-form,
+    .category-edit-form{
+        grid-template-columns:1fr;
+    }
 
-    .cats-btn{ width:100%; }
+    .cat-edit-row-fields,
+    .cat-edit-row-controls{
+        grid-template-columns:1fr;
+    }
 
-    .cats-delete-btn{ width:40px; }
+    button{
+        width:100%;
+    }
+
+    .icon-delete-btn{
+        width:40px;
+    }
+
+    .item-main{
+        align-items:flex-start;
+    }
 }
 </style>
 
-<div class="cats-page">
+<div class="page">
 
     <h1>Категории блюд</h1>
-    <div class="cats-subtitle">Управление категориями меню и их отображением на сайте</div>
+    <div class="muted">Управление категориями меню и их отображением на сайте</div>
 
-    {# ===== Карточка добавления ===== #}
-    <div class="cats-card" style="margin-top:20px;">
-        <div class="cats-card-title">Новая категория</div>
+    <div class="settings-grid">
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="create_category">
+        <div class="settings-card">
+            <div class="settings-title">Категории блюд</div>
 
-            <div class="cats-add-name-row">
-                <div>
-                    <label class="cats-field-label" for="cat-create-name">Название</label>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_category">
+
+                <div class="add-form">
                     <input
-                        id="cat-create-name"
-                        type="text"
                         name="name"
                         placeholder="Название категории"
                         required
                     >
+
+                    <button type="submit">Добавить</button>
                 </div>
-                <button type="submit" class="cats-btn">Добавить</button>
-            </div>
 
-            <div class="cats-add-grid">
-                <div class="cats-add-col">
-                    <label class="cats-checkbox-row">
-                        <input type="checkbox" name="is_visible_on_site" value="1">
-                        Показывать на сайте
-                    </label>
+                <label class="checkbox-row">
+                    <input type="checkbox" name="is_visible_on_site" value="1">
+                    Показывать на сайте
+                </label>
 
-                    <div>
-                        <label class="cats-field-label" for="cat-create-photo-url">Ссылка на фото (приоритет)</label>
-                        <input
-                            id="cat-create-photo-url"
-                            name="photo_url"
-                            type="url"
-                            placeholder="https://example.com/category.jpg"
-                        >
-                        <div class="cats-hint">Используется на сайте вместо загруженного файла.</div>
+                <label class="checkbox-row">
+                    <input type="checkbox" name="in_home_block_1" value="1" checked>
+                    Блок 1 (основной)
+                </label>
+                <label class="checkbox-row">
+                    <input type="checkbox" name="in_home_block_2" value="1">
+                    Блок 2 (новый)
+                </label>
+
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label" for="cat-create-photo-url">Ссылка на фото (приоритет)</label>
+                    <input
+                        id="cat-create-photo-url"
+                        name="photo_url"
+                        type="url"
+                        placeholder="https://example.com/category.jpg"
+                    >
+                    <div class="cat-photo-hint" style="margin-top:4px;">
+                        Используется на сайте вместо загруженного файла.
                     </div>
                 </div>
 
-                <div class="cats-add-col">
-                    <div class="cats-photo-row">
-                        <div class="cats-photo-preview">
-                            <div class="cats-photo-empty">Фото не выбрано</div>
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label">Логотип бренда — ссылка (блок «Наши рестораны»)</label>
+                    <input name="logo_url" type="url" placeholder="https://example.com/logo.png">
+                    <div class="cat-photo-hint" style="margin-top:4px;">Можно вместо ссылки загрузить файл ниже. Отдельно от основной картинки.</div>
+                    <input class="cat-photo-file" type="file" name="logo" accept="image/*" style="margin-top:8px;">
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label">Подзаголовок (тип кухни)</label>
+                    <input name="subtitle" type="text" placeholder="Напр. Римская пинца">
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label">Рейтинг (необязательно)</label>
+                    <input name="rating" type="number" step="0.1" min="0" max="5" placeholder="напр. 4.9">
+                </div>
+
+                <div class="cat-photo-row" style="margin-bottom:14px;">
+                    <div class="cat-photo-preview">
+                        <div class="cat-photo-empty">Фото не выбрано</div>
+                    </div>
+                    <div class="cat-photo-controls">
+                        <label class="cat-field-label" for="cat-create-photo">Загруженное фото (резерв)</label>
+                        <input
+                            id="cat-create-photo"
+                            class="cat-photo-file"
+                            type="file"
+                            name="photo"
+                            accept="image/*"
+                        >
+                        <div class="cat-photo-hint">
+                            JPG, PNG или WebP. Используется, только если выше не указана внешняя ссылка.
                         </div>
-                        <div class="cats-photo-controls">
-                            <label class="cats-field-label" for="cat-create-photo">Загруженное фото (резерв)</label>
-                            <input
-                                id="cat-create-photo"
-                                class="cats-photo-file"
-                                type="file"
-                                name="photo"
-                                accept="image/*"
-                            >
-                            <div class="cats-hint">
-                                JPG, PNG или WebP. Используется, только если выше не указана внешняя ссылка.
+                    </div>
+                </div>
+            </form>
+
+            <div class="items-list">
+                {% for item in categories %}
+                    <div class="item-row">
+                        <div class="item-main">
+                            <div>
+                                <div class="item-name">{{ item.name }}</div>
+                                {% if item.is_visible_on_site %}
+                                    <span class="cat-status-badge cat-status-on">
+                                        <span class="cat-status-dot"></span>
+                                        Показывается на сайте
+                                    </span>
+                                {% else %}
+                                    <span class="cat-status-badge cat-status-off">
+                                        <span class="cat-status-dot"></span>
+                                        Скрыта на сайте
+                                    </span>
+                                {% endif %}
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
 
-    {# ===== Сетка существующих категорий ===== #}
-    <div class="cats-grid">
-        {% for item in categories %}
-            <div class="cats-card cats-item">
-                <div class="cats-item-head">
-                    <div>
-                        <div class="cats-item-name">{{ item.name }}</div>
-                        {% if item.is_visible_on_site %}
-                            <span class="cats-status-badge cats-status-on">
-                                <span class="cats-status-dot"></span>
-                                Показывается на сайте
-                            </span>
-                        {% else %}
-                            <span class="cats-status-badge cats-status-off">
-                                <span class="cats-status-dot"></span>
-                                Скрыта на сайте
-                            </span>
-                        {% endif %}
-                    </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_category">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="delete_category">
-                        <input type="hidden" name="item_id" value="{{ item.id }}">
-
-                        <button
-                            type="submit"
-                            class="cats-delete-btn"
-                            onclick="return confirm('Удалить категорию?')"
-                            title="Удалить"
-                        >
-                            <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
-                                <path d="M4 7h16"/>
-                                <path d="M10 11v6"/>
-                                <path d="M14 11v6"/>
-                                <path d="M6 7l1 14h10l1-14"/>
-                                <path d="M9 7V4h6v3"/>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-
-                <form method="post" enctype="multipart/form-data" class="cats-edit-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_category">
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-
-                    <div class="cats-edit-fields">
-                        <div>
-                            <label class="cats-field-label" for="cat-name-{{ item.id }}">Название</label>
-                            <input
-                                id="cat-name-{{ item.id }}"
-                                type="text"
-                                name="name"
-                                value="{{ item.name }}"
-                                placeholder="Название (для админки)"
-                                required
-                            >
+                                <button
+                                    type="submit"
+                                    class="icon-delete-btn"
+                                    onclick="return confirm('Удалить категорию?')"
+                                    title="Удалить"
+                                >
+                                    <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
+                                        <path d="M4 7h16"/>
+                                        <path d="M10 11v6"/>
+                                        <path d="M14 11v6"/>
+                                        <path d="M6 7l1 14h10l1-14"/>
+                                        <path d="M9 7V4h6v3"/>
+                                    </svg>
+                                </button>
+                            </form>
                         </div>
 
-                        <div>
-                            <label class="cats-field-label" for="cat-public-name-{{ item.id }}">Название на сайте</label>
-                            <input
-                                id="cat-public-name-{{ item.id }}"
-                                type="text"
-                                name="public_name"
-                                value="{{ item.public_name }}"
-                                placeholder="Если пусто — берётся обычное"
-                            >
-                        </div>
+                        <form method="post" enctype="multipart/form-data" class="cat-edit-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_category">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                        <div class="cats-span-2">
-                            <label class="cats-field-label" for="cat-slug-{{ item.id }}">Slug (адрес)</label>
-                            <input
-                                id="cat-slug-{{ item.id }}"
-                                type="text"
-                                name="slug"
-                                value="{{ item.slug }}"
-                                placeholder="pizza"
-                            >
-                        </div>
-                    </div>
+                            <div class="cat-edit-row cat-edit-row-fields">
+                                <div>
+                                    <label class="cat-field-label" for="cat-name-{{ item.id }}">Название</label>
+                                    <input
+                                        id="cat-name-{{ item.id }}"
+                                        name="name"
+                                        value="{{ item.name }}"
+                                        placeholder="Название (для админки)"
+                                        required
+                                    >
+                                </div>
 
-                    <div>
-                        <label class="cats-field-label" for="cat-photo-url-{{ item.id }}">Ссылка на фото (приоритет)</label>
-                        <input
-                            id="cat-photo-url-{{ item.id }}"
-                            name="photo_url"
-                            type="url"
-                            value="{{ item.photo_url }}"
-                            placeholder="https://example.com/category.jpg"
-                        >
-                        <div class="cats-hint">
-                            Если указана — используется на сайте вместо загруженного файла.
-                            Можно вставить ссылку с CDN, Telegram, любого хостинга.
-                        </div>
-                    </div>
+                                <div>
+                                    <label class="cat-field-label" for="cat-public-name-{{ item.id }}">Название на сайте</label>
+                                    <input
+                                        id="cat-public-name-{{ item.id }}"
+                                        name="public_name"
+                                        value="{{ item.public_name }}"
+                                        placeholder="Если пусто — берётся обычное"
+                                    >
+                                </div>
 
-                    <div class="cats-photo-row">
-                        <div class="cats-photo-preview">
-                            {% if item.photo_url %}
-                                <img src="{{ item.photo_url }}" alt="{{ item.name }}">
-                            {% elif item.photo %}
-                                <img src="{{ item.photo.url }}" alt="{{ item.name }}">
-                            {% else %}
-                                <div class="cats-photo-empty">Фото не загружено</div>
-                            {% endif %}
-                        </div>
-                        <div class="cats-photo-controls">
-                            <label class="cats-field-label" for="cat-photo-{{ item.id }}">Загруженное фото (резерв)</label>
-                            <input
-                                id="cat-photo-{{ item.id }}"
-                                class="cats-photo-file"
-                                type="file"
-                                name="photo"
-                                accept="image/*"
-                            >
-                            {% if item.photo %}
-                                <label class="cats-photo-clear">
-                                    <input type="checkbox" name="photo_clear" value="1">
-                                    Удалить загруженный файл
+                                <div>
+                                    <label class="cat-field-label" for="cat-slug-{{ item.id }}">Slug (адрес)</label>
+                                    <input
+                                        id="cat-slug-{{ item.id }}"
+                                        name="slug"
+                                        value="{{ item.slug }}"
+                                        placeholder="pizza"
+                                    >
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-photo-url-{{ item.id }}">Ссылка на фото (приоритет)</label>
+                                <input
+                                    id="cat-photo-url-{{ item.id }}"
+                                    name="photo_url"
+                                    type="url"
+                                    value="{{ item.photo_url }}"
+                                    placeholder="https://example.com/category.jpg"
+                                >
+                                <div class="cat-photo-hint" style="margin-top:4px;">
+                                    Если указана — используется на сайте вместо загруженного файла.
+                                    Можно вставить ссылку с CDN, Telegram, любого хостинга.
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-logo-url-{{ item.id }}">Логотип бренда — ссылка (блок «Наши рестораны»)</label>
+                                <input id="cat-logo-url-{{ item.id }}" name="logo_url" type="url" value="{{ item.logo_url }}" placeholder="https://example.com/logo.png">
+                                <div class="cat-photo-hint" style="margin-top:4px;">Можно вместо ссылки загрузить файл ниже. Отдельно от основной картинки.</div>
+                                <input class="cat-photo-file" type="file" name="logo" accept="image/*" style="margin-top:8px;">
+                                {% if item.logo %}
+                                <label class="cat-photo-clear">
+                                    <input type="checkbox" name="logo_clear" value="1"> Удалить логотип
                                 </label>
-                            {% endif %}
-                            <div class="cats-hint">
-                                Используется, только если выше не указана внешняя ссылка.
+                                {% endif %}
                             </div>
-                        </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-subtitle-{{ item.id }}">Подзаголовок (тип кухни)</label>
+                                <input id="cat-subtitle-{{ item.id }}" name="subtitle" type="text" value="{{ item.subtitle }}" placeholder="Напр. Римская пинца">
+                            </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-rating-{{ item.id }}">Рейтинг (необязательно)</label>
+                                <input id="cat-rating-{{ item.id }}" name="rating" type="number" step="0.1" min="0" max="5" value="{{ item.rating|default_if_none:'' }}" placeholder="напр. 4.9">
+                            </div>
+
+                            <div class="cat-photo-row">
+                                <div class="cat-photo-preview">
+                                    {% if item.photo_url %}
+                                        <img src="{{ item.photo_url }}" alt="{{ item.name }}">
+                                    {% elif item.photo %}
+                                        <img src="{{ item.photo.url }}" alt="{{ item.name }}">
+                                    {% else %}
+                                        <div class="cat-photo-empty">Фото не загружено</div>
+                                    {% endif %}
+                                </div>
+                                <div class="cat-photo-controls">
+                                    <label class="cat-field-label" for="cat-photo-{{ item.id }}">Загруженное фото (резерв)</label>
+                                    <input
+                                        id="cat-photo-{{ item.id }}"
+                                        class="cat-photo-file"
+                                        type="file"
+                                        name="photo"
+                                        accept="image/*"
+                                    >
+                                    {% if item.photo %}
+                                        <label class="cat-photo-clear">
+                                            <input type="checkbox" name="photo_clear" value="1">
+                                            Удалить загруженный файл
+                                        </label>
+                                    {% endif %}
+                                    <div class="cat-photo-hint">
+                                        Используется, только если выше не указана внешняя ссылка.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="cat-edit-row cat-edit-row-controls">
+                                <div>
+                                    <label class="cat-field-label" for="cat-sort-{{ item.id }}">Порядок</label>
+                                    <input
+                                        id="cat-sort-{{ item.id }}"
+                                        name="site_sort_order"
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="{{ item.site_sort_order }}"
+                                    >
+                                </div>
+
+                                <label class="cat-visibility-toggle">
+                                    <input
+                                        type="checkbox"
+                                        name="is_visible_on_site"
+                                        value="1"
+                                        {% if item.is_visible_on_site %}checked{% endif %}
+                                    >
+                                    Показывать на сайте
+                                </label>
+
+                                <label class="cat-visibility-toggle">
+                                    <input type="checkbox" name="in_home_block_1" value="1"
+                                        {% if item.in_home_block_1 %}checked{% endif %}>
+                                    Блок 1 (основной)
+                                </label>
+                                <label class="cat-visibility-toggle">
+                                    <input type="checkbox" name="in_home_block_2" value="1"
+                                        {% if item.in_home_block_2 %}checked{% endif %}>
+                                    Блок 2 (новый)
+                                </label>
+                                <div>
+                                    <label class="cat-field-label" for="cat-sort2-{{ item.id }}">Порядок (блок 2)</label>
+                                    <input id="cat-sort2-{{ item.id }}" name="home_block_2_sort_order"
+                                        type="number" min="0" step="1" value="{{ item.home_block_2_sort_order }}">
+                                </div>
+
+                                <button type="submit">Сохранить</button>
+                            </div>
+                        </form>
                     </div>
-
-                    <div class="cats-edit-controls">
-                        <div>
-                            <label class="cats-field-label" for="cat-sort-{{ item.id }}">Порядок</label>
-                            <input
-                                id="cat-sort-{{ item.id }}"
-                                name="site_sort_order"
-                                type="number"
-                                min="0"
-                                step="1"
-                                value="{{ item.site_sort_order }}"
-                            >
-                        </div>
-
-                        <label class="cats-checkbox-row">
-                            <input
-                                type="checkbox"
-                                name="is_visible_on_site"
-                                value="1"
-                                {% if item.is_visible_on_site %}checked{% endif %}
-                            >
-                            Показывать на сайте
-                        </label>
-
-                        <button type="submit" class="cats-btn">Сохранить</button>
-                    </div>
-                </form>
+                {% empty %}
+                    <div class="empty">Пока нет категорий</div>
+                {% endfor %}
             </div>
-        {% empty %}
-            <div class="cats-empty">Пока нет категорий</div>
-        {% endfor %}
+        </div>
+
     </div>
 
 </div>

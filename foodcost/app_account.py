@@ -66,6 +66,7 @@ def _serialize_address(a):
         "intercom": a.intercom or "",
         "landmark": a.landmark or "",
         "courier_comment": a.courier_comment or "",
+        "comment": a.comment or "",
         "latitude": float(a.latitude) if a.latitude is not None else None,
         "longitude": float(a.longitude) if a.longitude is not None else None,
         "location_id": a.location_id,
@@ -164,6 +165,7 @@ _ADDR_FIELD_MAX = {
     "intercom": 50,
     "landmark": 255,
     "courier_comment": 255,
+    "comment": 255,
 }
 
 

@@ -237,6 +237,30 @@ class DishCategory(models.Model):
         default=""
     )
 
+    # 🏷 Логотип бренда/концепции для карточки «ресторана» (блок 2 на главной),
+    # отдельно от основной картинки. Можно загрузить файл или указать ссылку.
+    logo = models.ImageField(
+        upload_to="category_logos/",
+        null=True,
+        blank=True
+    )
+    logo_url = models.URLField(
+        blank=True,
+        default=""
+    )
+    # Подзаголовок (тип кухни) и ручной рейтинг для карточки «ресторана».
+    subtitle = models.CharField(
+        max_length=255,
+        blank=True,
+        default=""
+    )
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=1,
+        null=True,
+        blank=True
+    )
+
     is_visible_on_site = models.BooleanField(
         default=False
     )
@@ -244,6 +268,15 @@ class DishCategory(models.Model):
     site_sort_order = models.PositiveIntegerField(
         default=0
     )
+
+    # ===== Главная: распределение по блокам категорий =====
+    # На главной сайта может быть два блока категорий с разными наборами.
+    # in_home_block_1 — текущий (основной) блок; in_home_block_2 — новый блок.
+    # Категория может быть в обоих, в одном или ни в одном (тогда доступна в
+    # каталоге, но не выводится на главной).
+    in_home_block_1 = models.BooleanField(default=True)
+    in_home_block_2 = models.BooleanField(default=False)
+    home_block_2_sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name = "Категория блюда"
@@ -445,6 +478,11 @@ class Dish(models.Model):
     )
 
     is_featured = models.BooleanField(
+        default=False
+    )
+
+    # Блок «Комбо с фудкорта» на главной (механика как у is_featured/«Хиты»).
+    show_in_combo_block = models.BooleanField(
         default=False
     )
 
@@ -2265,6 +2303,30 @@ class OrderItem(models.Model):
             return self.dish.name
 
         return f"Позиция #{self.id}"
+
+
+class OrderItemAddon(models.Model):
+    """Снимок выбранной добавки (модификатора) позиции заказа.
+
+    Добавка — это тоже блюдо (см. DishAddon). Сохраняем ссылку на блюдо-добавку
+    + снимок имени и цены на момент заказа, чтобы «Повторить заказ» мог
+    восстановить добавки, а детали заказа — их показать.
+    """
+    order_item = models.ForeignKey(
+        OrderItem, on_delete=models.CASCADE, related_name="addons"
+    )
+    addon_dish = models.ForeignKey(
+        Dish, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="used_as_order_addon",
+    )
+    name_snapshot = models.CharField(max_length=255, blank=True, default="")
+    price_snapshot = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name_snapshot or f"Добавка #{self.id}"
         
         
         

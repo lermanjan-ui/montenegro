@@ -20,6 +20,8 @@ from . import app_auth
 from . import app_account
 from . import app_push
 from . import app_favorites
+from . import app_repeat_order
+from . import views_combo_picks
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -123,6 +125,7 @@ urlpatterns = [
     # коммуналка
     path("c/<slug:country_slug>/utilities/", views.utilities_list, name="utilities_list"),
     path("c/<slug:country_slug>/finance/expenses/", views_finance.finance_expenses, name="finance_expenses"),
+    path("c/<slug:country_slug>/combo-picks/", views_combo_picks.combo_picks, name="combo_picks"),
 
     # списания
 
@@ -427,6 +430,8 @@ urlpatterns = [
     path("api/app/orders/", app_account.orders_list, name="app_orders_s"),
     path("api/app/orders/<str:public_order_number>", app_account.order_detail, name="app_order_detail"),
     path("api/app/orders/<str:public_order_number>/", app_account.order_detail, name="app_order_detail_s"),
+    path("api/app/orders/<str:public_order_number>/repeat", app_repeat_order.repeat_order, name="app_repeat_order"),
+    path("api/app/orders/<str:public_order_number>/repeat/", app_repeat_order.repeat_order, name="app_repeat_order_s"),
     path("api/app/addresses", app_account.addresses, name="app_addresses"),
     path("api/app/addresses/", app_account.addresses, name="app_addresses_s"),
     path("api/app/addresses/<int:address_id>", app_account.address_detail, name="app_address_detail"),
@@ -473,6 +478,16 @@ urlpatterns = [
         "api/public/home/bestsellers",
         public_api.home_bestsellers,
         name="public_home_bestsellers",
+    ),
+    path(
+        "api/public/home/combo",
+        public_api.home_combo,
+        name="public_home_combo",
+    ),
+    path(
+        "api/public/home/combo/",
+        public_api.home_combo,
+        name="public_home_combo_s",
     ),
     path(
         "api/public/home/frequently-bought",

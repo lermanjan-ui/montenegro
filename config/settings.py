@@ -7,12 +7,21 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-# 🔐 безопасность
-SECRET_KEY = 'django-insecure-987789'
+# 🔐 безопасность — значения берём из переменных окружения (Render → Environment).
+# SECRET_KEY: на проде задайте сильный ключ в переменной SECRET_KEY.
+#   ВНИМАНИЕ: смена ключа инвалидирует все токены приложения, коды OTP и
+#   сессии персонала (нужно будет войти заново). Поэтому меняем сейчас, пока
+#   нет реальных пользователей. Фоллбэк ниже — чтобы приложение не падало,
+#   если переменная вдруг не задана.
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-987789")
 
-DEBUG = True
+# DEBUG по умолчанию ВЫКЛЮЧЕН (прод). Локально поставьте DEBUG=True в .env.
+# Чтобы быстро откатиться на проде — задайте переменную DEBUG=True в Render.
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]
+# Хосты через запятую; по умолчанию "*" (как было). На проде можно сузить до
+# своих доменов, задав ALLOWED_HOSTS="raccoon.uz,montenegro-8y6i.onrender.com".
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()]
 
 
 # 🔧 приложения

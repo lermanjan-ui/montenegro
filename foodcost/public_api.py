@@ -79,6 +79,7 @@ from .models import (
     # Part 4 — write API
     Order,
     OrderItem,
+    OrderItemAddon,
     OrderSource,
     Customer,
     CustomerAddress,
@@ -458,6 +459,17 @@ def serialize_category(request, category, min_price=None):
         ),
         "min_price": _to_float(min_price) if min_price is not None else None,
         "sort_order": int(category.site_sort_order or 0),
+        "sort_order_2": int(getattr(category, "home_block_2_sort_order", 0) or 0),
+        "in_block_1": bool(getattr(category, "in_home_block_1", True)),
+        "in_block_2": bool(getattr(category, "in_home_block_2", False)),
+        # Доп. поля для карточки «ресторана» (блок 2). Все опциональны.
+        "logo_image": _resolve_image(
+            request,
+            getattr(category, "logo", None),
+            getattr(category, "logo_url", "") or "",
+        ),
+        "subtitle": (getattr(category, "subtitle", "") or "").strip(),
+        "rating": _to_float(category.rating) if getattr(category, "rating", None) is not None else None,
     }
 
 
@@ -611,6 +623,7 @@ def serialize_product_card(request, dish, location=None):
         "is_spicy": bool(dish.is_spicy),
         "is_vegetarian": bool(dish.is_vegetarian),
         "is_featured": bool(dish.is_featured),
+        "show_in_combo_block": bool(getattr(dish, "show_in_combo_block", False)),
         "spice_level": dish.spice_level or "",
         "is_available": is_dish_available(dish, location=location),
     }
@@ -1258,8 +1271,10 @@ def search(request):
 # operator later introduces "accepted" as a custom status, but newly-created
 # orders use the model's default ("new").
 PUBLIC_STATUS_LABELS = {
-    "new":       "Принят",
-    "accepted":  "Принят",
+    "new":              "Принят",
+    "accepted":         "Принят",
+    "awaiting_payment": "Ожидает оплаты",
+    "payment_failed":   "Оплата не прошла",
     "cooking":   "Готовится",
     "delivery":  "В доставке",
     "done":      "Завершён",
@@ -2413,6 +2428,31 @@ def _get_or_create_website_source(country):
     return source
 
 
+def _get_or_create_app_source(country):
+    """Get or create the "Приложение" OrderSource for the given country."""
+    source, _ = OrderSource.objects.get_or_create(
+        country=country,
+        name="Приложение",
+        defaults={"is_active": True},
+    )
+    return source
+
+
+def _is_app_order(request, payload):
+    """Заказ из мобильного приложения? Сигнал от клиента:
+    payload {"client": "app"} или {"platform": "ios|android"}, либо заголовок
+    X-Client-Type: app. Иначе считаем заказом с сайта."""
+    body = payload or {}
+    client = str(body.get("client") or "").strip().lower()
+    platform = str(body.get("platform") or "").strip().lower()
+    header = str(request.META.get("HTTP_X_CLIENT_TYPE", "") or "").strip().lower()
+    return (
+        client in {"app", "mobile", "application"}
+        or platform in {"ios", "android"}
+        or header in {"app", "mobile"}
+    )
+
+
 def _get_or_create_website_customer(country, name, phone):
     """
     Resolve a Customer by phone in this country, or create a new one.
@@ -2460,6 +2500,17 @@ def _serialize_order_item_for_tracking(item):
         "quantity": _to_float(item.quantity),
         "price": _to_float(item.price_snapshot),
         "total_price": _to_float(item.total_price),
+        # Подарок акции — позиция с нулевой ценой (бэк добавляет сам).
+        "is_gift": _to_float(item.price_snapshot) == 0 and _to_float(item.total_price) == 0,
+        # Снимок добавок позиции (пусто для заказов до внедрения добавок).
+        "addons": [
+            {
+                "id": a.addon_dish_id,
+                "name": a.name_snapshot,
+                "price": _to_float(a.price_snapshot),
+            }
+            for a in item.addons.all()
+        ],
     }
 
 
@@ -2866,7 +2917,10 @@ def order_create(request):
     if err:
         return err
 
-    source = _get_or_create_website_source(country)
+    if _is_app_order(request, payload):
+        source = _get_or_create_app_source(country)
+    else:
+        source = _get_or_create_website_source(country)
     if token_customer is not None:
         customer = token_customer
         # Если у клиента в профиле пусто, а в заказе указали имя — сохраним.
@@ -3082,7 +3136,7 @@ def order_create(request):
             except Exception:
                 dish_cost = Decimal("0")
 
-            OrderItem.objects.create(
+            oi = OrderItem.objects.create(
                 order=order,
                 dish=line["dish"],
                 quantity=Decimal(line["quantity"]),
@@ -3090,6 +3144,17 @@ def order_create(request):
                 cost_snapshot=dish_cost,
                 total_price=line["total_price"],
             )
+            # Снимок выбранных добавок позиции (для деталей и «Повторить заказ»).
+            for _addon in (line.get("addons_payload") or []):
+                try:
+                    OrderItemAddon.objects.create(
+                        order_item=oi,
+                        addon_dish_id=_addon.get("id"),
+                        name_snapshot=(_addon.get("name") or "")[:255],
+                        price_snapshot=Decimal(str(_addon.get("price") or 0)),
+                    )
+                except Exception:
+                    pass
 
         # Подарочные позиции акций — бэк добавляет сам, цена 0. Любые
         # «подарки» от клиента игнорируются: источник истины — этот список.
@@ -3119,6 +3184,30 @@ def order_create(request):
         send_new_order_to_telegram(order)
     except Exception:
         pass
+
+    # Авто-сохранение адреса доставки вошедшего клиента в книгу адресов
+    # (без дублей по тексту адреса). Гостевые заказы — пропускаем. Сбой не
+    # влияет на оформление заказа.
+    if (token_customer is not None
+            and fulfillment_method == Order.FULFILLMENT_DELIVERY
+            and delivery_address):
+        try:
+            _norm = delivery_address.strip().casefold()
+            _existing = list(token_customer.addresses.all())
+            if not any((a.address or "").strip().casefold() == _norm for a in _existing):
+                CustomerAddress.objects.create(
+                    customer=token_customer,
+                    address=delivery_address[:2000],
+                    latitude=lat,
+                    longitude=lng,
+                    location=location,
+                    landmark=(courier_landmark_value or "")[:255],
+                    courier_comment=(courier_comment_value or "")[:255],
+                    comment=(customer_comment or "")[:255],
+                    is_default=(len(_existing) == 0),
+                )
+        except Exception:
+            pass
 
     # Build the payment block. For cash (and any order without an online
     # Build the payment block. Three cases:
@@ -3733,6 +3822,48 @@ def home_bestsellers(request):
 
     response = api_success({
         "products": [_serialize_bestseller(request, d) for d in dishes],
+    })
+    return _apply_homepage_cache_headers(response)
+
+
+# -----------------------------------------------------------------------------
+# 🍱  ENDPOINT: GET /api/public/home/combo  («Комбо с фудкорта»; как bestsellers)
+# -----------------------------------------------------------------------------
+
+def _serialize_combo_pick(request, dish):
+    """Карточка для блока «Комбо с фудкорта» — та же карточка каталога."""
+    card = serialize_product_card(request, dish)
+    card["show_in_combo_block"] = True
+    return card
+
+
+@csrf_exempt
+@require_GET
+def home_combo(request):
+    """
+    Блюда блока «Комбо с фудкорта» для главной (механика как у bestsellers).
+
+    Фильтры: country, is_visible_on_site=True, is_stop_list=False,
+             show_in_combo_block=True. Сортировка: (site_sort_order, name).
+    Пусто -> products: [] (фронт прячет секцию).
+    """
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    dishes = (
+        Dish.objects
+        .filter(
+            country=country,
+            is_visible_on_site=True,
+            is_stop_list=False,
+            show_in_combo_block=True,
+        )
+        .order_by("site_sort_order", "name")
+    )
+
+    response = api_success({
+        "products": [_serialize_combo_pick(request, d) for d in dishes],
     })
     return _apply_homepage_cache_headers(response)
 
