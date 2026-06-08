@@ -280,6 +280,28 @@ def transfer_detail(request, country_slug, transfer_id):
         if action in ("update_header", "add_item", "remove_item", "delete", "copy", "confirm") and not can_edit_draft:
             return redirect(f"/c/{country.slug}/transfers/{transfer.id}/")
 
+        # Исправление подтверждённого перемещения: откатываем его движения по
+        # складу и возвращаем документ в черновик. Дальше правится штатно, а
+        # повторное «Подтвердить» пересоздаёт движения (с тем же номером).
+        if action == "reopen" and transfer.status == Transfer.STATUS_CONFIRMED:
+            if not can_edit:
+                return redirect(f"/c/{country.slug}/transfers/{transfer.id}/")
+            with transaction.atomic():
+                StockMovement.objects.filter(
+                    country=country,
+                    source_type=StockMovement.SOURCE_TRANSFER,
+                    source_id=transfer.id,
+                ).delete()
+                transfer.status = Transfer.STATUS_DRAFT
+                transfer.confirmed_at = None
+                transfer.save(update_fields=["status", "confirmed_at", "updated_at"])
+                DocumentLog.objects.create(
+                    country=country, document_type=DocumentLog.DOC_TRANSFER,
+                    document_id=transfer.id, user=request.user, action="reopened",
+                    comment=f"Перемещение {transfer.document_number} открыто на правку (движения склада откатаны)",
+                )
+            return redirect(f"/c/{country.slug}/transfers/{transfer.id}/?reopened=1")
+
         if action == "update_header" and is_draft:
             from_id = request.POST.get("from_warehouse_id")
             to_id = request.POST.get("to_warehouse_id")
@@ -407,6 +429,7 @@ def transfer_detail(request, country_slug, transfer_id):
         "preparations": Preparation.objects.filter(country=country).order_by("name"),
         "logs": logs,
         "confirmed_flag": request.GET.get("confirmed") == "1",
+        "reopened_flag": request.GET.get("reopened") == "1",
         "err": request.GET.get("err") or "",
     })
 
@@ -427,7 +450,8 @@ def _confirm_transfer(transfer, user, country):
 
     with transaction.atomic():
         year = (transfer.transfer_date or timezone.now().date()).year
-        transfer.document_number = _next_doc_number(country, year)
+        if not transfer.document_number:
+            transfer.document_number = _next_doc_number(country, year)
         transfer.status = Transfer.STATUS_CONFIRMED
         transfer.confirmed_at = timezone.now()
         transfer.save()

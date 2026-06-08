@@ -92,6 +92,7 @@
                 <form method="post"><input type="hidden" name="action" value="confirm">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-dark" onclick="return confirm('Подтвердить перемещение? Остатки спишутся с отправителя и поступят получателю.');">✓ Подтвердить</button></form>
             {% endif %}
             {% if can_edit %}<form method="post"><input type="hidden" name="action" value="copy">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">⧉ Копировать</button></form>{% endif %}
+            {% if is_confirmed and can_edit %}<form method="post" onsubmit="return confirm('Открыть перемещение на правку? Движения по складу будут откатаны, документ вернётся в черновик. После исправления нужно снова нажать «Подтвердить».');"><input type="hidden" name="action" value="reopen">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">✎ Исправить</button></form>{% endif %}
             {% if is_draft and can_edit %}<form method="post" onsubmit="return confirm('Удалить черновик?');"><input type="hidden" name="action" value="delete">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger">Удалить</button></form>{% endif %}
         </div>
     </div>
@@ -102,7 +103,8 @@
     {% elif err == 'same' %}<div class="banner banner-red">Склад-отправитель и склад-получатель должны различаться.</div>
     {% elif err == 'items' %}<div class="banner banner-red">Добавьте хотя бы одну позицию.</div>
     {% elif err == 'status' %}<div class="banner banner-red">Документ уже не в статусе черновика.</div>{% endif %}
-    {% if is_confirmed %}<div class="banner banner-info">Документ подтверждён и доступен только для просмотра.</div>{% endif %}
+    {% if reopened_flag %}<div class="banner banner-amber">Перемещение открыто на правку: движения по складу откатаны. Исправьте позиции и снова нажмите «Подтвердить».</div>{% endif %}
+    {% if is_confirmed %}<div class="banner banner-info">Документ подтверждён. Чтобы исправить — нажмите «Исправить»: склад откатится и документ вернётся в черновик.</div>{% endif %}
 
     <!-- Основное -->
     <div class="fc-card">

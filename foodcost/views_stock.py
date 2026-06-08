@@ -123,26 +123,20 @@ def stock_list(request, country_slug):
         for p in Preparation.objects.filter(id__in=prep_ids)
     }
 
-    # Последняя подтверждённая закупочная цена по каждому продукту (один запрос).
+    # Цена продукта — последняя из истории цен (ProductPrice): тот же источник,
+    # что используют техкарты заготовок и блюд (Product.get_price()). Раньше цена
+    # бралась из последней подтверждённой закупки, поэтому у продуктов без
+    # закупки она была пустой. Один запрос: для каждого product_id первая строка
+    # в порядке -date_from — самая свежая цена.
     last_price = {}
     if product_ids:
-        items = (
-            PurchaseReceiptItem.objects
-            .filter(
-                receipt__status=PurchaseReceipt.STATUS_CONFIRMED,
-                product_id__in=product_ids,
-            )
-            .select_related("receipt")
-            .order_by(
-                "product_id",
-                "-receipt__receipt_date",
-                "-receipt__confirmed_at",
-                "-id",
-            )
-        )
-        for it in items:
-            if it.product_id not in last_price:
-                last_price[it.product_id] = it.unit_price or Decimal(0)
+        for pp in (
+            ProductPrice.objects
+            .filter(product_id__in=product_ids)
+            .order_by("product_id", "-date_from", "-id")
+        ):
+            if pp.product_id not in last_price:
+                last_price[pp.product_id] = pp.price or Decimal(0)
 
     # ----- собираем строки -----
     rows = []
@@ -423,15 +417,14 @@ def stock_product_detail(request, country_slug, product_id):
 
     product = get_object_or_404(Product, id=product_id, country=country)
 
-    # последняя закупочная цена
-    last_item = (
-        PurchaseReceiptItem.objects
-        .filter(receipt__status=PurchaseReceipt.STATUS_CONFIRMED, product=product)
-        .select_related("receipt")
-        .order_by("-receipt__receipt_date", "-receipt__confirmed_at", "-id")
+    # цена продукта — последняя из истории цен (ProductPrice), как в техкартах
+    last_pp = (
+        ProductPrice.objects
+        .filter(product=product)
+        .order_by("-date_from", "-id")
         .first()
     )
-    last_price = (last_item.unit_price or Decimal(0)) if last_item else Decimal(0)
+    last_price = (last_pp.price or Decimal(0)) if last_pp else Decimal(0)
 
     min_stock = product.minimum_stock or Decimal(0)
 
