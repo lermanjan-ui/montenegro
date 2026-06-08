@@ -35,6 +35,7 @@ from .models import (
     PurchaseReceipt,
     PurchaseReceiptItem,
     Preparation,
+    ProductPrice,
 )
 
 from .views import get_country, require_section_access
@@ -76,8 +77,17 @@ def _aware(date_obj):
 
 
 def recompute_sales_for_date(country, date_obj, location_id=None, user=None):
-    """Пересчёт автосписания за дату. Возвращает сводку.
-    Идемпотентно: удаляет прежние движения-продажи за дату и создаёт заново."""
+    """Пересчёт автосписания за дату. Идемпотентно.
+
+    Списание заготовок по правилу:
+      • есть остаток заготовки на складе → списываем заготовку;
+      • остатка нет → раскрываем заготовку в продукты по её техкарте;
+      • остатка не хватает → списываем доступный остаток заготовки, а недостающее —
+        продуктами (рекурсивно: вложенные заготовки — по тому же правилу).
+    """
+    from django.db import transaction
+    from django.db.models import Sum
+
     orders = (
         Order.objects
         .filter(country=country, order_date__date=date_obj, is_cancelled=False)
@@ -90,8 +100,9 @@ def recompute_sales_for_date(country, date_obj, location_id=None, user=None):
         "items__dish__preparation_items",
     ).select_related("location")
 
-    # накапливаем расход: (loc_id, item_type, item_id) -> qty
-    consumption = defaultdict(lambda: Decimal(0))
+    # Сырой расход по техкартам блюд (валовый × количество).
+    raw_product = defaultdict(lambda: Decimal(0))   # (loc, product_id) -> qty
+    raw_prep = defaultdict(lambda: Decimal(0))      # (loc, prep_id) -> qty
     order_count = 0
     skipped_no_location = 0
 
@@ -107,37 +118,17 @@ def recompute_sales_for_date(country, date_obj, location_id=None, user=None):
             if q == 0:
                 continue
             for pi in it.dish.product_items.all():
-                consumption[(o.location_id, "product", pi.product_id)] += (pi.gross or Decimal(0)) * q
+                raw_product[(o.location_id, pi.product_id)] += (pi.gross or Decimal(0)) * q
             for pp in it.dish.preparation_items.all():
-                consumption[(o.location_id, "preparation", pp.preparation_id)] += (pp.gross or Decimal(0)) * q
-
-    # последние закупочные цены по продуктам (один запрос)
-    product_ids = [iid for (_, itype, iid) in consumption if itype == "product"]
-    last_price = {}
-    if product_ids:
-        for pit in (
-            PurchaseReceiptItem.objects
-            .filter(receipt__status=PurchaseReceipt.STATUS_CONFIRMED, product_id__in=product_ids)
-            .select_related("receipt")
-            .order_by("product_id", "-receipt__receipt_date", "-receipt__confirmed_at", "-id")
-        ):
-            if pit.product_id not in last_price:
-                last_price[pit.product_id] = pit.unit_price or Decimal(0)
-
-    prep_ids = [iid for (_, itype, iid) in consumption if itype == "preparation"]
-    prep_cost = {}
-    if prep_ids:
-        for p in Preparation.objects.filter(id__in=prep_ids):
-            prep_cost[p.id] = p.cached_cost_per_kg or Decimal(0)
+                raw_prep[(o.location_id, pp.preparation_id)] += (pp.gross or Decimal(0)) * q
 
     dt = _aware(date_obj)
     label = date_obj.strftime("%d.%m.%Y")
 
-    from django.db import transaction
     total_cost = Decimal(0)
     created = 0
     with transaction.atomic():
-        # удаляем прежние движения-продажи за дату
+        # удаляем прежние движения-продажи за дату (идемпотентность)
         del_qs = StockMovement.objects.filter(
             country=country,
             source_type=StockMovement.SOURCE_ORDER,
@@ -148,35 +139,123 @@ def recompute_sales_for_date(country, date_obj, location_id=None, user=None):
         deleted = del_qs.count()
         del_qs.delete()
 
-        for (loc, itype, iid), qty in consumption.items():
+        # ---- распределение заготовок: остаток заготовки vs раскрытие в продукты ----
+        product_consumption = defaultdict(lambda: Decimal(0))   # (loc, product_id) -> qty
+        prep_consumption = defaultdict(lambda: Decimal(0))      # (loc, prep_id) -> qty
+        for key, qty in raw_product.items():
+            product_consumption[key] += qty
+
+        _bal = {}   # (loc, prep_id) -> доступный остаток заготовки (уменьшается при распределении)
+
+        def _remaining(loc, prep_id):
+            k = (loc, prep_id)
+            if k not in _bal:
+                _bal[k] = StockMovement.objects.filter(
+                    country=country, warehouse_id=loc,
+                    item_type=StockMovement.ITEM_TYPE_PREPARATION,
+                    preparation_id=prep_id,
+                ).aggregate(s=Sum("quantity_delta"))["s"] or Decimal(0)
+            return _bal[k]
+
+        _prep_obj = {}
+
+        def _get_prep(prep_id):
+            if prep_id not in _prep_obj:
+                _prep_obj[prep_id] = (
+                    Preparation.objects
+                    .filter(id=prep_id)
+                    .prefetch_related("items", "subitems")
+                    .first()
+                )
+            return _prep_obj[prep_id]
+
+        def _allocate(loc, prep_id, qty, depth=0):
+            """Списать qty заготовки: со склада сколько есть, недостающее — в продукты."""
+            if qty <= 0:
+                return
+            avail = _remaining(loc, prep_id)
+            take = qty if qty < avail else (avail if avail > 0 else Decimal(0))
+            if take > 0:
+                prep_consumption[(loc, prep_id)] += take
+                _bal[(loc, prep_id)] = avail - take
+            short = qty - take
+            if short <= 0:
+                return
+            prep = _get_prep(prep_id)
+            # нельзя раскрыть (нет техкарты/веса/слишком глубоко) — спишем как заготовку
+            if depth >= 10 or not prep or not prep.final_weight:
+                prep_consumption[(loc, prep_id)] += short
+                return
+            ratio = short / prep.final_weight
+            for item in prep.items.all():
+                if item.product_id:
+                    product_consumption[(loc, item.product_id)] += (item.gross or Decimal(0)) * ratio
+            for sub in prep.subitems.all():
+                if sub.sub_preparation_id:
+                    _allocate(loc, sub.sub_preparation_id, (sub.gross or Decimal(0)) * ratio, depth + 1)
+
+        for (loc, prep_id), qty in raw_prep.items():
+            _allocate(loc, prep_id, qty)
+
+        # ---- цены: продукт — последняя ProductPrice (как техкарты/остатки);
+        #            заготовка — кэш техкарты, иначе живой расчёт ----
+        product_ids = [pid for (_, pid) in product_consumption]
+        last_price = {}
+        if product_ids:
+            for pp in (
+                ProductPrice.objects
+                .filter(product_id__in=product_ids)
+                .order_by("product_id", "-date_from", "-id")
+            ):
+                if pp.product_id not in last_price:
+                    last_price[pp.product_id] = pp.price or Decimal(0)
+
+        prep_ids = [pid for (_, pid) in prep_consumption]
+        prep_cost = {}
+        if prep_ids:
+            for p in Preparation.objects.filter(id__in=prep_ids):
+                c = p.cached_cost_per_kg or Decimal(0)
+                if not c:
+                    try:
+                        c = Decimal(str(p.cost_per_kg() or 0))
+                    except Exception:
+                        c = Decimal(0)
+                prep_cost[p.id] = c
+
+        # ---- создаём движения списания ----
+        for (loc, pid), qty in product_consumption.items():
             if qty == 0:
                 continue
-            if itype == "product":
-                unit_cost = last_price.get(iid, Decimal(0))
-                cost = qty * unit_cost
-                StockMovement.objects.create(
-                    country=country, warehouse_id=loc,
-                    item_type=StockMovement.ITEM_TYPE_PRODUCT, product_id=iid,
-                    quantity_delta=-qty,
-                    movement_type=StockMovement.TYPE_SALE,
-                    source_type=StockMovement.SOURCE_ORDER, source_id=0,
-                    unit_cost=unit_cost, total_cost=-cost,
-                    comment=f"Автосписание продаж за {label}",
-                    created_by=user, movement_datetime=dt,
-                )
-            else:
-                unit_cost = prep_cost.get(iid, Decimal(0))
-                cost = qty * unit_cost
-                StockMovement.objects.create(
-                    country=country, warehouse_id=loc,
-                    item_type=StockMovement.ITEM_TYPE_PREPARATION, preparation_id=iid,
-                    quantity_delta=-qty,
-                    movement_type=StockMovement.TYPE_SALE,
-                    source_type=StockMovement.SOURCE_ORDER, source_id=0,
-                    unit_cost=unit_cost, total_cost=-cost,
-                    comment=f"Автосписание продаж за {label}",
-                    created_by=user, movement_datetime=dt,
-                )
+            unit_cost = last_price.get(pid, Decimal(0))
+            cost = qty * unit_cost
+            StockMovement.objects.create(
+                country=country, warehouse_id=loc,
+                item_type=StockMovement.ITEM_TYPE_PRODUCT, product_id=pid,
+                quantity_delta=-qty,
+                movement_type=StockMovement.TYPE_SALE,
+                source_type=StockMovement.SOURCE_ORDER, source_id=0,
+                unit_cost=unit_cost, total_cost=-cost,
+                comment=f"Автосписание продаж за {label}",
+                created_by=user, movement_datetime=dt,
+            )
+            total_cost += cost
+            created += 1
+
+        for (loc, pid), qty in prep_consumption.items():
+            if qty == 0:
+                continue
+            unit_cost = prep_cost.get(pid, Decimal(0))
+            cost = qty * unit_cost
+            StockMovement.objects.create(
+                country=country, warehouse_id=loc,
+                item_type=StockMovement.ITEM_TYPE_PREPARATION, preparation_id=pid,
+                quantity_delta=-qty,
+                movement_type=StockMovement.TYPE_SALE,
+                source_type=StockMovement.SOURCE_ORDER, source_id=0,
+                unit_cost=unit_cost, total_cost=-cost,
+                comment=f"Автосписание продаж за {label}",
+                created_by=user, movement_datetime=dt,
+            )
             total_cost += cost
             created += 1
 

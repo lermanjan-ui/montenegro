@@ -123,6 +123,19 @@ def stock_list(request, country_slug):
         for p in Preparation.objects.filter(id__in=prep_ids)
     }
 
+    # Себестоимость заготовки: берём кэш техкарты; если он пуст (кэш не пересчитан
+    # после задания цен на продукты) — считаем вживую из техкарты, как на странице
+    # заготовки. Один расчёт на заготовку.
+    prep_unit_cost = {}
+    for _pid, _prep in preparations.items():
+        _cost = _prep.cached_cost_per_kg or Decimal(0)
+        if not _cost:
+            try:
+                _cost = Decimal(str(_prep.cost_per_kg() or 0))
+            except Exception:
+                _cost = Decimal(0)
+        prep_unit_cost[_pid] = _cost
+
     # Цена продукта — последняя из истории цен (ProductPrice): тот же источник,
     # что используют техкарты заготовок и блюд (Product.get_price()). Раньше цена
     # бралась из последней подтверждённой закупки, поэтому у продуктов без
@@ -185,8 +198,8 @@ def stock_list(request, country_slug):
             continue
 
         qty = row["qty"] or Decimal(0)
-        # Себестоимость заготовки — из техкарты (кэш cost_per_kg).
-        price = prep.cached_cost_per_kg or Decimal(0)
+        # Себестоимость заготовки — кэш техкарты, с расчётом вживую при пустом кэше.
+        price = prep_unit_cost.get(prep.id, Decimal(0))
         value = qty * price
 
         # У заготовок нет минимального остатка.
