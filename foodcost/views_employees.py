@@ -621,18 +621,61 @@ def schedule_page(request, country_slug):
                 except (TypeError, ValueError):
                     break_min = 0
                 hours = _shift_hours(start, end, break_min, employee.default_shift_hours)
+                # Посменная оплата: план = полная смена (напр. 12 ч), факт по
+                # умолчанию = полная смена. При частичной смене факт правят в
+                # карточке смены — зарплата пересчитается пропорционально
+                # (стоимость смены / план × факт), это уже в модели.
+                if employee.pay_type == Employee.PAY_TYPE_SHIFT:
+                    planned_h = employee.default_shift_hours or Decimal("12")
+                    actual_h = planned_h
+                else:
+                    planned_h = hours
+                    actual_h = hours
                 EmployeeShift.objects.create(
                     country=country, employee=employee, location=location,
                     shift_date=_parse_date(request.POST.get("shift_date")) or timezone.localdate(),
                     start_time=start, end_time=end, break_minutes=break_min,
                     shift_type=request.POST.get("shift_type") or EmployeeShift.SHIFT_TYPE_DAY,
-                    planned_hours=hours, actual_hours=hours, hours=hours,
+                    planned_hours=planned_h, actual_hours=actual_h, hours=hours,
                     fixed_amount=employee.shift_rate_amount, kpi_amount=employee.shift_kpi_amount,
                     kpi_percent=Decimal("100"), hourly_rate_snapshot=employee.hourly_rate_amount,
                     tax_percent_snapshot=employee.tax_percent,
                     status=request.POST.get("status") or EmployeeShift.STATUS_PLANNED,
                     comment=request.POST.get("comment", "").strip(),
                 )
+
+        if action == "edit_shift":
+            shift = EmployeeShift.objects.filter(
+                id=request.POST.get("shift_id"), country=country
+            ).first()
+            if shift:
+                emp = Employee.objects.filter(
+                    id=request.POST.get("employee_id"), country=country
+                ).first()
+                if emp:
+                    shift.employee = emp
+                loc_id = request.POST.get("location_id")
+                if loc_id:
+                    shift.location = Location.objects.filter(
+                        id=loc_id, country=country
+                    ).first()
+                shift.shift_date = _parse_date(request.POST.get("shift_date")) or shift.shift_date
+                shift.start_time = _parse_time(request.POST.get("start_time"))
+                shift.end_time = _parse_time(request.POST.get("end_time"))
+                try:
+                    shift.break_minutes = int(request.POST.get("break_minutes") or 0)
+                except (TypeError, ValueError):
+                    pass
+                shift.shift_type = request.POST.get("shift_type") or shift.shift_type
+                shift.status = request.POST.get("status") or shift.status
+                shift.comment = (request.POST.get("comment") or "").strip()
+                planned = clean_decimal(request.POST.get("planned_hours"))
+                actual = clean_decimal(request.POST.get("actual_hours"))
+                if planned > 0:
+                    shift.planned_hours = planned
+                shift.actual_hours = actual
+                shift.hours = actual
+                shift.save()
 
         if action == "delete_shift":
             EmployeeShift.objects.filter(id=request.POST.get("shift_id"), country=country).delete()
@@ -705,9 +748,19 @@ def schedule_page(request, country_slug):
         return {
             "id": s.id,
             "employee": s.employee.name if s.employee else "—",
+            "employee_id": s.employee_id or "",
+            "location_id": s.location_id or "",
             "time": (f"{s.start_time.strftime('%H:%M')}–{s.end_time.strftime('%H:%M')}" if s.start_time and s.end_time else _fmt_qty(s.hours or 0) + " ч"),
             "location": s.location.name if s.location else "",
             "status": s.status,
+            "start": s.start_time.strftime('%H:%M') if s.start_time else "",
+            "end": s.end_time.strftime('%H:%M') if s.end_time else "",
+            "break_minutes": s.break_minutes or 0,
+            "shift_type": s.shift_type,
+            "comment": s.comment or "",
+            "planned_hours": s.planned_hours,
+            "actual_hours": s.actual_hours,
+            "date": s.shift_date.isoformat() if s.shift_date else "",
         }
 
     if view == "week":

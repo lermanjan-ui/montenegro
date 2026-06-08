@@ -15,9 +15,11 @@
 
 from decimal import Decimal, InvalidOperation
 
+from django.db.models import Q
+
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import CustomerAddress, Location, Order
+from .models import Customer, CustomerAddress, Location, Order
 from .public_api import (
     api_success,
     api_error,
@@ -26,7 +28,7 @@ from .public_api import (
     _status_label,
     _to_float,
 )
-from .app_auth import _authenticate
+from .app_auth import _authenticate, _normalize_phone
 
 
 # ---------------------------------------------------------------------------
@@ -107,6 +109,36 @@ def profile(request):
 # ---------------------------------------------------------------------------
 # orders history
 # ---------------------------------------------------------------------------
+def _orders_qs_for_customer(customer):
+    """Все заказы клиента, включая прежние гостевые с тем же номером телефона.
+
+    Сопоставление по нормализованному номеру (+ и только цифры): берём все
+    записи Customer этой страны с тем же телефоном, плюс заказы, где номер
+    совпал в поле customer_phone (гостевые, привязанные к другой/пустой записи).
+    """
+    base = Order.objects.filter(customer=customer)
+    norm = _normalize_phone(getattr(customer, "phone", ""))
+    digits = norm[1:] if norm.startswith("+") else norm
+    if not digits:
+        return base
+    tail = digits[-9:] if len(digits) >= 9 else digits
+
+    cust_ids = {customer.id}
+    cand = (
+        Customer.objects
+        .filter(country_id=customer.country_id, phone__contains=tail)
+        .only("id", "phone")
+    )
+    for c in cand:
+        if _normalize_phone(c.phone) == norm:
+            cust_ids.add(c.id)
+
+    return Order.objects.filter(
+        Q(country_id=customer.country_id),
+        Q(customer_id__in=cust_ids) | Q(customer_phone__contains=tail),
+    )
+
+
 @csrf_exempt
 def orders_list(request):
     customer, _row, err = _authenticate(request)
@@ -124,7 +156,7 @@ def orders_list(request):
     except (TypeError, ValueError):
         offset = 0
 
-    qs = Order.objects.filter(customer=customer).order_by("-created_at")
+    qs = _orders_qs_for_customer(customer).order_by("-created_at")
     total = qs.count()
     rows = list(qs[offset:offset + limit])
     return api_success({
@@ -145,7 +177,8 @@ def order_detail(request, public_order_number):
 
     number = (public_order_number or "").strip()
     order = (
-        Order.objects.filter(customer=customer, public_order_number=number)
+        _orders_qs_for_customer(customer)
+        .filter(public_order_number=number)
         .select_related("payment_method")
         .first()
     )
