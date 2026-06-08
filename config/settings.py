@@ -7,27 +7,16 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-# 🔐 безопасность — значения берём из переменных окружения (Render → Environment).
-# SECRET_KEY: на проде задайте сильный ключ в переменной SECRET_KEY.
-#   ВНИМАНИЕ: смена ключа инвалидирует все токены приложения, коды OTP и
-#   сессии персонала (нужно будет войти заново). Поэтому меняем сейчас, пока
-#   нет реальных пользователей. Фоллбэк ниже — чтобы приложение не падало,
-#   если переменная вдруг не задана.
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-987789")
+# 🔐 безопасность
+SECRET_KEY = 'django-insecure-987789'
 
-# DEBUG по умолчанию ВЫКЛЮЧЕН (прод). Локально поставьте DEBUG=True в .env.
-# Чтобы быстро откатиться на проде — задайте переменную DEBUG=True в Render.
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = True
 
-# Хосты через запятую; по умолчанию "*" (как было). На проде можно сузить до
-# своих доменов, задав ALLOWED_HOSTS="raccoon.uz,montenegro-8y6i.onrender.com".
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()]
+ALLOWED_HOSTS = ["*"]
 
 
 # 🔧 приложения
 INSTALLED_APPS = [
-    "corsheaders",
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -36,13 +25,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
-    'foodcost',
+    'foodcost',  # твое приложение
 ]
 
 # 🔧 middleware
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
-    
+    "config.cors_middleware.PublicCorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
 
     # 👇 обязательно для Railway
@@ -116,78 +104,81 @@ import os
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
-# 💳 Платёжные шлюзы (значения — в переменных окружения Render). Пусто = выкл.
-PAYME_MERCHANT_ID = os.environ.get("PAYME_MERCHANT_ID", "")
-PAYME_SECRET_KEY = os.environ.get("PAYME_SECRET_KEY", "")
-PAYME_CHECKOUT_URL = os.environ.get("PAYME_CHECKOUT_URL", "https://checkout.paycom.uz")
-PAYME_ACCOUNT_FIELD = os.environ.get("PAYME_ACCOUNT_FIELD", "order_id")
-PAYME_SUCCESS_URL = os.environ.get("PAYME_SUCCESS_URL", "")
 
+# =============================================================================
+# 💳 CLICK PAYMENT INTEGRATION
+# =============================================================================
+# Credentials are read from environment variables ONLY — never hardcode the
+# secret key in code or commit it to the repo. If CLICK_SECRET_KEY was ever
+# exposed (logs, screenshots, frontend bundles, public commits), rotate it
+# in the Click merchant cabinet BEFORE deploying to production.
+#
+# Required for Part 1 (URL build):
+#   CLICK_SERVICE_ID       — Click service ID (numeric, public, used in URL)
+#   CLICK_MERCHANT_ID      — Click merchant ID (numeric, public, used in URL)
+#   CLICK_MERCHANT_USER_ID — used by Click API; not part of the checkout URL
+#   CLICK_SUCCESS_URL      — where Click redirects after successful payment
+#   CLICK_FAIL_URL         — where Click redirects after failed payment
+#
+# Required for Part 2 (callback verification — NOT in URLs):
+#   CLICK_SECRET_KEY       — server-only; used to compute/verify md5 sign_string
+#
+# All values default to empty string so missing env doesn't crash boot; the
+# build_click_payment_url() helper validates them at call time and surfaces
+# a clear error if anything is missing.
 CLICK_SERVICE_ID = os.environ.get("CLICK_SERVICE_ID", "")
 CLICK_MERCHANT_ID = os.environ.get("CLICK_MERCHANT_ID", "")
-CLICK_SECRET_KEY = os.environ.get("CLICK_SECRET_KEY", "")
 CLICK_MERCHANT_USER_ID = os.environ.get("CLICK_MERCHANT_USER_ID", "")
-CLICK_SUCCESS_URL = os.environ.get("CLICK_SUCCESS_URL", "")
-
-# 📲 Eskiz (SMS для входа по коду). Значения — в переменных Render.
-ESKIZ_EMAIL = os.environ.get("ESKIZ_EMAIL", "")
-ESKIZ_PASSWORD = os.environ.get("ESKIZ_PASSWORD", "")
-ESKIZ_BASE_URL = os.environ.get("ESKIZ_BASE_URL", "https://notify.eskiz.uz/api")
-ESKIZ_FROM = os.environ.get("ESKIZ_FROM", "4546")  # 4546 — тестовый отправитель Eskiz
-# Текст SMS с кодом. ДОЛЖЕН совпадать с одобренным шаблоном Eskiz. {code} — подстановка.
-ESKIZ_OTP_TEMPLATE = os.environ.get(
-    "ESKIZ_OTP_TEMPLATE",
-    "Код верификации для входа в мобильное приложение Raccoon: {code}",
+CLICK_SECRET_KEY = os.environ.get("CLICK_SECRET_KEY", "")
+CLICK_SUCCESS_URL = os.environ.get(
+    "CLICK_SUCCESS_URL",
+    "https://raccoon-frontend.onrender.com/order-success",
+)
+CLICK_FAIL_URL = os.environ.get(
+    "CLICK_FAIL_URL",
+    "https://raccoon-frontend.onrender.com/checkout?payment_failed=1",
 )
 
-# 🔢 OTP и токены приложения
-OTP_CODE_TTL_SECONDS = int(os.environ.get("OTP_CODE_TTL_SECONDS", "300"))
-# Длина кода = числу нулей в одобренном шаблоне Eskiz («для входа» = 4).
-OTP_CODE_LENGTH = int(os.environ.get("OTP_CODE_LENGTH", "4"))
-OTP_RESEND_COOLDOWN_SECONDS = int(os.environ.get("OTP_RESEND_COOLDOWN_SECONDS", "60"))
-OTP_MAX_PER_HOUR = int(os.environ.get("OTP_MAX_PER_HOUR", "5"))
-OTP_MAX_ATTEMPTS = int(os.environ.get("OTP_MAX_ATTEMPTS", "5"))
-APP_ACCESS_TOKEN_TTL_DAYS = int(os.environ.get("APP_ACCESS_TOKEN_TTL_DAYS", "30"))
-APP_REFRESH_TOKEN_TTL_DAYS = int(os.environ.get("APP_REFRESH_TOKEN_TTL_DAYS", "180"))
-# ВНИМАНИЕ: только для теста на стейдже (вернёт код в ответе). НЕ включать на проде!
-OTP_EXPOSE_CODE_FOR_TESTING = os.environ.get("OTP_EXPOSE_CODE_FOR_TESTING", "") == "1"
 
-# 🔔 Firebase (push). Путь к JSON сервис-аккаунта — Render Secret File,
-# например /etc/secrets/firebase.json (или используйте GOOGLE_APPLICATION_CREDENTIALS).
-# Пусто = push выключен.
-FIREBASE_CREDENTIALS_FILE = os.environ.get("FIREBASE_CREDENTIALS_FILE", "")
-FCM_ENABLED = os.environ.get("FCM_ENABLED", "1") == "1"
+# =============================================================================
+# 💳 PAYME (PAYCOM) PAYMENT INTEGRATION
+# =============================================================================
+# Payme is a separate provider from Click — uses JSON-RPC 2.0 Merchant API
+# and Basic Auth (NOT a signature). Credentials are server-only.
+#
+# Required:
+#   PAYME_MERCHANT_ID    — cashbox id (24-char hex from cabinet); public
+#   PAYME_SECRET_KEY     — server-only; used in HTTP Basic on callback
+#   PAYME_CHECKOUT_URL   — https://checkout.paycom.uz (live)
+#                          or https://test.paycom.uz (sandbox)
+#   PAYME_ACCOUNT_FIELD  — name of the account sub-field that holds the
+#                          order id (configured in Payme cabinet). Default
+#                          "order_id"; sent as ac.<PAYME_ACCOUNT_FIELD>.
+#   PAYME_SUCCESS_URL    — where Payme redirects after a successful payment
+#   PAYME_FAIL_URL       — where Payme redirects after a failed payment
+PAYME_MERCHANT_ID = os.environ.get("PAYME_MERCHANT_ID", "")
+PAYME_SECRET_KEY = os.environ.get("PAYME_SECRET_KEY", "")
+PAYME_CHECKOUT_URL = os.environ.get(
+    "PAYME_CHECKOUT_URL",
+    "https://checkout.paycom.uz",
+)
+PAYME_ACCOUNT_FIELD = os.environ.get("PAYME_ACCOUNT_FIELD", "order_id")
+PAYME_SUCCESS_URL = os.environ.get(
+    "PAYME_SUCCESS_URL",
+    "https://raccoon-frontend.onrender.com/order-success",
+)
+PAYME_FAIL_URL = os.environ.get(
+    "PAYME_FAIL_URL",
+    "https://raccoon-frontend.onrender.com/checkout?payment_failed=1",
+)
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://raccoon.uz",
-    "https://www.raccoon.uz",
-    # 👉 ДОБАВИТЬ сюда боевой домен веб-версии приложения, когда будет известен,
-    #    например "https://app.raccoon.uz".
-]
 
-# Для разработки: разрешаем любой локальный порт (Vite/Expo/Next и т.п.),
-# чтобы не дописывать каждый порт вручную. Боевые источники — только из списка
-# выше (НЕ открываем API всем подряд: бэк принимает заказы и оплату).
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost:\d+$",
-    r"^http://127\.0\.0\.1:\d+$",
-]
-
-CORS_ALLOW_METHODS = [
-    "GET",
-    "POST",
-    "OPTIONS",
-]
-
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "authorization",
-    "content-type",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
-]
-
-CORS_URLS_REGEX = r"^/api/.*$"
+# =============================================================================
+# Online-payment TTL
+# =============================================================================
+# How long an online-payment order can sit in awaiting_payment before our
+# cron / lazy-expire path declares it dead. Default 24h. Set via env if
+# operations want a different window.
+ORDER_AWAITING_PAYMENT_TTL_HOURS = int(
+    os.environ.get("ORDER_AWAITING_PAYMENT_TTL_HOURS", "24")
+)

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_landing
 from . import views_techcards
 from . import views_finance
 from . import views_employees
@@ -64,7 +65,7 @@ urlpatterns = [
     path("", views.country_list, name="country_list"),
 
     # блюда
-    path("c/<slug:country_slug>/", views.dish_list, name="dish_list"),
+    path("c/<slug:country_slug>/", views_landing.country_home, name="dish_list"),
     path("c/<slug:country_slug>/dish/create/", views.dish_create, name="dish_create"),
     path("c/<slug:country_slug>/dish/<int:dish_id>/", views.dish_detail, name="dish_detail"),
     # Soft-archive a dish: hides it from menu / cart / new orders, keeps it
