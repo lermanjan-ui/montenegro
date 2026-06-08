@@ -607,14 +607,6 @@
 						<a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}" href="/c/{{ country.slug }}/">
 						    Блюда
 						</a>
-
-			            <a class="side-link {% if '/dish-categories/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dish-categories/">
-			                Категории блюд
-			            </a>
-
-			            <a class="side-link {% if '/combo-picks/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/combo-picks/">
-			                Комбо на главной
-			            </a>
 			            {% endif %}
 
 			            {% if can_menu_products %}
@@ -811,6 +803,29 @@
 			    </details>
 			    {% endif %}
 
+				{% if can_menu_dishes or can_menu_settings %}
+				<details class="menu-section" {% if '/dish-categories/' in request.path or '/combo-picks/' in request.path or '/settings/' in request.path or '/promotions/' in request.path %}open{% endif %}>
+				    <summary class="menu-title">
+				        <span class="menu-title-left">
+				            <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+				            Настройки сайта и приложения
+				        </span>
+				        <span class="menu-arrow">⌄</span>
+				    </summary>
+				    <div class="menu-items">
+				        {% if can_menu_dishes %}
+				        <a class="side-link {% if '/dish-categories/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dish-categories/">Категории</a>
+				        <a class="side-link {% if '/combo-picks/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/combo-picks/">Комбо на главной</a>
+				        {% endif %}
+				        {% if can_menu_settings %}
+				        <a class="side-link {% if '/settings/homepage/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/homepage/">Главная сайта</a>
+				        <a class="side-link {% if '/promotions/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/promotions/">Промокоды и акции</a>
+				        <a class="side-link {% if '/settings/' in request.path and '/settings/homepage/' not in request.path and '/promotions/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/">Настройки</a>
+				        {% endif %}
+				    </div>
+				</details>
+				{% endif %}
+
 			    {% if can_menu_users or can_menu_settings or can_menu_all_orders %}
 			    <details class="menu-section" {% if '/settings/' in request.path or '/users/' in request.path or '/orders/all/' in request.path or '/orders/analytics/' in request.path or '/shift-handover/admin/' in request.path or '/writeoffs/analytics/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
@@ -831,15 +846,6 @@
 			            </a>
 			            {% endif %}
 
-			            {% if can_menu_settings %}
-			            <a class="side-link {% if '/settings/' in request.path and '/settings/homepage/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/">
-			                Настройки
-			            </a>
-
-			            <a class="side-link {% if '/settings/homepage/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/homepage/">
-			                Главная сайта
-			            </a>
-			            {% endif %}
 
 			          
 
