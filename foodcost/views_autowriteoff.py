@@ -26,6 +26,7 @@ from datetime import datetime, time, timedelta
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils import timezone
+from django.db.models.functions import TruncDate
 
 from .models import (
     UserProfile,
@@ -284,18 +285,63 @@ def auto_writeoff_page(request, country_slug):
 
     result = None
     if request.method == "POST":
-        date_obj = _parse_date(request.POST.get("date"))
         loc_id = request.POST.get("location_id") or None
-        if date_obj:
-            summary = recompute_sales_for_date(country, date_obj, location_id=loc_id, user=request.user)
+        action = request.POST.get("action") or "recompute_one"
+
+        if action == "recompute_range":
+            # Пересчёт за период (пустые даты = за всё время). Кнопка «Пересчитать склад».
+            df = _parse_date(request.POST.get("date_from"))
+            dt = _parse_date(request.POST.get("date_to"))
+            qs = (
+                Order.objects
+                .filter(country=country, is_cancelled=False)
+                .exclude(status=Order.STATUS_CANCELLED)
+            )
+            if loc_id:
+                qs = qs.filter(location_id=loc_id)
+            dates = sorted(
+                d for d in set(
+                    qs.annotate(_d=TruncDate("order_date")).values_list("_d", flat=True)
+                ) if d
+            )
+            if df:
+                dates = [d for d in dates if d >= df]
+            if dt:
+                dates = [d for d in dates if d <= dt]
+
+            agg_orders = agg_moves = agg_deleted = 0
+            agg_cost = Decimal(0)
+            for d in dates:
+                s = recompute_sales_for_date(country, d, location_id=loc_id, user=request.user)
+                agg_orders += s["orders"]
+                agg_moves += s["movements"]
+                agg_deleted += s["deleted"]
+                agg_cost += s["total_cost"]
             result = {
-                "date": summary["date"].strftime("%d.%m.%Y"),
-                "orders": summary["orders"],
-                "movements": summary["movements"],
-                "deleted": summary["deleted"],
-                "total_cost_display": _fmt_money(summary["total_cost"]),
-                "skipped": summary["skipped_no_location"],
+                "range": True,
+                "days": len(dates),
+                "date_span": (
+                    f"{dates[0].strftime('%d.%m.%Y')} – {dates[-1].strftime('%d.%m.%Y')}"
+                    if dates else "—"
+                ),
+                "orders": agg_orders,
+                "movements": agg_moves,
+                "deleted": agg_deleted,
+                "total_cost_display": _fmt_money(agg_cost),
+                "skipped": 0,
             }
+        else:
+            date_obj = _parse_date(request.POST.get("date"))
+            if date_obj:
+                summary = recompute_sales_for_date(country, date_obj, location_id=loc_id, user=request.user)
+                result = {
+                    "date": summary["date"].strftime("%d.%m.%Y"),
+                    "orders": summary["orders"],
+                    "movements": summary["movements"],
+                    "deleted": summary["deleted"],
+                    "total_cost_display": _fmt_money(summary["total_cost"]),
+                    "skipped": summary["skipped_no_location"],
+                }
 
     yesterday = (timezone.now().date() - timedelta(days=1))
 
