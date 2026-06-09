@@ -434,6 +434,72 @@ def transfer_detail(request, country_slug, transfer_id):
     })
 
 
+def _prep_balance(country, warehouse_id, prep_id):
+    """Текущий остаток заготовки на складе (Σ движений)."""
+    return StockMovement.objects.filter(
+        country=country, warehouse_id=warehouse_id,
+        item_type=StockMovement.ITEM_TYPE_PREPARATION, preparation_id=prep_id,
+    ).aggregate(s=Sum("quantity_delta"))["s"] or Decimal(0)
+
+
+def _consume_prep_as_products(country, warehouse, prep, qty_kg, transfer, user, depth=0):
+    """Списать qty_kg заготовки «из продуктов» на складе (раскрытие техкарты по весу).
+
+    На каждый продукт техкарты — минус по весу. Вложенные заготовки: есть остаток —
+    списываем его, иначе раскрываем дальше в продукты. Применяется к той части
+    заготовки, которой не было в готовом виде на складе-источнике.
+    """
+    if qty_kg <= 0 or prep is None:
+        return
+    if depth >= 10 or not prep.final_weight:
+        return  # нет техкарты/веса — раскрыть нечем
+    ratio = qty_kg / prep.final_weight
+
+    for item in prep.items.all():
+        if not item.product_id:
+            continue
+        pq = (item.gross or Decimal(0)) * ratio
+        if pq <= 0:
+            continue
+        price = item.product.get_price()
+        uc = price.price if price else Decimal(0)
+        StockMovement.objects.create(
+            country=country, warehouse=warehouse,
+            item_type=StockMovement.ITEM_TYPE_PRODUCT, product=item.product,
+            quantity_delta=-pq,
+            movement_type=StockMovement.TYPE_TRANSFER_OUT,
+            source_type=StockMovement.SOURCE_TRANSFER, source_id=transfer.id,
+            unit_cost=uc, total_cost=-(pq * uc),
+            comment=f"Списание продукта под заготовку «{prep.name}» (перемещение {transfer.document_number})",
+            created_by=user,
+        )
+
+    for sub in prep.subitems.all():
+        if not sub.sub_preparation_id:
+            continue
+        sub_qty = (sub.gross or Decimal(0)) * ratio
+        if sub_qty <= 0:
+            continue
+        subprep = sub.sub_preparation
+        avail = _prep_balance(country, warehouse.id, subprep.id)
+        take = sub_qty if sub_qty <= avail else (avail if avail > 0 else Decimal(0))
+        if take > 0:
+            sc = subprep.cached_cost_per_kg or Decimal(0)
+            StockMovement.objects.create(
+                country=country, warehouse=warehouse,
+                item_type=StockMovement.ITEM_TYPE_PREPARATION, preparation=subprep,
+                quantity_delta=-take,
+                movement_type=StockMovement.TYPE_TRANSFER_OUT,
+                source_type=StockMovement.SOURCE_TRANSFER, source_id=transfer.id,
+                unit_cost=sc, total_cost=-(take * sc),
+                comment=f"Списание заготовки «{subprep.name}» под «{prep.name}» (перемещение {transfer.document_number})",
+                created_by=user,
+            )
+        short = sub_qty - take
+        if short > 0:
+            _consume_prep_as_products(country, warehouse, subprep, short, transfer, user, depth + 1)
+
+
 def _confirm_transfer(transfer, user, country):
     if transfer.status != Transfer.STATUS_DRAFT:
         return "status"
@@ -457,37 +523,71 @@ def _confirm_transfer(transfer, user, country):
         transfer.save()
 
         for it in items:
+            qty = it.quantity or Decimal(0)
+            if qty <= 0:
+                continue
             unit_cost = _item_unit_cost(it)
-            total_cost = (it.quantity or Decimal(0)) * unit_cost
-            if it.item_type == TransferItem.ITEM_TYPE_PRODUCT:
-                sm_item_type = StockMovement.ITEM_TYPE_PRODUCT
-                product, preparation = it.product, None
-            else:
-                sm_item_type = StockMovement.ITEM_TYPE_PREPARATION
-                product, preparation = None, it.preparation
 
-            # выход со склада-отправителя
-            StockMovement.objects.create(
-                country=country, warehouse=transfer.from_warehouse,
-                item_type=sm_item_type, product=product, preparation=preparation,
-                quantity_delta=-(it.quantity or Decimal(0)),
-                movement_type=StockMovement.TYPE_TRANSFER_OUT,
-                source_type=StockMovement.SOURCE_TRANSFER, source_id=transfer.id,
-                unit_cost=unit_cost, total_cost=-total_cost,
-                comment=f"Перемещение {transfer.document_number} → {transfer.to_warehouse.name}",
-                created_by=user,
-            )
-            # вход на склад-получатель
+            if it.item_type == TransferItem.ITEM_TYPE_PRODUCT:
+                # продукт — обычное перемещение
+                StockMovement.objects.create(
+                    country=country, warehouse=transfer.from_warehouse,
+                    item_type=StockMovement.ITEM_TYPE_PRODUCT, product=it.product,
+                    quantity_delta=-qty,
+                    movement_type=StockMovement.TYPE_TRANSFER_OUT,
+                    source_type=StockMovement.SOURCE_TRANSFER, source_id=transfer.id,
+                    unit_cost=unit_cost, total_cost=-(qty * unit_cost),
+                    comment=f"Перемещение {transfer.document_number} → {transfer.to_warehouse.name}",
+                    created_by=user,
+                )
+                StockMovement.objects.create(
+                    country=country, warehouse=transfer.to_warehouse,
+                    item_type=StockMovement.ITEM_TYPE_PRODUCT, product=it.product,
+                    quantity_delta=qty,
+                    movement_type=StockMovement.TYPE_TRANSFER_IN,
+                    source_type=StockMovement.SOURCE_TRANSFER, source_id=transfer.id,
+                    unit_cost=unit_cost, total_cost=qty * unit_cost,
+                    comment=f"Перемещение {transfer.document_number} ← {transfer.from_warehouse.name}",
+                    created_by=user,
+                )
+                continue
+
+            # ----- заготовка: списываем готовый остаток, недостающее — из продуктов -----
+            prep = it.preparation
+            avail = _prep_balance(country, transfer.from_warehouse_id, prep.id)
+            take = qty if qty <= avail else (avail if avail > 0 else Decimal(0))
+
+            # выход готовой заготовки со склада-источника (сколько было в наличии)
+            if take > 0:
+                StockMovement.objects.create(
+                    country=country, warehouse=transfer.from_warehouse,
+                    item_type=StockMovement.ITEM_TYPE_PREPARATION, preparation=prep,
+                    quantity_delta=-take,
+                    movement_type=StockMovement.TYPE_TRANSFER_OUT,
+                    source_type=StockMovement.SOURCE_TRANSFER, source_id=transfer.id,
+                    unit_cost=unit_cost, total_cost=-(take * unit_cost),
+                    comment=f"Перемещение {transfer.document_number} → {transfer.to_warehouse.name}",
+                    created_by=user,
+                )
+
+            # приход полного количества на склад-получатель
             StockMovement.objects.create(
                 country=country, warehouse=transfer.to_warehouse,
-                item_type=sm_item_type, product=product, preparation=preparation,
-                quantity_delta=(it.quantity or Decimal(0)),
+                item_type=StockMovement.ITEM_TYPE_PREPARATION, preparation=prep,
+                quantity_delta=qty,
                 movement_type=StockMovement.TYPE_TRANSFER_IN,
                 source_type=StockMovement.SOURCE_TRANSFER, source_id=transfer.id,
-                unit_cost=unit_cost, total_cost=total_cost,
+                unit_cost=unit_cost, total_cost=qty * unit_cost,
                 comment=f"Перемещение {transfer.document_number} ← {transfer.from_warehouse.name}",
                 created_by=user,
             )
+
+            # недостающую часть «производим» из продуктов на складе-источнике
+            shortfall = qty - take
+            if shortfall > 0:
+                _consume_prep_as_products(
+                    country, transfer.from_warehouse, prep, shortfall, transfer, user
+                )
 
         DocumentLog.objects.create(
             country=country, document_type=DocumentLog.DOC_TRANSFER, document_id=transfer.id,

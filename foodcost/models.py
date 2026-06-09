@@ -278,6 +278,12 @@ class DishCategory(models.Model):
     in_home_block_2 = models.BooleanField(default=False)
     home_block_2_sort_order = models.PositiveIntegerField(default=0)
 
+    # --- Поля карточки «ресторана» под референс (Я.Еда-стиль) ---
+    badge_label = models.CharField(max_length=50, blank=True, default="")
+    badge_style = models.CharField(max_length=20, blank=True, default="")
+    delivery_time_label = models.CharField(max_length=50, blank=True, default="")
+    gallery = models.JSONField(default=list, blank=True)
+
     class Meta:
         verbose_name = "Категория блюда"
         verbose_name_plural = "Категории блюд"
@@ -445,6 +451,24 @@ class Dish(models.Model):
 
     is_stop_list = models.BooleanField(
         default=False
+    )
+
+    # --- Uzum Tezkor ---
+    uzum_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Цена для Uzum. Пусто → используется selling_price.",
+    )
+    uzum_stop = models.BooleanField(
+        default=False,
+        help_text="Стоп только для Uzum (на сайт/приложение не влияет).",
+    )
+    mxik_code = models.CharField(
+        max_length=32, blank=True, default="",
+        help_text="ИКПУ/mxik (фискальный). Пока в Uzum не передаётся.",
+    )
+    package_code = models.CharField(
+        max_length=32, blank=True, default="",
+        help_text="Код упаковки (фискальный).",
     )
 
     # Soft-archive flag. When True, the dish is hidden from:
@@ -947,6 +971,9 @@ class Location(models.Model):
     name = models.CharField(max_length=255)
 
     is_active = models.BooleanField(default=True)
+
+    # Точка отдаётся в Uzum Tezkor (включается вручную).
+    uzum_enabled = models.BooleanField(default=False)
     telegram_thread_id = models.BigIntegerField(
         null=True,
         blank=True
@@ -1885,6 +1912,12 @@ class Order(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True
+    )
+
+    # Сквозной идентификатор заказа в Uzum Tezkor (формат DDDDDD-DDDDDD),
+    # для идемпотентного приёма заказов.
+    uzum_eats_id = models.CharField(
+        max_length=64, blank=True, default="", db_index=True,
     )
 
     delivery_provider = models.ForeignKey(
@@ -4493,3 +4526,27 @@ def _purchase_to_expense(sender, instance, **kwargs):
         )
     except Exception:
         pass
+
+
+class UzumApp(models.Model):
+    """OAuth2-креды и текущий токен интеграции Uzum Tezkor (client_credentials).
+
+    Мы выдаём Uzum client_id/client_secret; по ним Uzum получает у нас токен,
+    который мы храним и проверяем в заголовке Authorization: Bearer.
+    """
+
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="uzum_apps"
+    )
+    name = models.CharField(max_length=255, blank=True, default="Uzum Tezkor")
+    client_id = models.CharField(max_length=128, unique=True)
+    client_secret = models.CharField(max_length=256)
+    access_token = models.CharField(
+        max_length=512, blank=True, default="", db_index=True
+    )
+    token_issued_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"UzumApp {self.client_id}"

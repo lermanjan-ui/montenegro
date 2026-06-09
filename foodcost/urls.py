@@ -1,8 +1,5 @@
 from django.urls import path
 from . import views
-from . import views_landing
-from . import views_techcards
-from . import views_finance
 from . import views_employees
 from . import order_views
 from . import views_settings
@@ -17,12 +14,7 @@ from . import views_transfers
 from . import views_inventory
 from . import views_autowriteoff
 from . import public_api
-from . import app_auth
-from . import app_account
-from . import app_push
-from . import app_favorites
-from . import app_repeat_order
-from . import views_combo_picks
+from . import uzum_api
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -65,7 +57,7 @@ urlpatterns = [
     path("", views.country_list, name="country_list"),
 
     # блюда
-    path("c/<slug:country_slug>/", views_landing.country_home, name="dish_list"),
+    path("c/<slug:country_slug>/", views.dish_list, name="dish_list"),
     path("c/<slug:country_slug>/dish/create/", views.dish_create, name="dish_create"),
     path("c/<slug:country_slug>/dish/<int:dish_id>/", views.dish_detail, name="dish_detail"),
     # Soft-archive a dish: hides it from menu / cart / new orders, keeps it
@@ -94,16 +86,6 @@ urlpatterns = [
         views.dish_techcard_print,
         name="dish_techcard_print",
     ),
-    path(
-        "c/<slug:country_slug>/techcards/",
-        views_techcards.techcards_list,
-        name="techcards_list",
-    ),
-    path(
-        "c/<slug:country_slug>/techcards/<int:dish_id>/",
-        views_techcards.techcard_view,
-        name="techcard_view",
-    ),
 
     # продукты
     path("c/<slug:country_slug>/products/", views.product_list, name="product_list"),
@@ -125,8 +107,6 @@ urlpatterns = [
 
     # коммуналка
     path("c/<slug:country_slug>/utilities/", views.utilities_list, name="utilities_list"),
-    path("c/<slug:country_slug>/finance/expenses/", views_finance.finance_expenses, name="finance_expenses"),
-    path("c/<slug:country_slug>/combo-picks/", views_combo_picks.combo_picks, name="combo_picks"),
 
     # списания
 
@@ -411,49 +391,6 @@ urlpatterns = [
     ),
 
     # =========================================================================
-    # 🔐 APP AUTH — вход по SMS (OTP) + токены для мобильного приложения
-    # =========================================================================
-    path("api/app/auth/request-code", app_auth.auth_request_code, name="app_auth_request_code"),
-    path("api/app/auth/request-code/", app_auth.auth_request_code, name="app_auth_request_code_s"),
-    path("api/app/auth/verify-code", app_auth.auth_verify_code, name="app_auth_verify_code"),
-    path("api/app/auth/verify-code/", app_auth.auth_verify_code, name="app_auth_verify_code_s"),
-    path("api/app/auth/refresh", app_auth.auth_refresh, name="app_auth_refresh"),
-    path("api/app/auth/refresh/", app_auth.auth_refresh, name="app_auth_refresh_s"),
-    path("api/app/auth/logout", app_auth.auth_logout, name="app_auth_logout"),
-    path("api/app/auth/logout/", app_auth.auth_logout, name="app_auth_logout_s"),
-
-    # =========================================================================
-    # 👤 APP ACCOUNT — профиль, история заказов, адреса (нужен Bearer-токен)
-    # =========================================================================
-    path("api/app/profile", app_account.profile, name="app_profile"),
-    path("api/app/profile/", app_account.profile, name="app_profile_s"),
-    path("api/app/orders", app_account.orders_list, name="app_orders"),
-    path("api/app/orders/", app_account.orders_list, name="app_orders_s"),
-    path("api/app/orders/<str:public_order_number>", app_account.order_detail, name="app_order_detail"),
-    path("api/app/orders/<str:public_order_number>/", app_account.order_detail, name="app_order_detail_s"),
-    path("api/app/orders/<str:public_order_number>/repeat", app_repeat_order.repeat_order, name="app_repeat_order"),
-    path("api/app/orders/<str:public_order_number>/repeat/", app_repeat_order.repeat_order, name="app_repeat_order_s"),
-    path("api/app/addresses", app_account.addresses, name="app_addresses"),
-    path("api/app/addresses/", app_account.addresses, name="app_addresses_s"),
-    path("api/app/addresses/<int:address_id>", app_account.address_detail, name="app_address_detail"),
-    path("api/app/addresses/<int:address_id>/", app_account.address_detail, name="app_address_detail_s"),
-
-    # =========================================================================
-    # 🔔 APP PUSH — регистрация токена устройства (FCM), нужен Bearer-токен
-    # =========================================================================
-    path("api/app/push/register", app_push.push_register, name="app_push_register"),
-    path("api/app/push/register/", app_push.push_register, name="app_push_register_s"),
-    path("api/app/push/unregister", app_push.push_unregister, name="app_push_unregister"),
-    path("api/app/push/unregister/", app_push.push_unregister, name="app_push_unregister_s"),
-    # ⭐️ Избранное
-    path("api/app/favorites", app_favorites.favorites, name="app_favorites"),
-    path("api/app/favorites/", app_favorites.favorites, name="app_favorites_s"),
-    path("api/app/favorites/ids", app_favorites.favorite_ids, name="app_favorites_ids"),
-    path("api/app/favorites/ids/", app_favorites.favorite_ids, name="app_favorites_ids_s"),
-    path("api/app/favorites/<int:dish_id>", app_favorites.favorite_detail, name="app_favorite_detail"),
-    path("api/app/favorites/<int:dish_id>/", app_favorites.favorite_detail, name="app_favorite_detail_s"),
-
-    # =========================================================================
     # 🗺  PUBLIC API (Part 8) — delivery zone check by coordinates
     # =========================================================================
     path(
@@ -479,16 +416,6 @@ urlpatterns = [
         "api/public/home/bestsellers",
         public_api.home_bestsellers,
         name="public_home_bestsellers",
-    ),
-    path(
-        "api/public/home/combo",
-        public_api.home_combo,
-        name="public_home_combo",
-    ),
-    path(
-        "api/public/home/combo/",
-        public_api.home_combo,
-        name="public_home_combo_s",
     ),
     path(
         "api/public/home/frequently-bought",
@@ -570,4 +497,16 @@ urlpatterns = [
         public_api.payme_callback,
         name="payments_payme_callback_noslash",
     ),
+
+    # --- Octo онлайн-оплата ---
+    path("api/payments/octo/callback/", public_api.octo_callback, name="payments_octo_callback"),
+    path("api/payments/octo/callback", public_api.octo_callback, name="payments_octo_callback_noslash"),
+
+    # --- Uzum Tezkor (Retail API): Uzum опрашивает нас; пути с /v1 и без ---
+    path("security/oauth/token", uzum_api.oauth_token, name="uzum_token"),
+    path("v1/security/oauth/token", uzum_api.oauth_token, name="uzum_token_v1"),
+    path("nomenclature/<str:store_id>/composition", uzum_api.composition, name="uzum_composition"),
+    path("v1/nomenclature/<str:store_id>/composition", uzum_api.composition, name="uzum_composition_v1"),
+    path("nomenclature/<str:store_id>/availability", uzum_api.availability, name="uzum_availability"),
+    path("v1/nomenclature/<str:store_id>/availability", uzum_api.availability, name="uzum_availability_v1"),
 ]

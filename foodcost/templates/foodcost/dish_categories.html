@@ -475,6 +475,31 @@ button:hover{
                     <input name="rating" type="number" step="0.1" min="0" max="5" placeholder="напр. 4.9">
                 </div>
 
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label">Бейдж на фото (необязательно)</label>
+                    <input name="badge_label" type="text" placeholder="напр. -50% или SALE20">
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label">Цвет бейджа</label>
+                    <select name="badge_style">
+                        <option value="">По умолчанию</option>
+                        <option value="red">Красный</option>
+                        <option value="green">Зелёный</option>
+                        <option value="orange">Оранжевый</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label">Время доставки (необязательно)</label>
+                    <input name="delivery_time_label" type="text" placeholder="напр. 15–25 мин">
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label class="cat-field-label">Галерея фото (по одной ссылке в строке)</label>
+                    <textarea name="gallery" rows="3" placeholder="https://.../1.jpg"></textarea>
+                </div>
+
                 <div class="cat-photo-row" style="margin-bottom:14px;">
                     <div class="cat-photo-preview">
                         <div class="cat-photo-empty">Фото не выбрано</div>
@@ -609,6 +634,32 @@ button:hover{
                             <div>
                                 <label class="cat-field-label" for="cat-rating-{{ item.id }}">Рейтинг (необязательно)</label>
                                 <input id="cat-rating-{{ item.id }}" name="rating" type="number" step="0.1" min="0" max="5" value="{{ item.rating|default_if_none:'' }}" placeholder="напр. 4.9">
+                            </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-badge-{{ item.id }}">Бейдж на фото (необязательно)</label>
+                                <input id="cat-badge-{{ item.id }}" name="badge_label" type="text" value="{{ item.badge_label }}" placeholder="напр. -50% или SALE20">
+                            </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-badge-style-{{ item.id }}">Цвет бейджа</label>
+                                <select id="cat-badge-style-{{ item.id }}" name="badge_style">
+                                    <option value="" {% if not item.badge_style %}selected{% endif %}>По умолчанию</option>
+                                    <option value="red" {% if item.badge_style == 'red' %}selected{% endif %}>Красный</option>
+                                    <option value="green" {% if item.badge_style == 'green' %}selected{% endif %}>Зелёный</option>
+                                    <option value="orange" {% if item.badge_style == 'orange' %}selected{% endif %}>Оранжевый</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-delivery-{{ item.id }}">Время доставки (необязательно)</label>
+                                <input id="cat-delivery-{{ item.id }}" name="delivery_time_label" type="text" value="{{ item.delivery_time_label }}" placeholder="напр. 15–25 мин">
+                            </div>
+
+                            <div>
+                                <label class="cat-field-label" for="cat-gallery-{{ item.id }}">Галерея фото (по одной ссылке в строке)</label>
+                                <textarea id="cat-gallery-{{ item.id }}" name="gallery" rows="3" placeholder="https://.../1.jpg">{% for u in item.gallery %}{{ u }}
+{% endfor %}</textarea>
                             </div>
 
                             <div class="cat-photo-row">

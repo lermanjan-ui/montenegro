@@ -262,6 +262,10 @@ def dish_categories_page(request, country_slug):
                     logo_url=(request.POST.get("logo_url") or "").strip(),
                     subtitle=(request.POST.get("subtitle") or "").strip()[:255],
                     rating=_parse_rating(request.POST.get("rating")),
+                    badge_label=(request.POST.get("badge_label") or "").strip()[:50],
+                    badge_style=(request.POST.get("badge_style") or "").strip()[:20],
+                    delivery_time_label=(request.POST.get("delivery_time_label") or "").strip()[:50],
+                    gallery=[u.strip() for u in (request.POST.get("gallery") or "").splitlines() if u.strip()],
                 )
 
                 uploaded_photo = request.FILES.get("photo")
@@ -309,6 +313,10 @@ def dish_categories_page(request, country_slug):
             item.logo_url = (request.POST.get("logo_url") or "").strip()
             item.subtitle = (request.POST.get("subtitle") or "").strip()[:255]
             item.rating = _parse_rating(request.POST.get("rating"))
+            item.badge_label = (request.POST.get("badge_label") or "").strip()[:50]
+            item.badge_style = (request.POST.get("badge_style") or "").strip()[:20]
+            item.delivery_time_label = (request.POST.get("delivery_time_label") or "").strip()[:50]
+            item.gallery = [u.strip() for u in (request.POST.get("gallery") or "").splitlines() if u.strip()]
 
             uploaded_photo = request.FILES.get("photo")
             if uploaded_photo:

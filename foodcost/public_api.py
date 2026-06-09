@@ -470,6 +470,10 @@ def serialize_category(request, category, min_price=None):
         ),
         "subtitle": (getattr(category, "subtitle", "") or "").strip(),
         "rating": _to_float(category.rating) if getattr(category, "rating", None) is not None else None,
+        "badge_label": (getattr(category, "badge_label", "") or "").strip(),
+        "badge_style": (getattr(category, "badge_style", "") or "").strip(),
+        "delivery_time_label": (getattr(category, "delivery_time_label", "") or "").strip(),
+        "gallery": [u for u in (getattr(category, "gallery", []) or []) if u],
     }
 
 
@@ -1317,13 +1321,14 @@ DEFAULT_FREE_DELIVERY_THRESHOLD = Decimal("150000")
 # `is_cash` is True only for "cash" so cashiers see the right indicator in
 # the existing ERP. All other methods are non-cash.
 
-PAYMENT_METHOD_KEYS = ("cash", "click", "payme", "online_card")
+PAYMENT_METHOD_KEYS = ("cash", "click", "payme", "online_card", "octo")
 
 PAYMENT_METHOD_LABELS = {
     "cash":        "Наличные",
     "click":       "Click",
     "payme":       "Payme",
     "online_card": "Карта онлайн",
+    "octo":        "Octo (карта)",
 }
 
 
@@ -2946,7 +2951,7 @@ def order_create(request):
     #     this status. The Part 2 callback transitions awaiting_payment →
     #     new (or cancelled, on failure).
     #   - everything else (cash, missing) → NEW as before.
-    ONLINE_GATEWAY_KEYS = ("click", "payme", "online_card")
+    ONLINE_GATEWAY_KEYS = ("click", "payme", "online_card", "octo")
 
     # =========================================================================
     # MVP fallback: if the gateway env vars are empty, behave like cash.
@@ -2975,6 +2980,11 @@ def order_create(request):
                 (getattr(_settings_mvp, "CLICK_SERVICE_ID", "") or "").strip()
                 and (getattr(_settings_mvp, "CLICK_MERCHANT_ID", "") or "").strip()
                 and (getattr(_settings_mvp, "CLICK_SECRET_KEY", "") or "").strip()
+            )
+        if key == "octo":
+            return bool(
+                (getattr(_settings_mvp, "OCTO_SHOP_ID", "") or "").strip()
+                and (getattr(_settings_mvp, "OCTO_SECRET", "") or "").strip()
             )
         if key == "payme":
             return bool(
@@ -3253,6 +3263,20 @@ def order_create(request):
             )
         payment_block = {
             "provider": "payme",
+            "payment_url": payment_url,
+        }
+    elif gateway_active and payment_key == "octo":
+        from .payments.octo import build_octo_payment_url, OctoConfigError
+        try:
+            payment_url = build_octo_payment_url(order)
+        except OctoConfigError as exc:
+            return api_error(
+                "PAYMENT_PROVIDER_UNAVAILABLE",
+                str(exc),
+                status=503,
+            )
+        payment_block = {
+            "provider": "octo",
             "payment_url": payment_url,
         }
     elif payment_key in ONLINE_GATEWAY_KEYS:
@@ -5126,3 +5150,61 @@ def payme_callback(request):
         )
 
     return _payme_rpc_response(request_id, result=result)
+
+
+@csrf_exempt
+def octo_callback(request):
+    """Уведомление Octo о статусе платежа (notify_url). Помечает заказ оплаченным."""
+    from .payments.octo import verify_octo_signature
+
+    try:
+        payload = json.loads((request.body or b"{}").decode("utf-8") or "{}")
+    except Exception:  # noqa: BLE001
+        return JsonResponse({"status": "error", "message": "Bad JSON"}, status=400)
+
+    shop_tx = str(payload.get("shop_transaction_id") or "").strip()
+    uuid = str(payload.get("octo_payment_UUID") or "").strip()
+    status = str(payload.get("status") or "").strip()
+    signature = str(payload.get("signature") or "").strip()
+    total_sum = payload.get("total_sum")
+
+    if not verify_octo_signature(uuid, status, signature):
+        return JsonResponse({"status": "error", "message": "Bad signature"}, status=400)
+
+    order = Order.objects.filter(public_order_number=shop_tx).first()
+    if order is None and shop_tx.isdigit():
+        order = Order.objects.filter(pk=int(shop_tx)).first()
+    if order is None:
+        return JsonResponse({"status": "error", "message": "Order not found"}, status=404)
+
+    if not amounts_match(order.total_amount, str(total_sum)):
+        return JsonResponse({"status": "error", "message": "Incorrect amount"}, status=400)
+
+    with transaction.atomic():
+        try:
+            locked = Order.objects.select_for_update().get(pk=order.pk)
+        except Order.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Order not found"}, status=404)
+
+        if locked.payment_status == Order.PAYMENT_STATUS_PAID:
+            return JsonResponse({"status": "success", "message": "Already processed"}, status=200)
+
+        st = status.lower()
+        if st == "succeeded":
+            if getattr(locked, "auto_expired", False):
+                return JsonResponse({"status": "error", "message": "Order expired"}, status=400)
+            locked.payment_status = Order.PAYMENT_STATUS_PAID
+            locked.payment_transaction_id = uuid
+            locked.payment_paid_at = timezone.now()
+            if locked.status == Order.STATUS_AWAITING_PAYMENT:
+                locked.status = Order.STATUS_NEW
+            fields = ["payment_status", "payment_transaction_id", "payment_paid_at", "status"]
+            if hasattr(locked, "updated_at"):
+                fields.append("updated_at")
+            locked.save(update_fields=fields)
+        elif st in ("canceled", "cancelled", "failed", "error", "expired", "reversed", "refunded"):
+            locked.payment_status = Order.PAYMENT_STATUS_FAILED
+            locked.status = Order.STATUS_PAYMENT_FAILED
+            locked.save(update_fields=["payment_status", "status"])
+
+    return JsonResponse({"status": "success", "message": "OK"}, status=200)
