@@ -2309,6 +2309,27 @@
                        {% if not can_edit_dish_base %}readonly{% endif %}>
                 <div class="fc-field-hint">Общее время приготовления</div>
             </div>
+
+            <div class="fc-field">
+                <label class="fc-label">ИКПУ (mxik)</label>
+                <input class="fc-input" type="text" name="mxik_code" value="{{ dish.mxik_code }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Фискальный код блюда. Используется в фискализации и при необходимости в Uzum.</div>
+            </div>
+
+            <div class="fc-field">
+                <label class="fc-label">Код упаковки</label>
+                <input class="fc-input" type="text" name="package_code" value="{{ dish.package_code }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Фискальный код упаковки (необязательно).</div>
+            </div>
+
+            <div class="fc-field">
+                <label class="fc-label">Цена для Uzum</label>
+                <input class="fc-input" type="text" name="uzum_price" value="{{ dish.uzum_price|default_if_none:'' }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Если пусто — в Uzum уходит обычная «Цена продажи».</div>
+            </div>
         </div>
 
         {% if can_edit_dish_base %}
@@ -3493,10 +3514,16 @@
                         {% endif %}
                     </div>
 
-                    <label class="ws-switch" title="Доступно">
-                        <input type="checkbox" name="is_available" value="1" {% if row.is_available %}checked{% endif %}>
-                        <span class="ws-switch-track"></span>
-                    </label>
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        <label class="ws-switch" title="Доступно">
+                            <input type="checkbox" name="is_available" value="1" {% if row.is_available %}checked{% endif %}>
+                            <span class="ws-switch-track"></span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6B7280;cursor:pointer;white-space:nowrap;">
+                            <input type="checkbox" name="uzum_stop" value="1" {% if row.uzum_stop %}checked{% endif %}>
+                            стоп Uzum
+                        </label>
+                    </div>
 
                     <input class="ws-input" type="text" name="comment"
                            value="{{ row.comment }}"

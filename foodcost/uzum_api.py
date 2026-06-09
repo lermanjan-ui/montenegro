@@ -9,6 +9,7 @@ storeId = id нашей точки (Location). Приём заказов — Э�
 Ошибки отдаём списком [{code, description}] по их схеме ErrorListV1.
 """
 
+import hashlib
 import json
 import secrets
 from decimal import Decimal, InvalidOperation
@@ -19,7 +20,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
-    Location, DishCategory, Dish, UzumApp,
+    Location, DishCategory, Dish, UzumApp, DishAvailability,
     Order, OrderItem, OrderSource, PaymentMethod,
 )
 
@@ -91,6 +92,33 @@ def oauth_token(request):
     })
 
 
+def _dish_images(request, dish):
+    """Список изображений блюда для Uzum: [{hash, url}]. Основное фото + галерея.
+
+    Приоритет основного фото: внешняя ссылка photo_url, иначе загруженное photo.
+    hash — SHA1 от URL (служит признаком изменения: меняется URL → Uzum перезальёт).
+    """
+    urls = []
+    ext = (getattr(dish, "photo_url", "") or "").strip()
+    if ext:
+        urls.append(ext)
+    else:
+        photo = getattr(dish, "photo", None)
+        try:
+            if photo and photo.url:
+                urls.append(request.build_absolute_uri(photo.url))
+        except Exception:  # noqa: BLE001
+            pass
+    for g in (getattr(dish, "gallery", None) or []):
+        g = (g or "").strip() if isinstance(g, str) else ""
+        if g and g not in urls:
+            urls.append(g)
+    return [
+        {"hash": hashlib.sha1(u.encode("utf-8")).hexdigest(), "url": u}
+        for u in urls if u
+    ]
+
+
 def composition(request, store_id):
     """Каталог точки: категории + товары в схеме PickerNomenclatureV1."""
     app = _bearer_app(request)
@@ -135,7 +163,7 @@ def composition(request, store_id):
             "categoryId": str(d.category_id),
             "name": (d.public_name or d.name or "").strip() or d.name,
             "description": {"general": (d.public_name or d.name or "").strip()},
-            "images": [],
+            "images": _dish_images(request, d),
             "isCatchWeight": False,
             "measure": {"unit": "GRM", "value": grams, "quantum": 1},
             "price": price,
@@ -180,16 +208,28 @@ def availability(request, store_id):
 
     items = []
     if store.uzum_enabled:
+        # стоп/доступность конкретного филиала
+        av_map = {
+            a.dish_id: a
+            for a in DishAvailability.objects.filter(
+                country=store.country, location=store
+            )
+        }
         dishes = Dish.objects.filter(country=store.country, is_archived=False)
         for d in dishes:
             if not d.category_id:
                 continue
             if _dish_price(d) <= 0:
                 continue
-            available = not (
-                d.is_stop_list or d.uzum_stop or not d.is_visible_on_site
-            )
-            items.append({"id": str(d.id), "stock": 999 if available else 0})
+            # глобальные правила блюда
+            blocked = bool(d.is_stop_list or d.uzum_stop or not d.is_visible_on_site)
+            # правила филиала
+            av = av_map.get(d.id)
+            if av is not None and (
+                not av.is_available or av.is_stop_list or av.uzum_stop
+            ):
+                blocked = True
+            items.append({"id": str(d.id), "stock": 0 if blocked else 999})
 
     return JsonResponse({"items": items})
 

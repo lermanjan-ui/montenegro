@@ -2859,6 +2859,8 @@ class DishAvailability(models.Model):
 
     is_available = models.BooleanField(default=True)
     is_stop_list = models.BooleanField(default=False)
+    # Стоп в Uzum для этого блюда на этом филиале (не влияет на сайт/приложение).
+    uzum_stop = models.BooleanField(default=False)
 
     comment = models.CharField(
         max_length=255,

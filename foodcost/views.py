@@ -971,6 +971,7 @@ def dish_detail(request, country_slug, dish_id):
             # that read `is_stop_list` remain consistent.
             availability.is_stop_list = not is_available
             availability.comment = (request.POST.get("comment") or "").strip()
+            availability.uzum_stop = bool(request.POST.get("uzum_stop"))
             availability.save()
 
             return _back_to_dish("#tab-availability")
@@ -1009,6 +1010,14 @@ def dish_detail(request, country_slug, dish_id):
                 )
             else:
                 dish.category = None
+
+            dish.mxik_code = (request.POST.get("mxik_code") or "").strip()[:32]
+            dish.package_code = (request.POST.get("package_code") or "").strip()[:32]
+            _uzp = (request.POST.get("uzum_price") or "").strip().replace(",", ".")
+            try:
+                dish.uzum_price = Decimal(_uzp) if _uzp else None
+            except Exception:
+                dish.uzum_price = None
 
             dish.save()
             dish.recalculate_cache()
@@ -1331,6 +1340,7 @@ def dish_detail(request, country_slug, dish_id):
                 "availability": None,
                 "is_available": True,
                 "is_stop_list": False,
+                "uzum_stop": False,
                 "comment": "",
                 "updated_at": None,
             })
@@ -1340,6 +1350,7 @@ def dish_detail(request, country_slug, dish_id):
                 "availability": rec,
                 "is_available": bool(rec.is_available),
                 "is_stop_list": bool(rec.is_stop_list),
+                "uzum_stop": bool(rec.uzum_stop),
                 "comment": rec.comment or "",
                 "updated_at": rec.updated_at,
             })

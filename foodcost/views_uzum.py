@@ -1,66 +1,39 @@
-from decimal import Decimal, InvalidOperation
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
-from .models import UserProfile, Location, Dish
+from .models import UserProfile, Location
 from .views import get_country, require_section_access
-
-
-def _dec_or_none(raw):
-    raw = (raw or "").strip().replace(",", ".")
-    if not raw:
-        return None
-    try:
-        return Decimal(raw)
-    except (InvalidOperation, ValueError):
-        return None
 
 
 @login_required(login_url="/login/")
 def uzum_settings(request, country_slug):
-    """Настройки интеграции Uzum: какие точки отдаём в Uzum, цена/стоп блюд."""
+    """Страница «Локации»: видимость филиалов (активна / на сайте) и отдача в Uzum.
+
+    Управление филиалами (создание/адрес/удаление) и доступ пользователей —
+    по-прежнему на странице «Пользователи». Здесь — быстрые переключатели
+    видимости и интеграции Uzum по всем точкам в одном месте.
+    """
     country = get_country(country_slug, request.user)
 
     access_error = require_section_access(request.user, UserProfile.SECTION_SETTINGS)
     if access_error:
         return access_error
 
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        if action == "save_locations":
-            enabled_ids = set(request.POST.getlist("uzum_enabled"))
-            for loc in Location.objects.filter(country=country):
-                want = str(loc.id) in enabled_ids
-                if loc.uzum_enabled != want:
-                    loc.uzum_enabled = want
-                    loc.save(update_fields=["uzum_enabled"])
-
-        elif action == "save_dish":
-            dish = Dish.objects.filter(
-                id=request.POST.get("dish_id"), country=country
-            ).first()
-            if dish:
-                dish.uzum_price = _dec_or_none(request.POST.get("uzum_price"))
-                dish.uzum_stop = bool(request.POST.get("uzum_stop"))
-                dish.mxik_code = (request.POST.get("mxik_code") or "").strip()[:32]
-                dish.package_code = (request.POST.get("package_code") or "").strip()[:32]
-                dish.save(update_fields=[
-                    "uzum_price", "uzum_stop", "mxik_code", "package_code",
-                ])
-
+    if request.method == "POST" and request.POST.get("action") == "save_locations":
+        enabled = set(request.POST.getlist("uzum_enabled"))
+        active = set(request.POST.getlist("is_active"))
+        visible = set(request.POST.getlist("is_visible_on_site"))
+        for loc in Location.objects.filter(country=country):
+            sid = str(loc.id)
+            loc.uzum_enabled = sid in enabled
+            loc.is_active = sid in active
+            loc.is_visible_on_site = sid in visible
+            loc.save(update_fields=["uzum_enabled", "is_active", "is_visible_on_site"])
         return redirect(f"/c/{country.slug}/uzum/")
 
-    locations = Location.objects.filter(country=country).order_by("name")
-    dishes = (
-        Dish.objects.filter(country=country, is_archived=False)
-        .select_related("category")
-        .order_by("name")
-    )
+    locations = Location.objects.filter(country=country).order_by("site_sort_order", "name")
 
     return render(request, "foodcost/uzum_settings.html", {
         "country": country,
         "locations": locations,
-        "dishes": dishes,
     })
