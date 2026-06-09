@@ -15,6 +15,7 @@ from . import views_inventory
 from . import views_autowriteoff
 from . import public_api
 from . import uzum_api
+from . import views_uzum
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -509,4 +510,13 @@ urlpatterns = [
     path("v1/nomenclature/<str:store_id>/composition", uzum_api.composition, name="uzum_composition_v1"),
     path("nomenclature/<str:store_id>/availability", uzum_api.availability, name="uzum_availability"),
     path("v1/nomenclature/<str:store_id>/availability", uzum_api.availability, name="uzum_availability_v1"),
+    path("order", uzum_api.order_create, name="uzum_order_create"),
+    path("v1/order", uzum_api.order_create, name="uzum_order_create_v1"),
+    path("order/<str:order_id>", uzum_api.order_detail, name="uzum_order_detail"),
+    path("v1/order/<str:order_id>", uzum_api.order_detail, name="uzum_order_detail_v1"),
+    path("order/<str:order_id>/status", uzum_api.order_status, name="uzum_order_status"),
+    path("v1/order/<str:order_id>/status", uzum_api.order_status, name="uzum_order_status_v1"),
+
+    # Страница настроек Uzum (точки + цена/стоп блюд)
+    path("c/<slug:country_slug>/uzum/", views_uzum.uzum_settings, name="uzum_settings"),
 ]

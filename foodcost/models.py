@@ -1852,9 +1852,12 @@ class Order(models.Model):
     STATUS_DELIVERY = "delivery"
     STATUS_DONE = "done"
     STATUS_CANCELLED = "cancelled"
+    STATUS_READY = "ready"
 
     STATUS_CHOICES = [
         (STATUS_NEW, "Принят"),
+        (STATUS_COOKING, "Готовится"),
+        (STATUS_READY, "Готов"),
         (STATUS_AWAITING_PAYMENT, "Ожидает оплаты"),
         (STATUS_PAYMENT_FAILED, "Оплата не прошла"),
         (STATUS_DELIVERY, "Доставка"),
