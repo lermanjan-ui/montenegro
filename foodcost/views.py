@@ -337,11 +337,28 @@ def dish_list(request, country_slug):
     real_category_ids = [c for c in category_ids if c != "none"]
 
     if category_ids:
-        dishes = [
-            dish for dish in dishes
-            if (dish.category_id and str(dish.category_id) in real_category_ids)
-            or (want_no_category and not dish.category_id)
-        ]
+        # Вторичные категории блюда (public_categories, M2M): чтобы фильтр по
+        # второй категории тоже находил блюдо, а не только по основной.
+        pubcat_map = {}
+        for _did, _cid in (
+            Dish.objects.filter(country=country)
+            .values_list("id", "public_categories")
+        ):
+            if _cid is not None:
+                pubcat_map.setdefault(_did, set()).add(str(_cid))
+
+        _real_set = set(real_category_ids)
+
+        def _in_selected_categories(dish):
+            if dish.category_id and str(dish.category_id) in _real_set:
+                return True
+            if _real_set & pubcat_map.get(dish.id, set()):
+                return True
+            if want_no_category and not dish.category_id:
+                return True
+            return False
+
+        dishes = [dish for dish in dishes if _in_selected_categories(dish)]
 
     if filter_type == "loss":
         dishes = [dish for dish in dishes if dish.cached_margin < 0]
