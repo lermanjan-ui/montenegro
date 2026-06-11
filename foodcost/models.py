@@ -462,6 +462,10 @@ class Dish(models.Model):
         default=False,
         help_text="Стоп только для Uzum (на сайт/приложение не влияет).",
     )
+    uzum_excluded = models.BooleanField(
+        default=False,
+        help_text="Не передавать блюдо в Uzum вообще (для незапущенных позиций).",
+    )
     mxik_code = models.CharField(
         max_length=32, blank=True, default="",
         help_text="ИКПУ/mxik (фискальный). Пока в Uzum не передаётся.",

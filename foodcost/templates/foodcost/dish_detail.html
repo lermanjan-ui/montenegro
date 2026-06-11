@@ -2330,6 +2330,15 @@
                        {% if not can_edit_dish_base %}readonly{% endif %}>
                 <div class="fc-field-hint">Если пусто — в Uzum уходит обычная «Цена продажи».</div>
             </div>
+
+            <div class="fc-field">
+                <label class="fc-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;">
+                    <input type="checkbox" name="uzum_excluded" value="1" {% if dish.uzum_excluded %}checked{% endif %}
+                           {% if not can_edit_dish_base %}disabled{% endif %}>
+                    Не передавать в Uzum
+                </label>
+                <div class="fc-field-hint">Для незапущенных позиций: блюдо вообще не попадёт в каталог Uzum.</div>
+            </div>
         </div>
 
         {% if can_edit_dish_base %}

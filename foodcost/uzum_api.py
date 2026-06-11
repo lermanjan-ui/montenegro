@@ -150,6 +150,8 @@ def composition(request, store_id):
     for d in dishes:
         if not d.category_id:
             continue
+        if getattr(d, "uzum_excluded", False):
+            continue  # блюдо вручную исключено из передачи в Uzum
         price = _dish_price(d)
         if price <= 0:
             continue  # позиции с нулевой ценой Uzum отбрасывает
@@ -162,7 +164,10 @@ def composition(request, store_id):
             "id": str(d.id),
             "categoryId": str(d.category_id),
             "name": (d.public_name or d.name or "").strip() or d.name,
-            "description": {"general": (d.public_name or d.name or "").strip()},
+            "description": {
+                "general": (getattr(d, "composition", "") or "").strip()
+                or (d.public_name or d.name or "").strip()
+            },
             "images": _dish_images(request, d),
             "isCatchWeight": False,
             "measure": {"unit": "GRM", "value": grams, "quantum": 1},
@@ -218,6 +223,8 @@ def availability(request, store_id):
         dishes = Dish.objects.filter(country=store.country, is_archived=False)
         for d in dishes:
             if not d.category_id:
+                continue
+            if getattr(d, "uzum_excluded", False):
                 continue
             if _dish_price(d) <= 0:
                 continue
