@@ -1036,6 +1036,11 @@ def dish_detail(request, country_slug, dish_id):
                 dish.uzum_price = Decimal(_uzp) if _uzp else None
             except Exception:
                 dish.uzum_price = None
+            _yap = (request.POST.get("yandex_price") or "").strip().replace(",", ".")
+            try:
+                dish.yandex_price = Decimal(_yap) if _yap else None
+            except Exception:
+                dish.yandex_price = None
 
             dish.save()
             dish.recalculate_cache()

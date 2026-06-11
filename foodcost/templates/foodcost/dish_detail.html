@@ -2332,6 +2332,13 @@
             </div>
 
             <div class="fc-field">
+                <label class="fc-label">Цена для Яндекса</label>
+                <input class="fc-input" type="text" name="yandex_price" value="{{ dish.yandex_price|default_if_none:'' }}"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Если пусто — берётся «Цена для Uzum», иначе «Цена продажи».</div>
+            </div>
+
+            <div class="fc-field">
                 <label class="fc-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;">
                     <input type="checkbox" name="uzum_excluded" value="1" {% if dish.uzum_excluded %}checked{% endif %}
                            {% if not can_edit_dish_base %}disabled{% endif %}>

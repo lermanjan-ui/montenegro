@@ -107,6 +107,7 @@ def dish_pricing(request, country_slug):
         cost = d.cached_total_cost or Decimal(0)
         price = d.selling_price or Decimal(0)
         uzum_price = d.uzum_price if d.uzum_price is not None else price
+        yandex_price = d.yandex_price if d.yandex_price is not None else uzum_price
 
         margin_abs = price - cost
         margin_pct = _pct(margin_abs, price)
@@ -115,7 +116,7 @@ def dish_pricing(request, country_slug):
         uzum_margin_abs = uzum_net - cost
         uzum_margin_pct = _pct(uzum_margin_abs, uzum_net)
 
-        yandex_net = (uzum_price * (Decimal(100) - YANDEX_COMMISSION) / Decimal(100)).quantize(Decimal("1"))
+        yandex_net = (yandex_price * (Decimal(100) - YANDEX_COMMISSION) / Decimal(100)).quantize(Decimal("1"))
         yandex_margin_abs = yandex_net - cost
 
         loc_cells = []
@@ -138,6 +139,7 @@ def dish_pricing(request, country_slug):
             "uzum_net": uzum_net,
             "uzum_margin_abs": uzum_margin_abs,
             "uzum_margin_pct": uzum_margin_pct,
+            "yandex_price": yandex_price,
             "yandex_net": yandex_net,
             "yandex_margin_abs": yandex_margin_abs,
             "loc_cells": loc_cells,

@@ -119,7 +119,7 @@ table.dp th.srt:hover{ color:var(--fc-text); }
 
           <th class="dp-sep c-yx srt">Цена (источник)<span class="dp-arr"></span></th>
           <th class="c-yx srt">Яндекс −{{ yandex_comm }}%<span class="dp-arr"></span></th>
-          <th class="c-yx srt">Яндекс итог<span class="dp-arr"></span></th>
+          <th class="c-yx srt">Прибыль после комиссии<span class="dp-arr"></span></th>
 
           {% for loc in locations %}
             <th class="dp-sep c-site srt">{{ loc.name }}<div class="dp-grp">доступно</div><span class="dp-arr"></span></th>
@@ -157,7 +157,7 @@ table.dp th.srt:hover{ color:var(--fc-text); }
             <td class="c-uzum" data-sort="{{ r.uzum_net }}">{{ r.uzum_net }}</td>
             <td class="c-uzum" data-sort="{{ r.uzum_margin_abs }}"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
 
-            <td class="dp-sep c-yx dp-muted" data-sort="{{ r.uzum_price }}">{{ r.uzum_price }}</td>
+            <td class="dp-sep c-yx dp-muted" data-sort="{{ r.yandex_price }}">{{ r.yandex_price }}</td>
             <td class="c-yx" data-sort="{{ r.yandex_net }}">{{ r.yandex_net }}</td>
             <td class="c-yx" data-sort="{{ r.yandex_margin_abs }}"><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span></td>
 

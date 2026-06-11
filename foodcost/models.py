@@ -475,6 +475,12 @@ class Dish(models.Model):
         help_text="Код упаковки (фискальный).",
     )
 
+    # --- Яндекс (выдача/доставка) ---
+    yandex_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Цена для Яндекса. Пусто → используется цена Uzum, иначе selling_price.",
+    )
+
     # Soft-archive flag. When True, the dish is hidden from:
     #   - public website (cart, checkout, /products listing)
     #   - ERP dish list (default view; toggle to see archive)
