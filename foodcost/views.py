@@ -1562,6 +1562,48 @@ def dish_techcard_print(request, country_slug, dish_id):
 
 
 @login_required(login_url="/login/")
+def techcards_page(request, country_slug):
+    """Список техкарт для поваров: состав (продукты + заготовки) с брутто/нетто
+    и текстом приготовления. Без финансов. Комбо не показываем."""
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(request.user, UserProfile.SECTION_TECHCARDS)
+    if access_error:
+        return access_error
+
+    dishes = (
+        Dish.objects.filter(country=country, is_archived=False, is_combo=False)
+        .select_related("category")
+        .prefetch_related("product_items__product", "preparation_items__preparation")
+        .order_by("category__name", "name")
+    )
+
+    rows = []
+    for d in dishes:
+        product_items = [
+            {"name": it.product.name, "gross": it.gross, "net": it.net, "unit": it.unit_label()}
+            for it in d.product_items.all()
+        ]
+        preparation_items = [
+            {"name": it.preparation.name, "gross": it.gross, "net": it.net, "unit": it.unit_label()}
+            for it in d.preparation_items.all()
+        ]
+        if not product_items and not preparation_items and not (d.tech_card or "").strip():
+            continue  # совсем пустые техкарты не показываем
+        rows.append({
+            "dish": d,
+            "category": d.category.name if d.category_id else "Без категории",
+            "product_items": product_items,
+            "preparation_items": preparation_items,
+        })
+
+    return render(request, "foodcost/techcards.html", {
+        "country": country,
+        "rows": rows,
+    })
+
+
+@login_required(login_url="/login/")
 def product_list(request, country_slug):
     country = get_country(country_slug, request.user)
 

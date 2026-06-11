@@ -1,0 +1,110 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Техкарты{% endblock %}
+{% block content %}
+<style>
+:root{ --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-border:#E5E7EB; --fc-text:#111827;
+ --fc-muted:#6B7280; --fc-green:#16A34A; --fc-green-soft:#DCFCE7; --fc-hover:#F9FAFB; }
+.tc-wrap{ max-width:900px; margin:0 auto; font-family:Inter,system-ui,sans-serif; }
+.tc-wrap h1{ margin:0 0 4px; font-size:30px; font-weight:600; color:var(--fc-text); }
+.tc-wrap .tc-sub{ margin:0 0 18px; font-size:14px; color:var(--fc-muted); }
+.tc-search{ width:100%; box-sizing:border-box; height:44px; border:1px solid var(--fc-border); border-radius:10px; padding:0 14px; font-size:15px; margin-bottom:20px; }
+.tc-search:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px var(--fc-green-soft); }
+.tc-cat{ font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; color:var(--fc-muted); margin:22px 0 10px; }
+.tc-dish{ background:#fff; border:1px solid var(--fc-border); border-radius:12px; margin-bottom:10px; overflow:hidden; }
+.tc-dish > summary{ list-style:none; cursor:pointer; padding:14px 16px; display:flex; align-items:center; gap:12px; user-select:none; }
+.tc-dish > summary::-webkit-details-marker{ display:none; }
+.tc-thumb{ width:42px; height:42px; border-radius:8px; object-fit:cover; border:1px solid var(--fc-border); flex:none; }
+.tc-thumb-empty{ width:42px; height:42px; border-radius:8px; background:var(--fc-hover); border:1px solid var(--fc-border); flex:none; }
+.tc-name{ font-size:16px; font-weight:600; color:var(--fc-text); flex:1; }
+.tc-meta{ font-size:13px; color:var(--fc-muted); flex:none; }
+.tc-arrow{ color:#9CA3AF; flex:none; transition:transform .15s; }
+.tc-dish[open] .tc-arrow{ transform:rotate(90deg); }
+.tc-body{ padding:0 16px 16px; border-top:1px solid var(--fc-border); }
+.tc-h{ font-size:12px; font-weight:600; text-transform:uppercase; color:var(--fc-muted); margin:14px 0 8px; }
+table.tc-tab{ width:100%; border-collapse:collapse; font-size:14px; }
+table.tc-tab th{ text-align:left; font-size:11px; text-transform:uppercase; color:var(--fc-muted); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--fc-border); }
+table.tc-tab th.r, table.tc-tab td.r{ text-align:right; }
+table.tc-tab td{ padding:8px; border-bottom:1px solid #F0F2F4; color:var(--fc-text); }
+table.tc-tab tr:last-child td{ border-bottom:none; }
+.tc-tag{ font-size:11px; color:var(--fc-muted); background:var(--fc-hover); border-radius:6px; padding:1px 6px; margin-left:6px; }
+.tc-text{ white-space:pre-wrap; font-size:14px; line-height:1.55; color:var(--fc-text); background:var(--fc-hover); border-radius:8px; padding:12px 14px; }
+.tc-print{ display:inline-block; margin-top:14px; font-size:13px; font-weight:600; color:var(--fc-green); text-decoration:none; border:1px solid var(--fc-border); border-radius:8px; padding:8px 14px; }
+.tc-print:hover{ background:var(--fc-hover); }
+.tc-empty, .tc-none{ padding:24px; text-align:center; color:var(--fc-muted); font-size:14px; }
+.tc-none{ display:none; }
+</style>
+
+<div class="tc-wrap">
+  <h1>Техкарты</h1>
+  <p class="tc-sub">Состав блюд для кухни: продукты и заготовки с брутто/нетто и описанием приготовления.</p>
+
+  <input type="text" class="tc-search" id="tcSearch" placeholder="Поиск блюда по названию…" autocomplete="off">
+
+  <div id="tcList">
+    {% for row in rows %}
+      {% ifchanged row.category %}<div class="tc-cat">{{ row.category }}</div>{% endifchanged %}
+      <details class="tc-dish" data-name="{{ row.dish.name|lower }}">
+        <summary>
+          {% if row.dish.photo_url %}<img class="tc-thumb" src="{{ row.dish.photo_url }}">
+          {% elif row.dish.photo %}<img class="tc-thumb" src="{{ row.dish.photo.url }}">
+          {% else %}<div class="tc-thumb-empty"></div>{% endif %}
+          <span class="tc-name">{{ row.dish.name }}</span>
+          <span class="tc-meta">{{ row.dish.final_weight }} г{% if row.dish.cooking_minutes %} · {{ row.dish.cooking_minutes }} мин{% endif %}</span>
+          <span class="tc-arrow">▸</span>
+        </summary>
+        <div class="tc-body">
+          {% if row.product_items or row.preparation_items %}
+          <div class="tc-h">Состав</div>
+          <table class="tc-tab">
+            <thead><tr><th>Ингредиент</th><th class="r">Брутто</th><th class="r">Нетто</th></tr></thead>
+            <tbody>
+              {% for it in row.product_items %}
+              <tr><td>{{ it.name }}</td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
+              {% endfor %}
+              {% for it in row.preparation_items %}
+              <tr><td>{{ it.name }}<span class="tc-tag">заготовка</span></td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+
+          {% if row.dish.composition %}
+          <div class="tc-h">Состав (для гостя)</div>
+          <div class="tc-text">{{ row.dish.composition }}</div>
+          {% endif %}
+
+          {% if row.dish.tech_card %}
+          <div class="tc-h">Приготовление</div>
+          <div class="tc-text">{{ row.dish.tech_card }}</div>
+          {% endif %}
+
+          <a class="tc-print" href="/c/{{ country.slug }}/dish/{{ row.dish.id }}/techcard/" target="_blank">🖨 Печать техкарты</a>
+        </div>
+      </details>
+    {% empty %}
+      <div class="tc-empty">Пока нет техкарт.</div>
+    {% endfor %}
+    <div class="tc-none" id="tcNone">Ничего не найдено.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var s = document.getElementById('tcSearch');
+  var none = document.getElementById('tcNone');
+  if(!s) return;
+  s.addEventListener('input', function(){
+    var q = this.value.trim().toLowerCase();
+    var cards = document.querySelectorAll('.tc-dish');
+    var shown = 0;
+    cards.forEach(function(c){
+      var hit = !q || (c.getAttribute('data-name')||'').indexOf(q) !== -1;
+      c.style.display = hit ? '' : 'none';
+      if(hit) shown++;
+    });
+    document.querySelectorAll('.tc-cat').forEach(function(h){ h.style.display = q ? 'none' : ''; });
+    if(none) none.style.display = (shown===0) ? 'block' : 'none';
+  });
+})();
+</script>
+{% endblock %}

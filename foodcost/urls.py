@@ -88,6 +88,11 @@ urlpatterns = [
         views.dish_techcard_print,
         name="dish_techcard_print",
     ),
+    path(
+        "c/<slug:country_slug>/techcards/",
+        views.techcards_page,
+        name="techcards_page",
+    ),
 
     # продукты
     path("c/<slug:country_slug>/products/", views.product_list, name="product_list"),

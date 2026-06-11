@@ -6,7 +6,8 @@ from django.shortcuts import render, redirect
 from .models import UserProfile, Dish, Location, DishAvailability, OrderSource
 from .views import get_country, require_section_access
 
-YANDEX_COMMISSION = Decimal("35")  # %, фиксированная для расчёта «Выручка с Яндекса»
+YANDEX_COMMISSION = Decimal("35")          # %, фиксированная для расчёта «Выручка с Яндекса»
+UZUM_COMMISSION_DEFAULT = Decimal("28")    # %, дефолт если у источника Uzum комиссия не задана
 
 
 def _dec_or_none(raw):
@@ -56,8 +57,12 @@ def dish_pricing(request, country_slug):
                 if sp is not None:
                     dish.selling_price = sp
                 dish.uzum_price = _dec_or_none(request.POST.get("uzum_price"))
-                dish.is_visible_on_site = bool(request.POST.get("is_visible_on_site"))
-                dish.save(update_fields=["selling_price", "uzum_price", "is_visible_on_site"])
+                visible = bool(request.POST.get("is_visible_on_site"))
+                dish.is_visible_on_site = visible
+                dish.uzum_excluded = bool(request.POST.get("uzum_excluded"))
+                dish.save(update_fields=[
+                    "selling_price", "uzum_price", "is_visible_on_site", "uzum_excluded"
+                ])
                 try:
                     dish.recalculate_cache()
                 except Exception:
@@ -65,6 +70,10 @@ def dish_pricing(request, country_slug):
 
                 avail_ids = set(request.POST.getlist("avail"))
                 uzum_ok_ids = set(request.POST.getlist("uzum_ok"))
+                # Правило: нет на сайте → недоступно везде (все точки + все выдачи/Uzum).
+                if not visible:
+                    avail_ids = set()
+                    uzum_ok_ids = set()
                 for loc in locations:
                     da, _ = DishAvailability.objects.get_or_create(
                         country=country, dish=dish, location=loc
@@ -74,12 +83,12 @@ def dish_pricing(request, country_slug):
                     da.save(update_fields=["is_available", "uzum_stop"])
             return redirect(f"/c/{country.slug}/dish-pricing/")
 
-    # источник Uzum и его комиссия
+    # источник Uzum и его комиссия (дефолт 28%, если у источника не задана)
     uzum_source = (
         OrderSource.objects.filter(country=country, is_uzum=True).first()
         or OrderSource.objects.filter(country=country, name__icontains="uzum").first()
     )
-    uzum_comm = (uzum_source.commission_percent if uzum_source else Decimal(0)) or Decimal(0)
+    uzum_comm = (uzum_source.commission_percent if uzum_source else None) or UZUM_COMMISSION_DEFAULT
 
     # карта доступности по (блюдо, точка)
     av = {
