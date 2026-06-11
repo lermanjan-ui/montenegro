@@ -4633,83 +4633,99 @@ class UzumApp(models.Model):
 #
 # Себестоимость заготовок и блюд кэшируется в cached_total_cost и обновляется
 # только вызовом recalculate_cache(). Цена товара меняется через ProductPrice
-# (подтверждение/правка прихода, ручная правка цены в карточке товара). Чтобы
-# кэш не устаревал НИ ПРИ КАКОМ пути смены цены, ловим сохранение/удаление
-# ProductPrice сигналом и пересчитываем все зависимые объекты.
+# (подтверждение/правка прихода, ручная правка цены в карточке товара).
+#
+# ВАЖНО про производительность: один приход при пересборе создаёт/удаляет много
+# записей ProductPrice. Чтобы НЕ пересчитывать одни и те же заготовки/блюда
+# десятки раз и не держать транзакцию, сигналы лишь КОПЯТ затронутые товары, а
+# реальный пересчёт идёт ОДНИМ дедуплицированным проходом ПОСЛЕ коммита
+# (transaction.on_commit) — вне блокировок транзакции.
 #
 # Цепочка зависимостей от товара:
 #   товар → заготовки с этим товаром (PreparationItem)
 #         → заготовки, использующие те заготовки как под-заготовки (рекурсивно)
 #         → блюда с этим товаром напрямую (DishProductItem)
 #         → блюда, где участвует любая затронутая заготовка (DishPreparationItem)
-#
-# Порядок пересчёта не важен: calculate_cost() у заготовок/блюд считается
-# вживую (под-заготовки через cost_per_kg()), поэтому каждый recalculate_cache()
-# даёт корректное значение независимо от того, что пересчитали раньше.
 # =============================================================================
+from django.db import transaction  # noqa: E402
+import threading  # noqa: E402
 
-def _recalc_dependents_for_product(product):
-    """Пересчитать cached_total_cost у всех заготовок и блюд, зависящих от
-    данного товара (включая вложенные под-заготовки)."""
-    if product is None:
+_recalc_state = threading.local()
+
+
+def _flush_product_recalc():
+    """Один дедуплицированный проход пересчёта для всех накопленных товаров.
+    Выполняется после коммита транзакции (или сразу — в autocommit-режиме)."""
+    product_ids = getattr(_recalc_state, "pending", None)
+    if not product_ids:
         return
+    # Очищаем очередь ДО пересчёта: повторные on_commit-колбэки станут no-op,
+    # а новые правки начнут копить заново.
+    _recalc_state.pending = None
 
-    # 1) заготовки, использующие товар напрямую
-    prep_ids = set(
-        PreparationItem.objects
-        .filter(product=product)
-        .values_list("preparation_id", flat=True)
-    )
-
-    # 2) подняться вверх по под-заготовкам, пока множество растёт
-    affected_preps = set(prep_ids)
-    frontier = set(prep_ids)
-    while frontier:
-        parents = set(
-            PreparationSubItem.objects
-            .filter(sub_preparation_id__in=frontier)
+    try:
+        # 1) заготовки, использующие любой из товаров напрямую
+        affected_preps = set(
+            PreparationItem.objects
+            .filter(product_id__in=product_ids)
             .values_list("preparation_id", flat=True)
         )
-        new = parents - affected_preps
-        affected_preps |= new
-        frontier = new
+        # 2) вверх по под-заготовкам, пока множество растёт
+        frontier = set(affected_preps)
+        while frontier:
+            parents = set(
+                PreparationSubItem.objects
+                .filter(sub_preparation_id__in=frontier)
+                .values_list("preparation_id", flat=True)
+            )
+            new = parents - affected_preps
+            affected_preps |= new
+            frontier = new
 
-    # 3) пересчёт заготовок
-    for prep in Preparation.objects.filter(id__in=affected_preps):
-        prep.recalculate_cache()
-
-    # 4) блюда: с товаром напрямую + где используется затронутая заготовка
-    dish_ids = set(
-        DishProductItem.objects
-        .filter(product=product)
-        .values_list("dish_id", flat=True)
-    )
-    if affected_preps:
-        dish_ids |= set(
-            DishPreparationItem.objects
-            .filter(preparation_id__in=affected_preps)
+        # 3) блюда: с товаром напрямую + где участвует затронутая заготовка
+        dish_ids = set(
+            DishProductItem.objects
+            .filter(product_id__in=product_ids)
             .values_list("dish_id", flat=True)
         )
+        if affected_preps:
+            dish_ids |= set(
+                DishPreparationItem.objects
+                .filter(preparation_id__in=affected_preps)
+                .values_list("dish_id", flat=True)
+            )
 
-    # 5) пересчёт блюд
-    for dish in Dish.objects.filter(id__in=dish_ids):
-        dish.recalculate_cache()
+        # 4) пересчёт — каждую заготовку и каждое блюдо РОВНО ОДИН раз
+        for prep in Preparation.objects.filter(id__in=affected_preps):
+            prep.recalculate_cache()
+        for dish in Dish.objects.filter(id__in=dish_ids):
+            dish.recalculate_cache()
+    except Exception:
+        pass
+
+
+def _queue_product_recalc(product_id):
+    """Накопить товар и запланировать единый пересчёт на момент коммита.
+    Несколько on_commit-колбэков безопасны: первый делает работу и очищает
+    очередь, остальные — no-op. id добавляется ДО регистрации колбэка, чтобы в
+    autocommit-режиме (когда on_commit срабатывает сразу) товар не потерялся."""
+    if product_id is None:
+        return
+    pending = getattr(_recalc_state, "pending", None)
+    if pending is None:
+        pending = set()
+        _recalc_state.pending = pending
+    pending.add(product_id)
+    transaction.on_commit(_flush_product_recalc)
 
 
 @receiver(post_save, sender=ProductPrice)
 def _productprice_saved(sender, instance, **kwargs):
-    """Новая/изменённая цена товара → пересчитать зависимые заготовки и блюда."""
-    try:
-        _recalc_dependents_for_product(instance.product)
-    except Exception:
-        pass
+    """Новая/изменённая цена товара → запланировать пересчёт зависимых."""
+    _queue_product_recalc(instance.product_id)
 
 
 @receiver(post_delete, sender=ProductPrice)
 def _productprice_deleted(sender, instance, **kwargs):
-    """Удаление цены (откат/пересбор прихода) → пересчитать зависимые объекты
-    под актуальную (теперь последнюю) цену товара."""
-    try:
-        _recalc_dependents_for_product(instance.product)
-    except Exception:
-        pass
+    """Удаление цены (откат/пересбор прихода) → запланировать пересчёт."""
+    _queue_product_recalc(instance.product_id)
