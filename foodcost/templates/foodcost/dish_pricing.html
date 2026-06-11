@@ -149,7 +149,7 @@ table.dp th.srt:hover{ color:var(--fc-text); }
             <td class="c-com dp-muted" data-sort="{{ r.cost }}">{{ r.cost }}</td>
 
             <td class="dp-sep c-site"><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
-            <td class="c-site" data-sort="{{ r.margin_abs }}">{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_pct }}%</span>{% else %}—{% endif %}</td>
+            <td class="c-site" data-sort="{{ r.margin_abs }}"><span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }}</span>{% if r.margin_pct != None %} <span class="dp-muted">({{ r.margin_pct }}%)</span>{% endif %}</td>
             <td class="dp-sep c-site" style="text-align:center;"><input class="dp-chk js-site" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
 
             <td class="dp-sep c-uzum"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>

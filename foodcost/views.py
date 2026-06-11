@@ -2086,6 +2086,34 @@ def preparation_detail(request, country_slug, prep_id):
                 dpi.dish.recalculate_cache()
             return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
+        # Состав или выход заготовки могли измениться → событийно обновляем
+        # кэш этой заготовки и всех зависящих от неё (родительские заготовки и
+        # блюда), чтобы себестоимость/цена за кг в списках были актуальны.
+        # Выполняется только при сохранении правок, БЕЗ пересчёта при открытии
+        # списка заготовок.
+        affected_prep_ids = {preparation.id}
+        frontier = {preparation.id}
+        while frontier:
+            parents = set(
+                PreparationSubItem.objects.filter(
+                    sub_preparation_id__in=frontier,
+                    preparation__country=country,
+                ).values_list("preparation_id", flat=True)
+            )
+            new_ids = parents - affected_prep_ids
+            affected_prep_ids |= new_ids
+            frontier = new_ids
+        for prep in Preparation.objects.filter(id__in=affected_prep_ids):
+            prep.recalculate_cache()
+        dish_ids = set(
+            DishPreparationItem.objects.filter(
+                preparation_id__in=affected_prep_ids,
+                dish__country=country,
+            ).values_list("dish_id", flat=True)
+        )
+        for dish in Dish.objects.filter(id__in=dish_ids, country=country):
+            dish.recalculate_cache()
+
         return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
     total_gross = (

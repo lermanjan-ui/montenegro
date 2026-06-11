@@ -4480,7 +4480,7 @@ class DeviceToken(models.Model):
 # смены статуса: админка, ERP-экраны, API). Ошибки push никогда не ломают
 # сохранение заказа.
 # =============================================================================
-from django.db.models.signals import pre_save, post_save  # noqa: E402
+from django.db.models.signals import pre_save, post_save, post_delete  # noqa: E402
 from django.dispatch import receiver  # noqa: E402
 
 # Статусы, при переходе в которые шлём push клиенту.
@@ -4569,3 +4569,90 @@ class UzumApp(models.Model):
 
     def __str__(self):
         return f"UzumApp {self.client_id}"
+
+
+# =============================================================================
+# 🔁 Автопересчёт себестоимости при изменении закупочной цены товара.
+#
+# Себестоимость заготовок и блюд кэшируется в cached_total_cost и обновляется
+# только вызовом recalculate_cache(). Цена товара меняется через ProductPrice
+# (подтверждение/правка прихода, ручная правка цены в карточке товара). Чтобы
+# кэш не устаревал НИ ПРИ КАКОМ пути смены цены, ловим сохранение/удаление
+# ProductPrice сигналом и пересчитываем все зависимые объекты.
+#
+# Цепочка зависимостей от товара:
+#   товар → заготовки с этим товаром (PreparationItem)
+#         → заготовки, использующие те заготовки как под-заготовки (рекурсивно)
+#         → блюда с этим товаром напрямую (DishProductItem)
+#         → блюда, где участвует любая затронутая заготовка (DishPreparationItem)
+#
+# Порядок пересчёта не важен: calculate_cost() у заготовок/блюд считается
+# вживую (под-заготовки через cost_per_kg()), поэтому каждый recalculate_cache()
+# даёт корректное значение независимо от того, что пересчитали раньше.
+# =============================================================================
+
+def _recalc_dependents_for_product(product):
+    """Пересчитать cached_total_cost у всех заготовок и блюд, зависящих от
+    данного товара (включая вложенные под-заготовки)."""
+    if product is None:
+        return
+
+    # 1) заготовки, использующие товар напрямую
+    prep_ids = set(
+        PreparationItem.objects
+        .filter(product=product)
+        .values_list("preparation_id", flat=True)
+    )
+
+    # 2) подняться вверх по под-заготовкам, пока множество растёт
+    affected_preps = set(prep_ids)
+    frontier = set(prep_ids)
+    while frontier:
+        parents = set(
+            PreparationSubItem.objects
+            .filter(sub_preparation_id__in=frontier)
+            .values_list("preparation_id", flat=True)
+        )
+        new = parents - affected_preps
+        affected_preps |= new
+        frontier = new
+
+    # 3) пересчёт заготовок
+    for prep in Preparation.objects.filter(id__in=affected_preps):
+        prep.recalculate_cache()
+
+    # 4) блюда: с товаром напрямую + где используется затронутая заготовка
+    dish_ids = set(
+        DishProductItem.objects
+        .filter(product=product)
+        .values_list("dish_id", flat=True)
+    )
+    if affected_preps:
+        dish_ids |= set(
+            DishPreparationItem.objects
+            .filter(preparation_id__in=affected_preps)
+            .values_list("dish_id", flat=True)
+        )
+
+    # 5) пересчёт блюд
+    for dish in Dish.objects.filter(id__in=dish_ids):
+        dish.recalculate_cache()
+
+
+@receiver(post_save, sender=ProductPrice)
+def _productprice_saved(sender, instance, **kwargs):
+    """Новая/изменённая цена товара → пересчитать зависимые заготовки и блюда."""
+    try:
+        _recalc_dependents_for_product(instance.product)
+    except Exception:
+        pass
+
+
+@receiver(post_delete, sender=ProductPrice)
+def _productprice_deleted(sender, instance, **kwargs):
+    """Удаление цены (откат/пересбор прихода) → пересчитать зависимые объекты
+    под актуальную (теперь последнюю) цену товара."""
+    try:
+        _recalc_dependents_for_product(instance.product)
+    except Exception:
+        pass
