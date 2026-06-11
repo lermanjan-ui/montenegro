@@ -16,6 +16,7 @@ from . import views_autowriteoff
 from . import public_api
 from . import uzum_api
 from . import views_uzum
+from . import views_dish_pricing
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -519,4 +520,5 @@ urlpatterns = [
 
     # Страница настроек Uzum (точки + цена/стоп блюд)
     path("c/<slug:country_slug>/uzum/", views_uzum.uzum_settings, name="uzum_settings"),
+    path("c/<slug:country_slug>/dish-pricing/", views_dish_pricing.dish_pricing, name="dish_pricing"),
 ]

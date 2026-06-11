@@ -1,0 +1,125 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Цены и доступность{% endblock %}
+{% block content %}
+<style>
+:root{ --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-border:#E5E7EB; --fc-text:#111827;
+ --fc-muted:#6B7280; --fc-green:#16A34A; --fc-green-soft:#DCFCE7; --fc-warning:#F59E0B;
+ --fc-danger:#EF4444; --fc-hover:#F9FAFB; }
+.dp-wrap{ font-family:Inter,system-ui,sans-serif; }
+.dp-head h1{ margin:0 0 4px; font-size:30px; font-weight:600; color:var(--fc-text); }
+.dp-head p{ margin:0 0 16px; font-size:14px; color:var(--fc-muted); }
+.dp-bar{ background:#fff; border:1px solid var(--fc-border); border-radius:12px; padding:14px 16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; font-size:14px; }
+.dp-bar form{ display:flex; gap:8px; align-items:center; }
+.dp-bar select{ height:36px; border:1px solid var(--fc-border); border-radius:8px; padding:0 8px; }
+.dp-btn{ height:36px; border-radius:8px; padding:0 14px; font-weight:600; font-size:13px; border:1px solid transparent; cursor:pointer; background:var(--fc-green); color:#fff; }
+.dp-btn-sec{ background:#fff; color:var(--fc-text); border-color:var(--fc-border); }
+.dp-pill{ background:var(--fc-hover); border:1px solid var(--fc-border); border-radius:999px; padding:4px 12px; color:var(--fc-muted); }
+
+.dp-scroll{ overflow-x:auto; background:#fff; border:1px solid var(--fc-border); border-radius:12px; }
+table.dp{ border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
+table.dp th, table.dp td{ padding:8px 10px; border-bottom:1px solid #F0F2F4; text-align:right; }
+table.dp th{ position:sticky; top:0; background:#fff; color:var(--fc-muted); font-size:11px; text-transform:uppercase; font-weight:600; text-align:right; z-index:1; }
+table.dp th.l, table.dp td.l{ text-align:left; }
+table.dp td.l{ font-weight:600; color:var(--fc-text); }
+table.dp tbody tr:hover td{ background:var(--fc-hover); }
+.dp-thumb{ width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid var(--fc-border); }
+.dp-thumb-empty{ width:36px; height:36px; border-radius:8px; background:var(--fc-hover); border:1px solid var(--fc-border); }
+.dp-in{ width:84px; height:32px; border:1px solid var(--fc-border); border-radius:8px; padding:0 8px; font-size:13px; text-align:right; }
+.dp-pos{ color:var(--fc-green); font-weight:600; }
+.dp-neg{ color:var(--fc-danger); font-weight:600; }
+.dp-sep{ border-left:2px solid #EEF1F4; }
+.dp-grp{ color:#9CA3AF; font-weight:600; font-size:10px; }
+.dp-chk{ width:18px; height:18px; accent-color:var(--fc-green); }
+.dp-save{ height:32px; border-radius:8px; padding:0 12px; font-weight:600; font-size:12px; border:none; cursor:pointer; background:var(--fc-green); color:#fff; }
+.dp-muted{ color:var(--fc-muted); }
+.dp-empty{ padding:30px; text-align:center; color:var(--fc-muted); }
+</style>
+
+<div class="dp-wrap">
+  <div class="dp-head">
+    <h1>Цены и доступность</h1>
+    <p>Цены, маржа и доступность блюд по точкам и в Uzum, расчёт выручки с учётом комиссий.</p>
+  </div>
+
+  <div class="dp-bar">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="set_uzum_source">
+      <span>Источник Uzum:</span>
+      <select name="uzum_source_id">
+        <option value="">— не выбран —</option>
+        {% for s in order_sources %}
+        <option value="{{ s.id }}" {% if uzum_source and uzum_source.id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.commission_percent }}%)</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="dp-btn dp-btn-sec">Сохранить</button>
+    </form>
+    <span class="dp-pill">Комиссия Uzum: {{ uzum_comm }}%</span>
+    <span class="dp-pill">Яндекс: {{ yandex_comm }}%</span>
+  </div>
+
+  <div class="dp-scroll">
+    <table class="dp">
+      <thead>
+        <tr>
+          <th class="l">Фото</th>
+          <th class="l">Блюдо</th>
+          <th>Стоимость</th>
+          <th>Себест.</th>
+          <th>Маржа</th>
+          <th class="dp-sep">Цена Uzum</th>
+          <th>Uzum: получим</th>
+          <th>Маржа Uzum</th>
+          <th class="dp-sep">Яндекс −{{ yandex_comm }}%</th>
+          <th>Яндекс итог</th>
+          <th class="dp-sep">Сайт</th>
+          {% for loc in locations %}
+            <th class="dp-sep">{{ loc.name }}<div class="dp-grp">доступно</div></th>
+            <th>{{ loc.name }}<div class="dp-grp">Uzum</div></th>
+          {% endfor %}
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <form method="post" style="display:contents">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_dish">
+            <input type="hidden" name="dish_id" value="{{ r.dish.id }}">
+
+            <td class="l">
+              {% if r.dish.photo_url %}<img class="dp-thumb" src="{{ r.dish.photo_url }}">
+              {% elif r.dish.photo %}<img class="dp-thumb" src="{{ r.dish.photo.url }}">
+              {% else %}<div class="dp-thumb-empty"></div>{% endif %}
+            </td>
+            <td class="l">{{ r.dish.name }}</td>
+            <td><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
+            <td class="dp-muted">{{ r.cost }}</td>
+            <td>{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_pct }}%</span>{% else %}—{% endif %}</td>
+
+            <td class="dp-sep"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
+            <td>{{ r.uzum_net }}</td>
+            <td><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
+
+            <td class="dp-sep">{{ r.yandex_net }}</td>
+            <td><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span></td>
+
+            <td class="dp-sep" style="text-align:center;"><input class="dp-chk" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
+
+            {% for c in r.loc_cells %}
+              <td class="dp-sep" style="text-align:center;"><input class="dp-chk" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
+              <td style="text-align:center;" title="{% if not c.uzum_enabled %}Точка не подключена к Uzum{% endif %}"><input class="dp-chk" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
+            {% endfor %}
+
+            <td><button type="submit" class="dp-save">OK</button></td>
+          </form>
+        </tr>
+        {% empty %}
+        <tr><td class="dp-empty" colspan="20">Нет блюд.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

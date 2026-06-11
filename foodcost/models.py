@@ -1629,7 +1629,11 @@ class OrderSource(models.Model):
         decimal_places=2,
         default=0
     )
-    
+
+    # Отметить этот источник как Uzum — чтобы заказы из Uzum-интеграции писались
+    # сюда (не дублируя источник) и чтобы брать его комиссию в расчётах выручки.
+    is_uzum = models.BooleanField(default=False)
+
     default_payment_method = models.ForeignKey(
         "PaymentMethod",
         on_delete=models.SET_NULL,

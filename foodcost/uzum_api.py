@@ -337,9 +337,11 @@ def order_create(request):
     items_cost = payment_info.get("itemsCost")
     delivery = data.get("deliveryInfo") or {}
 
-    source, _ = OrderSource.objects.get_or_create(
-        country=country, name="Uzum Tezkor"
-    )
+    source = OrderSource.objects.filter(country=country, is_uzum=True).first()
+    if source is None:
+        source, _ = OrderSource.objects.get_or_create(
+            country=country, name="Uzum Tezkor"
+        )
     pay_method = PaymentMethod.objects.filter(
         country=country, is_cash=(pay_type == "CASH")
     ).first()

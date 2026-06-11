@@ -822,6 +822,7 @@
 				        <a class="side-link {% if '/promotions/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/promotions/">Промокоды и акции</a>
 				        <a class="side-link {% if '/settings/' in request.path and '/settings/homepage/' not in request.path and '/promotions/' not in request.path %}active{% endif %}" href="/c/{{ country.slug }}/settings/">Настройки</a>
 				        <a class="side-link {% if '/uzum/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/uzum/">Локации</a>
+				        <a class="side-link {% if '/dish-pricing/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dish-pricing/">Цены и доступность</a>
 				        {% endif %}
 				    </div>
 				</details>
