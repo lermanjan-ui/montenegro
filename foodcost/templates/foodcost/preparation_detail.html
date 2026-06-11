@@ -91,7 +91,7 @@
 
     .main-grid {
         display: grid;
-        grid-template-columns: 1.8fr 0.9fr 0.9fr auto;
+        grid-template-columns: 1.8fr 0.9fr 0.9fr 1.2fr auto;
         gap: 14px;
         align-items: end;
     }
@@ -323,6 +323,17 @@
             <div>
                 <label>Время, мин</label>
                 <input type="text" name="cooking_minutes" value="{{ preparation.cooking_minutes }}" {% if not can_edit %}readonly{% endif %}>
+            </div>
+
+            <div>
+                <label>Повар</label>
+                <select name="cook_id" {% if not can_edit %}disabled{% endif %}
+                        style="width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;background:white;color:#111827;font-weight:700;">
+                    <option value="">— не выбран —</option>
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if preparation.cook_id == emp.id %}selected{% endif %}>{{ emp.name }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             {% if can_edit %}

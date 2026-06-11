@@ -1922,6 +1922,11 @@ def preparation_detail(request, country_slug, prep_id):
             preparation.name = request.POST.get("name")
             preparation.final_weight = request.POST.get("final_weight")
             preparation.cooking_minutes = request.POST.get("cooking_minutes") or 0
+            cook_id = request.POST.get("cook_id")
+            preparation.cook = (
+                Employee.objects.filter(id=cook_id, country=country).first()
+                if cook_id else None
+            )
             preparation.save()
 
         if action == "add_item":
@@ -2160,6 +2165,9 @@ def preparation_detail(request, country_slug, prep_id):
         "preparation": preparation,
         "products": products,
         "preparations": preparations,
+        "employees": Employee.objects.filter(
+            country=country, is_active=True
+        ).order_by("name"),
         "total_gross": total_gross,
         "total_net": total_net,
         "used_in_dishes": used_in_dishes,

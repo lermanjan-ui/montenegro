@@ -112,6 +112,16 @@ class Preparation(models.Model):
         default=0
     )
 
+    # Повар, изготавливающий заготовку. Его ставка × cooking_minutes идёт в
+    # графу «труд» блюд, где используется заготовка (прорейтед по net).
+    cook = models.ForeignKey(
+        "Employee",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preparations",
+    )
+
     def __str__(self):
         return self.name
 
@@ -125,6 +135,23 @@ class Preparation(models.Model):
         if self.final_weight == 0:
             return 0
         return self.calculate_cost() / self.final_weight
+
+    def labor_cost(self):
+        """Зарплата повара за изготовление ВСЕГО батча заготовки
+        (cooking_minutes относятся к final_weight). Без повара — 0."""
+        if not self.cook_id:
+            return Decimal("0")
+        return Decimal(self.cooking_minutes or 0) * Decimal(self.cook.minute_rate())
+
+    def total_labor_cost(self):
+        """Труд на весь батч с учётом труда под-заготовок (прорейтед по net)."""
+        total = self.labor_cost()
+        for item in self.subitems.all():
+            sub = item.sub_preparation
+            if sub.final_weight == 0:
+                continue
+            total += sub.total_labor_cost() * (item.net / sub.final_weight)
+        return total
         
     def recalculate_cache(self):
         total_cost = self.calculate_cost()
@@ -612,7 +639,22 @@ class Dish(models.Model):
         return sum(item.calculate_cost() for item in self.packaging_items.all())
 
     def labor_cost(self):
-        return sum(item.calculate_cost() for item in self.labor_items.all())
+        return (
+            sum(item.calculate_cost() for item in self.labor_items.all())
+            + self.preparation_labor_cost()
+        )
+
+    def preparation_labor_cost(self):
+        """Зарплата поваров за время на заготовки, использованные в блюде:
+        труд каждой заготовки прорейтится по доле net/final_weight, рекурсивно
+        по под-заготовкам. Идёт в графу «труд», а не в ингредиентную базу."""
+        total = Decimal("0")
+        for item in self.preparation_items.all():
+            prep = item.preparation
+            if prep.final_weight == 0:
+                continue
+            total += prep.total_labor_cost() * (item.net / prep.final_weight)
+        return total
 
     def utilities_cost(self):
         utilities = MonthlyUtilityExpense.objects.filter(country=self.country).order_by("-month").first()
@@ -893,9 +935,24 @@ class Employee(models.Model):
         return self.name
 
     def hourly_rate(self):
-        # Возвращаем Decimal во ВСЕХ ветках. Раньше при monthly_hours == 0
-        # возвращался int 0, из-за чего minute_rate() = 0/60 = 0.0 (float),
-        # и дальше DishLaborItem.calculate_cost падал на Decimal * float.
+        # Ставка за ЧАС по типу оплаты. Возвращаем Decimal во ВСЕХ ветках,
+        # иначе minute_rate() даёт float и DishLaborItem падает на Decimal*float.
+        pay_type = self.pay_type or self.PAY_TYPE_HOURLY
+
+        if pay_type == self.PAY_TYPE_HOURLY:
+            # Почасовая: ставка задана напрямую.
+            return Decimal(self.hourly_rate_amount or 0)
+
+        if pay_type == self.PAY_TYPE_SHIFT:
+            # Сменная: оплата за смену (ставка + фикс), разнесённая на часы смены.
+            # KPI — переменная премия, в себестоимость минуты не закладываем.
+            hours = Decimal(self.default_shift_hours or 0)
+            if hours <= 0:
+                return Decimal("0")
+            per_shift = Decimal(self.shift_rate_amount or 0) + Decimal(self.shift_fixed_amount or 0)
+            return per_shift / hours
+
+        # Оклад: из месячного оклада и месячной нормы часов.
         if not self.monthly_hours:
             return Decimal("0")
         return Decimal(self.monthly_salary or 0) / Decimal(self.monthly_hours)
