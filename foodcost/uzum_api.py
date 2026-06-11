@@ -152,6 +152,8 @@ def composition(request, store_id):
             continue
         if getattr(d, "uzum_excluded", False):
             continue  # блюдо вручную исключено из передачи в Uzum
+        if not d.is_visible_on_site:
+            continue  # скрытое с сайта блюдо в Uzum не передаём
         price = _dish_price(d)
         if price <= 0:
             continue  # позиции с нулевой ценой Uzum отбрасывает
