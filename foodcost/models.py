@@ -4729,3 +4729,147 @@ def _productprice_saved(sender, instance, **kwargs):
 def _productprice_deleted(sender, instance, **kwargs):
     """Удаление цены (откат/пересбор прихода) → запланировать пересчёт."""
     _queue_product_recalc(instance.product_id)
+
+
+# =============================================================================
+# 🍽️ «Обед дня» — комплексные обеды (отдельная посадочная страница сайта).
+# Меню на конкретную дату: 4 слота (суп/горячее/салат/напиток), на каждый слот
+# можно ЛИБО выбрать блюдо из системы, ЛИБО просто вписать название текстом.
+# Допродажи — реальные блюда каталога (их кладут в корзину как обычный товар).
+# Корп-скидки — пороги количества на уровне страны.
+# =============================================================================
+
+class LunchMenu(models.Model):
+    """Комплексный обед («Обед дня») на конкретную дату."""
+    SLOTS = ("soup", "main", "salad", "drink")
+    SLOT_LABELS = {
+        "soup": "Суп дня",
+        "main": "Горячее",
+        "salad": "Салат",
+        "drink": "Напиток",
+    }
+
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="lunch_menus"
+    )
+    date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    title = models.CharField(max_length=120, default="Обед дня")
+    delivery_from = models.CharField(
+        max_length=20, blank=True, default="",
+        help_text="Напр. '11:00' — показывается как «Доставка с 11:00».",
+    )
+
+    combo_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    separate_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # 4 слота: на каждый — либо блюдо из системы (FK), либо текст названия.
+    soup_dish = models.ForeignKey(
+        Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    soup_name = models.CharField(max_length=255, blank=True, default="")
+    main_dish = models.ForeignKey(
+        Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    main_name = models.CharField(max_length=255, blank=True, default="")
+    salad_dish = models.ForeignKey(
+        Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    salad_name = models.CharField(max_length=255, blank=True, default="")
+    drink_dish = models.ForeignKey(
+        Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    drink_name = models.CharField(max_length=255, blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("country", "date")
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"Обед дня {self.date}"
+
+    @property
+    def savings(self):
+        return (self.separate_price or 0) - (self.combo_price or 0)
+
+    def slot_dish(self, slot):
+        return getattr(self, f"{slot}_dish", None)
+
+    def slot_text(self, slot):
+        return getattr(self, f"{slot}_name", "") or ""
+
+    def slot_display_name(self, slot):
+        """Имя слота: из выбранного блюда, иначе из текста."""
+        dish = self.slot_dish(slot)
+        if dish is not None:
+            return dish.name
+        return self.slot_text(slot)
+
+    def composition_names(self):
+        """Список названий состава (для снапшота/витрины), пустые пропускаем."""
+        out = []
+        for slot in self.SLOTS:
+            name = self.slot_display_name(slot)
+            if name:
+                out.append(name)
+        return out
+
+
+class LunchUpsell(models.Model):
+    """Допродажа «Добавить к обеду» — реальное блюдо каталога (заказывается как товар)."""
+    menu = models.ForeignKey(
+        LunchMenu, on_delete=models.CASCADE, related_name="upsells"
+    )
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name="+")
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        unique_together = ("menu", "dish")
+
+    def __str__(self):
+        return f"Upsell dish={self.dish_id} menu={self.menu_id}"
+
+
+class LunchCorporateTier(models.Model):
+    """Порог корпоративной скидки на комплекты (уровень страны)."""
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="lunch_corporate_tiers"
+    )
+    min_qty = models.PositiveIntegerField()
+    discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["min_qty"]
+        unique_together = ("country", "min_qty")
+
+    def __str__(self):
+        return f"{self.min_qty}+ → {self.discount_percent}%"
+
+
+class OrderLunchCombo(models.Model):
+    """Снимок комплексного обеда в заказе.
+
+    Состав ФИКСИРУЕТСЯ на момент заказа: если админ позже изменит меню этого
+    дня, ранее оформленные заказы не меняются. composition — список названий
+    блюд состава на момент оформления.
+    """
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="lunch_combos"
+    )
+    lunch_menu = models.ForeignKey(
+        LunchMenu, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    date = models.DateField(null=True, blank=True)
+    name = models.CharField(max_length=120, default="Обед дня")
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    composition = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ×{self.quantity} (заказ {self.order_id})"

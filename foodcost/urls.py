@@ -17,6 +17,15 @@ from . import public_api
 from . import uzum_api
 from . import views_uzum
 from . import views_dish_pricing
+# 📱 APP API — личный кабинет приложения (вход по SMS, профиль, заказы,
+# адреса, избранное, push, повтор заказа). Модули существуют, но раньше
+# не были подключены в urls.py — из-за чего вся секция /api/app/ отдавала 404.
+from . import app_auth
+from . import app_account
+from . import app_favorites
+from . import app_push
+from . import app_repeat_order
+from . import lunch_api          # 🍽️ публичные эндпоинты «Обед дня»
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -322,6 +331,37 @@ urlpatterns = [
     path("c/<slug:country_slug>/live-calculate/", views.live_calculate, name="live_calculate"),
 
     # =========================================================================
+    # 📱 APP API — личный кабинет приложения. Все требуют Bearer-токен, кроме
+    # auth/* (вход по SMS). Пути — ровно как в докстрингах модулей app_*.py.
+    # =========================================================================
+    # — авторизация (вход по SMS → токены) —
+    path("api/app/auth/request-code", app_auth.auth_request_code, name="app_auth_request_code"),
+    path("api/app/auth/verify-code", app_auth.auth_verify_code, name="app_auth_verify_code"),
+    path("api/app/auth/refresh", app_auth.auth_refresh, name="app_auth_refresh"),
+    path("api/app/auth/logout", app_auth.auth_logout, name="app_auth_logout"),
+
+    # — профиль —
+    path("api/app/profile", app_account.profile, name="app_profile"),
+
+    # — заказы (повтор и деталь — отдельными сегментами) —
+    path("api/app/orders", app_account.orders_list, name="app_orders"),
+    path("api/app/orders/<str:public_order_number>/repeat", app_repeat_order.repeat_order, name="app_order_repeat"),
+    path("api/app/orders/<str:public_order_number>", app_account.order_detail, name="app_order_detail"),
+
+    # — адреса —
+    path("api/app/addresses", app_account.addresses, name="app_addresses"),
+    path("api/app/addresses/<int:address_id>", app_account.address_detail, name="app_address_detail"),
+
+    # — избранное (ids ДО <dish_id>) —
+    path("api/app/favorites", app_favorites.favorites, name="app_favorites"),
+    path("api/app/favorites/ids", app_favorites.favorite_ids, name="app_favorite_ids"),
+    path("api/app/favorites/<int:dish_id>", app_favorites.favorite_detail, name="app_favorite_detail"),
+
+    # — push-токены устройств —
+    path("api/app/push/register", app_push.push_register, name="app_push_register"),
+    path("api/app/push/unregister", app_push.push_unregister, name="app_push_unregister"),
+
+    # =========================================================================
     # 🌐 PUBLIC API (Part 2) — read-only menu / catalog for the website
     # =========================================================================
     path(
@@ -329,6 +369,15 @@ urlpatterns = [
         public_api.locations,
         name="public_locations",
     ),
+
+    # 🍽️ «Обед дня» (комплексные обеды). days — ДО <date>, иначе "days"
+    # совпадёт с параметром даты. Пути со слешем и без.
+    path("api/public/lunch/days", lunch_api.lunch_days, name="public_lunch_days"),
+    path("api/public/lunch/days/", lunch_api.lunch_days, name="public_lunch_days_slash"),
+    path("api/public/lunch", lunch_api.lunch_menu, name="public_lunch"),
+    path("api/public/lunch/", lunch_api.lunch_menu, name="public_lunch_slash"),
+    path("api/public/lunch/<str:date>", lunch_api.lunch_menu, name="public_lunch_by_date"),
+    path("api/public/lunch/<str:date>/", lunch_api.lunch_menu, name="public_lunch_by_date_slash"),
     path(
         "api/public/categories",
         public_api.categories,
