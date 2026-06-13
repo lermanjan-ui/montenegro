@@ -1,0 +1,174 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Обед дня — {{ menu.date|date:"d.m.Y" }}{% endblock %}
+
+{% block content %}
+
+<style>
+    .page { max-width: 900px; margin: 0 auto; }
+    .card {
+        background: #fff; border: 1px solid #e5e7eb; border-radius: 18px;
+        padding: 22px 26px; margin-bottom: 18px; box-shadow: 0 10px 28px rgba(15,23,42,0.05);
+    }
+    h1 { margin: 0 0 6px; font-size: 30px; line-height: 1.1; color: #111827; letter-spacing: -0.03em; }
+    h2 { margin: 0 0 14px; font-size: 19px; color: #111827; }
+    .back { color: #6b7280; text-decoration: none; font-size: 14px; }
+    .back:hover { color: #111827; }
+    label { display: block; font-size: 13px; color: #6b7280; font-weight: 600; margin: 0 0 6px; }
+    input[type="text"], input[type="number"], select {
+        width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 10px;
+        font-size: 14px; font-family: inherit; background: #fff; box-sizing: border-box;
+    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { margin-bottom: 16px; }
+    .slot-row { display: grid; grid-template-columns: 140px 1fr 1fr; gap: 12px; align-items: end;
+        padding: 12px 0; border-bottom: 1px solid #eef0f3; }
+    .slot-label { font-weight: 600; color: #111827; font-size: 15px; padding-bottom: 9px; }
+    .hint { font-size: 12px; color: #9ca3af; margin: 4px 0 0; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 10px;
+        border: 1px solid transparent; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: #047857; color: #fff; }
+    .btn-primary:hover { background: #036b4d; }
+    .btn-ghost { background: #fff; color: #111827; border-color: #e5e7eb; }
+    .btn-ghost:hover { background: #f9fafb; }
+    .btn-danger { background: #fff; color: #b91c1c; border-color: #fee2e2; }
+    .btn-danger:hover { background: #fee2e2; }
+    .check { display: flex; align-items: center; gap: 8px; }
+    .check input { width: auto; }
+    .check label { margin: 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid #eef0f3; font-size: 14px; }
+    th { color: #6b7280; font-weight: 600; }
+    .muted { color: #6b7280; }
+    .empty { color: #6b7280; padding: 14px 0; }
+    .row-input { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .inline-form { display: inline; }
+</style>
+
+<div class="page">
+    <a class="back" href="/c/{{ country.slug }}/lunch/">← Все обеды</a>
+    <h1 style="margin-top:8px;">Обед дня — {{ menu.date|date:"d.m.Y" }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_menu">
+
+        <div class="card">
+            <h2>Параметры</h2>
+            <div class="grid2">
+                <div class="field">
+                    <label>Заголовок</label>
+                    <input type="text" name="title" value="{{ menu.title }}" maxlength="120">
+                </div>
+                <div class="field">
+                    <label>Доставка с (напр. 11:00)</label>
+                    <input type="text" name="delivery_from" value="{{ menu.delivery_from }}" maxlength="20" placeholder="11:00">
+                </div>
+                <div class="field">
+                    <label>Цена комплекта, UZS</label>
+                    <input type="number" name="combo_price" value="{{ menu.combo_price|floatformat:'0' }}" min="0" step="1">
+                </div>
+                <div class="field">
+                    <label>Стоимость по отдельности, UZS</label>
+                    <input type="number" name="separate_price" value="{{ menu.separate_price|floatformat:'0' }}" min="0" step="1">
+                    <p class="hint">Экономия считается автоматически: отдельно − комплект.</p>
+                </div>
+            </div>
+            <div class="check">
+                <input type="checkbox" id="is_active" name="is_active" {% if menu.is_active %}checked{% endif %}>
+                <label for="is_active">Активно (показывать на сайте)</label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Состав</h2>
+            <p class="muted" style="margin:0 0 8px; font-size:13px;">На каждый слот: выберите блюдо из системы <strong>или</strong> впишите название текстом. Если выбрано блюдо — берётся его имя и фото.</p>
+            {% for slot in slots %}
+            <div class="slot-row">
+                <div class="slot-label">{{ slot.label }}</div>
+                <div>
+                    <label>Блюдо из системы</label>
+                    <select name="{{ slot.key }}_dish">
+                        <option value="">— не выбрано —</option>
+                        {% for d in dishes %}
+                        <option value="{{ d.id }}" {% if slot.dish_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Или впишите название</label>
+                    <input type="text" name="{{ slot.key }}_name" value="{{ slot.name }}" maxlength="255" placeholder="напр. Куриный суп">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="card">
+            <div class="row-input" style="justify-content:space-between;">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                {% if can_edit %}
+                <span class="muted" style="font-size:13px;">Изменения применяются сразу на сайте, если меню активно.</span>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    <div class="card">
+        <h2>Допродажи «Добавить к обеду»</h2>
+        <p class="muted" style="margin:0 0 14px; font-size:13px;">Только реальные блюда из каталога — их кладут в корзину как обычный товар.</p>
+        {% if upsells %}
+        <table>
+            <thead><tr><th>Блюдо</th><th>Порядок</th><th></th></tr></thead>
+            <tbody>
+                {% for u in upsells %}
+                <tr>
+                    <td>{{ u.dish.name }}</td>
+                    <td class="muted">{{ u.sort_order }}</td>
+                    <td>
+                        {% if can_edit %}
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_upsell">
+                            <input type="hidden" name="upsell_id" value="{{ u.id }}">
+                            <button type="submit" class="btn btn-danger">Убрать</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">Допродажи не добавлены.</div>
+        {% endif %}
+
+        {% if can_edit %}
+        <form method="post" class="row-input" style="margin-top:16px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_upsell">
+            <select name="upsell_dish" required style="min-width:280px;">
+                <option value="">— выберите блюдо —</option>
+                {% for d in dishes %}
+                <option value="{{ d.id }}">{{ d.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="sort_order" min="0" step="1" value="0" title="Порядок" style="width:110px;">
+            <button type="submit" class="btn btn-primary">Добавить</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if can_edit %}
+    <div class="card">
+        <h2 style="color:#b91c1c;">Удалить меню</h2>
+        <p class="muted" style="margin:0 0 14px; font-size:13px;">Удаляет меню на эту дату. Оформленные заказы не меняются (состав в них зафиксирован).</p>
+        <form method="post" onsubmit="return confirm('Удалить меню на {{ menu.date|date:"d.m.Y" }}?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_menu">
+            <button type="submit" class="btn btn-danger">Удалить меню</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -134,6 +134,14 @@ def customer_list(request, country_slug):
                 Sum("orders__total_amount"),
                 Value(Decimal("0")),
                 output_field=money_field,
+            ) - Coalesce(
+                Sum("orders__lunch_combo_subtotal"),
+                Value(Decimal("0")),
+                output_field=money_field,
+            ) + Coalesce(
+                Sum("orders__lunch_corporate_discount"),
+                Value(Decimal("0")),
+                output_field=money_field,
             ),
             last_order_date=Max("orders__order_date"),
             site_orders=Count(
@@ -281,9 +289,18 @@ def customer_list(request, country_slug):
     order_agg = (
         Order.objects
         .filter(country=country)
-        .aggregate(revenue=Sum("total_amount"), n=Count("pk"))
+        .aggregate(
+            revenue=Sum("total_amount"),
+            combo=Sum("lunch_combo_subtotal"),
+            combo_disc=Sum("lunch_corporate_discount"),
+            n=Count("pk"),
+        )
     )
-    revenue = order_agg["revenue"] or Decimal("0")
+    revenue = (
+        (order_agg["revenue"] or Decimal("0"))
+        - (order_agg["combo"] or Decimal("0"))
+        + (order_agg["combo_disc"] or Decimal("0"))
+    )
     n_orders = order_agg["n"] or 0
     avg_check = (revenue / n_orders) if n_orders else Decimal("0")
 
@@ -407,7 +424,16 @@ def customer_detail(request, country_slug, customer_id):
     )
 
     total_orders = orders.count()
-    total_amount = orders.aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+    _agg = orders.aggregate(
+        total=Sum("total_amount"),
+        combo=Sum("lunch_combo_subtotal"),
+        combo_disc=Sum("lunch_corporate_discount"),
+    )
+    total_amount = (
+        (_agg["total"] or Decimal("0"))
+        - (_agg["combo"] or Decimal("0"))
+        + (_agg["combo_disc"] or Decimal("0"))
+    )
     average_check = (total_amount / total_orders) if total_orders else Decimal("0")
 
     order_rows = [{

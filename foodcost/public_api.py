@@ -80,6 +80,7 @@ from .models import (
     Order,
     OrderItem,
     OrderItemAddon,
+    OrderLunchCombo,
     OrderSource,
     Customer,
     CustomerAddress,
@@ -1069,8 +1070,10 @@ def categories(request):
         agg = dishes_in_cat.aggregate(min_price=Min("selling_price"))
         min_price = agg["min_price"]
 
-        if min_price is None:
-            # No dishes link to this category → hide it.
+        if min_price is None and not getattr(cat, "in_home_block_2", False):
+            # Нет привязанных блюд → скрываем. Исключение — карточки блока 2
+            # («Наши рестораны»): они показываются как концепт-карточки и
+            # могут не иметь напрямую привязанных блюд.
             continue
 
         result.append(serialize_category(request, cat, min_price=min_price))
@@ -1540,6 +1543,9 @@ def _validate_and_price_cart(
     fulfillment_method=Order.FULFILLMENT_DELIVERY,
     promo_code=None,
     collect_unavailable=False,
+    extra_subtotal=None,
+    extra_discount=None,
+    extra_lines=None,
 ):
     """
     Validate raw cart items and compute prices server-side.
@@ -1573,7 +1579,14 @@ def _validate_and_price_cart(
         }
     On failure, returns (None, api_error(...)).
     """
-    if not isinstance(items_raw, list) or len(items_raw) == 0:
+    extra_subtotal = extra_subtotal or Decimal("0")
+    extra_discount = extra_discount or Decimal("0")
+    extra_lines = extra_lines or []
+
+    if not isinstance(items_raw, list):
+        items_raw = []
+    # Пусто допустимо, только если есть позиции-комбо (extra_lines).
+    if len(items_raw) == 0 and not extra_lines:
         return None, api_error(
             "EMPTY_CART",
             "Cart must contain at least one item",
@@ -1757,7 +1770,7 @@ def _validate_and_price_cart(
 
     # Мягкий режим: если после отсева недоступных не осталось ни одной
     # позиции — оформлять/считать нечего, отдаём ALL_UNAVAILABLE со списком.
-    if collect_unavailable and not line_objects:
+    if collect_unavailable and not line_objects and not extra_lines:
         return None, api_error(
             "ALL_UNAVAILABLE",
             "Все товары корзины недоступны в выбранной зоне",
@@ -1852,7 +1865,14 @@ def _validate_and_price_cart(
     discount_amount = discount_amount + auto_discount
     if discount_amount > subtotal:
         discount_amount = subtotal
-    discounted_subtotal = subtotal - discount_amount
+
+    # Комбо-обеды (extra_*) считаются ВНЕ движка акций/промокодов: их сумма
+    # добавляется к подытогу (влияет на порог бесплатной доставки и итог), а
+    # корпоративная скидка по комбо приходит отдельной суммой extra_discount.
+    full_subtotal = subtotal + extra_subtotal
+    discounted_subtotal = full_subtotal - discount_amount - extra_discount
+    if discounted_subtotal < Decimal("0"):
+        discounted_subtotal = Decimal("0")
 
     # ---- Delivery ----
     delivery_price = Decimal("0")
@@ -1880,10 +1900,13 @@ def _validate_and_price_cart(
 
     total = discounted_subtotal + delivery_price
 
+    if extra_lines:
+        lines.extend(extra_lines)
+
     return {
         "lines": lines,
         "line_objects": line_objects,
-        "subtotal": subtotal,
+        "subtotal": full_subtotal,
         "discount_amount": discount_amount,
         "discount_percent": discount_percent,
         "applied_promo": promo_code,
@@ -2525,6 +2548,20 @@ def _serialize_order_for_tracking(order):
         _serialize_order_item_for_tracking(it)
         for it in order.items.select_related("dish").all()
     ]
+    # Снимок комплексных обедов заказа (состав зафиксирован на момент заказа).
+    lunch_combos_payload = [
+        {
+            "type": "lunch_combo",
+            "lunch_combo_id": c.lunch_menu_id,
+            "date": c.date.isoformat() if c.date else None,
+            "name": c.name or "Обед дня",
+            "quantity": c.quantity,
+            "unit_price": _to_float(c.unit_price),
+            "total_price": _to_float(c.total_price),
+            "composition": c.composition or [],
+        }
+        for c in order.lunch_combos.all()
+    ]
     # payment_method is a FK to PaymentMethod; we surface it as the canonical
     # short string (cash / click / payme / online_card) so the frontend can
     # branch on a stable value. _resolve_payment_method names rows by the
@@ -2563,6 +2600,7 @@ def _serialize_order_for_tracking(order):
         "payment_status": order.payment_status or "",
         "payment_method": payment_method_key,
         "items": items_payload,
+        "lunch_combos": lunch_combos_payload,
     }
 
 
@@ -2661,14 +2699,41 @@ def cart_calculate(request):
     if err:
         return err
 
+    # ---- Комбо-обеды ("Обед дня") ----
+    # Позиции с lunch_combo_id считаются ОТДЕЛЬНО (вне движка акций), их сумма
+    # и корп-скидка подмешиваются в расчёт корзины через extra_* параметры.
+    from . import lunch_api  # локальный импорт — избегаем кольцевого
+    dish_items, combo_items = lunch_api.split_cart_items(payload.get("items") or [])
+
+    combo_subtotal = Decimal("0")
+    combo_discount = Decimal("0")
+    corporate_block = {"discount_amount": 0, "applied_tier": None}
+    combo_lines = []
+    if combo_items:
+        combo_res, cerr = lunch_api.price_combos(request, country, combo_items)
+        if cerr:
+            return cerr
+        combo_subtotal = combo_res["subtotal"]
+        combo_lines = combo_res["lines"]
+        combo_discount, applied_tier = lunch_api.corporate_discount(
+            country, combo_res["total_qty"], combo_subtotal
+        )
+        corporate_block = {
+            "discount_amount": _to_float(combo_discount),
+            "applied_tier": applied_tier,
+        }
+
     result, err = _validate_and_price_cart(
         country=country,
         location=location,
-        items_raw=payload.get("items") or [],
+        items_raw=dish_items,
         delivery_zone=delivery_zone,
         fulfillment_method=fulfillment_method,
         promo_code=promo,
         collect_unavailable=True,
+        extra_subtotal=combo_subtotal,
+        extra_discount=combo_discount,
+        extra_lines=combo_lines,
     )
     if err:
         return err
@@ -2700,6 +2765,9 @@ def cart_calculate(request):
         # Акции: применённые/доступные акции и автоподарки (контракт фронта).
         "promotions": result.get("promotions", []),
         "gifts": result.get("gifts", []),
+        # Корпоративная скидка по комбо-обедам: сумма скидки и сработавший порог
+        # (или null). Сама сумма уже учтена в total.
+        "corporate": corporate_block,
     }
 
     if matched_zone is not None:
@@ -2910,14 +2978,38 @@ def order_create(request):
     if err:
         return err
 
+    # ---- Комбо-обеды ("Обед дня") ----
+    # Считаем отдельной веткой (вне акций). Сумма и корп-скидка идут в расчёт
+    # заказа через extra_*; состав снапшотим в OrderLunchCombo в транзакции ниже.
+    from . import lunch_api  # локальный импорт — избегаем кольцевого
+    dish_items, combo_items = lunch_api.split_cart_items(payload.get("items") or [])
+
+    combo_subtotal = Decimal("0")
+    combo_discount = Decimal("0")
+    combo_lines = []
+    combo_objects = []
+    if combo_items:
+        combo_res, cerr = lunch_api.price_combos(request, country, combo_items)
+        if cerr:
+            return cerr
+        combo_subtotal = combo_res["subtotal"]
+        combo_lines = combo_res["lines"]
+        combo_objects = combo_res["objects"]
+        combo_discount, _combo_tier = lunch_api.corporate_discount(
+            country, combo_res["total_qty"], combo_subtotal
+        )
+
     result, err = _validate_and_price_cart(
         country=country,
         location=location,
-        items_raw=payload.get("items") or [],
+        items_raw=dish_items,
         delivery_zone=delivery_zone,
         fulfillment_method=fulfillment_method,
         promo_code=promo,
         collect_unavailable=True,
+        extra_subtotal=combo_subtotal,
+        extra_discount=combo_discount,
+        extra_lines=combo_lines,
     )
     if err:
         return err
@@ -3115,6 +3207,8 @@ def order_create(request):
             discount_amount=result["discount_amount"],
             delivery_amount=result["delivery_price"],
             total_amount=result["total"],
+            lunch_combo_subtotal=combo_subtotal,
+            lunch_corporate_discount=combo_discount,
             status=initial_status,
             fulfillment_method=fulfillment_method,
             payment_status=payment_status_value,
@@ -3185,6 +3279,21 @@ def order_create(request):
                 price_snapshot=Decimal("0"),
                 cost_snapshot=gift_cost,
                 total_price=Decimal("0"),
+            )
+
+        # Снимок комплексных обедов ("Обед дня"): состав фиксируется на момент
+        # заказа — последующее изменение меню не влияет на эту запись.
+        for co in combo_objects:
+            menu = co["menu"]
+            OrderLunchCombo.objects.create(
+                order=order,
+                lunch_menu=menu,
+                date=menu.date,
+                name=menu.title or "Обед дня",
+                quantity=co["quantity"],
+                unit_price=co["unit_price"],
+                total_price=co["line_total"],
+                composition=co["composition"],
             )
 
     # Уведомление о новом заказе в Telegram (в тред филиала). Сбой Telegram

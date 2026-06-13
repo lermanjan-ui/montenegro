@@ -2036,6 +2036,36 @@ class Order(models.Model):
         default=0
     )
 
+    # 🍽️ «Обед дня»: суммы комбо в заказе — чтобы исключать их из выручки и
+    # прибыли в отчётах. lunch_combo_subtotal — валовая сумма комбо (входит в
+    # subtotal_amount); lunch_corporate_discount — корп-скидка по комбо (учтена
+    # в total_amount). Себестоимость комбо в позициях заказа не фигурирует.
+    lunch_combo_subtotal = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+    lunch_corporate_discount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+
+    @property
+    def lunch_combo_net(self):
+        """Вклад комбо в total_amount: валовая сумма комбо − корп-скидка."""
+        return (self.lunch_combo_subtotal or Decimal("0")) - (
+            self.lunch_corporate_discount or Decimal("0")
+        )
+
+    @property
+    def revenue_amount(self):
+        """Выручка заказа БЕЗ обедов (для отчётов выручки/прибыли)."""
+        return (self.total_amount or Decimal("0")) - self.lunch_combo_net
+
+    @property
+    def revenue_subtotal(self):
+        """Подытог заказа БЕЗ обедов."""
+        return (self.subtotal_amount or Decimal("0")) - (
+            self.lunch_combo_subtotal or Decimal("0")
+        )
+
     order_date = models.DateTimeField()
 
     customer_name = models.CharField(

@@ -589,7 +589,7 @@
 			{% endif %}
 			   
 			    {% if can_menu_dishes or can_menu_products or can_menu_preparations or can_menu_packaging %}
-			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path or '/combo-picks/' in request.path %}open{% endif %}>
+			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path or '/combo-picks/' in request.path or '/lunch/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
 			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
@@ -607,6 +607,11 @@
 						<a class="side-link {% if request.path == '/c/'|add:country.slug|add:'/' %}active{% endif %}" href="/c/{{ country.slug }}/">
 						    Блюда
 						</a>
+			            {% endif %}
+			            {% if can_menu_dishes %}
+			            <a class="side-link {% if '/lunch/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/lunch/">
+			                Обед дня
+			            </a>
 			            {% endif %}
 
 			            {% if can_menu_products %}
@@ -829,7 +834,7 @@
 				{% endif %}
 
 			    {% if can_menu_users or can_menu_settings or can_menu_all_orders %}
-			    <details class="menu-section" {% if '/settings/' in request.path or '/users/' in request.path or '/orders/all/' in request.path or '/orders/analytics/' in request.path or '/shift-handover/admin/' in request.path or '/writeoffs/analytics/' in request.path %}open{% endif %}>
+			    <details class="menu-section" {% if '/settings/' in request.path or '/users/' in request.path or '/orders/all/' in request.path or '/orders/analytics/' in request.path or '/lunch-orders/' in request.path or '/shift-handover/admin/' in request.path or '/writeoffs/analytics/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
 			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
@@ -857,6 +862,10 @@
 						{% if can_menu_all_orders %}
 			            <a class="side-link {% if '/orders/all/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/orders/all/">
 			                Все заказы
+			            </a>
+
+			            <a class="side-link {% if '/lunch-orders/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/lunch-orders/">
+			                Статистика обедов
 			            </a>
 
 			            <a class="side-link" href="/admin/">

@@ -111,6 +111,10 @@ urlpatterns = [
     path("c/<slug:country_slug>/preparations/", views.preparation_list, name="preparation_list"),
     path("c/<slug:country_slug>/preparations/<int:prep_id>/", views.preparation_detail, name="preparation_detail"),
 
+    # 🍽️ Обед дня (комплексные обеды) — управление на отдельной вкладке
+    path("c/<slug:country_slug>/lunch/", views.lunch_list, name="lunch_list"),
+    path("c/<slug:country_slug>/lunch/<int:menu_id>/", views.lunch_detail, name="lunch_detail"),
+
     # сотрудники
     path("c/<slug:country_slug>/employees/", views_employees.employee_list, name="employee_list"),
     path("c/<slug:country_slug>/employees/<int:employee_id>/", views_employees.employee_detail, name="employee_detail"),
@@ -173,6 +177,12 @@ urlpatterns = [
         "c/<slug:country_slug>/orders/all/",
         order_views.order_all_list,
         name="order_all_list"
+    ),
+    # 🍽️ Статистика по заказам обедов (те же данные, что на «Все заказы»)
+    path(
+        "c/<slug:country_slug>/lunch-orders/",
+        order_views.lunch_orders_list,
+        name="lunch_orders_list"
     ),
     
     path(

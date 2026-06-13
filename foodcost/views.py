@@ -4,6 +4,7 @@ from django.http import JsonResponse, HttpResponseForbidden, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+import datetime
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -53,6 +54,10 @@ from .models import (
     DishUpsellLink,
     # 🗺  Website delivery zones (Part 8)
     DeliveryZone,
+    # 🍽️ «Обед дня» (комплексные обеды)
+    LunchMenu,
+    LunchUpsell,
+    LunchCorporateTier,
 )
 
 
@@ -2844,4 +2849,158 @@ def tilda_webhook(request):
     return JsonResponse({
         "success": True,
         "order_id": order.id
+    })
+
+# =============================================================================
+# 🍽️ «Обед дня» — управление комплексными обедами (отдельная вкладка)
+# =============================================================================
+
+def _lunch_parse_decimal(raw):
+    """Сумма из формы → Decimal (пустое/мусор → 0)."""
+    s = str(raw or "").strip().replace(" ", "").replace(",", ".")
+    if not s:
+        return Decimal("0")
+    try:
+        return Decimal(s)
+    except Exception:
+        return Decimal("0")
+
+
+@login_required(login_url="/login/")
+def lunch_list(request, country_slug):
+    """Список меню «Обед дня» по датам + создание меню на дату + корп-пороги."""
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(request.user, UserProfile.SECTION_DISHES)
+    if access_error:
+        return access_error
+    can_edit = user_can_edit(request.user)
+
+    if request.method == "POST":
+        if not can_edit:
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+        action = request.POST.get("action")
+
+        if action == "create_menu":
+            raw_date = (request.POST.get("date") or "").strip()
+            try:
+                d = datetime.date.fromisoformat(raw_date)
+            except (TypeError, ValueError):
+                d = None
+            if d is not None:
+                menu, _created = LunchMenu.objects.get_or_create(
+                    country=country, date=d,
+                    defaults={"title": "Обед дня", "is_active": True},
+                )
+                return redirect(f"/c/{country.slug}/lunch/{menu.id}/")
+
+        elif action == "add_tier":
+            try:
+                min_qty = int(request.POST.get("min_qty") or 0)
+            except (TypeError, ValueError):
+                min_qty = 0
+            percent = _lunch_parse_decimal(request.POST.get("discount_percent"))
+            if min_qty > 0:
+                LunchCorporateTier.objects.update_or_create(
+                    country=country, min_qty=min_qty,
+                    defaults={"discount_percent": percent},
+                )
+
+        elif action == "delete_tier":
+            LunchCorporateTier.objects.filter(
+                id=request.POST.get("tier_id"), country=country
+            ).delete()
+
+        return redirect(f"/c/{country.slug}/lunch/")
+
+    menus = LunchMenu.objects.filter(country=country).order_by("-date")
+    tiers = LunchCorporateTier.objects.filter(country=country).order_by("min_qty")
+    return render(request, "foodcost/lunch_list.html", {
+        "country": country,
+        "menus": menus,
+        "tiers": tiers,
+        "can_edit": can_edit,
+    })
+
+
+@login_required(login_url="/login/")
+def lunch_detail(request, country_slug, menu_id):
+    """Редактирование меню на дату: слоты (блюдо/текст), цены, активность, допродажи."""
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(request.user, UserProfile.SECTION_DISHES)
+    if access_error:
+        return access_error
+    can_edit = user_can_edit(request.user)
+    menu = get_object_or_404(LunchMenu, id=menu_id, country=country)
+
+    if request.method == "POST":
+        if not can_edit:
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+        action = request.POST.get("action")
+
+        if action == "save_menu":
+            menu.title = (request.POST.get("title") or "Обед дня").strip()[:120]
+            menu.delivery_from = (request.POST.get("delivery_from") or "").strip()[:20]
+            menu.combo_price = _lunch_parse_decimal(request.POST.get("combo_price"))
+            menu.separate_price = _lunch_parse_decimal(request.POST.get("separate_price"))
+            menu.is_active = bool(request.POST.get("is_active"))
+            for slot in LunchMenu.SLOTS:
+                raw_dish = (request.POST.get(f"{slot}_dish") or "").strip()
+                dish_obj = None
+                if raw_dish:
+                    dish_obj = Dish.objects.filter(
+                        id=raw_dish, country=country
+                    ).first()
+                setattr(menu, f"{slot}_dish", dish_obj)
+                setattr(
+                    menu, f"{slot}_name",
+                    (request.POST.get(f"{slot}_name") or "").strip()[:255],
+                )
+            menu.save()
+
+        elif action == "add_upsell":
+            raw_dish = (request.POST.get("upsell_dish") or "").strip()
+            dish_obj = Dish.objects.filter(
+                id=raw_dish, country=country, is_archived=False
+            ).first() if raw_dish else None
+            if dish_obj is not None:
+                try:
+                    sort_order = int(request.POST.get("sort_order") or 0)
+                except (TypeError, ValueError):
+                    sort_order = 0
+                LunchUpsell.objects.update_or_create(
+                    menu=menu, dish=dish_obj,
+                    defaults={"sort_order": sort_order},
+                )
+
+        elif action == "delete_upsell":
+            LunchUpsell.objects.filter(
+                id=request.POST.get("upsell_id"), menu=menu
+            ).delete()
+
+        elif action == "delete_menu":
+            menu.delete()
+            return redirect(f"/c/{country.slug}/lunch/")
+
+        return redirect(f"/c/{country.slug}/lunch/{menu.id}/")
+
+    dishes = Dish.objects.filter(
+        country=country, is_archived=False
+    ).order_by("name")
+    upsells = menu.upsells.select_related("dish").order_by("sort_order", "id")
+    slots = [
+        {
+            "key": s,
+            "label": LunchMenu.SLOT_LABELS[s],
+            "dish_id": (menu.slot_dish(s).id if menu.slot_dish(s) else None),
+            "name": menu.slot_text(s),
+        }
+        for s in LunchMenu.SLOTS
+    ]
+    return render(request, "foodcost/lunch_detail.html", {
+        "country": country,
+        "menu": menu,
+        "dishes": dishes,
+        "upsells": upsells,
+        "slots": slots,
+        "can_edit": can_edit,
     })

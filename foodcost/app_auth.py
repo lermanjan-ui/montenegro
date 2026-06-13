@@ -159,27 +159,65 @@ def auth_request_code(request):
     ttl = _cfg_int("OTP_CODE_TTL_SECONDS", 300)
     code_len = _cfg_int("OTP_CODE_LENGTH", 4)
     code = f"{secrets.randbelow(10 ** code_len):0{code_len}d}"
-    OtpCode.objects.create(
+    otp = OtpCode.objects.create(
         country=country,
         phone=phone,
         code_hash=_hash(f"{phone}:{code}"),
         expires_at=now + timedelta(seconds=ttl),
     )
 
-    sent = False
+    expose = bool(getattr(settings, "OTP_EXPOSE_CODE_FOR_TESTING", False))
     try:
-        sent = sms_eskiz.send_otp(phone, code)
+        result = sms_eskiz.send_otp_result(phone, code)
     except Exception:
-        logger.exception("send_otp raised")
-        sent = False
+        logger.exception("send_otp_result raised")
+        result = {"ok": False, "configured": True, "status": "", "error": "internal error"}
 
-    data = {"ttl": ttl, "resend_after": cooldown, "delivery": "sms" if sent else "pending"}
-    if not sent:
-        logger.warning("OTP not delivered via SMS (Eskiz off/failed/not approved).")
-        # Только для отладки на стейдже (НЕ включать на проде).
-        if getattr(settings, "OTP_EXPOSE_CODE_FOR_TESTING", False):
-            data["debug_code"] = code
-    return api_success(data)
+    delivered = bool(result.get("ok"))
+    if delivered:
+        logger.info(
+            "OTP queued via Eskiz (status=%s id=%s)",
+            result.get("status"), result.get("message_id"),
+        )
+    else:
+        logger.warning(
+            "OTP not sent via Eskiz (configured=%s): %s",
+            result.get("configured"), result.get("error"),
+        )
+
+    # dev/staging: код возвращаем прямо в ответе — поток входа работает даже без
+    # живого SMS-канала (на проде флаг выключен и сюда не попадаем).
+    if expose:
+        return api_success({
+            "ttl": ttl,
+            "resend_after": cooldown,
+            "delivery": "sms" if delivered else "debug",
+            "debug_code": code,
+        })
+
+    # ---- ПРОД ----
+    if delivered:
+        data = {"ttl": ttl, "resend_after": cooldown, "delivery": "sms"}
+        if result.get("message_id"):
+            data["message_id"] = result["message_id"]
+        return api_success(data)
+
+    # Отправка не удалась: снимаем cooldown (удаляем неиспользуемый код) и
+    # пробрасываем ошибку — НЕ отвечаем «успех».
+    otp.delete()
+    if not result.get("configured"):
+        logger.error("Eskiz is not configured on production — OTP SMS not sent")
+        return api_error(
+            "SMS_NOT_CONFIGURED",
+            "Отправка SMS временно недоступна. Попробуйте позже.",
+            status=503,
+        )
+    return api_error(
+        "SMS_SEND_FAILED",
+        "Не удалось отправить SMS. Попробуйте позже.",
+        details={"provider_status": result.get("status") or ""},
+        status=502,
+    )
 
 
 @csrf_exempt
