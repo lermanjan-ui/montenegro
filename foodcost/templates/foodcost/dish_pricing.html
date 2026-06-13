@@ -33,12 +33,27 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
 .dp-save{ height:32px; border-radius:8px; padding:0 12px; font-weight:600; font-size:12px; border:none; cursor:pointer; background:var(--fc-green); color:#fff; }
 .dp-muted{ color:var(--fc-muted); }
 .dp-empty{ padding:30px; text-align:center; color:var(--fc-muted); }
+
+/* Вкладки каналов */
+.dp-tabs{ display:flex; gap:6px; margin-bottom:14px; }
+.dp-tab{ height:38px; padding:0 18px; border-radius:10px; border:1px solid var(--fc-border); background:#fff; color:var(--fc-text); font-weight:600; font-size:14px; cursor:pointer; }
+.dp-tab.active{ background:var(--fc-green); color:#fff; border-color:var(--fc-green); }
+/* Показываем колонки/элементы только активного канала (общие — всегда) */
+.dp-wrap[data-tab="site"]   .c-uzum,  .dp-wrap[data-tab="site"]   .c-yandex{ display:none; }
+.dp-wrap[data-tab="uzum"]   .c-site,  .dp-wrap[data-tab="uzum"]   .c-yandex{ display:none; }
+.dp-wrap[data-tab="yandex"] .c-site,  .dp-wrap[data-tab="yandex"] .c-uzum{ display:none; }
 </style>
 
-<div class="dp-wrap">
+<div class="dp-wrap" id="dpWrap" data-tab="site">
   <div class="dp-head">
     <h1>Цены и доступность</h1>
     <p>Цены, маржа и доступность блюд по точкам и в Uzum, расчёт выручки с учётом комиссий.</p>
+  </div>
+
+  <div class="dp-tabs">
+    <button type="button" class="dp-tab active" data-tab="site">Сайт</button>
+    <button type="button" class="dp-tab" data-tab="uzum">Uzum</button>
+    <button type="button" class="dp-tab" data-tab="yandex">Яндекс</button>
   </div>
 
   <div class="dp-bar">
@@ -53,7 +68,7 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
       <noscript><button type="submit" class="dp-btn dp-btn-sec">Фильтр</button></noscript>
     </form>
 
-    <form method="post">
+    <form method="post" class="c-uzum">
       {% csrf_token %}
       <input type="hidden" name="action" value="set_uzum_source">
       <input type="hidden" name="category_id" value="{{ selected_category_id }}">
@@ -66,17 +81,17 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
       </select>
       <button type="submit" class="dp-btn dp-btn-sec">Сохранить</button>
     </form>
-    <span class="dp-pill">Комиссия Uzum: {{ uzum_comm }}%</span>
-    <span class="dp-pill">Яндекс: {{ yandex_comm }}%</span>
+    <span class="dp-pill c-uzum">Комиссия Uzum: {{ uzum_comm }}%</span>
+    <span class="dp-pill c-yandex">Яндекс: {{ yandex_comm }}%</span>
 
     <form method="post" style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;">
       {% csrf_token %}
       <input type="hidden" name="action" value="apply_discount_all">
       <input type="hidden" name="category_id" value="{{ selected_category_id }}">
       <span>Скидка всем, %:</span>
-      <input class="dp-in" type="text" name="all_site_discount" placeholder="сайт" style="width:64px;">
-      <input class="dp-in" type="text" name="all_uzum_discount" placeholder="Uzum" style="width:64px;">
-      <input class="dp-in" type="text" name="all_yandex_discount" placeholder="Яндекс" style="width:64px;">
+      <input class="dp-in c-site" type="text" name="all_site_discount" placeholder="сайт" style="width:64px;">
+      <input class="dp-in c-uzum" type="text" name="all_uzum_discount" placeholder="Uzum" style="width:64px;">
+      <input class="dp-in c-yandex" type="text" name="all_yandex_discount" placeholder="Яндекс" style="width:64px;">
       <button type="submit" class="dp-btn dp-btn-sec"
               onclick="return confirm('Применить скидку ко ВСЕМ блюдам? Пустые поля не меняются.');">
         Применить ко всем
@@ -90,22 +105,23 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
         <tr>
           <th class="l">Фото</th>
           <th class="l">Блюдо</th>
-          <th>Стоимость</th>
           <th>Себест.</th>
-          <th>Скидка сайт %</th>
-          <th>Цена со ск.</th>
-          <th>Маржа</th>
-          <th class="dp-sep">Цена Uzum</th>
-          <th>Скидка Uzum %</th>
-          <th>Uzum: получим</th>
-          <th>Маржа Uzum</th>
-          <th class="dp-sep">Скидка Яндекс %</th>
-          <th>Яндекс итог</th>
-          <th>Маржа Яндекс</th>
-          <th class="dp-sep">Сайт</th>
+          <th class="dp-sep c-site">Стоимость</th>
+          <th class="c-site">Скидка сайт %</th>
+          <th class="c-site">Цена со ск.</th>
+          <th class="c-site">Маржа</th>
+          <th class="c-site">На сайте</th>
+          <th class="dp-sep c-uzum">Цена Uzum</th>
+          <th class="c-uzum">Скидка Uzum %</th>
+          <th class="c-uzum">Uzum: получим</th>
+          <th class="c-uzum">Маржа Uzum</th>
+          <th class="dp-sep c-yandex">База (Uzum)</th>
+          <th class="c-yandex">Скидка Яндекс %</th>
+          <th class="c-yandex">Яндекс итог</th>
+          <th class="c-yandex">Маржа Яндекс</th>
           {% for loc in locations %}
-            <th class="dp-sep">{{ loc.name }}<div class="dp-grp">доступно</div></th>
-            <th>{{ loc.name }}<div class="dp-grp">Uzum</div></th>
+            <th class="dp-sep c-site">{{ loc.name }}<div class="dp-grp">доступно</div></th>
+            <th class="c-uzum">{{ loc.name }}<div class="dp-grp">Uzum</div></th>
           {% endfor %}
           <th></th>
         </tr>
@@ -125,26 +141,27 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
               {% else %}<div class="dp-thumb-empty"></div>{% endif %}
             </td>
             <td class="l">{{ r.dish.name }}</td>
-            <td><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
             <td class="dp-muted">{{ r.cost }}</td>
-            <td><input class="dp-in" type="text" name="site_discount_percent" value="{{ r.site_disc|floatformat:'-2' }}" placeholder="0"></td>
-            <td class="dp-muted">{{ r.site_price_disc }}</td>
-            <td>{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }} <span class="dp-muted">({{ r.margin_pct }}%)</span></span>{% else %}—{% endif %}</td>
 
-            <td class="dp-sep"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
-            <td><input class="dp-in" type="text" name="uzum_discount_percent" value="{{ r.uzum_disc|floatformat:'-2' }}" placeholder="0"></td>
-            <td>{{ r.uzum_net }}</td>
-            <td><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
+            <td class="dp-sep c-site"><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
+            <td class="c-site"><input class="dp-in" type="text" name="site_discount_percent" value="{{ r.site_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="dp-muted c-site">{{ r.site_price_disc }}</td>
+            <td class="c-site">{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }} <span class="dp-muted">({{ r.margin_pct }}%)</span></span>{% else %}—{% endif %}</td>
+            <td class="c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
 
-            <td class="dp-sep"><input class="dp-in" type="text" name="yandex_discount_percent" value="{{ r.yandex_disc|floatformat:'-2' }}" placeholder="0"></td>
-            <td>{{ r.yandex_net }}</td>
-            <td><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span>{% if r.yandex_margin_pct != None %} <span class="dp-muted">({{ r.yandex_margin_pct }}%)</span>{% endif %}</td>
+            <td class="dp-sep c-uzum"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
+            <td class="c-uzum"><input class="dp-in" type="text" name="uzum_discount_percent" value="{{ r.uzum_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="c-uzum">{{ r.uzum_net }}</td>
+            <td class="c-uzum"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
 
-            <td class="dp-sep" style="text-align:center;"><input class="dp-chk" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
+            <td class="dp-sep c-yandex dp-muted">{{ r.uzum_price }}</td>
+            <td class="c-yandex"><input class="dp-in" type="text" name="yandex_discount_percent" value="{{ r.yandex_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="c-yandex">{{ r.yandex_net }}</td>
+            <td class="c-yandex"><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span>{% if r.yandex_margin_pct != None %} <span class="dp-muted">({{ r.yandex_margin_pct }}%)</span>{% endif %}</td>
 
             {% for c in r.loc_cells %}
-              <td class="dp-sep" style="text-align:center;"><input class="dp-chk" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
-              <td style="text-align:center;" title="{% if not c.uzum_enabled %}Точка не подключена к Uzum{% endif %}"><input class="dp-chk" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
+              <td class="dp-sep c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
+              <td class="c-uzum" style="text-align:center;" title="{% if not c.uzum_enabled %}Точка не подключена к Uzum{% endif %}"><input class="dp-chk" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
             {% endfor %}
 
             <td><button type="submit" class="dp-save">OK</button></td>
@@ -157,4 +174,17 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
     </table>
   </div>
 </div>
+
+<script>
+(function(){
+  var wrap = document.getElementById('dpWrap');
+  var tabs = document.querySelectorAll('.dp-tab');
+  tabs.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      wrap.setAttribute('data-tab', btn.getAttribute('data-tab'));
+      tabs.forEach(function(b){ b.classList.toggle('active', b === btn); });
+    });
+  });
+})();
+</script>
 {% endblock %}
