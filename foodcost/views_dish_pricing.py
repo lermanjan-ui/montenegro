@@ -6,8 +6,7 @@ from django.shortcuts import render, redirect
 from .models import UserProfile, Dish, Location, DishAvailability, OrderSource
 from .views import get_country, require_section_access
 
-YANDEX_COMMISSION = Decimal("35")          # %, фиксированная для расчёта «Выручка с Яндекса»
-UZUM_COMMISSION_DEFAULT = Decimal("28")    # %, дефолт если у источника Uzum комиссия не задана
+YANDEX_COMMISSION = Decimal("35")  # %, фиксированная для расчёта «Выручка с Яндекса»
 
 
 def _dec_or_none(raw):
@@ -24,6 +23,22 @@ def _pct(part, whole):
     if not whole:
         return None
     return (part / whole * Decimal(100)).quantize(Decimal("0.1"))
+
+
+def _disc_pct(raw):
+    """Скидка-процент из формы → Decimal 0..100 (некорректное/пусто → 0)."""
+    raw = (raw or "").strip().replace(",", ".")
+    if not raw:
+        return Decimal("0")
+    try:
+        val = Decimal(raw)
+    except (InvalidOperation, ValueError):
+        return Decimal("0")
+    if val < 0:
+        return Decimal("0")
+    if val > 100:
+        return Decimal("100")
+    return val
 
 
 @login_required(login_url="/login/")
@@ -57,11 +72,20 @@ def dish_pricing(request, country_slug):
                 if sp is not None:
                     dish.selling_price = sp
                 dish.uzum_price = _dec_or_none(request.POST.get("uzum_price"))
-                visible = bool(request.POST.get("is_visible_on_site"))
-                dish.is_visible_on_site = visible
-                dish.uzum_excluded = bool(request.POST.get("uzum_excluded"))
+                dish.is_visible_on_site = bool(request.POST.get("is_visible_on_site"))
+                dish.site_discount_percent = _disc_pct(
+                    request.POST.get("site_discount_percent")
+                )
+                dish.uzum_discount_percent = _disc_pct(
+                    request.POST.get("uzum_discount_percent")
+                )
+                dish.yandex_discount_percent = _disc_pct(
+                    request.POST.get("yandex_discount_percent")
+                )
                 dish.save(update_fields=[
-                    "selling_price", "uzum_price", "is_visible_on_site", "uzum_excluded"
+                    "selling_price", "uzum_price", "is_visible_on_site",
+                    "site_discount_percent", "uzum_discount_percent",
+                    "yandex_discount_percent",
                 ])
                 try:
                     dish.recalculate_cache()
@@ -70,10 +94,6 @@ def dish_pricing(request, country_slug):
 
                 avail_ids = set(request.POST.getlist("avail"))
                 uzum_ok_ids = set(request.POST.getlist("uzum_ok"))
-                # Правило: нет на сайте → недоступно везде (все точки + все выдачи/Uzum).
-                if not visible:
-                    avail_ids = set()
-                    uzum_ok_ids = set()
                 for loc in locations:
                     da, _ = DishAvailability.objects.get_or_create(
                         country=country, dish=dish, location=loc
@@ -83,12 +103,33 @@ def dish_pricing(request, country_slug):
                     da.save(update_fields=["is_available", "uzum_stop"])
             return redirect(f"/c/{country.slug}/dish-pricing/")
 
-    # источник Uzum и его комиссия (дефолт 28%, если у источника не задана)
+        if action == "apply_discount_all":
+            # Единая скидка на ВСЕ блюда. Пустое поле канала → этот канал не трогаем.
+            updates = {}
+            if (request.POST.get("all_site_discount") or "").strip():
+                updates["site_discount_percent"] = _disc_pct(
+                    request.POST.get("all_site_discount")
+                )
+            if (request.POST.get("all_uzum_discount") or "").strip():
+                updates["uzum_discount_percent"] = _disc_pct(
+                    request.POST.get("all_uzum_discount")
+                )
+            if (request.POST.get("all_yandex_discount") or "").strip():
+                updates["yandex_discount_percent"] = _disc_pct(
+                    request.POST.get("all_yandex_discount")
+                )
+            if updates:
+                Dish.objects.filter(
+                    country=country, is_archived=False
+                ).update(**updates)
+            return redirect(f"/c/{country.slug}/dish-pricing/")
+
+    # источник Uzum и его комиссия
     uzum_source = (
         OrderSource.objects.filter(country=country, is_uzum=True).first()
         or OrderSource.objects.filter(country=country, name__icontains="uzum").first()
     )
-    uzum_comm = (uzum_source.commission_percent if uzum_source else None) or UZUM_COMMISSION_DEFAULT
+    uzum_comm = (uzum_source.commission_percent if uzum_source else Decimal(0)) or Decimal(0)
 
     # карта доступности по (блюдо, точка)
     av = {
@@ -107,17 +148,39 @@ def dish_pricing(request, country_slug):
         cost = d.cached_total_cost or Decimal(0)
         price = d.selling_price or Decimal(0)
         uzum_price = d.uzum_price if d.uzum_price is not None else price
-        yandex_price = d.yandex_price if d.yandex_price is not None else uzum_price
 
-        margin_abs = price - cost
-        margin_pct = _pct(margin_abs, price)
+        site_disc = d.site_discount_percent or Decimal(0)
+        uzum_disc = d.uzum_discount_percent or Decimal(0)
+        yandex_disc = d.yandex_discount_percent or Decimal(0)
 
-        uzum_net = (uzum_price * (Decimal(100) - uzum_comm) / Decimal(100)).quantize(Decimal("1"))
+        # Цены с учётом скидки канала (только для расчёта маржи на этой странице).
+        site_price_disc = (
+            price * (Decimal(100) - site_disc) / Decimal(100)
+        ).quantize(Decimal("1"))
+        uzum_price_disc = (
+            uzum_price * (Decimal(100) - uzum_disc) / Decimal(100)
+        ).quantize(Decimal("1"))
+        yandex_price_disc = (
+            uzum_price * (Decimal(100) - yandex_disc) / Decimal(100)
+        ).quantize(Decimal("1"))
+
+        # Сайт: без комиссии, маржа от цены со скидкой.
+        margin_abs = site_price_disc - cost
+        margin_pct = _pct(margin_abs, site_price_disc)
+
+        # Uzum: нетто после комиссии, считается от цены со скидкой.
+        uzum_net = (
+            uzum_price_disc * (Decimal(100) - uzum_comm) / Decimal(100)
+        ).quantize(Decimal("1"))
         uzum_margin_abs = uzum_net - cost
         uzum_margin_pct = _pct(uzum_margin_abs, uzum_net)
 
-        yandex_net = (yandex_price * (Decimal(100) - YANDEX_COMMISSION) / Decimal(100)).quantize(Decimal("1"))
+        # Яндекс: нетто после 35%, от цены со скидкой.
+        yandex_net = (
+            yandex_price_disc * (Decimal(100) - YANDEX_COMMISSION) / Decimal(100)
+        ).quantize(Decimal("1"))
         yandex_margin_abs = yandex_net - cost
+        yandex_margin_pct = _pct(yandex_margin_abs, yandex_net)
 
         loc_cells = []
         for loc in locations:
@@ -133,15 +196,21 @@ def dish_pricing(request, country_slug):
             "dish": d,
             "cost": cost,
             "price": price,
+            "site_disc": site_disc,
+            "site_price_disc": site_price_disc,
             "margin_abs": margin_abs,
             "margin_pct": margin_pct,
             "uzum_price": uzum_price,
+            "uzum_disc": uzum_disc,
+            "uzum_price_disc": uzum_price_disc,
             "uzum_net": uzum_net,
             "uzum_margin_abs": uzum_margin_abs,
             "uzum_margin_pct": uzum_margin_pct,
-            "yandex_price": yandex_price,
+            "yandex_disc": yandex_disc,
+            "yandex_price_disc": yandex_price_disc,
             "yandex_net": yandex_net,
             "yandex_margin_abs": yandex_margin_abs,
+            "yandex_margin_pct": yandex_margin_pct,
             "loc_cells": loc_cells,
         })
 

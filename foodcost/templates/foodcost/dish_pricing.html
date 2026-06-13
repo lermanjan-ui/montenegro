@@ -10,18 +10,10 @@
 .dp-head p{ margin:0 0 16px; font-size:14px; color:var(--fc-muted); }
 .dp-bar{ background:#fff; border:1px solid var(--fc-border); border-radius:12px; padding:14px 16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; font-size:14px; }
 .dp-bar form{ display:flex; gap:8px; align-items:center; }
-.dp-bar select, .dp-bar input[type="text"]{ height:36px; border:1px solid var(--fc-border); border-radius:8px; padding:0 10px; font-family:inherit; font-size:14px; color:var(--fc-text); }
-.dp-bar input[type="text"]{ min-width:220px; }
+.dp-bar select{ height:36px; border:1px solid var(--fc-border); border-radius:8px; padding:0 8px; }
 .dp-btn{ height:36px; border-radius:8px; padding:0 14px; font-weight:600; font-size:13px; border:1px solid transparent; cursor:pointer; background:var(--fc-green); color:#fff; }
 .dp-btn-sec{ background:#fff; color:var(--fc-text); border-color:var(--fc-border); }
 .dp-pill{ background:var(--fc-hover); border:1px solid var(--fc-border); border-radius:999px; padding:4px 12px; color:var(--fc-muted); }
-.dp-flt-label{ color:var(--fc-muted); }
-
-/* Вкладки */
-.dp-tabs{ display:flex; gap:4px; margin-bottom:16px; border-bottom:1px solid var(--fc-border); }
-.dp-tab{ background:none; border:none; padding:10px 16px; font-size:14px; font-weight:600; color:var(--fc-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; font-family:inherit; }
-.dp-tab:hover{ color:var(--fc-text); }
-.dp-tab.is-active{ color:var(--fc-green); border-bottom-color:var(--fc-green); }
 
 .dp-scroll{ overflow-x:auto; background:#fff; border:1px solid var(--fc-border); border-radius:12px; }
 table.dp{ border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
@@ -30,9 +22,6 @@ table.dp th{ position:sticky; top:0; background:#fff; color:var(--fc-muted); fon
 table.dp th.l, table.dp td.l{ text-align:left; }
 table.dp td.l{ font-weight:600; color:var(--fc-text); }
 table.dp tbody tr:hover td{ background:var(--fc-hover); }
-table.dp th.srt{ cursor:pointer; user-select:none; }
-table.dp th.srt:hover{ color:var(--fc-text); }
-.dp-arr{ font-size:9px; margin-left:4px; color:var(--fc-green); }
 .dp-thumb{ width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid var(--fc-border); }
 .dp-thumb-empty{ width:36px; height:36px; border-radius:8px; background:var(--fc-hover); border:1px solid var(--fc-border); }
 .dp-in{ width:84px; height:32px; border:1px solid var(--fc-border); border-radius:8px; padding:0 8px; font-size:13px; text-align:right; }
@@ -40,17 +29,10 @@ table.dp th.srt:hover{ color:var(--fc-text); }
 .dp-neg{ color:var(--fc-danger); font-weight:600; }
 .dp-sep{ border-left:2px solid #EEF1F4; }
 .dp-grp{ color:#9CA3AF; font-weight:600; font-size:10px; }
-.dp-sub{ color:var(--fc-muted); font-weight:500; font-size:11px; text-transform:none; }
 .dp-chk{ width:18px; height:18px; accent-color:var(--fc-green); }
-.dp-chk:disabled{ opacity:.3; cursor:not-allowed; }
 .dp-save{ height:32px; border-radius:8px; padding:0 12px; font-weight:600; font-size:12px; border:none; cursor:pointer; background:var(--fc-green); color:#fff; }
 .dp-muted{ color:var(--fc-muted); }
 .dp-empty{ padding:30px; text-align:center; color:var(--fc-muted); }
-
-/* Переключение колонок по вкладке. Скрытые поля остаются в DOM и сохраняются. */
-#dpTabbed[data-tab="site"]   .c-uzum, #dpTabbed[data-tab="site"]   .c-yx  { display:none; }
-#dpTabbed[data-tab="uzum"]   .c-site, #dpTabbed[data-tab="uzum"]   .c-yx  { display:none; }
-#dpTabbed[data-tab="yandex"] .c-site, #dpTabbed[data-tab="yandex"] .c-uzum{ display:none; }
 </style>
 
 <div class="dp-wrap">
@@ -74,217 +56,91 @@ table.dp th.srt:hover{ color:var(--fc-text); }
     </form>
     <span class="dp-pill">Комиссия Uzum: {{ uzum_comm }}%</span>
     <span class="dp-pill">Яндекс: {{ yandex_comm }}%</span>
+
+    <form method="post" style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="apply_discount_all">
+      <span>Скидка всем, %:</span>
+      <input class="dp-in" type="text" name="all_site_discount" placeholder="сайт" style="width:64px;">
+      <input class="dp-in" type="text" name="all_uzum_discount" placeholder="Uzum" style="width:64px;">
+      <input class="dp-in" type="text" name="all_yandex_discount" placeholder="Яндекс" style="width:64px;">
+      <button type="submit" class="dp-btn dp-btn-sec"
+              onclick="return confirm('Применить скидку ко ВСЕМ блюдам? Пустые поля не меняются.');">
+        Применить ко всем
+      </button>
+    </form>
   </div>
 
-  <!-- Фильтры (клиентские, без перезагрузки) -->
-  <div class="dp-bar">
-    <span class="dp-flt-label">Фильтры:</span>
-    <input type="text" id="flt-q" placeholder="Поиск по названию">
-    <select id="flt-cat"><option value="">Все категории</option></select>
-    <select id="flt-site">
-      <option value="">Сайт: все</option>
-      <option value="1">На сайте</option>
-      <option value="0">Скрытые</option>
-    </select>
-    <select id="flt-uzx">
-      <option value="">Uzum: все</option>
-      <option value="0">Передаётся в Uzum</option>
-      <option value="1">Исключено из Uzum</option>
-    </select>
-    <button type="button" class="dp-btn dp-btn-sec" id="flt-reset">Сбросить</button>
-  </div>
-
-  <div class="dp-tabs" role="tablist">
-    <button type="button" class="dp-tab is-active" data-target="site">Сайт</button>
-    <button type="button" class="dp-tab" data-target="uzum">Uzum</button>
-    <button type="button" class="dp-tab" data-target="yandex">Яндекс</button>
-  </div>
-
-  <div class="dp-scroll" id="dpTabbed" data-tab="site">
+  <div class="dp-scroll">
     <table class="dp">
       <thead>
         <tr>
-          <th class="l c-com">Фото</th>
-          <th class="l c-com srt" data-type="text">Блюдо<span class="dp-arr"></span></th>
-          <th class="c-com srt">Себест.<span class="dp-arr"></span></th>
-
-          <th class="dp-sep c-site srt">Стоимость<span class="dp-arr"></span></th>
-          <th class="c-site srt">Маржа<span class="dp-arr"></span></th>
-          <th class="dp-sep c-site srt">На сайте<span class="dp-arr"></span></th>
-
-          <th class="dp-sep c-uzum srt">Цена Uzum<span class="dp-arr"></span></th>
-          <th class="c-uzum srt">Не в Uzum<span class="dp-arr"></span></th>
-          <th class="c-uzum srt">Uzum: получим<span class="dp-arr"></span></th>
-          <th class="c-uzum srt">Маржа Uzum<span class="dp-arr"></span></th>
-
-          <th class="dp-sep c-yx srt">Цена (источник)<span class="dp-arr"></span></th>
-          <th class="c-yx srt">Яндекс −{{ yandex_comm }}%<span class="dp-arr"></span></th>
-          <th class="c-yx srt">Прибыль после комиссии<span class="dp-arr"></span></th>
-
+          <th class="l">Фото</th>
+          <th class="l">Блюдо</th>
+          <th>Стоимость</th>
+          <th>Себест.</th>
+          <th>Скидка сайт %</th>
+          <th>Цена со ск.</th>
+          <th>Маржа</th>
+          <th class="dp-sep">Цена Uzum</th>
+          <th>Скидка Uzum %</th>
+          <th>Uzum: получим</th>
+          <th>Маржа Uzum</th>
+          <th class="dp-sep">Скидка Яндекс %</th>
+          <th>Яндекс итог</th>
+          <th>Маржа Яндекс</th>
+          <th class="dp-sep">Сайт</th>
           {% for loc in locations %}
-            <th class="dp-sep c-site srt">{{ loc.name }}<div class="dp-grp">доступно</div><span class="dp-arr"></span></th>
-            <th class="dp-sep c-uzum srt">{{ loc.name }}<div class="dp-grp">Uzum</div><span class="dp-arr"></span></th>
+            <th class="dp-sep">{{ loc.name }}<div class="dp-grp">доступно</div></th>
+            <th>{{ loc.name }}<div class="dp-grp">Uzum</div></th>
           {% endfor %}
-
-          <th class="c-com"></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {% for r in rows %}
-        <tr data-name="{{ r.dish.name|lower }}"
-            data-cat="{% if r.dish.category %}{{ r.dish.category.name }}{% endif %}"
-            data-site="{% if r.dish.is_visible_on_site %}1{% else %}0{% endif %}"
-            data-uzx="{% if r.dish.uzum_excluded %}1{% else %}0{% endif %}">
+        <tr>
           <form method="post" style="display:contents">
             {% csrf_token %}
             <input type="hidden" name="action" value="save_dish">
             <input type="hidden" name="dish_id" value="{{ r.dish.id }}">
 
-            <td class="l c-com">
+            <td class="l">
               {% if r.dish.photo_url %}<img class="dp-thumb" src="{{ r.dish.photo_url }}">
               {% elif r.dish.photo %}<img class="dp-thumb" src="{{ r.dish.photo.url }}">
               {% else %}<div class="dp-thumb-empty"></div>{% endif %}
             </td>
-            <td class="l c-com">{{ r.dish.name }}{% if r.dish.category %}<div class="dp-sub">{{ r.dish.category.name }}</div>{% endif %}</td>
-            <td class="c-com dp-muted" data-sort="{{ r.cost }}">{{ r.cost }}</td>
+            <td class="l">{{ r.dish.name }}</td>
+            <td><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
+            <td class="dp-muted">{{ r.cost }}</td>
+            <td><input class="dp-in" type="text" name="site_discount_percent" value="{{ r.site_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="dp-muted">{{ r.site_price_disc }}</td>
+            <td>{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }} <span class="dp-muted">({{ r.margin_pct }}%)</span></span>{% else %}—{% endif %}</td>
 
-            <td class="dp-sep c-site"><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
-            <td class="c-site" data-sort="{{ r.margin_abs }}"><span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }}</span>{% if r.margin_pct != None %} <span class="dp-muted">({{ r.margin_pct }}%)</span>{% endif %}</td>
-            <td class="dp-sep c-site" style="text-align:center;"><input class="dp-chk js-site" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
+            <td class="dp-sep"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
+            <td><input class="dp-in" type="text" name="uzum_discount_percent" value="{{ r.uzum_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td>{{ r.uzum_net }}</td>
+            <td><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
 
-            <td class="dp-sep c-uzum"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
-            <td class="c-uzum" style="text-align:center;"><input class="dp-chk js-uzx" type="checkbox" name="uzum_excluded" value="1" {% if r.dish.uzum_excluded %}checked{% endif %}></td>
-            <td class="c-uzum" data-sort="{{ r.uzum_net }}">{{ r.uzum_net }}</td>
-            <td class="c-uzum" data-sort="{{ r.uzum_margin_abs }}"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
+            <td class="dp-sep"><input class="dp-in" type="text" name="yandex_discount_percent" value="{{ r.yandex_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td>{{ r.yandex_net }}</td>
+            <td><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span>{% if r.yandex_margin_pct != None %} <span class="dp-muted">({{ r.yandex_margin_pct }}%)</span>{% endif %}</td>
 
-            <td class="dp-sep c-yx dp-muted" data-sort="{{ r.yandex_price }}">{{ r.yandex_price }}</td>
-            <td class="c-yx" data-sort="{{ r.yandex_net }}">{{ r.yandex_net }}</td>
-            <td class="c-yx" data-sort="{{ r.yandex_margin_abs }}"><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span></td>
+            <td class="dp-sep" style="text-align:center;"><input class="dp-chk" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
 
             {% for c in r.loc_cells %}
-              <td class="dp-sep c-site" style="text-align:center;"><input class="dp-chk js-avail" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
-              <td class="dp-sep c-uzum" style="text-align:center;" title="{% if not c.uzum_enabled %}Точка не подключена к Uzum{% endif %}"><input class="dp-chk js-uok" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
+              <td class="dp-sep" style="text-align:center;"><input class="dp-chk" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
+              <td style="text-align:center;" title="{% if not c.uzum_enabled %}Точка не подключена к Uzum{% endif %}"><input class="dp-chk" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
             {% endfor %}
 
-            <td class="c-com"><button type="submit" class="dp-save">OK</button></td>
+            <td><button type="submit" class="dp-save">OK</button></td>
           </form>
         </tr>
         {% empty %}
-        <tr id="dp-empty-row"><td class="dp-empty" colspan="40">Нет блюд.</td></tr>
+        <tr><td class="dp-empty" colspan="30">Нет блюд.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-
-<script>
-(function(){
-  var wrap = document.getElementById('dpTabbed');
-  if(!wrap) return;
-  var table = wrap.querySelector('table.dp');
-  var tbody = table.querySelector('tbody');
-  var dataRows = Array.prototype.slice.call(tbody.querySelectorAll('tr[data-name]'));
-
-  /* --- Вкладки --- */
-  var tabs = document.querySelectorAll('.dp-tab');
-  function setTab(name){
-    wrap.setAttribute('data-tab', name);
-    tabs.forEach(function(t){ t.classList.toggle('is-active', t.getAttribute('data-target') === name); });
-  }
-  tabs.forEach(function(t){ t.addEventListener('click', function(){ setTab(t.getAttribute('data-target')); }); });
-
-  /* --- Правило: нет на сайте → нет нигде (UI) + исключение из Uzum --- */
-  function syncRow(tr){
-    var site = tr.querySelector('.js-site');
-    var uzx  = tr.querySelector('.js-uzx');
-    var siteOff = site ? !site.checked : false;
-    var excluded = uzx ? uzx.checked : false;
-    tr.querySelectorAll('.js-avail').forEach(function(c){ c.disabled = siteOff; });
-    tr.querySelectorAll('.js-uok').forEach(function(c){ c.disabled = siteOff || excluded; });
-  }
-  dataRows.forEach(function(tr){
-    var site = tr.querySelector('.js-site');
-    var uzx  = tr.querySelector('.js-uzx');
-    if(site) site.addEventListener('change', function(){ syncRow(tr); });
-    if(uzx)  uzx.addEventListener('change', function(){ syncRow(tr); });
-    syncRow(tr);
-  });
-
-  /* --- Фильтры --- */
-  var qEl = document.getElementById('flt-q');
-  var catEl = document.getElementById('flt-cat');
-  var siteEl = document.getElementById('flt-site');
-  var uzxEl = document.getElementById('flt-uzx');
-  var resetEl = document.getElementById('flt-reset');
-
-  // наполняем список категорий из строк
-  var cats = {};
-  dataRows.forEach(function(tr){ var c = tr.getAttribute('data-cat'); if(c) cats[c] = true; });
-  Object.keys(cats).sort(function(a,b){ return a.localeCompare(b, 'ru'); }).forEach(function(c){
-    var o = document.createElement('option'); o.value = c; o.textContent = c; catEl.appendChild(o);
-  });
-
-  function applyFilters(){
-    var q = (qEl.value || '').trim().toLowerCase();
-    var cat = catEl.value, site = siteEl.value, uzx = uzxEl.value;
-    dataRows.forEach(function(tr){
-      var ok = true;
-      if(q && tr.getAttribute('data-name').indexOf(q) < 0) ok = false;
-      if(cat && tr.getAttribute('data-cat') !== cat) ok = false;
-      if(site !== '' && tr.getAttribute('data-site') !== site) ok = false;
-      if(uzx !== '' && tr.getAttribute('data-uzx') !== uzx) ok = false;
-      tr.style.display = ok ? '' : 'none';
-    });
-  }
-  [qEl, catEl, siteEl, uzxEl].forEach(function(el){
-    el.addEventListener('input', applyFilters);
-    el.addEventListener('change', applyFilters);
-  });
-  resetEl.addEventListener('click', function(){
-    qEl.value = ''; catEl.value = ''; siteEl.value = ''; uzxEl.value = '';
-    applyFilters();
-  });
-
-  /* --- Сортировка по клику на заголовок --- */
-  var headers = Array.prototype.slice.call(table.querySelectorAll('thead th'));
-  function num(s){
-    s = (s || '').toString().replace(',', '.').replace(/[^\d.\-]/g, '');
-    var n = parseFloat(s);
-    return isNaN(n) ? null : n;
-  }
-  function cellValue(tr, idx, type){
-    var cells = tr.querySelectorAll('td');
-    var td = cells[idx];
-    if(!td) return type === 'text' ? '' : 0;
-    var txt = td.querySelector('input[type="text"]');
-    if(txt) return num(txt.value);
-    var chk = td.querySelector('input[type="checkbox"]');
-    if(chk) return chk.checked ? 1 : 0;
-    if(td.hasAttribute('data-sort')) return num(td.getAttribute('data-sort'));
-    if(type === 'text') return (td.textContent || '').trim().toLowerCase();
-    var n = num(td.textContent);
-    return n === null ? (td.textContent || '').trim().toLowerCase() : n;
-  }
-  headers.forEach(function(th, idx){
-    if(!th.classList.contains('srt')) return;
-    var type = th.getAttribute('data-type') || 'num';
-    th.addEventListener('click', function(){
-      var dir = th.getAttribute('data-dir') === 'asc' ? 'desc' : 'asc';
-      headers.forEach(function(h){
-        h.removeAttribute('data-dir');
-        var a = h.querySelector('.dp-arr'); if(a) a.textContent = '';
-      });
-      th.setAttribute('data-dir', dir);
-      var arr = th.querySelector('.dp-arr'); if(arr) arr.textContent = dir === 'asc' ? '\u25B2' : '\u25BC';
-      var sign = dir === 'asc' ? 1 : -1;
-      var sorted = dataRows.slice().sort(function(x, y){
-        var a = cellValue(x, idx, type), b = cellValue(y, idx, type);
-        if(typeof a === 'number' && typeof b === 'number') return (a - b) * sign;
-        return String(a).localeCompare(String(b), 'ru') * sign;
-      });
-      sorted.forEach(function(tr){ tbody.appendChild(tr); });
-    });
-  });
-})();
-</script>
 {% endblock %}

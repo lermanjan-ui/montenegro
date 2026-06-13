@@ -209,6 +209,10 @@ def send_new_order_to_telegram(order):
         f"<b>Телефон:</b> {escape(order.customer_phone or '—')}",
     ]
 
+    # Номер заказа в Uzum (eatsId) — показываем только для заказов из Uzum.
+    if getattr(order, "uzum_eats_id", ""):
+        lines.append(f"<b>Номер Uzum:</b> {escape(order.uzum_eats_id)}")
+
     if order.payment_method:
         lines.append(f"<b>Оплата:</b> {escape(order.payment_method.name)}")
 

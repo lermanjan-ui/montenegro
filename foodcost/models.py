@@ -512,6 +512,19 @@ class Dish(models.Model):
         help_text="Цена для Яндекса. Пусто → используется цена Uzum, иначе selling_price.",
     )
 
+    # --- Скидки по каналам (ТОЛЬКО для расчёта маржи на странице цен) ---
+    # Это НЕ влияет на сайт/Uzum/Яндекс/заказы — лишь показывает, какая маржа
+    # останется с учётом комиссии при заданной скидке. Проценты 0..100.
+    site_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0
+    )
+    uzum_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0
+    )
+    yandex_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0
+    )
+
     # Soft-archive flag. When True, the dish is hidden from:
     #   - public website (cart, checkout, /products listing)
     #   - ERP dish list (default view; toggle to see archive)
@@ -3115,6 +3128,19 @@ class DeliveryZone(models.Model):
     )
 
     name = models.CharField(max_length=255)
+
+    # Тип зоны: обычная доставка или доставка обедов («Обед дня»). Обеденные
+    # заказы матчатся только по lunch-зонам, обычные — только по regular.
+    KIND_REGULAR = "regular"
+    KIND_LUNCH = "lunch"
+    KIND_CHOICES = [
+        (KIND_REGULAR, "Обычная"),
+        (KIND_LUNCH, "Обеденная (Обед дня)"),
+    ]
+    zone_kind = models.CharField(
+        max_length=10, choices=KIND_CHOICES, default=KIND_REGULAR,
+        help_text="Обеденная зона действует только для заказов с обед-комбо.",
+    )
 
     delivery_price = models.DecimalField(
         max_digits=12,

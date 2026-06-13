@@ -319,6 +319,12 @@ textarea{
 
         <h1>Заказ #{{ order.id }}</h1>
 
+        {% if order.uzum_eats_id %}
+        <div class="muted" style="font-weight:800;color:#111827;">
+            Номер Uzum: {{ order.uzum_eats_id }}
+        </div>
+        {% endif %}
+
         <div class="muted">
             Создание заказа кассиром
         </div>
