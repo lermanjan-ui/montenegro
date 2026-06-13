@@ -165,7 +165,7 @@ def composition(request, store_id):
         item = {
             "id": str(d.id),
             "categoryId": str(d.category_id),
-            "name": (d.public_name or d.name or "").strip() or d.name,
+            "name": (d.uzum_name or "").strip() or (d.public_name or d.name or "").strip() or d.name,
             "description": {
                 "general": (getattr(d, "composition", "") or "").strip()
                 or (d.public_name or d.name or "").strip()

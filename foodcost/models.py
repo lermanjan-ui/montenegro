@@ -501,6 +501,10 @@ class Dish(models.Model):
         max_length=32, blank=True, default="",
         help_text="Код упаковки (фискальный).",
     )
+    uzum_name = models.CharField(
+        max_length=255, blank=True, default="",
+        help_text="Название блюда для выгрузки в Uzum. Пусто → обычное название блюда.",
+    )
 
     # --- Яндекс (выдача/доставка) ---
     yandex_price = models.DecimalField(

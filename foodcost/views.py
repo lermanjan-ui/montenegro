@@ -1035,6 +1035,7 @@ def dish_detail(request, country_slug, dish_id):
 
             dish.mxik_code = (request.POST.get("mxik_code") or "").strip()[:32]
             dish.package_code = (request.POST.get("package_code") or "").strip()[:32]
+            dish.uzum_name = (request.POST.get("uzum_name") or "").strip()[:255]
             dish.uzum_excluded = bool(request.POST.get("uzum_excluded"))
             _uzp = (request.POST.get("uzum_price") or "").strip().replace(",", ".")
             try:

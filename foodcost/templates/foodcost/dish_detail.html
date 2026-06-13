@@ -2325,6 +2325,13 @@
             </div>
 
             <div class="fc-field">
+                <label class="fc-label">Название для Uzum</label>
+                <input class="fc-input" type="text" name="uzum_name" value="{{ dish.uzum_name }}" maxlength="255"
+                       {% if not can_edit_dish_base %}readonly{% endif %}>
+                <div class="fc-field-hint">Если пусто — в Uzum уходит обычное название блюда.</div>
+            </div>
+
+            <div class="fc-field">
                 <label class="fc-label">Цена для Uzum</label>
                 <input class="fc-input" type="text" name="uzum_price" value="{{ dish.uzum_price|default_if_none:'' }}"
                        {% if not can_edit_dish_base %}readonly{% endif %}>
