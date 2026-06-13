@@ -4795,32 +4795,38 @@ class LunchMenu(models.Model):
     separate_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     # 5 слотов: на каждый — либо блюдо из системы (FK), либо текст названия,
-    # плюс граммовка (вес порции). Вес живёт на слоте (работает и для текста).
+    # плюс граммовка (вес порции) и цена «по отдельности» (price). Всё живёт на
+    # слоте (работает и для текстового слота). separate_price обеда = сумма price.
     soup_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     soup_name = models.CharField(max_length=255, blank=True, default="")
     soup_grams = models.PositiveIntegerField(default=0)
+    soup_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     main_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     main_name = models.CharField(max_length=255, blank=True, default="")
     main_grams = models.PositiveIntegerField(default=0)
+    main_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     salad_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     salad_name = models.CharField(max_length=255, blank=True, default="")
     salad_grams = models.PositiveIntegerField(default=0)
+    salad_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     drink_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     drink_name = models.CharField(max_length=255, blank=True, default="")
     drink_grams = models.PositiveIntegerField(default=0)
+    drink_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     bread_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     bread_name = models.CharField(max_length=255, blank=True, default="")
     bread_grams = models.PositiveIntegerField(default=0)
+    bread_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -4831,6 +4837,20 @@ class LunchMenu(models.Model):
 
     def __str__(self):
         return f"Обед дня {self.date}"
+
+    def save(self, *args, **kwargs):
+        # «Цена по отдельности» обеда — это сумма цен его блюд. Источник истины —
+        # цены по слотам; общее поле держим в синхроне автоматически.
+        self.separate_price = self.separate_total
+        super().save(*args, **kwargs)
+
+    @property
+    def separate_total(self):
+        """Сумма цен «по отдельности» всех слотов."""
+        total = Decimal("0")
+        for slot in self.SLOTS:
+            total += self.slot_price(slot)
+        return total
 
     @property
     def savings(self):
@@ -4844,6 +4864,9 @@ class LunchMenu(models.Model):
 
     def slot_grams(self, slot):
         return getattr(self, f"{slot}_grams", 0) or 0
+
+    def slot_price(self, slot):
+        return getattr(self, f"{slot}_price", None) or Decimal("0")
 
     def slot_display_name(self, slot):
         """Имя слота: из выбранного блюда, иначе из текста."""

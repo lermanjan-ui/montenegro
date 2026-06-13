@@ -70,14 +70,16 @@ def _dish_photo(request, dish):
 
 def _serialize_slot(request, menu, slot):
     """Слот состава: блюдо из системы (имя+фото) или просто текст (id/photo = null).
-    grams — вес порции (0, если не задан)."""
+    grams — вес порции; separate_price — цена этого блюда по отдельности (0, если не задано)."""
     grams = menu.slot_grams(slot)
+    separate_price = _to_float(menu.slot_price(slot))
     dish = menu.slot_dish(slot)
     if dish is not None:
         return {
             "slot": slot,
             "category_label": menu.SLOT_LABELS[slot],
             "grams": grams,
+            "separate_price": separate_price,
             "dish": {
                 "id": dish.id,
                 "name": _display_name(dish),
@@ -88,6 +90,7 @@ def _serialize_slot(request, menu, slot):
         "slot": slot,
         "category_label": menu.SLOT_LABELS[slot],
         "grams": grams,
+        "separate_price": separate_price,
         "dish": {
             "id": None,
             "name": menu.slot_text(slot),

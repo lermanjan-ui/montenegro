@@ -2941,7 +2941,7 @@ def lunch_detail(request, country_slug, menu_id):
             menu.title = (request.POST.get("title") or "Обед дня").strip()[:120]
             menu.delivery_from = (request.POST.get("delivery_from") or "").strip()[:20]
             menu.combo_price = _lunch_parse_decimal(request.POST.get("combo_price"))
-            menu.separate_price = _lunch_parse_decimal(request.POST.get("separate_price"))
+            # separate_price считается из цен по слотам в LunchMenu.save()
             menu.is_active = bool(request.POST.get("is_active"))
             for slot in LunchMenu.SLOTS:
                 raw_dish = (request.POST.get(f"{slot}_dish") or "").strip()
@@ -2961,6 +2961,10 @@ def lunch_detail(request, country_slug, menu_id):
                 except (TypeError, ValueError):
                     grams = 0
                 setattr(menu, f"{slot}_grams", grams)
+                setattr(
+                    menu, f"{slot}_price",
+                    _lunch_parse_decimal(request.POST.get(f"{slot}_price")),
+                )
             menu.save()
 
         elif action == "add_upsell":
@@ -3000,6 +3004,7 @@ def lunch_detail(request, country_slug, menu_id):
             "dish_id": (menu.slot_dish(s).id if menu.slot_dish(s) else None),
             "name": menu.slot_text(s),
             "grams": menu.slot_grams(s),
+            "price": menu.slot_price(s),
         }
         for s in LunchMenu.SLOTS
     ]
