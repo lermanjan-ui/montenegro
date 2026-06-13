@@ -182,3 +182,26 @@ PAYME_FAIL_URL = os.environ.get(
 ORDER_AWAITING_PAYMENT_TTL_HOURS = int(
     os.environ.get("ORDER_AWAITING_PAYMENT_TTL_HOURS", "24")
 )
+
+
+# =============================================================================
+# 📲 ESKIZ SMS — OTP для входа в приложение (/api/app/auth/*)
+# =============================================================================
+# Креды и параметры читаются ТОЛЬКО из окружения. Без ESKIZ_EMAIL/ESKIZ_PASSWORD
+# клиент считается «не настроенным» и /api/app/auth/request-code отдаёт
+# 503 SMS_NOT_CONFIGURED (как сейчас на проде). ESKIZ_OTP_TEMPLATE должен
+# ДОСЛОВНО совпадать с одобренным в кабинете Eskiz шаблоном (подставляется {code}).
+ESKIZ_EMAIL = os.environ.get("ESKIZ_EMAIL", "")
+ESKIZ_PASSWORD = os.environ.get("ESKIZ_PASSWORD", "")
+ESKIZ_FROM = os.environ.get("ESKIZ_FROM", "4546")
+ESKIZ_OTP_TEMPLATE = os.environ.get("ESKIZ_OTP_TEMPLATE", "Kod: {code}")
+ESKIZ_BASE_URL = os.environ.get("ESKIZ_BASE_URL", "https://notify.eskiz.uz/api")
+
+# OTP: на dev/staging можно вернуть код прямо в ответе request-code (для отладки
+# входа без живого SMS). На ПРОДЕ должно быть False, иначе код утечёт в ответ API.
+OTP_EXPOSE_CODE_FOR_TESTING = (
+    os.environ.get("OTP_EXPOSE_CODE_FOR_TESTING", "").strip().lower()
+    in ("1", "true", "yes", "on")
+)
+OTP_CODE_TTL_SECONDS = int(os.environ.get("OTP_CODE_TTL_SECONDS", "300"))
+OTP_CODE_LENGTH = int(os.environ.get("OTP_CODE_LENGTH", "4"))
