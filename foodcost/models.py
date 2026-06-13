@@ -4771,12 +4771,13 @@ def _productprice_deleted(sender, instance, **kwargs):
 
 class LunchMenu(models.Model):
     """Комплексный обед («Обед дня») на конкретную дату."""
-    SLOTS = ("soup", "main", "salad", "drink")
+    SLOTS = ("soup", "main", "salad", "drink", "bread")
     SLOT_LABELS = {
         "soup": "Суп дня",
         "main": "Горячее",
         "salad": "Салат",
         "drink": "Напиток",
+        "bread": "Хлеб",
     }
 
     country = models.ForeignKey(
@@ -4793,23 +4794,33 @@ class LunchMenu(models.Model):
     combo_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     separate_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
-    # 4 слота: на каждый — либо блюдо из системы (FK), либо текст названия.
+    # 5 слотов: на каждый — либо блюдо из системы (FK), либо текст названия,
+    # плюс граммовка (вес порции). Вес живёт на слоте (работает и для текста).
     soup_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     soup_name = models.CharField(max_length=255, blank=True, default="")
+    soup_grams = models.PositiveIntegerField(default=0)
     main_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     main_name = models.CharField(max_length=255, blank=True, default="")
+    main_grams = models.PositiveIntegerField(default=0)
     salad_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     salad_name = models.CharField(max_length=255, blank=True, default="")
+    salad_grams = models.PositiveIntegerField(default=0)
     drink_dish = models.ForeignKey(
         Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     drink_name = models.CharField(max_length=255, blank=True, default="")
+    drink_grams = models.PositiveIntegerField(default=0)
+    bread_dish = models.ForeignKey(
+        Dish, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    bread_name = models.CharField(max_length=255, blank=True, default="")
+    bread_grams = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -4831,6 +4842,9 @@ class LunchMenu(models.Model):
     def slot_text(self, slot):
         return getattr(self, f"{slot}_name", "") or ""
 
+    def slot_grams(self, slot):
+        return getattr(self, f"{slot}_grams", 0) or 0
+
     def slot_display_name(self, slot):
         """Имя слота: из выбранного блюда, иначе из текста."""
         dish = self.slot_dish(slot)
@@ -4839,12 +4853,14 @@ class LunchMenu(models.Model):
         return self.slot_text(slot)
 
     def composition_names(self):
-        """Список названий состава (для снапшота/витрины), пустые пропускаем."""
+        """Состав (для снапшота/витрины): «Название — N г», пустые слоты пропускаем."""
         out = []
         for slot in self.SLOTS:
             name = self.slot_display_name(slot)
-            if name:
-                out.append(name)
+            if not name:
+                continue
+            grams = self.slot_grams(slot)
+            out.append(f"{name} — {grams} г" if grams else name)
         return out
 
 

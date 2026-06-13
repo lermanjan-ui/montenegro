@@ -2955,6 +2955,12 @@ def lunch_detail(request, country_slug, menu_id):
                     menu, f"{slot}_name",
                     (request.POST.get(f"{slot}_name") or "").strip()[:255],
                 )
+                grams_raw = (request.POST.get(f"{slot}_grams") or "").strip()
+                try:
+                    grams = max(int(grams_raw), 0) if grams_raw else 0
+                except (TypeError, ValueError):
+                    grams = 0
+                setattr(menu, f"{slot}_grams", grams)
             menu.save()
 
         elif action == "add_upsell":
@@ -2993,6 +2999,7 @@ def lunch_detail(request, country_slug, menu_id):
             "label": LunchMenu.SLOT_LABELS[s],
             "dish_id": (menu.slot_dish(s).id if menu.slot_dish(s) else None),
             "name": menu.slot_text(s),
+            "grams": menu.slot_grams(s),
         }
         for s in LunchMenu.SLOTS
     ]

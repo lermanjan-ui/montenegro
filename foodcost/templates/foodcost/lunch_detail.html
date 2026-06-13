@@ -21,7 +21,7 @@
     }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .field { margin-bottom: 16px; }
-    .slot-row { display: grid; grid-template-columns: 140px 1fr 1fr; gap: 12px; align-items: end;
+    .slot-row { display: grid; grid-template-columns: 130px 1fr 1fr 100px; gap: 12px; align-items: end;
         padding: 12px 0; border-bottom: 1px solid #eef0f3; }
     .slot-label { font-weight: 600; color: #111827; font-size: 15px; padding-bottom: 9px; }
     .hint { font-size: 12px; color: #9ca3af; margin: 4px 0 0; }
@@ -98,6 +98,10 @@
                 <div>
                     <label>Или впишите название</label>
                     <input type="text" name="{{ slot.key }}_name" value="{{ slot.name }}" maxlength="255" placeholder="напр. Куриный суп">
+                </div>
+                <div>
+                    <label>Граммовка</label>
+                    <input type="number" name="{{ slot.key }}_grams" value="{{ slot.grams|default:0 }}" min="0" step="1" placeholder="г">
                 </div>
             </div>
             {% endfor %}
