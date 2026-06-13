@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
-from .models import UserProfile, Dish, Location, DishAvailability, OrderSource
+from .models import UserProfile, Dish, Location, DishAvailability, OrderSource, DishCategory
 from .views import get_country, require_section_access
 
 YANDEX_COMMISSION = Decimal("35")  # %, фиксированная для расчёта «Выручка с Яндекса»
@@ -53,6 +53,12 @@ def dish_pricing(request, country_slug):
         Location.objects.filter(country=country).order_by("site_sort_order", "name")
     )
 
+    def _back():
+        # Возврат на страницу с сохранением выбранной категории (фильтра).
+        cat = (request.POST.get("category_id") or "").strip()
+        base = f"/c/{country.slug}/dish-pricing/"
+        return base + (f"?category_id={cat}" if cat else "")
+
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -61,7 +67,7 @@ def dish_pricing(request, country_slug):
             sid = request.POST.get("uzum_source_id")
             if sid:
                 OrderSource.objects.filter(country=country, id=sid).update(is_uzum=True)
-            return redirect(f"/c/{country.slug}/dish-pricing/")
+            return redirect(_back())
 
         if action == "save_dish":
             dish = Dish.objects.filter(
@@ -101,7 +107,7 @@ def dish_pricing(request, country_slug):
                     da.is_available = str(loc.id) in avail_ids
                     da.uzum_stop = str(loc.id) not in uzum_ok_ids
                     da.save(update_fields=["is_available", "uzum_stop"])
-            return redirect(f"/c/{country.slug}/dish-pricing/")
+            return redirect(_back())
 
         if action == "apply_discount_all":
             # Единая скидка на ВСЕ блюда. Пустое поле канала → этот канал не трогаем.
@@ -122,7 +128,7 @@ def dish_pricing(request, country_slug):
                 Dish.objects.filter(
                     country=country, is_archived=False
                 ).update(**updates)
-            return redirect(f"/c/{country.slug}/dish-pricing/")
+            return redirect(_back())
 
     # источник Uzum и его комиссия
     uzum_source = (
@@ -137,11 +143,16 @@ def dish_pricing(request, country_slug):
         for a in DishAvailability.objects.filter(country=country)
     }
 
+    selected_category_id = (request.GET.get("category_id") or "").strip()
+    categories = DishCategory.objects.filter(country=country).order_by("name")
+
     dishes = (
         Dish.objects.filter(country=country, is_archived=False)
         .select_related("category")
         .order_by("name")
     )
+    if selected_category_id:
+        dishes = dishes.filter(category_id=selected_category_id)
 
     rows = []
     for d in dishes:
@@ -222,4 +233,6 @@ def dish_pricing(request, country_slug):
         "uzum_source": uzum_source,
         "uzum_comm": uzum_comm,
         "yandex_comm": YANDEX_COMMISSION,
+        "categories": categories,
+        "selected_category_id": selected_category_id,
     })

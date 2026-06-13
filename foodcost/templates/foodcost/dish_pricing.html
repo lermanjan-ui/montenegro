@@ -42,9 +42,21 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
   </div>
 
   <div class="dp-bar">
+    <form method="get" style="display:inline-flex;align-items:center;gap:6px;">
+      <span>Категория:</span>
+      <select name="category_id" onchange="this.form.submit()">
+        <option value="">Все категории</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if selected_category_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="dp-btn dp-btn-sec">Фильтр</button></noscript>
+    </form>
+
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="set_uzum_source">
+      <input type="hidden" name="category_id" value="{{ selected_category_id }}">
       <span>Источник Uzum:</span>
       <select name="uzum_source_id">
         <option value="">— не выбран —</option>
@@ -60,6 +72,7 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
     <form method="post" style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;">
       {% csrf_token %}
       <input type="hidden" name="action" value="apply_discount_all">
+      <input type="hidden" name="category_id" value="{{ selected_category_id }}">
       <span>Скидка всем, %:</span>
       <input class="dp-in" type="text" name="all_site_discount" placeholder="сайт" style="width:64px;">
       <input class="dp-in" type="text" name="all_uzum_discount" placeholder="Uzum" style="width:64px;">
@@ -104,6 +117,7 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
             {% csrf_token %}
             <input type="hidden" name="action" value="save_dish">
             <input type="hidden" name="dish_id" value="{{ r.dish.id }}">
+            <input type="hidden" name="category_id" value="{{ selected_category_id }}">
 
             <td class="l">
               {% if r.dish.photo_url %}<img class="dp-thumb" src="{{ r.dish.photo_url }}">
