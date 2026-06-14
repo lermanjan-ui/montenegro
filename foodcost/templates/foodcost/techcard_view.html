@@ -9,6 +9,16 @@
   .tc-table th { text-align:left; color:#6B7280; font-size:13px; font-weight:600; padding:6px 8px; }
   .tc-table td { padding:9px 8px; border-top:1px solid #E5E7EB; }
   .tc-h { font-weight:800; margin:0 0 8px; font-size:16px; }
+  .tc-portions { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:#F9FAFB; border:1px solid #E5E7EB; border-radius:12px; padding:12px 14px; margin:0 0 22px; }
+  .tc-portions .tc-lbl { font-weight:700; }
+  .tc-step { width:34px; height:34px; border:1px solid #E5E7EB; border-radius:9px; background:#fff;
+    font-size:18px; font-weight:700; line-height:1; cursor:pointer; color:#111827; }
+  .tc-step:hover { background:#F3F4F6; }
+  #tcPortions { width:72px; height:34px; text-align:center; border:1px solid #E5E7EB; border-radius:9px;
+    font-size:15px; font-weight:700; }
+  .tc-mult { color:#6B7280; font-size:13px; }
+  .tc-mult b { color:#16A34A; }
   @media print {
     body * { visibility: hidden !important; }
     body::before { content: "Печать техкарты запрещена"; visibility: visible; font-size:18px; }
@@ -20,13 +30,23 @@
   <h1 style="font-size:23px;font-weight:800;margin:10px 0 2px;">{{ dish.name }}</h1>
   <div style="color:#9CA3AF;font-size:13px;margin-bottom:20px;">Только просмотр</div>
 
+  {% if product_items or preparation_items %}
+  <div class="tc-portions">
+    <span class="tc-lbl">Порций:</span>
+    <button type="button" class="tc-step" data-step="-1" aria-label="меньше">−</button>
+    <input id="tcPortions" type="number" min="1" step="1" value="1" inputmode="numeric">
+    <button type="button" class="tc-step" data-step="1" aria-label="больше">+</button>
+    <span class="tc-mult">раскладка на 1 порцию × <b id="tcMult">1</b></span>
+  </div>
+  {% endif %}
+
   {% if product_items %}
     <div class="tc-h">Продукты</div>
     <table class="tc-table">
       <thead><tr><th>Наименование</th><th>Брутто</th><th>Нетто</th><th>Ед.</th></tr></thead>
       <tbody>
         {% for it in product_items %}
-          <tr><td>{{ it.name }}</td><td>{{ it.gross }}</td><td>{{ it.net }}</td><td>{{ it.unit }}</td></tr>
+          <tr><td>{{ it.name }}</td><td class="tc-num" data-base="{{ it.gross|stringformat:'s' }}">{{ it.gross }}</td><td class="tc-num" data-base="{{ it.net|stringformat:'s' }}">{{ it.net }}</td><td>{{ it.unit }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -38,7 +58,7 @@
       <thead><tr><th>Наименование</th><th>Брутто</th><th>Нетто</th><th>Ед.</th></tr></thead>
       <tbody>
         {% for it in preparation_items %}
-          <tr><td>{{ it.name }}</td><td>{{ it.gross }}</td><td>{{ it.net }}</td><td>{{ it.unit }}</td></tr>
+          <tr><td>{{ it.name }}</td><td class="tc-num" data-base="{{ it.gross|stringformat:'s' }}">{{ it.gross }}</td><td class="tc-num" data-base="{{ it.net|stringformat:'s' }}">{{ it.net }}</td><td>{{ it.unit }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -64,5 +84,38 @@
 <script>
   document.addEventListener('copy', function (e) { e.preventDefault(); });
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  (function(){
+    var inp = document.getElementById('tcPortions');
+    if (!inp) return;
+    var mult = document.getElementById('tcMult');
+    var cells = document.querySelectorAll('.tc-num');
+    function fmt(x){
+      if (!isFinite(x)) return '—';
+      return String(Math.round(x * 1000) / 1000);   // убираем шум float, до 3 знаков
+    }
+    function recalc(){
+      var n = parseInt(inp.value, 10);
+      if (!n || n < 1) { n = 1; }
+      inp.value = n;
+      if (mult) { mult.textContent = n; }
+      cells.forEach(function(td){
+        var base = parseFloat(td.getAttribute('data-base'));
+        if (isNaN(base)) { return; }
+        td.textContent = fmt(base * n);
+      });
+    }
+    inp.addEventListener('input', recalc);
+    inp.addEventListener('change', recalc);
+    document.querySelectorAll('.tc-step').forEach(function(b){
+      b.addEventListener('click', function(){
+        var step = parseInt(b.getAttribute('data-step'), 10) || 0;
+        var n = (parseInt(inp.value, 10) || 1) + step;
+        if (n < 1) { n = 1; }
+        inp.value = n;
+        recalc();
+      });
+    });
+  })();
 </script>
 {% endblock %}
