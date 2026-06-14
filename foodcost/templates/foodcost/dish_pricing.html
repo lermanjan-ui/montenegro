@@ -42,6 +42,10 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
 .dp-wrap[data-tab="site"]   .c-uzum,  .dp-wrap[data-tab="site"]   .c-yandex{ display:none; }
 .dp-wrap[data-tab="uzum"]   .c-site,  .dp-wrap[data-tab="uzum"]   .c-yandex{ display:none; }
 .dp-wrap[data-tab="yandex"] .c-site,  .dp-wrap[data-tab="yandex"] .c-uzum{ display:none; }
+/* Сортировка по клику на заголовок */
+table.dp th.dp-sort{ cursor:pointer; user-select:none; }
+table.dp th.dp-sort:hover{ color:var(--fc-text); }
+.dp-arr{ font-size:10px; color:var(--fc-green); }
 </style>
 
 <div class="dp-wrap" id="dpWrap" data-tab="site">
@@ -72,6 +76,7 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
       {% csrf_token %}
       <input type="hidden" name="action" value="set_uzum_source">
       <input type="hidden" name="category_id" value="{{ selected_category_id }}">
+      <input type="hidden" name="tab" class="dp-tabfield" value="site">
       <span>Источник Uzum:</span>
       <select name="uzum_source_id">
         <option value="">— не выбран —</option>
@@ -88,6 +93,7 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
       {% csrf_token %}
       <input type="hidden" name="action" value="apply_discount_all">
       <input type="hidden" name="category_id" value="{{ selected_category_id }}">
+      <input type="hidden" name="tab" class="dp-tabfield" value="site">
       <span>Скидка всем, %:</span>
       <input class="dp-in c-site" type="text" name="all_site_discount" placeholder="сайт" style="width:64px;">
       <input class="dp-in c-uzum" type="text" name="all_uzum_discount" placeholder="Uzum" style="width:64px;">
@@ -104,21 +110,21 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
       <thead>
         <tr>
           <th class="l">Фото</th>
-          <th class="l">Блюдо</th>
-          <th>Себест.</th>
-          <th class="dp-sep c-site">Стоимость</th>
-          <th class="c-site">Скидка сайт %</th>
-          <th class="c-site">Цена со ск.</th>
-          <th class="c-site">Маржа</th>
+          <th class="l dp-sort" data-key="name">Блюдо<span class="dp-arr"></span></th>
+          <th class="dp-sort" data-key="cost">Себест.<span class="dp-arr"></span></th>
+          <th class="dp-sep c-site dp-sort" data-key="price">Стоимость<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_disc">Скидка сайт %<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_price_disc">Цена со ск.<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_margin">Маржа<span class="dp-arr"></span></th>
           <th class="c-site">На сайте</th>
-          <th class="dp-sep c-uzum">Цена Uzum</th>
-          <th class="c-uzum">Скидка Uzum %</th>
-          <th class="c-uzum">Uzum: получим</th>
-          <th class="c-uzum">Маржа Uzum</th>
-          <th class="dp-sep c-yandex">База (Uzum)</th>
-          <th class="c-yandex">Скидка Яндекс %</th>
-          <th class="c-yandex">Яндекс итог</th>
-          <th class="c-yandex">Маржа Яндекс</th>
+          <th class="dp-sep c-uzum dp-sort" data-key="uzum_price">Цена Uzum<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_disc">Скидка Uzum %<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_net">Uzum: получим<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_margin">Маржа Uzum<span class="dp-arr"></span></th>
+          <th class="dp-sep c-yandex dp-sort" data-key="yandex_price">Цена Яндекс<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_disc">Скидка Яндекс %<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_net">Яндекс итог<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_margin">Маржа Яндекс<span class="dp-arr"></span></th>
           {% for loc in locations %}
             <th class="dp-sep c-site">{{ loc.name }}<div class="dp-grp">доступно</div></th>
             <th class="c-uzum">{{ loc.name }}<div class="dp-grp">Uzum</div></th>
@@ -134,30 +140,31 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
             <input type="hidden" name="action" value="save_dish">
             <input type="hidden" name="dish_id" value="{{ r.dish.id }}">
             <input type="hidden" name="category_id" value="{{ selected_category_id }}">
+            <input type="hidden" name="tab" class="dp-tabfield" value="site">
 
             <td class="l">
               {% if r.dish.photo_url %}<img class="dp-thumb" src="{{ r.dish.photo_url }}">
               {% elif r.dish.photo %}<img class="dp-thumb" src="{{ r.dish.photo.url }}">
               {% else %}<div class="dp-thumb-empty"></div>{% endif %}
             </td>
-            <td class="l">{{ r.dish.name }}</td>
-            <td class="dp-muted">{{ r.cost }}</td>
+            <td class="l" data-key="name" data-sort="{{ r.dish.name }}">{{ r.dish.name }}</td>
+            <td class="dp-muted" data-key="cost" data-sort="{{ r.cost }}">{{ r.cost }}</td>
 
-            <td class="dp-sep c-site"><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
-            <td class="c-site"><input class="dp-in" type="text" name="site_discount_percent" value="{{ r.site_disc|floatformat:'-2' }}" placeholder="0"></td>
-            <td class="dp-muted c-site">{{ r.site_price_disc }}</td>
-            <td class="c-site">{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }} <span class="dp-muted">({{ r.margin_pct }}%)</span></span>{% else %}—{% endif %}</td>
+            <td class="dp-sep c-site" data-key="price" data-sort="{{ r.price }}"><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
+            <td class="c-site" data-key="site_disc" data-sort="{{ r.site_disc }}"><input class="dp-in" type="text" name="site_discount_percent" value="{{ r.site_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="dp-muted c-site" data-key="site_price_disc" data-sort="{{ r.site_price_disc }}">{{ r.site_price_disc }}</td>
+            <td class="c-site" data-key="site_margin" data-sort="{{ r.margin_abs }}">{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }} <span class="dp-muted">({{ r.margin_pct }}%)</span></span>{% else %}—{% endif %}</td>
             <td class="c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
 
-            <td class="dp-sep c-uzum"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
-            <td class="c-uzum"><input class="dp-in" type="text" name="uzum_discount_percent" value="{{ r.uzum_disc|floatformat:'-2' }}" placeholder="0"></td>
-            <td class="c-uzum">{{ r.uzum_net }}</td>
-            <td class="c-uzum"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
+            <td class="dp-sep c-uzum" data-key="uzum_price" data-sort="{{ r.uzum_price }}"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
+            <td class="c-uzum" data-key="uzum_disc" data-sort="{{ r.uzum_disc }}"><input class="dp-in" type="text" name="uzum_discount_percent" value="{{ r.uzum_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="c-uzum" data-key="uzum_net" data-sort="{{ r.uzum_net }}">{{ r.uzum_net }}</td>
+            <td class="c-uzum" data-key="uzum_margin" data-sort="{{ r.uzum_margin_abs }}"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
 
-            <td class="dp-sep c-yandex dp-muted">{{ r.uzum_price }}</td>
-            <td class="c-yandex"><input class="dp-in" type="text" name="yandex_discount_percent" value="{{ r.yandex_disc|floatformat:'-2' }}" placeholder="0"></td>
-            <td class="c-yandex">{{ r.yandex_net }}</td>
-            <td class="c-yandex"><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span>{% if r.yandex_margin_pct != None %} <span class="dp-muted">({{ r.yandex_margin_pct }}%)</span>{% endif %}</td>
+            <td class="dp-sep c-yandex" data-key="yandex_price" data-sort="{{ r.yandex_price }}"><input class="dp-in" type="text" name="yandex_price" value="{% if r.dish.yandex_price is not None %}{{ r.dish.yandex_price }}{% endif %}" placeholder="как Uzum"></td>
+            <td class="c-yandex" data-key="yandex_disc" data-sort="{{ r.yandex_disc }}"><input class="dp-in" type="text" name="yandex_discount_percent" value="{{ r.yandex_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="c-yandex" data-key="yandex_net" data-sort="{{ r.yandex_net }}">{{ r.yandex_net }}</td>
+            <td class="c-yandex" data-key="yandex_margin" data-sort="{{ r.yandex_margin_abs }}"><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span>{% if r.yandex_margin_pct != None %} <span class="dp-muted">({{ r.yandex_margin_pct }}%)</span>{% endif %}</td>
 
             {% for c in r.loc_cells %}
               <td class="dp-sep c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
@@ -178,11 +185,51 @@ table.dp tbody tr:hover td{ background:var(--fc-hover); }
 <script>
 (function(){
   var wrap = document.getElementById('dpWrap');
+
+  // --- Вкладки каналов ---
   var tabs = document.querySelectorAll('.dp-tab');
+  function setTab(name){
+    if (['site','uzum','yandex'].indexOf(name) === -1) { name = 'site'; }
+    wrap.setAttribute('data-tab', name);
+    tabs.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === name); });
+    // прокидываем активную вкладку в скрытые поля форм, чтобы после сохранения
+    // вернуться на неё же, а не на первую («Сайт»).
+    document.querySelectorAll('.dp-tabfield').forEach(function(f){ f.value = name; });
+  }
   tabs.forEach(function(btn){
-    btn.addEventListener('click', function(){
-      wrap.setAttribute('data-tab', btn.getAttribute('data-tab'));
-      tabs.forEach(function(b){ b.classList.toggle('active', b === btn); });
+    btn.addEventListener('click', function(){ setTab(btn.getAttribute('data-tab')); });
+  });
+  // Восстанавливаем вкладку из ?tab= (после сохранения редиректит сюда), иначе «Сайт».
+  var _tabParam = new URLSearchParams(window.location.search).get('tab');
+  setTab(_tabParam || 'site');
+
+  // --- Сортировка по клику на заголовок (по убыванию ↔ по возрастанию) ---
+  var tbody = wrap.querySelector('table.dp tbody');
+  var state = { key: null, dir: -1 };  // первый клик: по убыванию
+  wrap.querySelectorAll('th.dp-sort').forEach(function(th){
+    th.addEventListener('click', function(){
+      var key = th.getAttribute('data-key');
+      if (state.key === key) { state.dir = -state.dir; }
+      else { state.key = key; state.dir = -1; }
+
+      var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'))
+        .filter(function(tr){ return tr.querySelector('[data-key="' + key + '"]'); });
+
+      rows.sort(function(a, b){
+        var ea = a.querySelector('[data-key="' + key + '"]');
+        var eb = b.querySelector('[data-key="' + key + '"]');
+        var va = ea ? ea.getAttribute('data-sort') : '';
+        var vb = eb ? eb.getAttribute('data-sort') : '';
+        var na = parseFloat(va), nb = parseFloat(vb), cmp;
+        if (!isNaN(na) && !isNaN(nb)) { cmp = na - nb; }
+        else { cmp = String(va).localeCompare(String(vb), 'ru'); }
+        return cmp * state.dir;
+      });
+      rows.forEach(function(tr){ tbody.appendChild(tr); });
+
+      wrap.querySelectorAll('.dp-arr').forEach(function(s){ s.textContent = ''; });
+      var arr = th.querySelector('.dp-arr');
+      if (arr) { arr.textContent = state.dir < 0 ? ' ▼' : ' ▲'; }
     });
   });
 })();

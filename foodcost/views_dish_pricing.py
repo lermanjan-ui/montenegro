@@ -54,10 +54,17 @@ def dish_pricing(request, country_slug):
     )
 
     def _back():
-        # Возврат на страницу с сохранением выбранной категории (фильтра).
+        # Возврат на страницу с сохранением выбранной категории и активной вкладки,
+        # чтобы после сохранения не сбрасывало на первую вкладку «Сайт».
+        params = []
         cat = (request.POST.get("category_id") or "").strip()
+        if cat:
+            params.append(f"category_id={cat}")
+        tab = (request.POST.get("tab") or "").strip()
+        if tab in ("site", "uzum", "yandex"):
+            params.append(f"tab={tab}")
         base = f"/c/{country.slug}/dish-pricing/"
-        return base + (f"?category_id={cat}" if cat else "")
+        return base + ("?" + "&".join(params) if params else "")
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -78,6 +85,7 @@ def dish_pricing(request, country_slug):
                 if sp is not None:
                     dish.selling_price = sp
                 dish.uzum_price = _dec_or_none(request.POST.get("uzum_price"))
+                dish.yandex_price = _dec_or_none(request.POST.get("yandex_price"))
                 dish.is_visible_on_site = bool(request.POST.get("is_visible_on_site"))
                 dish.site_discount_percent = _disc_pct(
                     request.POST.get("site_discount_percent")
@@ -89,7 +97,8 @@ def dish_pricing(request, country_slug):
                     request.POST.get("yandex_discount_percent")
                 )
                 dish.save(update_fields=[
-                    "selling_price", "uzum_price", "is_visible_on_site",
+                    "selling_price", "uzum_price", "yandex_price",
+                    "is_visible_on_site",
                     "site_discount_percent", "uzum_discount_percent",
                     "yandex_discount_percent",
                 ])
@@ -164,6 +173,10 @@ def dish_pricing(request, country_slug):
         uzum_disc = d.uzum_discount_percent or Decimal(0)
         yandex_disc = d.yandex_discount_percent or Decimal(0)
 
+        # Своя цена Яндекса: если задана — берём её, иначе fallback на цену Uzum
+        # (которая уже падает на selling_price). Скидка Яндекса считается от неё.
+        yandex_price = d.yandex_price if d.yandex_price is not None else uzum_price
+
         # Цены с учётом скидки канала (только для расчёта маржи на этой странице).
         site_price_disc = (
             price * (Decimal(100) - site_disc) / Decimal(100)
@@ -172,7 +185,7 @@ def dish_pricing(request, country_slug):
             uzum_price * (Decimal(100) - uzum_disc) / Decimal(100)
         ).quantize(Decimal("1"))
         yandex_price_disc = (
-            uzum_price * (Decimal(100) - yandex_disc) / Decimal(100)
+            yandex_price * (Decimal(100) - yandex_disc) / Decimal(100)
         ).quantize(Decimal("1"))
 
         # Сайт: без комиссии, маржа от цены со скидкой.
@@ -218,6 +231,7 @@ def dish_pricing(request, country_slug):
             "uzum_margin_abs": uzum_margin_abs,
             "uzum_margin_pct": uzum_margin_pct,
             "yandex_disc": yandex_disc,
+            "yandex_price": yandex_price,
             "yandex_price_disc": yandex_price_disc,
             "yandex_net": yandex_net,
             "yandex_margin_abs": yandex_margin_abs,
