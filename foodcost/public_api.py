@@ -1546,6 +1546,7 @@ def _validate_and_price_cart(
     extra_subtotal=None,
     extra_discount=None,
     extra_lines=None,
+    delivery_available=True,
 ):
     """
     Validate raw cart items and compute prices server-side.
@@ -1882,6 +1883,11 @@ def _validate_and_price_cart(
         # Pickup is always free — irrespective of zone or threshold.
         delivery_price = Decimal("0")
         free_delivery = True
+    elif not delivery_available:
+        # Адрес вне зоны доставки (для обедов — вне обеденной зоны): доставку
+        # не считаем, фронт блокирует оформление по флагу delivery_available.
+        delivery_price = Decimal("0")
+        free_delivery = False
     elif delivery_zone is not None:
         # Zone overrides the country-wide defaults.
         threshold = _money(delivery_zone.free_delivery_threshold)
@@ -2092,13 +2098,18 @@ def _haversine_km(lat1, lon1, lat2, lon2):
     return R_KM * c
 
 
-def _find_delivery_zone(country, lat, lng):
+def _find_delivery_zone(country, lat, lng, for_lunch=False):
     """
     Find the best DeliveryZone for the given customer coordinates.
+
+    for_lunch=True → матчим только ОБЕДЕННЫЕ зоны (zone_kind="lunch"); иначе —
+    только ОБЫЧНЫЕ (zone_kind="regular"). Так заказы с обедом и обычные заказы
+    не пересекаются по зонам.
 
     A zone is eligible iff ALL of:
       - zone.is_active=True
       - zone.country=country
+      - zone.zone_kind matches the requested kind
       - zone.radius_km > 0
       - zone.center_latitude / center_longitude are set
       - zone.location.is_active=True
@@ -2119,6 +2130,7 @@ def _find_delivery_zone(country, lat, lng):
         .filter(
             country=country,
             is_active=True,
+            zone_kind=(DeliveryZone.KIND_LUNCH if for_lunch else DeliveryZone.KIND_REGULAR),
             location__is_active=True,
             location__is_visible_on_site=True,
             location__supports_delivery=True,
@@ -2657,23 +2669,40 @@ def cart_calculate(request):
     if err:
         return err
 
+    # Наличие обед-комбо определяем ЗАРАНЕЕ: для заказов с комбо действуют
+    # ОБЕДЕННЫЕ зона/тариф (смешанная корзина → приоритет обеда, §4а ТЗ).
+    from . import lunch_api  # локальный импорт — избегаем кольцевого
+    dish_items, combo_items = lunch_api.split_cart_items(payload.get("items") or [])
+    has_lunch = bool(combo_items)
+    delivery_context = "lunch" if has_lunch else "regular"
+
     matched_zone = None
     matched_distance_km = None
     location = None
     delivery_zone = None
+    delivery_available = True
 
     if fulfillment_method == Order.FULFILLMENT_DELIVERY and lat is not None:
         # Coordinates win: server picks branch + zone, frontend cannot override.
-        matched_zone, matched_distance_km = _find_delivery_zone(country, lat, lng)
+        # Для обед-заказов матчим ОБЕДЕННЫЕ зоны, иначе — обычные.
+        matched_zone, matched_distance_km = _find_delivery_zone(
+            country, lat, lng, for_lunch=has_lunch
+        )
         if matched_zone is None:
-            return api_error(
-                "OUT_OF_DELIVERY_ZONE",
-                "Пока не доставляем по этому адресу",
-                details={"latitude": lat, "longitude": lng},
-                status=400,
-            )
-        location = matched_zone.location
-        delivery_zone = matched_zone
+            if has_lunch:
+                # Вне обеденной зоны: корзину считаем, доставку блокируем флагом
+                # delivery_available=false (фронт не даст оформить).
+                delivery_available = False
+            else:
+                return api_error(
+                    "OUT_OF_DELIVERY_ZONE",
+                    "Пока не доставляем по этому адресу",
+                    details={"latitude": lat, "longitude": lng},
+                    status=400,
+                )
+        else:
+            location = matched_zone.location
+            delivery_zone = matched_zone
     else:
         # Legacy / no-coords path — location and zone resolved from payload.
         location, err = _require_location_from_payload(
@@ -2702,9 +2731,7 @@ def cart_calculate(request):
     # ---- Комбо-обеды ("Обед дня") ----
     # Позиции с lunch_combo_id считаются ОТДЕЛЬНО (вне движка акций), их сумма
     # и корп-скидка подмешиваются в расчёт корзины через extra_* параметры.
-    from . import lunch_api  # локальный импорт — избегаем кольцевого
-    dish_items, combo_items = lunch_api.split_cart_items(payload.get("items") or [])
-
+    # (dish_items / combo_items уже получены выше — для выбора зоны доставки.)
     combo_subtotal = Decimal("0")
     combo_discount = Decimal("0")
     corporate_block = {"discount_amount": 0, "applied_tier": None}
@@ -2734,6 +2761,7 @@ def cart_calculate(request):
         extra_subtotal=combo_subtotal,
         extra_discount=combo_discount,
         extra_lines=combo_lines,
+        delivery_available=delivery_available,
     )
     if err:
         return err
@@ -2768,7 +2796,17 @@ def cart_calculate(request):
         # Корпоративная скидка по комбо-обедам: сумма скидки и сработавший порог
         # (или null). Сама сумма уже учтена в total.
         "corporate": corporate_block,
+        # Доставка обедов: какие правила применены и доступна ли доставка в адрес.
+        # delivery_available=false → адрес вне обеденной зоны, фронт блокирует
+        # оформление и показывает warnings.
+        "delivery_context": delivery_context,
+        "delivery_available": delivery_available,
     }
+
+    if not delivery_available:
+        response["warnings"] = [
+            "Обеды доставляются только в пределах зоны доставки обедов"
+        ]
 
     if matched_zone is not None:
         response["location_id"] = matched_zone.location_id
@@ -2924,18 +2962,29 @@ def order_create(request):
     if err:
         return err
 
+    # Есть ли в заказе обед-комбо → доставка по ОБЕДЕННОЙ зоне (приоритет обеда).
+    from . import lunch_api  # локальный импорт — избегаем кольцевого
+    _di_probe, _ci_probe = lunch_api.split_cart_items(payload.get("items") or [])
+    has_lunch = bool(_ci_probe)
+
     matched_zone = None
     location = None
     delivery_zone = None
 
     if fulfillment_method == Order.FULFILLMENT_DELIVERY and lat is not None:
         # Coordinates dictate the branch + zone. Frontend location_id and
-        # delivery_zone_id are intentionally ignored.
-        matched_zone, _distance = _find_delivery_zone(country, lat, lng)
+        # delivery_zone_id are intentionally ignored. Для обед-заказов матчим
+        # обеденные зоны; вне зоны — заказ не оформляем (жёсткая ошибка).
+        matched_zone, _distance = _find_delivery_zone(
+            country, lat, lng, for_lunch=has_lunch
+        )
         if matched_zone is None:
             return api_error(
-                "OUT_OF_DELIVERY_ZONE",
-                "Пока не доставляем по этому адресу",
+                "OUT_OF_LUNCH_DELIVERY_ZONE" if has_lunch
+                else "OUT_OF_DELIVERY_ZONE",
+                "Обеды доставляются только в пределах зоны доставки обедов"
+                if has_lunch
+                else "Пока не доставляем по этому адресу",
                 details={"latitude": lat, "longitude": lng},
                 status=400,
             )
@@ -3799,14 +3848,27 @@ def delivery_check(request):
             status=400,
         )
 
-    zone, distance = _find_delivery_zone(country, lat, lng)
+    # Контекст заказа: если в запросе has_lunch_combo=true (или передан
+    # lunch_combo_id) — проверяем по ОБЕДЕННЫМ зонам/тарифу.
+    for_lunch = bool(payload.get("has_lunch_combo")) or bool(payload.get("lunch_combo_id"))
+    delivery_context = "lunch" if for_lunch else "regular"
+
+    zone, distance = _find_delivery_zone(country, lat, lng, for_lunch=for_lunch)
     address_echo = str(payload.get("address") or "").strip()
 
     if zone is None:
         response = {
             "is_deliverable": False,
-            "reason": "OUT_OF_DELIVERY_ZONE",
-            "message": "Пока не доставляем по этому адресу",
+            "reason": (
+                "OUT_OF_LUNCH_DELIVERY_ZONE" if for_lunch
+                else "OUT_OF_DELIVERY_ZONE"
+            ),
+            "message": (
+                "Обеды доставляются только в пределах зоны доставки обедов"
+                if for_lunch
+                else "Пока не доставляем по этому адресу"
+            ),
+            "delivery_context": delivery_context,
         }
         if address_echo:
             response["address"] = address_echo
@@ -3815,6 +3877,7 @@ def delivery_check(request):
     location = zone.location
     response = {
         "is_deliverable": True,
+        "delivery_context": delivery_context,
         "location": {
             "id": location.id,
             "name": location.name,
