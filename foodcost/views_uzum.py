@@ -141,6 +141,13 @@ def uzum_settings(request, country_slug):
                     country=country,
                     location=zone_location,
                     name=zone_name,
+                    zone_kind=(
+                        request.POST.get("zone_kind")
+                        if request.POST.get("zone_kind") in (
+                            DeliveryZone.KIND_REGULAR, DeliveryZone.KIND_LUNCH
+                        )
+                        else DeliveryZone.KIND_REGULAR
+                    ),
                     center_latitude=_parse_optional_decimal(request.POST.get("zone_center_latitude")),
                     center_longitude=_parse_optional_decimal(request.POST.get("zone_center_longitude")),
                     radius_km=_parse_optional_decimal(request.POST.get("zone_radius_km")),
@@ -171,6 +178,9 @@ def uzum_settings(request, country_slug):
                     sort_order = 0
                 zone.name = new_name
                 zone.location = zone_location
+                _zk = request.POST.get("zone_kind")
+                if _zk in (DeliveryZone.KIND_REGULAR, DeliveryZone.KIND_LUNCH):
+                    zone.zone_kind = _zk
                 zone.center_latitude = _parse_optional_decimal(request.POST.get("zone_center_latitude"))
                 zone.center_longitude = _parse_optional_decimal(request.POST.get("zone_center_longitude"))
                 zone.radius_km = _parse_optional_decimal(request.POST.get("zone_radius_km"))

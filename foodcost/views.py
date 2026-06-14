@@ -1573,6 +1573,48 @@ def dish_techcard_print(request, country_slug, dish_id):
 
 
 @login_required(login_url="/login/")
+def techcard_view(request, country_slug, dish_id):
+    """Полная карточка техкарты блюда (просмотр) с пересчётом по порциям.
+    Открывается из списка техкарт по кнопке «Открыть». Состав — на 1 порцию;
+    пересчёт по количеству порций делается на клиенте. Доступ — как у раздела
+    техкарт."""
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(request.user, UserProfile.SECTION_TECHCARDS)
+    if access_error:
+        return access_error
+
+    dish = get_object_or_404(Dish, id=dish_id, country=country, is_archived=False)
+
+    product_items = [
+        {
+            "name": it.product.name,
+            "gross": it.gross,
+            "net": it.net,
+            "unit": it.unit_label(),
+        }
+        for it in dish.product_items.select_related("product").all()
+    ]
+    preparation_items = [
+        {
+            "name": it.preparation.name,
+            "gross": it.gross,
+            "net": it.net,
+            "unit": it.unit_label(),
+        }
+        for it in dish.preparation_items.select_related("preparation").all()
+    ]
+
+    return render(request, "foodcost/techcard_view.html", {
+        "country": country,
+        "dish": dish,
+        "product_items": product_items,
+        "preparation_items": preparation_items,
+        "steps": [],
+    })
+
+
+@login_required(login_url="/login/")
 def techcards_page(request, country_slug):
     """Список техкарт для поваров: состав (продукты + заготовки) с брутто/нетто
     и текстом приготовления. Без финансов. Комбо не показываем."""
@@ -2464,6 +2506,13 @@ def user_access_list(request, country_slug):
                     country=country,
                     location=zone_location,
                     name=zone_name,
+                    zone_kind=(
+                        request.POST.get("zone_kind")
+                        if request.POST.get("zone_kind") in (
+                            DeliveryZone.KIND_REGULAR, DeliveryZone.KIND_LUNCH
+                        )
+                        else DeliveryZone.KIND_REGULAR
+                    ),
                     center_latitude=_parse_optional_decimal(
                         request.POST.get("zone_center_latitude")
                     ),
@@ -2517,6 +2566,9 @@ def user_access_list(request, country_slug):
 
                 zone.name = new_name
                 zone.location = zone_location
+                _zk = request.POST.get("zone_kind")
+                if _zk in (DeliveryZone.KIND_REGULAR, DeliveryZone.KIND_LUNCH):
+                    zone.zone_kind = _zk
                 zone.center_latitude = _parse_optional_decimal(
                     request.POST.get("zone_center_latitude")
                 )

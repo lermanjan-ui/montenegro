@@ -400,6 +400,13 @@ details > summary::-webkit-details-marker{ display:none; }
 
                 <div class="form-grid">
                     <div>
+                        <label>Тип зоны</label>
+                        <select name="zone_kind">
+                            <option value="regular" selected>Обычная</option>
+                            <option value="lunch">Обеденная (Обед дня)</option>
+                        </select>
+                    </div>
+                    <div>
                         <label>Стоимость доставки</label>
                         <input name="zone_delivery_price" type="number" min="0" step="1" value="15000">
                     </div>
@@ -430,6 +437,7 @@ details > summary::-webkit-details-marker{ display:none; }
                         </div>
                     </div>
                     <div class="branch-badges">
+                        {% if zone.zone_kind == "lunch" %}<span class="branch-badge branch-badge-on">🍽 Обеденная</span>{% endif %}
                         {% if zone.is_active %}<span class="branch-badge branch-badge-on">Активна</span>{% else %}<span class="branch-badge branch-badge-off">Отключена</span>{% endif %}
                         <span class="branch-badge branch-badge-off">{{ zone.delivery_price|floatformat:0 }}</span>
                         {% if zone.free_delivery_threshold %}<span class="branch-badge branch-badge-off">free от {{ zone.free_delivery_threshold|floatformat:0 }}</span>{% endif %}
@@ -489,6 +497,13 @@ details > summary::-webkit-details-marker{ display:none; }
                         </div>
 
                         <div class="form-grid">
+                            <div>
+                                <label>Тип зоны</label>
+                                <select name="zone_kind">
+                                    <option value="regular" {% if zone.zone_kind != "lunch" %}selected{% endif %}>Обычная</option>
+                                    <option value="lunch" {% if zone.zone_kind == "lunch" %}selected{% endif %}>Обеденная (Обед дня)</option>
+                                </select>
+                            </div>
                             <div>
                                 <label>Стоимость доставки</label>
                                 <input name="zone_delivery_price" type="number" min="0" step="1" value="{{ zone.delivery_price|floatformat:0 }}">

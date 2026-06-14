@@ -102,6 +102,11 @@ urlpatterns = [
         views.techcards_page,
         name="techcards_page",
     ),
+    path(
+        "c/<slug:country_slug>/techcards/<int:dish_id>/",
+        views.techcard_view,
+        name="techcard_view",
+    ),
 
     # продукты
     path("c/<slug:country_slug>/products/", views.product_list, name="product_list"),

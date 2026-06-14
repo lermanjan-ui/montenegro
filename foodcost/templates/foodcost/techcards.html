@@ -30,6 +30,8 @@ table.tc-tab tr:last-child td{ border-bottom:none; }
 .tc-text{ white-space:pre-wrap; font-size:14px; line-height:1.55; color:var(--fc-text); background:var(--fc-hover); border-radius:8px; padding:12px 14px; }
 .tc-print{ display:inline-block; margin-top:14px; font-size:13px; font-weight:600; color:var(--fc-green); text-decoration:none; border:1px solid var(--fc-border); border-radius:8px; padding:8px 14px; }
 .tc-print:hover{ background:var(--fc-hover); }
+.tc-open{ display:inline-block; margin-top:14px; margin-right:8px; font-size:13px; font-weight:600; color:#fff; background:var(--fc-green); text-decoration:none; border:1px solid var(--fc-green); border-radius:8px; padding:8px 14px; }
+.tc-open:hover{ background:#15803D; border-color:#15803D; }
 .tc-empty, .tc-none{ padding:24px; text-align:center; color:var(--fc-muted); font-size:14px; }
 .tc-none{ display:none; }
 </style>
@@ -78,6 +80,7 @@ table.tc-tab tr:last-child td{ border-bottom:none; }
           <div class="tc-text">{{ row.dish.tech_card }}</div>
           {% endif %}
 
+          <a class="tc-open" href="/c/{{ country.slug }}/techcards/{{ row.dish.id }}/">Открыть техкарту →</a>
           <a class="tc-print" href="/c/{{ country.slug }}/dish/{{ row.dish.id }}/techcard/" target="_blank">🖨 Печать техкарты</a>
         </div>
       </details>
