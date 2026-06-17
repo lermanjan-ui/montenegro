@@ -173,9 +173,9 @@ def dish_pricing(request, country_slug):
         uzum_disc = d.uzum_discount_percent or Decimal(0)
         yandex_disc = d.yandex_discount_percent or Decimal(0)
 
-        # Своя цена Яндекса: если задана — берём её, иначе fallback на цену Uzum
-        # (которая уже падает на selling_price). Скидка Яндекса считается от неё.
-        yandex_price = d.yandex_price if d.yandex_price is not None else uzum_price
+        # Своя цена Яндекса: если задана — берём её, иначе подставляем основную
+        # цену блюда (selling_price). Скидка Яндекса считается от этой цены.
+        yandex_price = d.yandex_price if d.yandex_price is not None else price
 
         # Цены с учётом скидки канала (только для расчёта маржи на этой странице).
         site_price_disc = (

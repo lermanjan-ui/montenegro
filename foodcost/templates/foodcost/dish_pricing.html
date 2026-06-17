@@ -161,7 +161,7 @@ table.dp th.dp-sort:hover{ color:var(--fc-text); }
             <td class="c-uzum" data-key="uzum_net" data-sort="{{ r.uzum_net }}">{{ r.uzum_net }}</td>
             <td class="c-uzum" data-key="uzum_margin" data-sort="{{ r.uzum_margin_abs }}"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
 
-            <td class="dp-sep c-yandex" data-key="yandex_price" data-sort="{{ r.yandex_price }}"><input class="dp-in" type="text" name="yandex_price" value="{% if r.dish.yandex_price is not None %}{{ r.dish.yandex_price }}{% endif %}" placeholder="как Uzum"></td>
+            <td class="dp-sep c-yandex" data-key="yandex_price" data-sort="{{ r.yandex_price }}"><input class="dp-in" type="text" name="yandex_price" value="{{ r.yandex_price }}"></td>
             <td class="c-yandex" data-key="yandex_disc" data-sort="{{ r.yandex_disc }}"><input class="dp-in" type="text" name="yandex_discount_percent" value="{{ r.yandex_disc|floatformat:'-2' }}" placeholder="0"></td>
             <td class="c-yandex" data-key="yandex_net" data-sort="{{ r.yandex_net }}">{{ r.yandex_net }}</td>
             <td class="c-yandex" data-key="yandex_margin" data-sort="{{ r.yandex_margin_abs }}"><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span>{% if r.yandex_margin_pct != None %} <span class="dp-muted">({{ r.yandex_margin_pct }}%)</span>{% endif %}</td>

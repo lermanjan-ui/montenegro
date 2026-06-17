@@ -325,7 +325,7 @@
                         {% endfor %}
                         {% for combo in order.lunch_combos.all %}
                             <div class="order-items-row" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;">
-                                <div class="item-name">🍱 {{ combo.name }}{% if combo.composition %}<div style="color:#6b7280;font-weight:600;font-size:12px;margin-top:2px;">{{ combo.composition }}</div>{% endif %}</div>
+                                <div class="item-name">🍱 {{ combo.name }}{% if combo.date %} <span style="color:#9a3412;font-weight:800;font-size:12px;">на {{ combo.date|date:"d.m.Y" }}</span>{% endif %}{% if combo.composition %}<div style="color:#6b7280;font-weight:600;font-size:12px;margin-top:2px;">{{ combo.composition }}</div>{% endif %}</div>
                                 <div style="font-weight:800;color:#374151;align-self:center;">{{ combo.unit_price|floatformat:0 }}</div>
                                 <div style="font-weight:800;color:#374151;align-self:center;">× {{ combo.quantity }}</div>
                                 <div style="font-weight:900;align-self:center;">{{ combo.total_price|floatformat:0 }}</div>

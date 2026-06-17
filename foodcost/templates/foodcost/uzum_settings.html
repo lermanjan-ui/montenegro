@@ -223,6 +223,7 @@ details > summary::-webkit-details-marker{ display:none; }
                             <label class="check-row"><input type="checkbox" name="is_visible_on_site"> <span>Показывать на сайте</span></label>
                             <label class="check-row"><input type="checkbox" name="supports_delivery" checked> <span>Доставка</span></label>
                             <label class="check-row"><input type="checkbox" name="supports_pickup"> <span>Самовывоз</span></label>
+                            <label class="check-row"><input type="checkbox" name="uzum_enabled"> <span>Uzum (подключён)</span></label>
                         </div>
                     </div>
                 </div>
@@ -249,6 +250,7 @@ details > summary::-webkit-details-marker{ display:none; }
                         {% if branch.is_visible_on_site %}<span class="branch-badge branch-badge-on">На сайте</span>{% else %}<span class="branch-badge branch-badge-off">Скрыт</span>{% endif %}
                         {% if branch.supports_delivery %}<span class="branch-badge branch-badge-on">Доставка</span>{% else %}<span class="branch-badge branch-badge-off">Без доставки</span>{% endif %}
                         {% if branch.supports_pickup %}<span class="branch-badge branch-badge-on">Самовывоз</span>{% else %}<span class="branch-badge branch-badge-off">Без самовывоза</span>{% endif %}
+                        {% if branch.uzum_enabled %}<span class="branch-badge branch-badge-on">Uzum</span>{% else %}<span class="branch-badge branch-badge-off">Без Uzum</span>{% endif %}
                     </div>
                 </div>
 
@@ -310,6 +312,7 @@ details > summary::-webkit-details-marker{ display:none; }
                                     <label class="check-row"><input type="checkbox" name="is_visible_on_site" {% if branch.is_visible_on_site %}checked{% endif %}> <span>Показывать на сайте</span></label>
                                     <label class="check-row"><input type="checkbox" name="supports_delivery" {% if branch.supports_delivery %}checked{% endif %}> <span>Доставка</span></label>
                                     <label class="check-row"><input type="checkbox" name="supports_pickup" {% if branch.supports_pickup %}checked{% endif %}> <span>Самовывоз</span></label>
+                                    <label class="check-row"><input type="checkbox" name="uzum_enabled" {% if branch.uzum_enabled %}checked{% endif %}> <span>Uzum (подключён)</span></label>
                                 </div>
                             </div>
                         </div>
