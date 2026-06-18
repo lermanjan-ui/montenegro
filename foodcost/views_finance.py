@@ -32,7 +32,8 @@ def _parse_date(value):
 
 def _amount(value):
     try:
-        return Decimal(clean_decimal(value, "0"))
+        raw = clean_decimal(value, "0").replace(" ", "").replace("\u00a0", "")
+        return Decimal(raw)
     except (InvalidOperation, ValueError):
         return Decimal(0)
 
@@ -182,7 +183,7 @@ def finance_expenses(request, country_slug):
     f_type = request.GET.get("expense_type", "")
     f_location = request.GET.get("location_id", "")
     f_source = request.GET.get("source", "")
-    f_debtor = request.GET.get("debtor_id", "")
+    f_debtor_ids = request.GET.getlist("debtor_id")
 
     qs = FinancialExpense.objects.filter(country=country)
     d_from = _parse_date(f_date_from)
@@ -198,9 +199,9 @@ def finance_expenses(request, country_slug):
         qs = qs.filter(location_id=loc_id)
     if f_source:
         qs = qs.filter(source=f_source)
-    debtor_id = _int(f_debtor)
-    if debtor_id:
-        qs = qs.filter(debtor_id=debtor_id)
+    debtor_ids = [int(x) for x in f_debtor_ids if str(x).isdigit()]
+    if debtor_ids:
+        qs = qs.filter(debtor_id__in=debtor_ids)
 
     qs = qs.select_related("location", "debtor", "purchase_receipt").order_by(
         "-expense_date", "-id"
@@ -245,7 +246,7 @@ def finance_expenses(request, country_slug):
         "f_type": f_type,
         "f_location": f_location,
         "f_source": f_source,
-        "f_debtor": f_debtor,
+        "f_debtor_ids": f_debtor_ids,
         "SOURCE_DEBT": FinancialExpense.SOURCE_DEBT,
         "today": timezone.localdate().strftime("%Y-%m-%d"),
         "imported": request.GET.get("imported", ""),
@@ -387,7 +388,26 @@ def finance_chart(request, country_slug):
     if access_error:
         return access_error
 
-    year = _int(request.GET.get("year")) or timezone.localdate().year
+    # Список годов, где есть данные (приход или расход).
+    yrs = set()
+    for d in FinancialExpense.objects.filter(country=country).dates(
+        "expense_date", "year"
+    ):
+        yrs.add(d.year)
+    for d in FinancialIncome.objects.filter(country=country).dates(
+        "income_date", "year"
+    ):
+        yrs.add(d.year)
+
+    requested = _int(request.GET.get("year"))
+    if requested:
+        year = requested
+    elif yrs:
+        year = max(yrs)          # по умолчанию — последний год с данными
+    else:
+        year = timezone.localdate().year
+    yrs.add(year)
+    years = sorted(yrs, reverse=True)
 
     exp_rows = (
         FinancialExpense.objects.filter(
@@ -408,37 +428,40 @@ def finance_chart(request, country_slug):
 
     max_val = Decimal(0)
     for m in range(1, 13):
-        max_val = max(max_val, inc_by.get(m, Decimal(0)), exp_by.get(m, Decimal(0)))
+        max_val = max(
+            max_val, inc_by.get(m, Decimal(0)), exp_by.get(m, Decimal(0))
+        )
 
+    # Геометрия SVG (viewBox 0 0 760 260): базовая линия y=210, высота столбца до 170.
+    base_y = 210
+    plot_h = 170
+    col_w = 59
     months = []
     total_income = Decimal(0)
     total_expense = Decimal(0)
-    for m in range(1, 13):
+    for i in range(12):
+        m = i + 1
         inc = inc_by.get(m, Decimal(0))
         exp = exp_by.get(m, Decimal(0))
         total_income += inc
         total_expense += exp
+        in_h = int(float(inc) / float(max_val) * plot_h) if max_val else 0
+        ex_h = int(float(exp) / float(max_val) * plot_h) if max_val else 0
+        gx = 45 + i * col_w
         months.append({
             "m": m,
-            "name": _MONTHS_RU[m - 1],
+            "name": _MONTHS_RU[i],
             "income": inc,
             "expense": exp,
             "profit": inc - exp,
-            "income_h": (float(inc) / float(max_val) * 160) if max_val else 0,
-            "expense_h": (float(exp) / float(max_val) * 160) if max_val else 0,
+            "in_x": gx,
+            "in_y": base_y - in_h,
+            "in_h": in_h,
+            "ex_x": gx + 22,
+            "ex_y": base_y - ex_h,
+            "ex_h": ex_h,
+            "lbl_x": gx + 20,
         })
-
-    yrs = set()
-    for d in FinancialExpense.objects.filter(country=country).dates(
-        "expense_date", "year"
-    ):
-        yrs.add(d.year)
-    for d in FinancialIncome.objects.filter(country=country).dates(
-        "income_date", "year"
-    ):
-        yrs.add(d.year)
-    yrs.add(year)
-    years = sorted(yrs, reverse=True)
 
     context = {
         "country": country,
@@ -448,6 +471,7 @@ def finance_chart(request, country_slug):
         "total_income": total_income,
         "total_expense": total_expense,
         "total_profit": total_income - total_expense,
+        "base_y": base_y,
         "active": "chart",
     }
     return render(request, "foodcost/finance_chart.html", context)
