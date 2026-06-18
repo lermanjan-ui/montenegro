@@ -1,182 +1,189 @@
-"""Финансы → Расходы.
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
-Отдельный модуль (как views_techcards): большой views.py не трогаем, чтобы
-случайно не сломать сборку. Здесь:
-  - finance_expenses: список расходов с фильтрами + форма добавления;
-  - управление списком должников (только супер-админ).
-
-Расходы хранятся в модели FinancialExpense. Закупки из приходов попадают сюда
-автоматически через сигнал в models.py (тип «Закупка»), здесь они просто
-показываются в общем списке с пометкой «авто».
-"""
-
-from datetime import date
-
-from django.shortcuts import render, redirect
-from django.http import HttpResponseForbidden
-from django.db.models import Sum
-
-from .models import FinancialExpense, ExpenseDebtor, Location, UserProfile
-from .views import get_country, require_section_access
+from .models import UserProfile, Location, FinancialExpense, ExpenseDebtor
+from .views import get_country, require_section_access, clean_decimal
 
 
-def _is_super(user):
-    """Супер-админ: суперпользователь Django или роль super_admin в профиле."""
-    if getattr(user, "is_superuser", False):
-        return True
-    profile = getattr(user, "profile", None)
+def _int(value):
     try:
-        return bool(profile and profile.is_super_admin())
-    except Exception:
-        return False
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
+def _parse_date(value):
+    """'YYYY-MM-DD' -> date | None."""
+    if not value:
+        return None
+    try:
+        return datetime.strptime(str(value).strip(), "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return None
+
+
+def _amount(value):
+    try:
+        return Decimal(clean_decimal(value, "0"))
+    except (InvalidOperation, ValueError):
+        return Decimal(0)
+
+
+def _loc(value, country):
+    lid = _int(value)
+    if not lid:
+        return None
+    return Location.objects.filter(id=lid, country=country).first()
+
+
+def _debtor(value, country):
+    did = _int(value)
+    if not did:
+        return None
+    return ExpenseDebtor.objects.filter(id=did, country=country).first()
+
+
+def _redirect_url(request, country):
+    return request.POST.get("next") or f"/c/{country.slug}/finance/expenses/"
+
+
+@login_required
 def finance_expenses(request, country_slug):
     country = get_country(country_slug, request.user)
-
     access_error = require_section_access(request.user, UserProfile.SECTION_FINANCE)
     if access_error:
         return access_error
 
-    is_super = _is_super(request.user)
-    back = f"/c/{country.slug}/finance/expenses/"
-
-    if request.method == "POST":
-        action = request.POST.get("action") or "add_expense"
-
-        # ---- Управление должниками (только супер-админ) ----
-        if action == "add_debtor":
-            if not is_super:
-                return HttpResponseForbidden("Только супер-админ")
-            name = (request.POST.get("debtor_name") or "").strip()
-            if name:
-                ExpenseDebtor.objects.get_or_create(country=country, name=name)
-            return redirect(back)
-
-        if action == "toggle_debtor":
-            if not is_super:
-                return HttpResponseForbidden("Только супер-админ")
-            d = ExpenseDebtor.objects.filter(
-                id=request.POST.get("debtor_id"), country=country
-            ).first()
-            if d:
-                d.is_active = not d.is_active
-                d.save(update_fields=["is_active"])
-            return redirect(back)
-
-        # ---- Добавить расход ----
-        # Филиал: "general" (или пусто) = общий (location=None)
-        location = None
-        loc_raw = request.POST.get("location") or ""
-        if loc_raw and loc_raw != "general":
-            location = Location.objects.filter(id=loc_raw, country=country).first()
-
-        source = request.POST.get("source") or ""
-
-        debtor = None
-        if source == FinancialExpense.SOURCE_DEBT:
-            debtor = ExpenseDebtor.objects.filter(
-                id=request.POST.get("debtor") or 0, country=country
-            ).first()
-
-        legal_entity = ""
-        if source == FinancialExpense.SOURCE_COMPANY:
-            legal_entity = (request.POST.get("legal_entity") or "").strip()
-
-        expense_date = request.POST.get("expense_date") or date.today().isoformat()
-        expense_type = request.POST.get("expense_type") or FinancialExpense.EXPENSE_OTHER
-
-        FinancialExpense.objects.create(
-            country=country,
-            location=location,
-            expense_type=expense_type,
-            amount=request.POST.get("amount") or 0,
-            expense_date=expense_date,
-            source=source,
-            legal_entity=legal_entity,
-            debtor=debtor,
-            comment=(request.POST.get("comment") or "").strip(),
-            created_by=request.user if getattr(request.user, "is_authenticated", False) else None,
-        )
-        return redirect(back)
-
-    # ---- GET: фильтры + список ----
-    qs = FinancialExpense.objects.filter(country=country).select_related(
-        "location", "debtor", "purchase_receipt", "created_by"
+    locations = Location.objects.filter(country=country).order_by(
+        "site_sort_order", "name"
     )
+    debtors = ExpenseDebtor.objects.filter(
+        country=country, is_active=True
+    ).order_by("name")
 
-    f_from = (request.GET.get("date_from") or "").strip()
-    f_to = (request.GET.get("date_to") or "").strip()
-    f_type = (request.GET.get("type") or "").strip()
-    f_location = (request.GET.get("location") or "").strip()
-    f_source = (request.GET.get("source") or "").strip()
+    # ---------- POST: создание / редактирование / удаление ----------
+    if request.method == "POST":
+        action = request.POST.get("action", "")
 
-    if f_from:
-        qs = qs.filter(expense_date__gte=f_from)
-    if f_to:
-        qs = qs.filter(expense_date__lte=f_to)
+        if action == "create_expense":
+            FinancialExpense.objects.create(
+                country=country,
+                location=_loc(request.POST.get("location_id"), country),
+                expense_type=(
+                    request.POST.get("expense_type")
+                    or FinancialExpense.EXPENSE_OTHER
+                ),
+                name=(request.POST.get("name") or "").strip(),
+                amount=_amount(request.POST.get("amount")),
+                expense_date=(
+                    _parse_date(request.POST.get("expense_date"))
+                    or timezone.localdate()
+                ),
+                comment=(request.POST.get("comment") or "").strip(),
+                source=request.POST.get("source") or "",
+                legal_entity=(request.POST.get("legal_entity") or "").strip(),
+                debtor=_debtor(request.POST.get("debtor_id"), country),
+                created_by=request.user,
+            )
+            return redirect(_redirect_url(request, country))
+
+        if action == "update_expense":
+            exp = get_object_or_404(
+                FinancialExpense,
+                id=_int(request.POST.get("expense_id")),
+                country=country,
+            )
+            exp.location = _loc(request.POST.get("location_id"), country)
+            exp.expense_type = (
+                request.POST.get("expense_type") or exp.expense_type
+            )
+            exp.name = (request.POST.get("name") or "").strip()
+            exp.amount = _amount(request.POST.get("amount"))
+            exp.expense_date = (
+                _parse_date(request.POST.get("expense_date")) or exp.expense_date
+            )
+            exp.comment = (request.POST.get("comment") or "").strip()
+            exp.source = request.POST.get("source") or ""
+            exp.legal_entity = (request.POST.get("legal_entity") or "").strip()
+            exp.debtor = _debtor(request.POST.get("debtor_id"), country)
+            exp.save()
+            return redirect(_redirect_url(request, country))
+
+        if action == "delete_expense":
+            FinancialExpense.objects.filter(
+                id=_int(request.POST.get("expense_id")), country=country
+            ).delete()
+            return redirect(_redirect_url(request, country))
+
+    # ---------- GET: фильтры ----------
+    f_date_from = request.GET.get("date_from", "")
+    f_date_to = request.GET.get("date_to", "")
+    f_type = request.GET.get("expense_type", "")
+    f_location = request.GET.get("location_id", "")
+    f_source = request.GET.get("source", "")
+
+    qs = FinancialExpense.objects.filter(country=country)
+    d_from = _parse_date(f_date_from)
+    d_to = _parse_date(f_date_to)
+    if d_from:
+        qs = qs.filter(expense_date__gte=d_from)
+    if d_to:
+        qs = qs.filter(expense_date__lte=d_to)
     if f_type:
         qs = qs.filter(expense_type=f_type)
-    if f_location == "general":
-        qs = qs.filter(location__isnull=True)
-    elif f_location:
-        qs = qs.filter(location_id=f_location)
+    loc_id = _int(f_location)
+    if loc_id:
+        qs = qs.filter(location_id=loc_id)
     if f_source:
         qs = qs.filter(source=f_source)
 
-    qs = qs.order_by("-expense_date", "-id")
-    total = qs.aggregate(s=Sum("amount"))["s"] or 0
+    qs = qs.select_related("location", "debtor", "purchase_receipt").order_by(
+        "-expense_date", "-id"
+    )
 
     type_labels = dict(FinancialExpense.EXPENSE_TYPES)
     source_labels = dict(FinancialExpense.SOURCE_CHOICES)
 
-    rows = []
-    for e in qs[:1000]:
-        if e.location:
-            loc = e.location.name
-        else:
-            loc = "Общий"
-        if e.debtor:
-            extra = "Долг: " + e.debtor.name
-        elif e.legal_entity:
-            extra = e.legal_entity
-        else:
-            extra = ""
-        rows.append({
-            "obj": e,
-            "type_label": type_labels.get(e.expense_type, e.expense_type),
-            "source_label": source_labels.get(e.source, ""),
-            "location_label": loc,
-            "extra": extra,
-            "is_auto": e.purchase_receipt_id is not None,
-        })
+    expenses = list(qs)
+    total_sum = Decimal(0)
+    by_type_map = {}
+    for e in expenses:
+        amt = e.amount or Decimal(0)
+        total_sum += amt
+        by_type_map[e.expense_type] = by_type_map.get(
+            e.expense_type, Decimal(0)
+        ) + amt
+        # ярлыки и значения для форм редактирования
+        e.type_label = type_labels.get(e.expense_type, e.expense_type)
+        e.source_label = source_labels.get(e.source, "") if e.source else ""
+        e.date_value = e.expense_date.strftime("%Y-%m-%d") if e.expense_date else ""
 
-    # В форме добавления не показываем legacy-тип «Коммуналка (старое)»
-    form_types = [
-        (k, v) for k, v in FinancialExpense.EXPENSE_TYPES
-        if k != FinancialExpense.EXPENSE_UTILITIES
+    by_type = [
+        {"type": t, "label": type_labels.get(t, t), "sum": s}
+        for t, s in sorted(
+            by_type_map.items(), key=lambda kv: kv[1], reverse=True
+        )
     ]
 
     context = {
         "country": country,
-        "rows": rows,
-        "total": total,
-        "count": len(rows),
-        "locations": Location.objects.filter(
-            country=country, is_active=True
-        ).order_by("name"),
-        "form_types": form_types,
-        "all_types": FinancialExpense.EXPENSE_TYPES,
-        "sources": FinancialExpense.SOURCE_CHOICES,
-        "active_debtors": ExpenseDebtor.objects.filter(
-            country=country, is_active=True
-        ),
-        "all_debtors": ExpenseDebtor.objects.filter(country=country),
-        "is_super": is_super,
-        "today": date.today().isoformat(),
-        "f_from": f_from, "f_to": f_to, "f_type": f_type,
-        "f_location": f_location, "f_source": f_source,
+        "expenses": expenses,
+        "expense_types": FinancialExpense.EXPENSE_TYPES,
+        "source_choices": FinancialExpense.SOURCE_CHOICES,
+        "locations": locations,
+        "debtors": debtors,
+        "total_sum": total_sum,
+        "by_type": by_type,
+        "expenses_count": len(expenses),
+        "f_date_from": f_date_from,
+        "f_date_to": f_date_to,
+        "f_type": f_type,
+        "f_location": f_location,
+        "f_source": f_source,
         "SOURCE_DEBT": FinancialExpense.SOURCE_DEBT,
-        "SOURCE_COMPANY": FinancialExpense.SOURCE_COMPANY,
+        "today": timezone.localdate().strftime("%Y-%m-%d"),
     }
     return render(request, "foodcost/finance_expenses.html", context)

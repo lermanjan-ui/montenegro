@@ -342,9 +342,16 @@ def order_create(request):
         source, _ = OrderSource.objects.get_or_create(
             country=country, name="Uzum Tezkor"
         )
-    pay_method = PaymentMethod.objects.filter(
-        country=country, is_cash=(pay_type == "CASH")
-    ).first()
+    # Способ оплаты: наличные → наличный метод; карта/онлайн через Uzum →
+    # отдельный метод «Uzum» (а не первый попавшийся не-наличный, как Click).
+    if pay_type == "CASH":
+        pay_method = PaymentMethod.objects.filter(
+            country=country, is_cash=True
+        ).first()
+    else:
+        pay_method, _ = PaymentMethod.objects.get_or_create(
+            country=country, name="Uzum", defaults={"is_cash": False}
+        )
 
     try:
         with transaction.atomic():
@@ -375,19 +382,33 @@ def order_create(request):
 
             total = Decimal(0)
             for it in raw_items:
-                dish = Dish.objects.filter(
-                    id=_to_int(it.get("id")), country=country
-                ).first()
-                if not dish:
-                    continue
+                raw_id = str(it.get("id") or "").strip()
                 qty = _dec(it.get("quantity")) or Decimal(1)
                 price = _dec(it.get("price"))
                 line = price * qty
+
+                # Пытаемся сопоставить с нашим блюдом по id. Uzum может слать
+                # свой внутренний UUID товара — тогда блюдо не найдётся, но
+                # позицию всё равно создаём (с названием-снимком и ценой), чтобы
+                # состав заказа и сумма отображались корректно.
+                dish = None
+                did = _to_int(raw_id)
+                if did:
+                    dish = Dish.objects.filter(id=did, country=country).first()
+
+                if dish is not None:
+                    name_snap = (dish.public_name or dish.name or "").strip() or dish.name
+                elif raw_id:
+                    name_snap = "Uzum-товар " + raw_id[:8]
+                else:
+                    name_snap = "Позиция Uzum"
+
                 OrderItem.objects.create(
                     order=order, dish=dish, quantity=qty,
                     price_snapshot=price,
-                    cost_snapshot=getattr(dish, "cached_total_cost", 0) or 0,
+                    cost_snapshot=(getattr(dish, "cached_total_cost", 0) or 0) if dish else 0,
                     total_price=line,
+                    dish_name_snapshot=name_snap,
                 )
                 total += line
 

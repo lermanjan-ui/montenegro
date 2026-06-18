@@ -2122,6 +2122,8 @@
                         {{ dish.name }}
                     </h1>
 
+                    <span class="fc-badge fc-badge-gray" title="ID этого блюда, который мы отправляем в Uzum (composition id, vendorCode и barcode). Числовой, не UUID.">ID&nbsp;Uzum:&nbsp;{{ dish.id }}</span>
+
                     {# Status badges — visible on every role, read-only here. #}
                     {# Editing of these toggles lives in the "Сайт" tab.    #}
                     {% if dish.is_visible_on_site %}
@@ -2322,13 +2324,6 @@
                 <input class="fc-input" type="text" name="package_code" value="{{ dish.package_code }}"
                        {% if not can_edit_dish_base %}readonly{% endif %}>
                 <div class="fc-field-hint">Фискальный код упаковки (необязательно).</div>
-            </div>
-
-            <div class="fc-field">
-                <label class="fc-label">Название для Uzum</label>
-                <input class="fc-input" type="text" name="uzum_name" value="{{ dish.uzum_name }}" maxlength="255"
-                       {% if not can_edit_dish_base %}readonly{% endif %}>
-                <div class="fc-field-hint">Если пусто — в Uzum уходит обычное название блюда.</div>
             </div>
 
             <div class="fc-field">

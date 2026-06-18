@@ -17,6 +17,7 @@ from . import public_api
 from . import uzum_api
 from . import views_uzum
 from . import views_dish_pricing
+from . import views_finance
 # 📱 APP API — личный кабинет приложения (вход по SMS, профиль, заказы,
 # адреса, избранное, push, повтор заказа). Модули существуют, но раньше
 # не были подключены в urls.py — из-за чего вся секция /api/app/ отдавала 404.
@@ -101,11 +102,6 @@ urlpatterns = [
         "c/<slug:country_slug>/techcards/",
         views.techcards_page,
         name="techcards_page",
-    ),
-    path(
-        "c/<slug:country_slug>/techcards/<int:dish_id>/",
-        views.techcard_view,
-        name="techcard_view",
     ),
 
     # продукты
@@ -237,6 +233,11 @@ urlpatterns = [
         "c/<slug:country_slug>/dish-categories/",
         views_settings.dish_categories_page,
         name="dish_categories_page"
+    ),
+    path(
+        "c/<slug:country_slug>/finance/expenses/",
+        views_finance.finance_expenses,
+        name="finance_expenses"
     ),
 
     # Маркетинговые акции — отдельная страница управления.

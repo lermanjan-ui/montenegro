@@ -302,7 +302,7 @@
 								    value="{{ order_item.price_snapshot|floatformat:2 }}"
 								>
 
-                                <div class="item-name">{{ order_item.dish.name }}</div>
+                                <div class="item-name">{% if order_item.dish %}{{ order_item.dish.name }}{% else %}{{ order_item.dish_name_snapshot }}{% endif %}</div>
 								<input
 								    type="number"
 								    name="price"
@@ -469,6 +469,7 @@
             <input
                 type="text"
                 id="customer-comment"
+                value="{{ order.customer_comment|default:'' }}"
                 readonly
             >
         </div>
