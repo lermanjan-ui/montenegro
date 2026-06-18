@@ -38,6 +38,16 @@ def _amount(value):
         return Decimal(0)
 
 
+def _money(value):
+    """Деньги целыми, с пробелом-разделителем тысяч: 100 000 000."""
+    try:
+        n = int(round(float(value or 0)))
+    except (TypeError, ValueError):
+        return "0"
+    s = f"{abs(n):,}".replace(",", " ")
+    return f"-{s}" if n < 0 else s
+
+
 def _loc(value, country):
     lid = _int(value)
     if not lid:
@@ -223,9 +233,10 @@ def finance_expenses(request, country_slug):
         e.type_label = type_labels.get(e.expense_type, e.expense_type)
         e.source_label = source_labels.get(e.source, "") if e.source else ""
         e.date_value = e.expense_date.strftime("%Y-%m-%d") if e.expense_date else ""
+        e.amount_fmt = _money(amt)
 
     by_type = [
-        {"type": t, "label": type_labels.get(t, t), "sum": s}
+        {"type": t, "label": type_labels.get(t, t), "sum": s, "sum_fmt": _money(s)}
         for t, s in sorted(
             by_type_map.items(), key=lambda kv: kv[1], reverse=True
         )
@@ -239,6 +250,7 @@ def finance_expenses(request, country_slug):
         "locations": locations,
         "debtors": debtors,
         "total_sum": total_sum,
+        "total_sum_fmt": _money(total_sum),
         "by_type": by_type,
         "expenses_count": len(expenses),
         "f_date_from": f_date_from,
@@ -342,13 +354,14 @@ def finance_income(request, country_slug):
         total_sum += amt
         e.source_label = source_labels.get(e.source, "") if e.source else ""
         e.date_value = e.income_date.strftime("%Y-%m-%d") if e.income_date else ""
+        e.amount_fmt = _money(amt)
         if e.source:
             by_source_map[e.source_label] = by_source_map.get(
                 e.source_label, Decimal(0)
             ) + amt
 
     by_source = [
-        {"label": k, "sum": v}
+        {"label": k, "sum": v, "sum_fmt": _money(v)}
         for k, v in sorted(
             by_source_map.items(), key=lambda kv: kv[1], reverse=True
         )
@@ -360,6 +373,7 @@ def finance_income(request, country_slug):
         "source_choices": FinancialIncome.SOURCE_CHOICES,
         "locations": locations,
         "total_sum": total_sum,
+        "total_sum_fmt": _money(total_sum),
         "by_source": by_source,
         "incomes_count": len(incomes),
         "f_date_from": f_date_from,
@@ -454,6 +468,9 @@ def finance_chart(request, country_slug):
             "income": inc,
             "expense": exp,
             "profit": inc - exp,
+            "income_fmt": _money(inc),
+            "expense_fmt": _money(exp),
+            "profit_fmt": _money(inc - exp),
             "in_x": gx,
             "in_y": base_y - in_h,
             "in_h": in_h,
@@ -471,6 +488,9 @@ def finance_chart(request, country_slug):
         "total_income": total_income,
         "total_expense": total_expense,
         "total_profit": total_income - total_expense,
+        "total_income_fmt": _money(total_income),
+        "total_expense_fmt": _money(total_expense),
+        "total_profit_fmt": _money(total_income - total_expense),
         "base_y": base_y,
         "active": "chart",
     }

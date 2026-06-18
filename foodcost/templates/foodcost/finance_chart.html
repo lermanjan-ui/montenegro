@@ -1,5 +1,4 @@
 {% extends "foodcost/base.html" %}
-{% load finance_format %}
 {% block title %}Приход / расход{% endblock %}
 {% block content %}
 <style>
@@ -46,9 +45,9 @@
 
   <div class="fx-card">
     <div class="sum-row">
-      <div class="sum-box"><div class="sum-lbl">Приход за {{ year }}</div><div class="sum-val green">{{ total_income|money }}</div></div>
-      <div class="sum-box"><div class="sum-lbl">Расход за {{ year }}</div><div class="sum-val red">{{ total_expense|money }}</div></div>
-      <div class="sum-box"><div class="sum-lbl">Прибыль</div><div class="sum-val {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit|money }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">Приход за {{ year }}</div><div class="sum-val green">{{ total_income_fmt }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">Расход за {{ year }}</div><div class="sum-val red">{{ total_expense_fmt }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">Прибыль</div><div class="sum-val {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit_fmt }}</div></div>
     </div>
   </div>
 
@@ -73,16 +72,16 @@
         {% for mo in months %}
         <tr>
           <td>{{ mo.name }}</td>
-          <td class="num green">{{ mo.income|money }}</td>
-          <td class="num red">{{ mo.expense|money }}</td>
-          <td class="num {% if mo.profit < 0 %}red{% else %}green{% endif %}">{{ mo.profit|money }}</td>
+          <td class="num green">{{ mo.income_fmt }}</td>
+          <td class="num red">{{ mo.expense_fmt }}</td>
+          <td class="num {% if mo.profit < 0 %}red{% else %}green{% endif %}">{{ mo.profit_fmt }}</td>
         </tr>
         {% endfor %}
         <tr style="border-top:2px solid #e5e7eb;font-weight:900;">
           <td>Итого</td>
-          <td class="num green">{{ total_income|money }}</td>
-          <td class="num red">{{ total_expense|money }}</td>
-          <td class="num {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit|money }}</td>
+          <td class="num green">{{ total_income_fmt }}</td>
+          <td class="num red">{{ total_expense_fmt }}</td>
+          <td class="num {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit_fmt }}</td>
         </tr>
       </tbody>
     </table>

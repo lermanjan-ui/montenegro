@@ -1,5 +1,4 @@
 {% extends "foodcost/base.html" %}
-{% load finance_format %}
 {% block title %}Поступление денег{% endblock %}
 {% block content %}
 <style>
@@ -69,12 +68,12 @@
   <div class="fx-card">
     <div class="fx-card-title">Итого поступлений{% if f_date_from or f_date_to or f_source %} (по фильтру){% endif %}</div>
     <div class="fx-totals">
-      <div class="fx-total-big">{{ total_sum|money }}</div>
+      <div class="fx-total-big">{{ total_sum_fmt }}</div>
       <span class="fx-muted">сум · {{ incomes_count }} записей</span>
     </div>
     {% if by_source %}
     <div class="fx-totals" style="margin-top:12px;">
-      {% for row in by_source %}<span class="fx-chip">{{ row.label }}: <b>{{ row.sum|money }}</b></span>{% endfor %}
+      {% for row in by_source %}<span class="fx-chip">{{ row.label }}: <b>{{ row.sum_fmt }}</b></span>{% endfor %}
     </div>
     {% endif %}
   </div>
@@ -124,7 +123,7 @@
           <td>{% if e.source_label %}<span class="fx-badge-src">{{ e.source_label }}</span>{% else %}<span class="fx-muted">—</span>{% endif %}</td>
           <td>{{ e.name|default:"—" }}{% if e.comment %}<div class="fx-muted" style="font-size:12px;margin-top:2px;">{{ e.comment }}</div>{% endif %}</td>
           <td>{% if e.location %}{{ e.location.name }}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
-          <td class="fx-amount" style="text-align:right;color:#15803d;">{{ e.amount|money }}</td>
+          <td class="fx-amount" style="text-align:right;color:#15803d;">{{ e.amount_fmt }}</td>
           <td style="white-space:nowrap;text-align:right;">
             <button type="button" class="fx-btn fx-btn-gray fx-btn-sm" onclick="fxToggle({{ e.id }})">Изменить</button>
             <form method="post" style="display:inline;" onsubmit="return confirm('Удалить поступление?');">
