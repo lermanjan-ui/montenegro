@@ -39,6 +39,20 @@
   <h1 class="fx-h1">Расходы</h1>
   <p class="fx-sub">Учёт расходов: аренда, зарплата, маркетинг, закупки и прочее. Закупки попадают сюда автоматически из приходов.</p>
 
+  {% if imported %}<div class="fx-card" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;font-weight:700;">Импортировано записей: {{ imported }}</div>{% endif %}
+
+  <!-- ИМПОРТ ИЗ CSV -->
+  <form method="post" enctype="multipart/form-data" class="fx-card">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="import_csv">
+    <div class="fx-card-title">Импорт из CSV</div>
+    <div class="fx-totals" style="gap:12px;">
+      <input class="fx-in" type="file" name="csv_file" accept=".csv" style="max-width:360px;">
+      <button class="fx-btn fx-btn-gray" type="submit">Загрузить и импортировать</button>
+      <span class="fx-muted">Колонки: expense_date, expense_type, name, amount, source, comment</span>
+    </div>
+  </form>
+
   <!-- ФИЛЬТРЫ -->
   <form method="get" class="fx-card">
     <div class="fx-card-title">Фильтры</div>
@@ -65,6 +79,12 @@
           {% for s in source_choices %}<option value="{{ s.0 }}" {% if f_source == s.0 %}selected{% endif %}>{{ s.1 }}</option>{% endfor %}
         </select>
       </div>
+      <div class="fx-field"><label>Долг перед (профинансировал)</label>
+        <select class="fx-sel" name="debtor_id">
+          <option value="">Все</option>
+          {% for d in debtors %}<option value="{{ d.id }}" {% if f_debtor == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+        </select>
+      </div>
     </div>
     <div class="fx-actions">
       <a class="fx-btn fx-btn-gray" href="/c/{{ country.slug }}/finance/expenses/">Сбросить</a>
@@ -82,6 +102,12 @@
     {% if by_type %}
     <div class="fx-totals" style="margin-top:12px;">
       {% for row in by_type %}<span class="fx-chip">{{ row.label }}: <b>{{ row.sum|floatformat:0 }}</b></span>{% endfor %}
+    </div>
+    {% endif %}
+    {% if by_debtor %}
+    <div class="fx-card-title" style="margin-top:16px;">Долг перед (кто профинансировал)</div>
+    <div class="fx-totals">
+      {% for row in by_debtor %}<span class="fx-chip" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">{{ row.name }}: <b>{{ row.sum|floatformat:0 }}</b></span>{% endfor %}
     </div>
     {% endif %}
   </div>
@@ -116,7 +142,7 @@
         </select>
       </div>
       <div class="fx-field"><label>Юрлицо</label><input class="fx-in" type="text" name="legal_entity" placeholder="На кого оформлено"></div>
-      <div class="fx-field fx-debtor-field" id="fx-add-debtor" style="display:none;"><label>Должник</label>
+      <div class="fx-field fx-debtor-field" id="fx-add-debtor" style="display:none;"><label>Долг перед (профинансировал)</label>
         <select class="fx-sel" name="debtor_id">
           <option value="">— выбрать —</option>
           {% for d in debtors %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
@@ -145,7 +171,7 @@
           <td><span class="fx-badge">{{ e.type_label }}</span></td>
           <td>{{ e.name|default:"—" }}{% if e.purchase_receipt_id %} <span class="fx-badge fx-badge-auto">из прихода</span>{% endif %}{% if e.comment %}<div class="fx-muted" style="font-size:12px;margin-top:2px;">{{ e.comment }}</div>{% endif %}</td>
           <td>{% if e.location %}{{ e.location.name }}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
-          <td>{% if e.source_label %}<span class="fx-badge fx-badge-src">{{ e.source_label }}</span>{% if e.debtor %} <span class="fx-muted" style="font-size:12px;">{{ e.debtor.name }}</span>{% endif %}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
+          <td>{% if e.source_label %}<span class="fx-badge fx-badge-src">{{ e.source_label }}</span>{% if e.debtor %} <span class="fx-muted" style="font-size:12px;">перед {{ e.debtor.name }}</span>{% endif %}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
           <td>{{ e.legal_entity|default:"—" }}</td>
           <td class="fx-amount" style="text-align:right;">{{ e.amount|floatformat:0 }}</td>
           <td style="white-space:nowrap;text-align:right;">
@@ -190,7 +216,7 @@
                   </select>
                 </div>
                 <div class="fx-field"><label>Юрлицо</label><input class="fx-in" type="text" name="legal_entity" value="{{ e.legal_entity }}"></div>
-                <div class="fx-field fx-debtor-field" id="fx-edit-debtor-{{ e.id }}" {% if e.source != SOURCE_DEBT %}style="display:none;"{% endif %}><label>Должник</label>
+                <div class="fx-field fx-debtor-field" id="fx-edit-debtor-{{ e.id }}" {% if e.source != SOURCE_DEBT %}style="display:none;"{% endif %}><label>Долг перед (профинансировал)</label>
                   <select class="fx-sel" name="debtor_id">
                     <option value="">— выбрать —</option>
                     {% for d in debtors %}<option value="{{ d.id }}" {% if e.debtor_id == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
