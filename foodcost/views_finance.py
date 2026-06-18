@@ -1,12 +1,15 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.db.models import Sum
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import csv
 import io
 
-from .models import UserProfile, Location, FinancialExpense, ExpenseDebtor
+from .models import (
+    UserProfile, Location, FinancialExpense, ExpenseDebtor, FinancialIncome,
+)
 from .views import get_country, require_section_access, clean_decimal
 
 
@@ -209,17 +212,12 @@ def finance_expenses(request, country_slug):
     expenses = list(qs)
     total_sum = Decimal(0)
     by_type_map = {}
-    by_debtor_map = {}
     for e in expenses:
         amt = e.amount or Decimal(0)
         total_sum += amt
         by_type_map[e.expense_type] = by_type_map.get(
             e.expense_type, Decimal(0)
         ) + amt
-        if e.debtor_id and e.debtor:
-            by_debtor_map[e.debtor.name] = by_debtor_map.get(
-                e.debtor.name, Decimal(0)
-            ) + amt
         # ярлыки и значения для форм редактирования
         e.type_label = type_labels.get(e.expense_type, e.expense_type)
         e.source_label = source_labels.get(e.source, "") if e.source else ""
@@ -229,12 +227,6 @@ def finance_expenses(request, country_slug):
         {"type": t, "label": type_labels.get(t, t), "sum": s}
         for t, s in sorted(
             by_type_map.items(), key=lambda kv: kv[1], reverse=True
-        )
-    ]
-    by_debtor = [
-        {"name": n, "sum": s}
-        for n, s in sorted(
-            by_debtor_map.items(), key=lambda kv: kv[1], reverse=True
         )
     ]
 
@@ -247,7 +239,6 @@ def finance_expenses(request, country_slug):
         "debtors": debtors,
         "total_sum": total_sum,
         "by_type": by_type,
-        "by_debtor": by_debtor,
         "expenses_count": len(expenses),
         "f_date_from": f_date_from,
         "f_date_to": f_date_to,
@@ -258,5 +249,205 @@ def finance_expenses(request, country_slug):
         "SOURCE_DEBT": FinancialExpense.SOURCE_DEBT,
         "today": timezone.localdate().strftime("%Y-%m-%d"),
         "imported": request.GET.get("imported", ""),
+        "active": "expenses",
     }
     return render(request, "foodcost/finance_expenses.html", context)
+
+
+# ============================================================================
+#  ПОСТУПЛЕНИЕ ДЕНЕГ (приход)
+# ============================================================================
+
+def _income_url(request, country):
+    return request.POST.get("next") or f"/c/{country.slug}/finance/income/"
+
+
+@login_required
+def finance_income(request, country_slug):
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(
+        request.user, UserProfile.SECTION_FINANCE
+    )
+    if access_error:
+        return access_error
+
+    locations = Location.objects.filter(country=country).order_by(
+        "site_sort_order", "name"
+    )
+
+    if request.method == "POST":
+        action = request.POST.get("action", "")
+
+        if action == "create_income":
+            FinancialIncome.objects.create(
+                country=country,
+                location=_loc(request.POST.get("location_id"), country),
+                source=request.POST.get("source") or "",
+                name=(request.POST.get("name") or "").strip(),
+                amount=_amount(request.POST.get("amount")),
+                income_date=(
+                    _parse_date(request.POST.get("income_date"))
+                    or timezone.localdate()
+                ),
+                comment=(request.POST.get("comment") or "").strip(),
+                created_by=request.user,
+            )
+            return redirect(_income_url(request, country))
+
+        if action == "update_income":
+            inc = get_object_or_404(
+                FinancialIncome,
+                id=_int(request.POST.get("income_id")),
+                country=country,
+            )
+            inc.location = _loc(request.POST.get("location_id"), country)
+            inc.source = request.POST.get("source") or ""
+            inc.name = (request.POST.get("name") or "").strip()
+            inc.amount = _amount(request.POST.get("amount"))
+            inc.income_date = (
+                _parse_date(request.POST.get("income_date")) or inc.income_date
+            )
+            inc.comment = (request.POST.get("comment") or "").strip()
+            inc.save()
+            return redirect(_income_url(request, country))
+
+        if action == "delete_income":
+            FinancialIncome.objects.filter(
+                id=_int(request.POST.get("income_id")), country=country
+            ).delete()
+            return redirect(_income_url(request, country))
+
+    f_date_from = request.GET.get("date_from", "")
+    f_date_to = request.GET.get("date_to", "")
+    f_source = request.GET.get("source", "")
+
+    qs = FinancialIncome.objects.filter(country=country)
+    d_from = _parse_date(f_date_from)
+    d_to = _parse_date(f_date_to)
+    if d_from:
+        qs = qs.filter(income_date__gte=d_from)
+    if d_to:
+        qs = qs.filter(income_date__lte=d_to)
+    if f_source:
+        qs = qs.filter(source=f_source)
+    qs = qs.select_related("location").order_by("-income_date", "-id")
+
+    source_labels = dict(FinancialIncome.SOURCE_CHOICES)
+    incomes = list(qs)
+    total_sum = Decimal(0)
+    by_source_map = {}
+    for e in incomes:
+        amt = e.amount or Decimal(0)
+        total_sum += amt
+        e.source_label = source_labels.get(e.source, "") if e.source else ""
+        e.date_value = e.income_date.strftime("%Y-%m-%d") if e.income_date else ""
+        if e.source:
+            by_source_map[e.source_label] = by_source_map.get(
+                e.source_label, Decimal(0)
+            ) + amt
+
+    by_source = [
+        {"label": k, "sum": v}
+        for k, v in sorted(
+            by_source_map.items(), key=lambda kv: kv[1], reverse=True
+        )
+    ]
+
+    context = {
+        "country": country,
+        "incomes": incomes,
+        "source_choices": FinancialIncome.SOURCE_CHOICES,
+        "locations": locations,
+        "total_sum": total_sum,
+        "by_source": by_source,
+        "incomes_count": len(incomes),
+        "f_date_from": f_date_from,
+        "f_date_to": f_date_to,
+        "f_source": f_source,
+        "today": timezone.localdate().strftime("%Y-%m-%d"),
+        "active": "income",
+    }
+    return render(request, "foodcost/finance_income.html", context)
+
+
+# ============================================================================
+#  ПРИХОД / РАСХОД ПО МЕСЯЦАМ (график)
+# ============================================================================
+
+_MONTHS_RU = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн",
+              "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
+
+
+@login_required
+def finance_chart(request, country_slug):
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(
+        request.user, UserProfile.SECTION_FINANCE
+    )
+    if access_error:
+        return access_error
+
+    year = _int(request.GET.get("year")) or timezone.localdate().year
+
+    exp_rows = (
+        FinancialExpense.objects.filter(
+            country=country, expense_date__year=year
+        )
+        .values("expense_date__month")
+        .annotate(s=Sum("amount"))
+    )
+    inc_rows = (
+        FinancialIncome.objects.filter(
+            country=country, income_date__year=year
+        )
+        .values("income_date__month")
+        .annotate(s=Sum("amount"))
+    )
+    exp_by = {r["expense_date__month"]: (r["s"] or Decimal(0)) for r in exp_rows}
+    inc_by = {r["income_date__month"]: (r["s"] or Decimal(0)) for r in inc_rows}
+
+    max_val = Decimal(0)
+    for m in range(1, 13):
+        max_val = max(max_val, inc_by.get(m, Decimal(0)), exp_by.get(m, Decimal(0)))
+
+    months = []
+    total_income = Decimal(0)
+    total_expense = Decimal(0)
+    for m in range(1, 13):
+        inc = inc_by.get(m, Decimal(0))
+        exp = exp_by.get(m, Decimal(0))
+        total_income += inc
+        total_expense += exp
+        months.append({
+            "m": m,
+            "name": _MONTHS_RU[m - 1],
+            "income": inc,
+            "expense": exp,
+            "profit": inc - exp,
+            "income_h": (float(inc) / float(max_val) * 160) if max_val else 0,
+            "expense_h": (float(exp) / float(max_val) * 160) if max_val else 0,
+        })
+
+    yrs = set()
+    for d in FinancialExpense.objects.filter(country=country).dates(
+        "expense_date", "year"
+    ):
+        yrs.add(d.year)
+    for d in FinancialIncome.objects.filter(country=country).dates(
+        "income_date", "year"
+    ):
+        yrs.add(d.year)
+    yrs.add(year)
+    years = sorted(yrs, reverse=True)
+
+    context = {
+        "country": country,
+        "year": year,
+        "years": years,
+        "months": months,
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "total_profit": total_income - total_expense,
+        "active": "chart",
+    }
+    return render(request, "foodcost/finance_chart.html", context)

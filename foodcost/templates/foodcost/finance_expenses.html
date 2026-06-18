@@ -5,6 +5,9 @@
 .fx-wrap{max-width:1200px;margin:0 auto;}
 .fx-h1{font-size:24px;font-weight:800;margin:0 0 4px;}
 .fx-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.fx-tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap;}
+.fx-tab{padding:8px 16px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;text-decoration:none;font-weight:700;font-size:14px;}
+.fx-tab.active{background:#111827;color:#fff;border-color:#111827;}
 .fx-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
 .fx-card-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
 .fx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
@@ -38,6 +41,12 @@
 <div class="fx-wrap">
   <h1 class="fx-h1">Расходы</h1>
   <p class="fx-sub">Учёт расходов: аренда, зарплата, маркетинг, закупки и прочее. Закупки попадают сюда автоматически из приходов.</p>
+
+  <div class="fx-tabs">
+    <a href="/c/{{ country.slug }}/finance/expenses/" class="fx-tab {% if active == 'expenses' %}active{% endif %}">Расходы</a>
+    <a href="/c/{{ country.slug }}/finance/income/" class="fx-tab {% if active == 'income' %}active{% endif %}">Поступление денег</a>
+    <a href="/c/{{ country.slug }}/finance/chart/" class="fx-tab {% if active == 'chart' %}active{% endif %}">Приход / расход</a>
+  </div>
 
   {% if imported %}<div class="fx-card" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;font-weight:700;">Импортировано записей: {{ imported }}</div>{% endif %}
 
@@ -102,12 +111,6 @@
     {% if by_type %}
     <div class="fx-totals" style="margin-top:12px;">
       {% for row in by_type %}<span class="fx-chip">{{ row.label }}: <b>{{ row.sum|floatformat:0 }}</b></span>{% endfor %}
-    </div>
-    {% endif %}
-    {% if by_debtor %}
-    <div class="fx-card-title" style="margin-top:16px;">Долг перед (кто профинансировал)</div>
-    <div class="fx-totals">
-      {% for row in by_debtor %}<span class="fx-chip" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">{{ row.name }}: <b>{{ row.sum|floatformat:0 }}</b></span>{% endfor %}
     </div>
     {% endif %}
   </div>

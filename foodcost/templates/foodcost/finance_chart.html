@@ -1,0 +1,99 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Приход / расход{% endblock %}
+{% block content %}
+<style>
+.fx-wrap{max-width:1100px;margin:0 auto;}
+.fx-h1{font-size:24px;font-weight:800;margin:0 0 4px;}
+.fx-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.fx-tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap;}
+.fx-tab{padding:8px 16px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;text-decoration:none;font-weight:700;font-size:14px;}
+.fx-tab.active{background:#111827;color:#fff;border-color:#111827;}
+.fx-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
+.fx-card-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
+.fx-sel{border:1px solid #d1d5db;border-radius:10px;padding:9px 10px;font-size:14px;background:#fff;}
+.sum-row{display:flex;flex-wrap:wrap;gap:14px;}
+.sum-box{flex:1;min-width:180px;border:1px solid #e5e7eb;border-radius:14px;padding:14px 16px;}
+.sum-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#6b7280;}
+.sum-val{font-size:24px;font-weight:900;margin-top:4px;}
+.green{color:#15803d;} .red{color:#b91c1c;}
+.legend{display:flex;gap:16px;margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+.ch-chart{display:flex;align-items:flex-end;gap:6px;height:200px;border-bottom:2px solid #e5e7eb;padding-top:10px;overflow-x:auto;}
+.ch-col{flex:1;min-width:38px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.ch-bars{display:flex;align-items:flex-end;gap:3px;height:170px;}
+.ch-bar{width:13px;border-radius:4px 4px 0 0;min-height:1px;}
+.ch-in{background:#22c55e;}
+.ch-ex{background:#ef4444;}
+.ch-lbl{font-size:11px;color:#6b7280;margin-top:6px;font-weight:600;}
+.fx-table{width:100%;border-collapse:collapse;}
+.fx-table th{text-align:left;font-size:12px;text-transform:uppercase;color:#6b7280;padding:8px 10px;border-bottom:2px solid #e5e7eb;}
+.fx-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:14px;}
+.fx-table td.num{text-align:right;font-weight:700;white-space:nowrap;}
+</style>
+
+<div class="fx-wrap">
+  <h1 class="fx-h1">Приход / расход по месяцам</h1>
+  <p class="fx-sub">Сводка поступлений и расходов помесячно за выбранный год.</p>
+
+  <div class="fx-tabs">
+    <a href="/c/{{ country.slug }}/finance/expenses/" class="fx-tab {% if active == 'expenses' %}active{% endif %}">Расходы</a>
+    <a href="/c/{{ country.slug }}/finance/income/" class="fx-tab {% if active == 'income' %}active{% endif %}">Поступление денег</a>
+    <a href="/c/{{ country.slug }}/finance/chart/" class="fx-tab {% if active == 'chart' %}active{% endif %}">Приход / расход</a>
+  </div>
+
+  <form method="get" class="fx-card" style="display:flex;align-items:center;gap:12px;">
+    <span class="fx-card-title" style="margin:0;">Год</span>
+    <select class="fx-sel" name="year" onchange="this.form.submit()">
+      {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <noscript><button type="submit">Показать</button></noscript>
+  </form>
+
+  <div class="fx-card">
+    <div class="sum-row">
+      <div class="sum-box"><div class="sum-lbl">Приход за {{ year }}</div><div class="sum-val green">{{ total_income|floatformat:0 }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">Расход за {{ year }}</div><div class="sum-val red">{{ total_expense|floatformat:0 }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">Прибыль</div><div class="sum-val {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit|floatformat:0 }}</div></div>
+    </div>
+  </div>
+
+  <div class="fx-card">
+    <div class="fx-card-title">График по месяцам</div>
+    <div class="legend"><span><i class="ch-in"></i>Приход</span><span><i class="ch-ex"></i>Расход</span></div>
+    <div class="ch-chart">
+      {% for mo in months %}
+      <div class="ch-col">
+        <div class="ch-bars">
+          <div class="ch-bar ch-in" style="height:{{ mo.income_h }}px;" title="Приход: {{ mo.income|floatformat:0 }}"></div>
+          <div class="ch-bar ch-ex" style="height:{{ mo.expense_h }}px;" title="Расход: {{ mo.expense|floatformat:0 }}"></div>
+        </div>
+        <div class="ch-lbl">{{ mo.name }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="fx-card">
+    <div class="fx-card-title">Помесячно</div>
+    <table class="fx-table">
+      <thead><tr><th>Месяц</th><th style="text-align:right;">Приход</th><th style="text-align:right;">Расход</th><th style="text-align:right;">Прибыль</th></tr></thead>
+      <tbody>
+        {% for mo in months %}
+        <tr>
+          <td>{{ mo.name }}</td>
+          <td class="num green">{{ mo.income|floatformat:0 }}</td>
+          <td class="num red">{{ mo.expense|floatformat:0 }}</td>
+          <td class="num {% if mo.profit < 0 %}red{% else %}green{% endif %}">{{ mo.profit|floatformat:0 }}</td>
+        </tr>
+        {% endfor %}
+        <tr style="border-top:2px solid #e5e7eb;font-weight:900;">
+          <td>Итого</td>
+          <td class="num green">{{ total_income|floatformat:0 }}</td>
+          <td class="num red">{{ total_expense|floatformat:0 }}</td>
+          <td class="num {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit|floatformat:0 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

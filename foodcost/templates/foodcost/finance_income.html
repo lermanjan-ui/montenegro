@@ -1,0 +1,186 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Поступление денег{% endblock %}
+{% block content %}
+<style>
+.fx-wrap{max-width:1200px;margin:0 auto;}
+.fx-h1{font-size:24px;font-weight:800;margin:0 0 4px;}
+.fx-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.fx-tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap;}
+.fx-tab{padding:8px 16px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;text-decoration:none;font-weight:700;font-size:14px;}
+.fx-tab.active{background:#111827;color:#fff;border-color:#111827;}
+.fx-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
+.fx-card-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
+.fx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.fx-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin:0 0 4px;}
+.fx-in,.fx-sel,.fx-ta{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:9px 10px;font-size:14px;box-sizing:border-box;background:#fff;}
+.fx-ta{min-height:38px;resize:vertical;}
+.fx-btn{border:0;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer;}
+.fx-btn-green{background:#16a34a;color:#fff;}
+.fx-btn-gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+.fx-btn-red{background:#ef4444;color:#fff;}
+.fx-btn-sm{padding:6px 12px;font-size:13px;}
+.fx-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+.fx-totals{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.fx-total-big{font-size:26px;font-weight:900;color:#15803d;}
+.fx-chip{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:#166534;}
+.fx-chip b{font-weight:800;}
+.fx-table{width:100%;border-collapse:collapse;}
+.fx-table th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#6b7280;padding:8px 10px;border-bottom:2px solid #e5e7eb;white-space:nowrap;}
+.fx-table td{padding:10px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:top;}
+.fx-amount{font-weight:800;white-space:nowrap;}
+.fx-badge-src{display:inline-block;background:#f0fdf4;color:#15803d;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;}
+.fx-muted{color:#9ca3af;}
+.fx-edit-row{background:#f9fafb;}
+.fx-empty{text-align:center;color:#9ca3af;padding:30px;}
+@media(max-width:860px){.fx-grid{grid-template-columns:1fr 1fr;}}
+</style>
+
+<div class="fx-wrap">
+  <h1 class="fx-h1">Поступление денег</h1>
+  <p class="fx-sub">Приход: выручка, инвестиции, займы, возврат долгов и прочее. Эти суммы идут в график «Приход / расход по месяцам».</p>
+
+  <div class="fx-tabs">
+    <a href="/c/{{ country.slug }}/finance/expenses/" class="fx-tab {% if active == 'expenses' %}active{% endif %}">Расходы</a>
+    <a href="/c/{{ country.slug }}/finance/income/" class="fx-tab {% if active == 'income' %}active{% endif %}">Поступление денег</a>
+    <a href="/c/{{ country.slug }}/finance/chart/" class="fx-tab {% if active == 'chart' %}active{% endif %}">Приход / расход</a>
+  </div>
+
+  <!-- ФИЛЬТРЫ -->
+  <form method="get" class="fx-card">
+    <div class="fx-card-title">Фильтры</div>
+    <div class="fx-grid">
+      <div class="fx-field"><label>С даты</label><input class="fx-in" type="date" name="date_from" value="{{ f_date_from }}"></div>
+      <div class="fx-field"><label>По дату</label><input class="fx-in" type="date" name="date_to" value="{{ f_date_to }}"></div>
+      <div class="fx-field"><label>Источник</label>
+        <select class="fx-sel" name="source">
+          <option value="">Все</option>
+          {% for s in source_choices %}<option value="{{ s.0 }}" {% if f_source == s.0 %}selected{% endif %}>{{ s.1 }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fx-field" style="display:flex;align-items:flex-end;gap:8px;">
+        <a class="fx-btn fx-btn-gray" href="/c/{{ country.slug }}/finance/income/">Сбросить</a>
+        <button class="fx-btn fx-btn-green" type="submit">Применить</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- ИТОГИ -->
+  <div class="fx-card">
+    <div class="fx-card-title">Итого поступлений{% if f_date_from or f_date_to or f_source %} (по фильтру){% endif %}</div>
+    <div class="fx-totals">
+      <div class="fx-total-big">{{ total_sum|floatformat:0 }}</div>
+      <span class="fx-muted">сум · {{ incomes_count }} записей</span>
+    </div>
+    {% if by_source %}
+    <div class="fx-totals" style="margin-top:12px;">
+      {% for row in by_source %}<span class="fx-chip">{{ row.label }}: <b>{{ row.sum|floatformat:0 }}</b></span>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ДОБАВИТЬ -->
+  <form method="post" class="fx-card">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create_income">
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <div class="fx-card-title">Добавить поступление</div>
+    <div class="fx-grid">
+      <div class="fx-field"><label>Сумма *</label><input class="fx-in" type="text" name="amount" inputmode="decimal" placeholder="0" required></div>
+      <div class="fx-field"><label>Дата *</label><input class="fx-in" type="date" name="income_date" value="{{ today }}" required></div>
+      <div class="fx-field"><label>Источник</label>
+        <select class="fx-sel" name="source">
+          <option value="">— не указан —</option>
+          {% for s in source_choices %}<option value="{{ s.0 }}">{{ s.1 }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fx-field"><label>Филиал</label>
+        <select class="fx-sel" name="location_id">
+          <option value="">— не указан —</option>
+          {% for loc in locations %}<option value="{{ loc.id }}">{{ loc.name }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="fx-grid" style="margin-top:12px;">
+      <div class="fx-field" style="grid-column:span 2;"><label>Название</label><input class="fx-in" type="text" name="name" placeholder="Напр. Выручка за смену / Взнос учредителя"></div>
+      <div class="fx-field" style="grid-column:span 2;"><label>Комментарий</label><input class="fx-in" type="text" name="comment"></div>
+    </div>
+    <div class="fx-actions">
+      <button class="fx-btn fx-btn-green" type="submit">Добавить поступление</button>
+    </div>
+  </form>
+
+  <!-- СПИСОК -->
+  <div class="fx-card">
+    <div class="fx-card-title">Список поступлений</div>
+    <table class="fx-table">
+      <thead>
+        <tr><th>Дата</th><th>Источник</th><th>Название</th><th>Филиал</th><th style="text-align:right;">Сумма</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for e in incomes %}
+        <tr>
+          <td>{{ e.income_date|date:"d.m.Y" }}</td>
+          <td>{% if e.source_label %}<span class="fx-badge-src">{{ e.source_label }}</span>{% else %}<span class="fx-muted">—</span>{% endif %}</td>
+          <td>{{ e.name|default:"—" }}{% if e.comment %}<div class="fx-muted" style="font-size:12px;margin-top:2px;">{{ e.comment }}</div>{% endif %}</td>
+          <td>{% if e.location %}{{ e.location.name }}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
+          <td class="fx-amount" style="text-align:right;color:#15803d;">{{ e.amount|floatformat:0 }}</td>
+          <td style="white-space:nowrap;text-align:right;">
+            <button type="button" class="fx-btn fx-btn-gray fx-btn-sm" onclick="fxToggle({{ e.id }})">Изменить</button>
+            <form method="post" style="display:inline;" onsubmit="return confirm('Удалить поступление?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_income">
+              <input type="hidden" name="income_id" value="{{ e.id }}">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="fx-btn fx-btn-red fx-btn-sm">Удалить</button>
+            </form>
+          </td>
+        </tr>
+        <tr class="fx-edit-row" id="fx-edit-{{ e.id }}" style="display:none;">
+          <td colspan="6">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_income">
+              <input type="hidden" name="income_id" value="{{ e.id }}">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <div class="fx-grid">
+                <div class="fx-field"><label>Сумма</label><input class="fx-in" type="text" name="amount" inputmode="decimal" value="{{ e.amount|floatformat:0 }}"></div>
+                <div class="fx-field"><label>Дата</label><input class="fx-in" type="date" name="income_date" value="{{ e.date_value }}"></div>
+                <div class="fx-field"><label>Источник</label>
+                  <select class="fx-sel" name="source">
+                    <option value="">— не указан —</option>
+                    {% for s in source_choices %}<option value="{{ s.0 }}" {% if e.source == s.0 %}selected{% endif %}>{{ s.1 }}</option>{% endfor %}
+                  </select>
+                </div>
+                <div class="fx-field"><label>Филиал</label>
+                  <select class="fx-sel" name="location_id">
+                    <option value="">— не указан —</option>
+                    {% for loc in locations %}<option value="{{ loc.id }}" {% if e.location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>{% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="fx-grid" style="margin-top:12px;">
+                <div class="fx-field" style="grid-column:span 2;"><label>Название</label><input class="fx-in" type="text" name="name" value="{{ e.name }}"></div>
+                <div class="fx-field" style="grid-column:span 2;"><label>Комментарий</label><input class="fx-in" type="text" name="comment" value="{{ e.comment }}"></div>
+              </div>
+              <div class="fx-actions">
+                <button type="button" class="fx-btn fx-btn-gray" onclick="fxToggle({{ e.id }})">Отмена</button>
+                <button type="submit" class="fx-btn fx-btn-green">Сохранить</button>
+              </div>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="fx-empty">Поступлений нет. Добавьте первое поступление выше.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function fxToggle(id){
+  var row = document.getElementById('fx-edit-' + id);
+  if(row){ row.style.display = (row.style.display === 'none' || !row.style.display) ? 'table-row' : 'none'; }
+}
+</script>
+{% endblock %}

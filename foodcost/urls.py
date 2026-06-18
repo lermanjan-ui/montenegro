@@ -239,6 +239,16 @@ urlpatterns = [
         views_finance.finance_expenses,
         name="finance_expenses"
     ),
+    path(
+        "c/<slug:country_slug>/finance/income/",
+        views_finance.finance_income,
+        name="finance_income"
+    ),
+    path(
+        "c/<slug:country_slug>/finance/chart/",
+        views_finance.finance_chart,
+        name="finance_chart"
+    ),
 
     # Маркетинговые акции — отдельная страница управления.
     path(

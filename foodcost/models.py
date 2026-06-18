@@ -2615,9 +2615,51 @@ class FinancialExpense(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.amount}"
-   
-   
-   
+
+
+class FinancialIncome(models.Model):
+    """Поступления денег (приход): выручка, инвестиции, возврат долга и т.д."""
+
+    SOURCE_REVENUE = "revenue"
+    SOURCE_INVESTMENT = "investment"
+    SOURCE_LOAN = "loan"
+    SOURCE_DEBT_RETURN = "debt_return"
+    SOURCE_OTHER = "other"
+    SOURCE_CHOICES = [
+        (SOURCE_REVENUE, "Выручка"),
+        (SOURCE_INVESTMENT, "Инвестиции / взнос"),
+        (SOURCE_LOAN, "Заём / кредит"),
+        (SOURCE_DEBT_RETURN, "Возврат долга нам"),
+        (SOURCE_OTHER, "Прочее"),
+    ]
+
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="financial_incomes"
+    )
+    location = models.ForeignKey(
+        Location, on_delete=models.CASCADE, related_name="financial_incomes",
+        null=True, blank=True,
+    )
+    source = models.CharField(
+        max_length=30, choices=SOURCE_CHOICES, blank=True, default=""
+    )
+    name = models.CharField(max_length=255, blank=True, default="")
+    amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    income_date = models.DateField()
+    comment = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        "auth.User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="created_financial_incomes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-income_date", "-id"]
+
+    def __str__(self):
+        return f"{self.name} - {self.amount}"
+
+
 class EmployeeShift(models.Model):
 
     STATUS_PLANNED = "planned"
