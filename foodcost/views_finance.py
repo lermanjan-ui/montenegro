@@ -48,6 +48,23 @@ def _money(value):
     return f"-{s}" if n < 0 else s
 
 
+# Отображаемые варианты источника для РАСХОДОВ:
+# «Расчётный счёт» и «Счёт компании» объединены в один «Расчётный счёт»,
+# «Долг» переименован в «Заём». Значения в БД не меняем (миграция не нужна).
+EXPENSE_SOURCE_CHOICES = [
+    (FinancialExpense.SOURCE_CASH, "Касса точки"),
+    (FinancialExpense.SOURCE_SETTLEMENT, "Расчётный счёт"),
+    (FinancialExpense.SOURCE_DEBT, "Заём"),
+]
+# Метки для показа (включая старое значение company_account -> Расчётный счёт).
+EXPENSE_SOURCE_LABELS = {
+    FinancialExpense.SOURCE_CASH: "Касса точки",
+    FinancialExpense.SOURCE_SETTLEMENT: "Расчётный счёт",
+    FinancialExpense.SOURCE_COMPANY: "Расчётный счёт",
+    FinancialExpense.SOURCE_DEBT: "Заём",
+}
+
+
 def _loc(value, country):
     lid = _int(value)
     if not lid:
@@ -208,7 +225,14 @@ def finance_expenses(request, country_slug):
     if loc_id:
         qs = qs.filter(location_id=loc_id)
     if f_source:
-        qs = qs.filter(source=f_source)
+        if f_source == FinancialExpense.SOURCE_SETTLEMENT:
+            # «Расчётный счёт» теперь включает и старое «Счёт компании».
+            qs = qs.filter(source__in=[
+                FinancialExpense.SOURCE_SETTLEMENT,
+                FinancialExpense.SOURCE_COMPANY,
+            ])
+        else:
+            qs = qs.filter(source=f_source)
     debtor_ids = [int(x) for x in f_debtor_ids if str(x).isdigit()]
     if debtor_ids:
         qs = qs.filter(debtor_id__in=debtor_ids)
@@ -218,7 +242,7 @@ def finance_expenses(request, country_slug):
     )
 
     type_labels = dict(FinancialExpense.EXPENSE_TYPES)
-    source_labels = dict(FinancialExpense.SOURCE_CHOICES)
+    source_labels = EXPENSE_SOURCE_LABELS
 
     expenses = list(qs)
     total_sum = Decimal(0)
@@ -246,7 +270,7 @@ def finance_expenses(request, country_slug):
         "country": country,
         "expenses": expenses,
         "expense_types": FinancialExpense.EXPENSE_TYPES,
-        "source_choices": FinancialExpense.SOURCE_CHOICES,
+        "source_choices": EXPENSE_SOURCE_CHOICES,
         "locations": locations,
         "debtors": debtors,
         "total_sum": total_sum,

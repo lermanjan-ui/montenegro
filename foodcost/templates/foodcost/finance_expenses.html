@@ -84,11 +84,11 @@
     <div class="fx-grid" style="margin-top:12px;">
       <div class="fx-field"><label>Источник</label>
         <select class="fx-sel" name="source">
-          <option value="">Любой</option>
+          <option value="">Неопределённо</option>
           {% for s in source_choices %}<option value="{{ s.0 }}" {% if f_source == s.0 %}selected{% endif %}>{{ s.1 }}</option>{% endfor %}
         </select>
       </div>
-      <div class="fx-field"><label>Долг перед (профинансировал) — можно несколько</label>
+      <div class="fx-field"><label>Заём от (профинансировал) — можно несколько</label>
         <div style="display:flex;flex-wrap:wrap;gap:10px;padding:6px 0;">
           {% for d in debtors %}
           <label style="display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;cursor:pointer;">
@@ -148,7 +148,7 @@
         </select>
       </div>
       <div class="fx-field"><label>Юрлицо</label><input class="fx-in" type="text" name="legal_entity" placeholder="На кого оформлено"></div>
-      <div class="fx-field fx-debtor-field" id="fx-add-debtor" style="display:none;"><label>Долг перед (профинансировал)</label>
+      <div class="fx-field fx-debtor-field" id="fx-add-debtor" style="display:none;"><label>Заём от (профинансировал)</label>
         <select class="fx-sel" name="debtor_id">
           <option value="">— выбрать —</option>
           {% for d in debtors %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
@@ -177,7 +177,7 @@
           <td><span class="fx-badge">{{ e.type_label }}</span></td>
           <td>{{ e.name|default:"—" }}{% if e.purchase_receipt_id %} <span class="fx-badge fx-badge-auto">из прихода</span>{% endif %}{% if e.comment %}<div class="fx-muted" style="font-size:12px;margin-top:2px;">{{ e.comment }}</div>{% endif %}</td>
           <td>{% if e.location %}{{ e.location.name }}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
-          <td>{% if e.source_label %}<span class="fx-badge fx-badge-src">{{ e.source_label }}</span>{% if e.debtor %} <span class="fx-muted" style="font-size:12px;">перед {{ e.debtor.name }}</span>{% endif %}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
+          <td>{% if e.source_label %}<span class="fx-badge fx-badge-src">{{ e.source_label }}</span>{% if e.debtor %} <span class="fx-muted" style="font-size:12px;">от {{ e.debtor.name }}</span>{% endif %}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
           <td>{{ e.legal_entity|default:"—" }}</td>
           <td class="fx-amount" style="text-align:right;">{{ e.amount_fmt }}</td>
           <td style="white-space:nowrap;text-align:right;">
@@ -222,7 +222,7 @@
                   </select>
                 </div>
                 <div class="fx-field"><label>Юрлицо</label><input class="fx-in" type="text" name="legal_entity" value="{{ e.legal_entity }}"></div>
-                <div class="fx-field fx-debtor-field" id="fx-edit-debtor-{{ e.id }}" {% if e.source != SOURCE_DEBT %}style="display:none;"{% endif %}><label>Долг перед (профинансировал)</label>
+                <div class="fx-field fx-debtor-field" id="fx-edit-debtor-{{ e.id }}" {% if e.source != SOURCE_DEBT %}style="display:none;"{% endif %}><label>Заём от (профинансировал)</label>
                   <select class="fx-sel" name="debtor_id">
                     <option value="">— выбрать —</option>
                     {% for d in debtors %}<option value="{{ d.id }}" {% if e.debtor_id == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
