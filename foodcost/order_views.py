@@ -138,14 +138,14 @@ def order_list(request, country_slug):
 
     total_revenue = sum(
 
-        order.revenue_amount
+        order.total_amount
 
         for order in active_orders
 
     )
 
     total_cash = sum(
-        order.revenue_amount
+        order.total_amount
         for order in active_orders
         if order.payment_method
         and order.payment_method.is_cash
@@ -164,7 +164,7 @@ def order_list(request, country_slug):
         locations_summary.append({
             "name": location.name,
             "orders_count": location_orders.count(),
-            "revenue": sum(order.revenue_amount for order in location_orders),
+            "revenue": sum(order.total_amount for order in location_orders),
         })
     
     total_delivery = sum(
@@ -325,7 +325,7 @@ def order_all_list(request, country_slug):
     )
 
     total_revenue = sum(
-        order.revenue_amount
+        order.total_amount
         for order in active_orders
     )
 
@@ -791,11 +791,18 @@ def order_detail(request, country_slug, order_id):
         order.payment_method = payment_method
         order.promo_code = promo_code
 
-        # Смена статуса заказа менеджером. «Принят» ставится автоматически при
-        # поступлении заказа; отмена — отдельной функцией. Здесь менеджер
-        # вручную переводит в Доставку или Завершен.
+        # Смена статуса заказа менеджером. Разрешаем рабочие статусы:
+        # Принят (new) / Готовится / Готов / Доставка / Завершён.
+        # awaiting_payment/payment_failed — системные, отмена — отдельной
+        # функцией, поэтому их тут не выставляем.
         _status_in = (request.POST.get("status") or "").strip()
-        if _status_in in (Order.STATUS_DELIVERY, Order.STATUS_DONE):
+        if _status_in in (
+            Order.STATUS_NEW,
+            Order.STATUS_COOKING,
+            Order.STATUS_READY,
+            Order.STATUS_DELIVERY,
+            Order.STATUS_DONE,
+        ):
             order.status = _status_in
 
         order.customer_name = request.POST.get(
@@ -1286,11 +1293,11 @@ def order_analytics(request, country_slug):
 
     def _commission(order):
         if order.source:
-            return order.revenue_amount * order.source.commission_percent / HUNDRED
+            return order.total_amount * order.source.commission_percent / HUNDRED
         return ZERO
 
-    gross_revenue = sum((o.revenue_amount for o in active), ZERO)
-    subtotal_revenue = sum((o.revenue_subtotal for o in active), ZERO)
+    gross_revenue = sum((o.total_amount for o in active), ZERO)
+    subtotal_revenue = sum((o.subtotal_amount for o in active), ZERO)
     discount_loss = sum((o.discount_amount for o in active), ZERO)
 
     commission_total = sum((_commission(o) for o in active), ZERO)
@@ -1401,18 +1408,18 @@ def order_analytics(request, country_slug):
     bank_total = ZERO
 
     for o in active:
-        order_food_total = o.revenue_subtotal - o.discount_amount
+        order_food_total = o.subtotal_amount - o.discount_amount
         order_commission = ZERO
         if o.source:
             order_commission = order_food_total * o.source.commission_percent / HUNDRED
 
         if o.payment_method and o.payment_method.is_cash:
-            cash_total += o.revenue_amount
+            cash_total += o.total_amount
         else:
             if o.source and o.source.commission_percent > 0:
-                bank_total += o.revenue_amount - order_commission
+                bank_total += o.total_amount - order_commission
             else:
-                bank_total += o.revenue_amount
+                bank_total += o.total_amount
 
     # ---- новые / повторные клиенты: ОДИН запрос вместо N+1 ----
     # "повторный" = у клиента есть НЕотменённый заказ ДО date_from (глобально
@@ -1450,7 +1457,7 @@ def order_analytics(request, country_slug):
         loc_active = [o for o in active if o.location_id == location.id]
         loc_cancelled = [o for o in cancelled if o.location_id == location.id]
 
-        location_revenue = sum((o.revenue_amount for o in loc_active), ZERO)
+        location_revenue = sum((o.total_amount for o in loc_active), ZERO)
         location_commission = sum((_commission(o) for o in loc_active), ZERO)
         location_net_revenue = location_revenue - location_commission
 
@@ -2033,94 +2040,3 @@ def customer_list(request, country_slug):
         "sort": sort,
         "per_page": per_page,
     })
-
-@login_required(login_url="/login/")
-def lunch_orders_list(request, country_slug):
-    """Статистика по заказам обедов: те же данные/колонки, что на странице всех
-    заказов, но только заказы, содержащие комбо («Обед дня»). Выручка на этой
-    странице — это выручка ПО ОБЕДАМ (сумма комбо), т.к. в общих отчётах комбо
-    из выручки исключены."""
-    country = get_country(country_slug, request.user)
-
-    access_error = require_section_access(
-        request.user,
-        UserProfile.SECTION_ALL_ORDERS
-    )
-    if access_error:
-        return access_error
-
-    if not request.user.is_superuser:
-        return HttpResponseForbidden(
-            "Только главный админ может смотреть все заказы"
-        )
-
-    # Только заказы, в которых есть хотя бы один комбо-обед.
-    orders = (
-        Order.objects
-        .filter(country=country, lunch_combos__isnull=False)
-        .select_related("location", "payment_method", "source")
-        .prefetch_related("lunch_combos")
-        .order_by("-order_date")
-        .distinct()
-    )
-
-    date_from = request.GET.get("date_from")
-    date_to = request.GET.get("date_to")
-    location_id = request.GET.get("location_id")
-    status = request.GET.get("status")
-    search = request.GET.get("search")
-
-    if date_from:
-        orders = orders.filter(order_date__date__gte=date_from)
-    if date_to:
-        orders = orders.filter(order_date__date__lte=date_to)
-    if location_id:
-        orders = orders.filter(location_id=location_id)
-    if status == "active":
-        orders = orders.filter(is_cancelled=False)
-    elif status == "cancelled":
-        orders = orders.filter(is_cancelled=True)
-    if search:
-        orders = orders.filter(
-            customer_phone__icontains=search
-        ) | orders.filter(
-            customer_name__icontains=search
-        ) | orders.filter(
-            id__icontains=search
-        )
-
-    total_orders = orders.count()
-    active_orders = orders.filter(is_cancelled=False)
-
-    # Выручка ПО ОБЕДАМ (валовая сумма комбо − корп-скидка), а не общая по заказу.
-    total_revenue = sum(
-        (order.lunch_combo_net for order in active_orders),
-        Decimal("0"),
-    )
-    total_delivery = sum(
-        (order.delivery_amount for order in active_orders),
-        Decimal("0"),
-    )
-
-    locations = Location.objects.filter(
-        country=country,
-        is_active=True
-    ).order_by("name")
-
-    return render(
-        request,
-        "foodcost/lunch_orders_list.html",
-        {
-            "country": country,
-            "orders": orders[:300],
-            "total_orders": total_orders,
-            "total_revenue": total_revenue,
-            "total_delivery": total_delivery,
-            "locations": locations,
-            "date_from": date_from,
-            "date_to": date_to,
-            "location_id": location_id,
-            "status": status,
-            "search": search,
-        }
-    )

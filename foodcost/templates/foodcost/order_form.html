@@ -1,0 +1,494 @@
+<div class="layout">
+
+    <div>
+
+        <div class="card">
+            <div class="section-title">Клиент</div>
+
+            <div class="grid-2">
+                <div>
+                    <label>Телефон</label>
+                    <input type="text" name="customer_phone" id="customer-phone" placeholder="+998" value="{{ order.customer_phone|default:'' }}" required>
+                    <div id="customer-info" style="display:none;margin-top:10px;padding:12px;border-radius:12px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-weight:800;"></div>
+                </div>
+
+                <div>
+                    <label>Имя клиента</label>
+                    <input type="text" name="customer_name" value="{{ order.customer_name|default:'' }}" required>
+                </div>
+            </div>
+
+            <div style="margin-top:14px;">
+                <label>Telegram</label>
+                <input type="text" name="customer_telegram" placeholder="@username" value="{{ order.customer_telegram|default:'' }}">
+            </div>
+
+            <div id="customer-addresses-wrap" style="display:none; margin-top:14px;">
+                <label>Сохраненные адреса клиента</label>
+                <select id="customer-addresses">
+                    <option value="">Выбрать адрес</option>
+                </select>
+            </div>
+
+            <div style="margin-top:14px;">
+                <label>Адрес доставки</label>
+                <textarea name="delivery_address" required>{{ order.delivery_address|default:'' }}</textarea>
+            </div>
+
+            {# ===== Курьеру (Part 10 — courier info block) ===== #}
+            {# Shown for every order (new + existing) so the cashier can fill #}
+            {# these fields by phone. Public website orders pre-fill them via #}
+            {# the order_create API. Empty values are fine — they just stay   #}
+            {# blank in the DB.                                                #}
+            <div style="margin-top:14px;padding:14px 16px;border:1px solid #e5e7eb;border-radius:14px;background:#fbfcfd;">
+                <div style="font-weight:950;font-size:14px;color:#111827;margin-bottom:10px;">
+                    Курьеру
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <label>Ориентир для курьера</label>
+                    <input type="text" name="delivery_landmark"
+                           placeholder="Вход со двора, рядом аптека"
+                           value="{{ order.delivery_landmark|default:'' }}">
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <label>Комментарий курьеру</label>
+                    <textarea name="courier_comment"
+                              placeholder="Позвоните заранее, не звоните в домофон и т.д.">{{ order.courier_comment|default:'' }}</textarea>
+                </div>
+
+                <label style="display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;border:1px solid #e5e7eb;border-radius:12px;cursor:pointer;background:white;">
+                    <input type="checkbox" name="leave_at_door" id="leave-at-door"
+                           style="width:18px;height:18px;"
+                           {% if order.leave_at_door %}checked{% endif %}>
+                    <span style="font-weight:900;font-size:14px;">Оставить у двери</span>
+                </label>
+            </div>
+
+            <div style="margin-top:14px;">
+                <label>Комментарий к заказу</label>
+                <textarea name="cashier_comment" placeholder="Уточнения по заказу, пожелания клиента и т.д.">{{ order.cashier_comment|default:'' }}</textarea>
+            </div>
+        </div>
+
+	   <div class="card">
+	       <div class="section-title">Заказ</div>
+
+	       <div class="grid-3">
+	           <div>
+	               <label>Филиал</label>
+	               <select name="location_id" required>
+	                   {% for item in locations %}
+	                       <option value="{{ item.id }}" {% if order.location_id == item.id %}selected{% endif %}>{{ item.name }}</option>
+	                   {% endfor %}
+	               </select>
+	           </div>
+
+	           <div>
+	               <label>Источник заказа</label>
+				   <select
+				       name="source_id"
+				       id="source-select"
+				       required
+				   >
+					   {% for item in order_sources %}
+					       <option
+					           value="{{ item.id }}"
+					           data-payment="{{ item.default_payment_method_id|default:'' }}"
+					           data-commission="{{ item.commission_percent|stringformat:'f' }}"
+					           {% if order.source_id == item.id %}selected{% endif %}
+					       >
+					           {{ item.name }}
+					       </option>
+					   {% endfor %}
+	               </select>
+	           </div>
+
+	           <div>
+	               <label>Тип оплаты</label>
+				   <select
+				       name="payment_method_id"
+				       id="payment-method-select"
+				       required
+				   >
+	                   {% for item in payment_methods %}
+	                       <option value="{{ item.id }}" {% if order.payment_method_id == item.id %}selected{% endif %}>{{ item.name }}</option>
+	                   {% endfor %}
+	               </select>
+	           </div>
+			   {% if request.user.is_superuser %}
+			   <div>
+			       <label>Дата заказа</label>
+
+			       <input
+			           type="datetime-local"
+			           name="order_date"
+			           value="{% if order %}{{ order.order_date|date:'Y-m-d\\TH:i' }}{% endif %}"
+			       >
+			   </div>
+			   {% endif %}
+	       </div>
+
+	       <div class="grid-3" style="margin-top:14px;">
+	           <div>
+	               <label>Доставка</label>
+				   <select
+				       name="delivery_provider_id"
+				       id="delivery-provider-select"
+				       required
+				   >
+	                   {% for item in delivery_providers %}
+	                       <option value="{{ item.id }}" {% if order.delivery_provider_id == item.id %}selected{% endif %}>{{ item.name }}</option>
+	                   {% endfor %}
+	               </select>
+	           </div>
+
+	           <div>
+	               <label>Стоимость доставки</label>
+	               <input
+	                   type="number"
+	                   step="0.01"
+	                   name="delivery_amount"
+	                   value="{% if order %}{{ order.delivery_amount|floatformat:0 }}{% else %}0{% endif %}"
+	               >
+	           </div>
+			   <label
+			       style="
+			           display:flex;
+			           align-items:center;
+			           gap:12px;
+			           margin-top:28px;
+			           padding:12px 14px;
+			           border:1px solid #e5e7eb;
+			           border-radius:14px;
+			           cursor:pointer;
+			       "
+			   >
+			       <input
+			           type="checkbox"
+			           id="free-customer-delivery"
+					   name="free_customer_delivery"
+			           style="width:18px;height:18px;"
+					   {% if order.free_customer_delivery %}checked{% endif %}
+			       >
+
+			       <span style="font-weight:900;font-size:14px;">
+			           Клиент не оплачивает доставку
+			       </span>
+			   </label>
+
+	           <div>
+	               <label>Промокод</label>
+	               <select name="promo_code_id" id="promo-code-select">
+	                   <option value="">Без промокода</option>
+	                   {% for item in promo_codes %}
+	                       <option value="{{ item.id }}" data-percent="{{ item.percent }}" {% if order.promo_code_id == item.id %}selected{% endif %}>
+	                           {{ item.code }}
+	                       </option>
+	                   {% endfor %}
+	               </select>
+	           </div>
+	       </div>
+
+	       <div class="grid-2" style="margin-top:14px;">
+	           <label
+	               for="is-cancelled"
+	               style="display:flex;align-items:center;gap:12px;margin:0;padding:14px 16px;border:1px solid #e5e7eb;border-radius:14px;cursor:pointer;"
+	           >
+	               <input
+	                   type="checkbox"
+	                   name="is_cancelled"
+	                   id="is-cancelled"
+	                   style="width:20px;height:20px;"
+	                   {% if order.is_cancelled %}checked{% endif %}
+	               >
+	               <span style="font-size:15px;font-weight:900;">Заказ отменен</span>
+	           </label>
+
+	           <div>
+	               <label>Причина отказа</label>
+	               <select name="cancel_reason_id">
+	                   <option value="">Не выбрано</option>
+	                   {% for item in cancel_reasons %}
+	                       <option value="{{ item.id }}" {% if order.cancel_reason_id == item.id %}selected{% endif %}>
+	                           {{ item.name }}
+	                       </option>
+	                   {% endfor %}
+	               </select>
+	           </div>
+	       </div>
+	   </div>
+
+        <div class="card">
+            <div class="section-title">Позиции заказа</div>
+
+            <div class="add-dish-row">
+                <div>
+                    <label>Добавить блюдо</label>
+					<div class="dish-search-wrap">
+
+					    <input
+					        type="text"
+					        id="add-dish-search"
+					        placeholder="Начните вводить название блюда..."
+					        autocomplete="off"
+					    >
+
+					    <input
+					        type="hidden"
+					        id="add-dish-id"
+					    >
+
+					    <input
+					        type="hidden"
+					        id="add-dish-price"
+					    >
+
+					    <div
+					        id="dish-search-results"
+					        class="dish-search-results"
+					    >
+
+					        {% for item in dishes %}
+
+					            <div
+					                class="dish-search-result"
+					                data-id="{{ item.id }}"
+					                data-name="{{ item.name }}"
+					                data-price="{{ item.selling_price|stringformat:'f' }}"
+					            >
+
+					                {{ item.name }}
+
+					                <span class="dish-search-price">
+					                    {{ item.selling_price }}
+					                </span>
+
+					            </div>
+
+					        {% endfor %}
+
+					    </div>
+
+					</div>
+                </div>
+
+                <div>
+                    <label>Кол-во</label>
+                    <input type="number" id="add-dish-quantity" value="1" min="1" step="1">
+                </div>
+
+                <button type="button" id="add-item-btn">Добавить</button>
+            </div>
+
+            <div class="order-items-table">
+                <div class="order-items-head">
+                    <div>Блюдо</div>
+                    <div>Цена</div>
+                    <div>Кол-во</div>
+                    <div>Сумма</div>
+                    <div></div>
+                </div>
+
+                <div id="order-items">
+                    {% if order %}
+                        {% for order_item in order.items.all %}
+                            <div class="order-item order-items-row">
+                                <input type="hidden" name="dish_id" value="{{ order_item.dish_id }}" class="dish-hidden">
+								<input
+								    type="hidden"
+								    class="dish-price"
+								    value="{{ order_item.price_snapshot|floatformat:2 }}"
+								>
+
+                                <div class="item-name">{% if order_item.dish %}{{ order_item.dish.name }}{% else %}{{ order_item.dish_name_snapshot }}{% endif %}</div>
+								<input
+								    type="number"
+								    name="price"
+								    class="item-price-input"
+								    value="{{ order_item.price_snapshot|floatformat:0 }}"
+								    step="1"
+								>
+
+                                <input type="number" name="quantity" class="quantity-input" value="{{ order_item.quantity|floatformat:0 }}" min="1" step="1">
+
+							   <input
+							       type="text"
+							       class="item-total"
+							       value="0"
+							       readonly
+							   >
+
+                                <button type="button" class="remove-item-btn">×</button>
+                            </div>
+                        {% endfor %}
+                        {% for combo in order.lunch_combos.all %}
+                            <div class="order-items-row" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;">
+                                <div class="item-name">🍱 {{ combo.name }}{% if combo.date %} <span style="color:#9a3412;font-weight:800;font-size:12px;">на {{ combo.date|date:"d.m.Y" }}</span>{% endif %}{% if combo.composition %}<div style="color:#6b7280;font-weight:600;font-size:12px;margin-top:2px;">{{ combo.composition }}</div>{% endif %}</div>
+                                <div style="font-weight:800;color:#374151;align-self:center;">{{ combo.unit_price|floatformat:0 }}</div>
+                                <div style="font-weight:800;color:#374151;align-self:center;">× {{ combo.quantity }}</div>
+                                <div style="font-weight:900;align-self:center;">{{ combo.total_price|floatformat:0 }}</div>
+                                <div></div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div>
+        <div class="card summary-card-sticky">
+            <div class="section-title">Итоги заказа</div>
+
+            <div class="summary-box">
+                <div class="summary-row">
+                    <div class="summary-label">Сумма блюд</div>
+                    <div class="summary-value" id="summary-subtotal">0</div>
+                </div>
+
+                <div class="summary-row">
+                    <div class="summary-label">Скидка</div>
+                    <div class="summary-value" id="summary-discount">0</div>
+                </div>
+
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Итого по еде</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             После скидки
+			         </div>
+			     </div>
+
+			     <div class="summary-value" id="summary-food-total">0</div>
+			 </div>
+
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Доставка клиента</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             15 000 до 150 000 на сайте
+			         </div>
+			     </div>
+
+			     <div class="summary-value" id="summary-customer-delivery">
+			         {{ order.customer_delivery_amount|default:0|floatformat:0 }}
+			     </div>
+			 </div>
+
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Расход на доставку</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             Вводит кассир
+			         </div>
+			     </div>
+
+			     <div class="summary-value" id="summary-delivery">
+			         {{ order.delivery_amount|default:0|floatformat:0 }}
+			     </div>
+			 </div>
+
+			 <div class="summary-row">
+			     <div>
+			         <div class="summary-label">Итого к оплате</div>
+			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+			             Еда + доставка клиента
+			         </div>
+			     </div>
+
+			     <div class="summary-value summary-total" id="summary-total">0</div>
+			 </div>
+            </div>
+
+            {% if order %}
+            <div style="margin:6px 0 14px;">
+                <label style="display:block;font-weight:900;font-size:13px;color:#374151;margin-bottom:6px;">Статус заказа</label>
+                <select name="status" style="width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radius:12px;font-size:14px;font-weight:800;background:#fff;">
+                    <option value="new" {% if order.status == "new" %}selected{% endif %}>Принят</option>
+                    <option value="cooking" {% if order.status == "cooking" %}selected{% endif %}>Готовится</option>
+                    <option value="ready" {% if order.status == "ready" %}selected{% endif %}>Готов</option>
+                    <option value="delivery" {% if order.status == "delivery" %}selected{% endif %}>Доставка</option>
+                    <option value="done" {% if order.status == "done" %}selected{% endif %}>Завершён</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <button type="submit" class="save-btn">
+                {% if order %}Сохранить изменения{% else %}Сохранить заказ{% endif %}
+            </button>
+        </div>
+    </div>
+<div class="card" id="customer-history-card" style="display:none; margin-top:18px;">
+
+    <div
+        style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:18px;
+        "
+    >
+        <div class="section-title" style="margin-bottom:0;">
+            История клиента
+        </div>
+
+		<a
+		    href="#"
+		    id="open-customer-link"
+		    class="save-btn"
+		    style="
+		        width:auto;
+		        margin:0;
+		        padding:10px 14px;
+		        font-size:14px;
+		        text-decoration:none;
+		        display:inline-flex;
+		        align-items:center;
+		        justify-content:center;
+		    "
+		>
+		    Открыть
+		</a>
+    </div>
+
+    <div class="grid-3">
+
+        <div>
+            <label>Кол-во заказов</label>
+
+            <input
+                type="text"
+                id="customer-orders-count"
+                readonly
+            >
+        </div>
+
+        <div>
+            <label>Последний заказ</label>
+
+            <input
+                type="text"
+                id="customer-last-order"
+                readonly
+            >
+        </div>
+
+        <div>
+            <label>Комментарий клиента</label>
+
+            <textarea
+                id="customer-comment"
+                rows="2"
+                readonly
+                style="width:100%;resize:vertical;white-space:pre-wrap;"
+            >{{ order.customer_comment|default:'' }}</textarea>
+        </div>
+
+    </div>
+
+</div>
+
+</div>

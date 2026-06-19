@@ -423,6 +423,15 @@ def order_create(request):
     except Exception as exc:  # noqa: BLE001
         return _err(500, f"Order create failed: {exc}", 500)
 
+    # Уведомление о новом заказе в Telegram (в тред филиала), как у обычных и
+    # сайтовых заказов. Сбой Telegram не должен влиять на ответ Uzum — иначе
+    # они посчитают заказ непринятым; поэтому всё в try/except.
+    try:
+        from .shift_views import send_new_order_to_telegram
+        send_new_order_to_telegram(order)
+    except Exception:
+        pass
+
     return JsonResponse(
         {"orderId": str(order.pk), "eatsId": eats_id, "result": "OK"}
     )
