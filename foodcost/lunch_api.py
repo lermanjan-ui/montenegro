@@ -15,7 +15,7 @@ from decimal import Decimal
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import LunchMenu, LunchCorporateTier
+from .models import LunchMenu, LunchCorporateTier, Lunch, LunchSize
 from .public_api import (
     api_success,
     api_error,
@@ -211,12 +211,28 @@ def split_cart_items(items):
     return dish_items, combo_items
 
 
+def _new_lunch_composition(size):
+    """Состав размера списком строк: «Название (120 г)» или «Название»."""
+    out = []
+    for it in size.items.all():
+        nm = it.display_name()
+        w = (it.weight or "").strip()
+        out.append(f"{nm} ({w})" if w else nm)
+    return out
+
+
 def price_combos(request, country, combo_items):
     """Оценить позиции-комбо.
 
-    Возвращает (result, error). result:
-      { "lines": [...], "subtotal": Decimal, "total_qty": int,
-        "objects": [ {menu, quantity, unit_price, line_total}, ... ] }
+    Поддерживает ДВА слоя:
+      • НОВЫЙ Lunch/LunchSize (lunch_combo_id = Lunch.id,
+        lunch_combo_size_id = LunchSize.id) — приоритетно;
+      • СТАРЫЙ LunchMenu («Обед дня») — если по id не нашёлся Lunch.
+
+    Цена и состав берутся с СЕРВЕРА (клиентскую цену игнорируем).
+    Возвращает (result, error). objects[] несут явные поля для снапшота:
+      { lunch_menu (LunchMenu|None), date, name, quantity, unit_price,
+        line_total, composition }.
     """
     lines = []
     objects = []
@@ -236,6 +252,71 @@ def price_combos(request, country, combo_items):
                 "INVALID_QUANTITY", "Количество должно быть ≥ 1",
                 details={"index": index, "lunch_combo_id": combo_id}, status=400,
             )
+        size_id = _coerce_int(raw.get("lunch_combo_size_id"))
+
+        # --- НОВЫЙ слой: Lunch + размеры ---
+        lunch = (
+            Lunch.objects
+            .filter(id=combo_id, country=country, is_active=True)
+            .first()
+        )
+        if lunch is not None:
+            if not lunch.available:
+                return None, api_error(
+                    "LUNCH_UNAVAILABLE", "Обед сейчас недоступен",
+                    details={"index": index, "lunch_combo_id": combo_id},
+                    status=409,
+                )
+            if size_id:
+                size = LunchSize.objects.filter(id=size_id, lunch=lunch).first()
+                if size is None:
+                    return None, api_error(
+                        "LUNCH_SIZE_NOT_FOUND",
+                        "Размер не найден или не принадлежит этому обеду",
+                        details={"index": index, "lunch_combo_id": combo_id,
+                                 "lunch_combo_size_id": size_id},
+                        status=404,
+                    )
+            else:
+                size = lunch.default_size()
+                if size is None:
+                    return None, api_error(
+                        "LUNCH_NO_SIZE", "У обеда нет размеров",
+                        details={"index": index, "lunch_combo_id": combo_id},
+                        status=404,
+                    )
+
+            unit = Decimal(size.price or 0)
+            line_total = unit * Decimal(quantity)
+            subtotal += line_total
+            total_qty += quantity
+            composition = _new_lunch_composition(size)
+            name = f"{lunch.name} ({size.label})" if size.label else lunch.name
+
+            lines.append({
+                "type": "lunch_combo",
+                "lunch_combo_id": lunch.id,
+                "lunch_combo_size_id": size.id,
+                "date": lunch.date.isoformat() if lunch.date else None,
+                "name": name,
+                "quantity": quantity,
+                "unit_price": _money(unit),
+                "total_price": _money(line_total),
+                "composition": composition,
+            })
+            objects.append({
+                "menu": None,
+                "lunch_menu": None,
+                "date": lunch.date,
+                "name": name,
+                "quantity": quantity,
+                "unit_price": unit,
+                "line_total": line_total,
+                "composition": composition,
+            })
+            continue
+
+        # --- СТАРЫЙ слой: LunchMenu («Обед дня») ---
         menu = (
             LunchMenu.objects
             .filter(id=combo_id, country=country, is_active=True)
@@ -266,6 +347,9 @@ def price_combos(request, country, combo_items):
         })
         objects.append({
             "menu": menu,
+            "lunch_menu": menu,
+            "date": menu.date,
+            "name": menu.title or "Обед дня",
             "quantity": quantity,
             "unit_price": unit,
             "line_total": line_total,
@@ -302,3 +386,119 @@ def corporate_discount(country, total_qty, combo_subtotal):
     if amount > combo_subtotal:
         amount = combo_subtotal
     return amount, {"min_qty": tier.min_qty, "discount_percent": _to_float(pct)}
+
+
+# ===========================================================================
+#  🍱 НОВЫЙ слой: несколько обедов на дату × размеры × состав (ТЗ фронта)
+#     GET /api/public/lunches?date=YYYY-MM-DD
+#     GET /api/public/lunches/<date>
+#     GET /api/public/lunches/dates   — доступные даты для селектора
+# ===========================================================================
+
+def _serialize_lunch_size(size):
+    return {
+        "id": size.id,
+        "label": size.label,
+        "is_default": bool(size.is_default),
+        "price": _money(size.price),
+        "weight_total": size.weight_total or None,
+        "items": [
+            {
+                "name": it.display_name(),
+                "weight": (it.weight or None),
+                "role": it.role,
+            }
+            for it in size.items.all()
+        ],
+    }
+
+
+def _serialize_lunch_full(request, lunch):
+    return {
+        "id": lunch.id,
+        "name": lunch.name,
+        "photo": _resolve_image(request, lunch.photo, lunch.photo_url or ""),
+        "description": (lunch.description or None),
+        "badge": (lunch.badge or None),
+        "available": bool(lunch.available),
+        "sizes": [_serialize_lunch_size(s) for s in lunch.sizes.all()],
+    }
+
+
+@csrf_exempt
+def lunches(request, date=None):
+    """Список обедов-комплексов на дату (несколько обедов × размеры × состав)."""
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    raw = date if date is not None else request.GET.get("date")
+    today = _today()
+    if raw:
+        target = _parse_date(raw)
+        if target is None:
+            return api_error(
+                "INVALID_DATE", "Неверный формат даты (YYYY-MM-DD)", status=400
+            )
+    else:
+        target = (
+            Lunch.objects
+            .filter(country=country, is_active=True, date__gte=today)
+            .order_by("date")
+            .values_list("date", flat=True)
+            .first()
+        ) or today
+
+    rows = list(
+        Lunch.objects
+        .filter(country=country, date=target, is_active=True)
+        .order_by("sort_order", "id")
+        .prefetch_related(
+            "sizes__items__dish",
+            "sizes__items__preparation",
+            "sizes__items__product",
+        )
+    )
+
+    order_cutoff = ""
+    for lu in rows:
+        if (lu.order_cutoff or "").strip():
+            order_cutoff = lu.order_cutoff.strip()
+            break
+
+    return api_success({
+        "date": target.isoformat(),
+        "order_cutoff": order_cutoff or None,
+        "lunches": [_serialize_lunch_full(request, lu) for lu in rows],
+    })
+
+
+@csrf_exempt
+def lunches_dates(request):
+    """Доступные даты с обедами (для переключателя дней на фронте)."""
+    country, err = get_public_country(request)
+    if err:
+        return err
+    today = _today()
+    horizon = today + datetime.timedelta(days=_DAYS_AHEAD)
+    raw_dates = (
+        Lunch.objects
+        .filter(country=country, is_active=True, date__gte=today, date__lte=horizon)
+        .order_by("date")
+        .values_list("date", flat=True)
+        .distinct()
+    )
+    seen = []
+    for d in raw_dates:
+        if d not in seen:
+            seen.append(d)
+    return api_success({
+        "dates": [
+            {
+                "date": d.isoformat(),
+                "label": _label_for(d, today),
+                "weekday": _weekday_ru(d),
+            }
+            for d in seen
+        ]
+    })

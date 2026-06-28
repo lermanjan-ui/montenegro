@@ -3333,12 +3333,11 @@ def order_create(request):
         # Снимок комплексных обедов ("Обед дня"): состав фиксируется на момент
         # заказа — последующее изменение меню не влияет на эту запись.
         for co in combo_objects:
-            menu = co["menu"]
             OrderLunchCombo.objects.create(
                 order=order,
-                lunch_menu=menu,
-                date=menu.date,
-                name=menu.title or "Обед дня",
+                lunch_menu=co.get("lunch_menu"),
+                date=co.get("date"),
+                name=co.get("name") or "Обед",
                 quantity=co["quantity"],
                 unit_price=co["unit_price"],
                 total_price=co["line_total"],

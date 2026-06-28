@@ -5014,3 +5014,7 @@ class OrderLunchCombo(models.Model):
 
     def __str__(self):
         return f"{self.name} ×{self.quantity} (заказ {self.order_id})"
+
+
+# 🍱 Обеды-комплексы (новый слой рядом с LunchMenu) — модели в отдельном модуле.
+from .models_lunch import Lunch, LunchSize, LunchSizeItem  # noqa: E402,F401

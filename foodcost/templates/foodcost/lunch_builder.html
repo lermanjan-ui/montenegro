@@ -1,0 +1,187 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Конструктор обеда{% endblock %}
+{% block content %}
+<style>
+.lb-wrap{max-width:1180px;margin:0 auto;}
+.lb-h1{font-size:23px;font-weight:800;margin:0 0 2px;}
+.lb-sub{color:#6b7280;font-size:14px;margin:0 0 16px;}
+.lb-back{color:#047857;text-decoration:none;font-weight:700;font-size:14px;}
+.lb-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
+.lb-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
+.lb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.lb-f label{display:block;font-size:12px;font-weight:700;color:#374151;margin:0 0 4px;}
+.lb-in,.lb-sel{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:9px 10px;font-size:14px;box-sizing:border-box;background:#fff;}
+.lb-check{display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px;margin-top:22px;}
+.lb-btn{border:0;border-radius:10px;padding:9px 15px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block;}
+.lb-green{background:#047857;color:#fff;}
+.lb-gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+.lb-red{background:#fff;color:#b91c1c;border:1px solid #fee2e2;}
+.lb-sm{padding:7px 11px;font-size:13px;}
+.lb-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+.size-card{border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:14px;background:#fcfcfd;}
+.size-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.size-name{font-size:17px;font-weight:800;}
+.kpis{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0 14px;}
+.kpi{border:1px solid #e5e7eb;border-radius:10px;padding:8px 12px;background:#fff;font-size:13px;}
+.kpi b{display:block;font-size:16px;font-weight:800;margin-top:2px;}
+.green{color:#047857;} .red{color:#b91c1c;}
+.irow{display:grid;grid-template-columns:120px 1.4fr 80px 1.6fr 80px 70px 100px 96px;gap:8px;align-items:end;padding:8px;border-bottom:1px solid #f1f5f9;}
+.irow .lb-f label{font-size:11px;}
+.irow .lb-in,.irow .lb-sel{padding:7px 8px;font-size:13px;}
+.irow-head{font-size:11px;text-transform:uppercase;color:#6b7280;font-weight:700;}
+.cost-cell{font-weight:800;text-align:right;align-self:center;}
+.row-btns{display:flex;gap:6px;align-self:center;}
+.muted{color:#9ca3af;}
+@media(max-width:1000px){.lb-grid{grid-template-columns:1fr 1fr;}.irow{grid-template-columns:1fr 1fr;}}
+</style>
+
+<div class="lb-wrap">
+  <a class="lb-back" href="/c/{{ country.slug }}/lunches/">← Все обеды</a>
+  <h1 class="lb-h1" style="margin-top:8px;">{{ lunch.name }}</h1>
+  <p class="lb-sub">{{ lunch.date|date:"d.m.Y" }} · конструктор обеда: размеры, состав, себестоимость и маржа.</p>
+
+  <!-- ОБЕД -->
+  <div class="lb-card">
+    <div class="lb-title">Обед</div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update_lunch">
+      <div class="lb-grid">
+        <div class="lb-f"><label>Название</label><input class="lb-in" name="name" value="{{ lunch.name }}"></div>
+        <div class="lb-f"><label>Дата</label><input class="lb-in" type="date" name="date" value="{{ date_value }}"></div>
+        <div class="lb-f"><label>Бейдж</label>
+          <select class="lb-sel" name="badge">
+            <option value="">— нет —</option>
+            {% for b in badge_choices %}<option value="{{ b.0 }}" {% if lunch.badge == b.0 %}selected{% endif %}>{{ b.1 }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="lb-f"><label>Дедлайн заказа (напр. 11:00)</label><input class="lb-in" name="order_cutoff" value="{{ lunch.order_cutoff }}"></div>
+      </div>
+      <div class="lb-grid" style="margin-top:12px;">
+        <div class="lb-f" style="grid-column:span 2;"><label>Описание</label><input class="lb-in" name="description" value="{{ lunch.description }}"></div>
+        <div class="lb-f" style="grid-column:span 2;"><label>Фото (URL)</label><input class="lb-in" name="photo_url" value="{{ lunch.photo_url }}" placeholder="https://…"></div>
+      </div>
+      <div class="lb-grid" style="margin-top:12px;">
+        <div class="lb-f"><label>Порядок</label><input class="lb-in" type="number" name="sort_order" value="{{ lunch.sort_order }}"></div>
+        <label class="lb-check"><input type="checkbox" name="available" {% if lunch.available %}checked{% endif %}> Доступен к заказу</label>
+        <label class="lb-check"><input type="checkbox" name="is_active" {% if lunch.is_active %}checked{% endif %}> Активен (показывать)</label>
+      </div>
+      <div class="lb-actions">
+        <button class="lb-btn lb-green" type="submit">Сохранить обед</button>
+      </div>
+    </form>
+    <form method="post" onsubmit="return confirm('Удалить обед целиком (со всеми размерами)?');" style="margin-top:6px;text-align:right;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete_lunch">
+      <button class="lb-btn lb-red lb-sm" type="submit">Удалить обед</button>
+    </form>
+  </div>
+
+  <!-- РАЗМЕРЫ -->
+  <div class="lb-card">
+    <div class="lb-title">Размеры и состав</div>
+
+    {% for sd in sizes_data %}
+    <div class="size-card">
+      <div class="size-head">
+        <div class="size-name">{{ sd.size.label }}{% if sd.size.is_default %} <span class="muted" style="font-size:13px;">· по умолчанию</span>{% endif %}</div>
+      </div>
+
+      <!-- параметры размера -->
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_size">
+        <input type="hidden" name="size_id" value="{{ sd.size.id }}">
+        <div class="lb-grid">
+          <div class="lb-f"><label>Название размера</label><input class="lb-in" name="label" value="{{ sd.size.label }}"></div>
+          <div class="lb-f"><label>Цена (UZS)</label><input class="lb-in" name="price" value="{{ sd.size.price|floatformat:0 }}"></div>
+          <div class="lb-f"><label>Граммовка итого (г)</label><input class="lb-in" type="number" name="weight_total" value="{{ sd.size.weight_total }}"></div>
+          <div class="lb-f"><label>Порядок</label><input class="lb-in" type="number" name="sort_order" value="{{ sd.size.sort_order }}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+          <label class="lb-check" style="margin:0;"><input type="checkbox" name="is_default" {% if sd.size.is_default %}checked{% endif %}> Размер по умолчанию</label>
+          <div style="display:flex;gap:8px;">
+            <button class="lb-btn lb-green lb-sm" type="submit">Сохранить размер</button>
+          </div>
+        </div>
+      </form>
+      <form method="post" onsubmit="return confirm('Удалить размер со всем составом?');" style="text-align:right;margin-top:6px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_size">
+        <input type="hidden" name="size_id" value="{{ sd.size.id }}">
+        <button class="lb-btn lb-red lb-sm" type="submit">Удалить размер</button>
+      </form>
+
+      <!-- KPI -->
+      <div class="kpis">
+        <div class="kpi">Себестоимость<b class="red">{{ sd.total_cost_fmt }}</b></div>
+        <div class="kpi">Цена<b>{{ sd.price_fmt }}</b></div>
+        <div class="kpi">Маржа<b class="{% if sd.margin < 0 %}red{% else %}green{% endif %}">{{ sd.margin_fmt }}</b></div>
+        <div class="kpi">Фудкост<b>{{ sd.foodcost }}%</b></div>
+        <div class="kpi">Маржа %<b>{{ sd.margin_pct }}%</b></div>
+      </div>
+
+      <!-- состав -->
+      <div class="irow irow-head">
+        <div>Роль</div><div>Название (текст)</div><div>Грамм.</div><div>Привязка (для себест.)</div><div>net</div><div>кол-во</div><div>Себест.вручную</div><div>Себест.</div>
+      </div>
+      {% for li in sd.items %}
+      <div class="irow">
+        <form method="post" style="display:contents;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_item">
+          <input type="hidden" name="item_id" value="{{ li.item.id }}">
+          <div class="lb-f"><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}" {% if li.item.role == r.0 %}selected{% endif %}>{{ r.1 }}</option>{% endfor %}</select></div>
+          <div class="lb-f"><input class="lb-in" name="name" value="{{ li.item.name }}" placeholder="{{ li.display_name }}"></div>
+          <div class="lb-f"><input class="lb-in" name="weight" value="{{ li.item.weight }}" placeholder="120 г"></div>
+          <div class="lb-f"><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected=li.comp_value %}</select></div>
+          <div class="lb-f"><input class="lb-in" name="net" value="{{ li.item.net|floatformat:3 }}"></div>
+          <div class="lb-f"><input class="lb-in" name="quantity" value="{{ li.item.quantity|floatformat:3 }}"></div>
+          <div class="lb-f"><input class="lb-in" name="cost_override" value="{% if li.item.cost_override is not None %}{{ li.item.cost_override|floatformat:0 }}{% endif %}" placeholder="—"></div>
+          <div class="cost-cell">{{ li.cost_fmt }}<br><button class="lb-btn lb-green lb-sm" type="submit" style="margin-top:4px;">✓</button></div>
+        </form>
+        <form method="post" style="align-self:center;" onsubmit="return confirm('Удалить строку?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_item">
+          <input type="hidden" name="item_id" value="{{ li.item.id }}">
+          <button class="lb-btn lb-red lb-sm" type="submit" style="grid-column:9;">✕</button>
+        </form>
+      </div>
+      {% empty %}
+      <div class="muted" style="padding:10px;">Состав пуст — добавьте строки ниже.</div>
+      {% endfor %}
+
+      <!-- добавить строку -->
+      <form method="post" class="irow" style="border-bottom:0;background:#f0fdf4;border-radius:10px;margin-top:8px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_item">
+        <input type="hidden" name="size_id" value="{{ sd.size.id }}">
+        <div class="lb-f"><label>Роль</label><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}">{{ r.1 }}</option>{% endfor %}</select></div>
+        <div class="lb-f"><label>Название</label><input class="lb-in" name="name" placeholder="Куриная котлета"></div>
+        <div class="lb-f"><label>Грамм.</label><input class="lb-in" name="weight" placeholder="120 г"></div>
+        <div class="lb-f"><label>Привязка</label><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected="none" %}</select></div>
+        <div class="lb-f"><label>net</label><input class="lb-in" name="net" value="0"></div>
+        <div class="lb-f"><label>кол-во</label><input class="lb-in" name="quantity" value="1"></div>
+        <div class="lb-f"><label>Себест.вручную</label><input class="lb-in" name="cost_override" placeholder="—"></div>
+        <div style="align-self:end;"><button class="lb-btn lb-green lb-sm" type="submit">+ Добавить</button></div>
+      </form>
+    </div>
+    {% empty %}
+    <div class="muted" style="padding:10px;">Размеров пока нет — добавьте первый ниже.</div>
+    {% endfor %}
+
+    <!-- добавить размер -->
+    <form method="post" style="margin-top:10px;border-top:1px solid #e5e7eb;padding-top:14px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_size">
+      <div class="lb-grid">
+        <div class="lb-f"><label>Новый размер</label><input class="lb-in" name="label" placeholder="Большой"></div>
+        <div class="lb-f"><label>Цена (UZS)</label><input class="lb-in" name="price" value="0"></div>
+        <div class="lb-f"><label>Граммовка итого (г)</label><input class="lb-in" type="number" name="weight_total" value="0"></div>
+        <label class="lb-check"><input type="checkbox" name="is_default"> По умолчанию</label>
+      </div>
+      <div class="lb-actions"><button class="lb-btn lb-green" type="submit">+ Добавить размер</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

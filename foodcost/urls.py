@@ -27,6 +27,7 @@ from . import app_favorites
 from . import app_push
 from . import app_repeat_order
 from . import lunch_api          # 🍽️ публичные эндпоинты «Обед дня»
+from . import views_lunch_builder  # 🍱 конструктор обедов (этап 2)
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -115,6 +116,8 @@ urlpatterns = [
     # 🍽️ Обед дня (комплексные обеды) — управление на отдельной вкладке
     path("c/<slug:country_slug>/lunch/", views.lunch_list, name="lunch_list"),
     path("c/<slug:country_slug>/lunch/<int:menu_id>/", views.lunch_detail, name="lunch_detail"),
+    path("c/<slug:country_slug>/lunches/", views_lunch_builder.lunches_list, name="lunches_list"),
+    path("c/<slug:country_slug>/lunches/<int:lunch_id>/", views_lunch_builder.lunch_builder, name="lunch_builder"),
 
     # сотрудники
     path("c/<slug:country_slug>/employees/", views_employees.employee_list, name="employee_list"),
@@ -404,6 +407,12 @@ urlpatterns = [
     path("api/public/lunch/", lunch_api.lunch_menu, name="public_lunch_slash"),
     path("api/public/lunch/<str:date>", lunch_api.lunch_menu, name="public_lunch_by_date"),
     path("api/public/lunch/<str:date>/", lunch_api.lunch_menu, name="public_lunch_by_date_slash"),
+    path("api/public/lunches", lunch_api.lunches, name="public_lunches"),
+    path("api/public/lunches/", lunch_api.lunches, name="public_lunches_slash"),
+    path("api/public/lunches/dates", lunch_api.lunches_dates, name="public_lunches_dates"),
+    path("api/public/lunches/dates/", lunch_api.lunches_dates, name="public_lunches_dates_slash"),
+    path("api/public/lunches/<str:date>", lunch_api.lunches, name="public_lunches_by_date"),
+    path("api/public/lunches/<str:date>/", lunch_api.lunches, name="public_lunches_by_date_slash"),
     path(
         "api/public/categories",
         public_api.categories,
