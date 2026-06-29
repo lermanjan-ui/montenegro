@@ -1,0 +1,195 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Учёт обедов{% endblock %}
+{% block content %}
+<style>
+.ls-wrap{max-width:1280px;margin:0 auto;}
+.ls-h1{font-size:24px;font-weight:800;margin:0 0 4px;}
+.ls-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.ls-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
+.ls-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
+.ls-tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:16px;}
+.ls-tile{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:12px 14px;}
+.ls-tile .k{color:#6b7280;font-size:12px;font-weight:600;margin:0 0 4px;}
+.ls-tile .v{font-size:20px;font-weight:800;letter-spacing:-.02em;}
+.green{color:#047857;} .red{color:#b91c1c;}
+.ls-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ls-f label{display:block;font-size:12px;font-weight:700;color:#374151;margin:0 0 4px;}
+.ls-in,.ls-sel{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:9px 10px;font-size:14px;box-sizing:border-box;background:#fff;}
+.ls-btn{border:0;border-radius:10px;padding:9px 15px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block;}
+.ls-green{background:#047857;color:#fff;} .ls-gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;} .ls-red{background:#fff;color:#b91c1c;border:1px solid #fee2e2;}
+.ls-sm{padding:6px 11px;font-size:13px;}
+.ls-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+.ls-table{width:100%;border-collapse:collapse;}
+.ls-table th{text-align:left;font-size:12px;text-transform:uppercase;color:#6b7280;padding:8px 10px;border-bottom:2px solid #e5e7eb;white-space:nowrap;}
+.ls-table td{padding:10px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:top;}
+.num{text-align:right;white-space:nowrap;}
+.muted{color:#9ca3af;}
+.badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;}
+.b-site{background:#eff6ff;color:#1d4ed8;} .b-manual{background:#f3f4f6;color:#374151;}
+.comp{color:#6b7280;font-size:13px;}
+.edit-row{background:#f9fafb;}
+.empty{text-align:center;color:#9ca3af;padding:26px;}
+@media(max-width:1100px){.ls-tiles{grid-template-columns:repeat(3,1fr);}.ls-grid{grid-template-columns:1fr 1fr;}}
+</style>
+
+<div class="ls-wrap">
+  <h1 class="ls-h1">Учёт обедов</h1>
+  <p class="ls-sub">Журнал продаж обедов: записи с сайта падают сюда автоматически, плюс можно добавлять вручную. Фильтр по клиенту + период даёт выборку, что он заказывал.</p>
+
+  <!-- ФИЛЬТРЫ -->
+  <form method="get" class="ls-card">
+    <div class="ls-title">Фильтры</div>
+    <div class="ls-grid">
+      <div class="ls-f"><label>С даты</label><input class="ls-in" type="date" name="date_from" value="{{ f_from }}"></div>
+      <div class="ls-f"><label>По дату</label><input class="ls-in" type="date" name="date_to" value="{{ f_to }}"></div>
+      <div class="ls-f"><label>Точка</label>
+        <select class="ls-sel" name="location_id">
+          <option value="">Все</option>
+          {% for loc in locations %}<option value="{{ loc.id }}" {% if f_location == loc.id|stringformat:'s' %}selected{% endif %}>{{ loc.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="ls-f"><label>Источник</label>
+        <select class="ls-sel" name="source">
+          <option value="">Все</option>
+          {% for s in source_choices %}<option value="{{ s.0 }}" {% if f_source == s.0 %}selected{% endif %}>{{ s.1 }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="ls-grid" style="margin-top:12px;">
+      <div class="ls-f" style="grid-column:span 2;"><label>Клиент (имя или телефон)</label><input class="ls-in" name="customer" value="{{ f_customer }}" placeholder="напр. 90… или имя"></div>
+      <div class="ls-f" style="display:flex;align-items:flex-end;gap:8px;grid-column:span 2;">
+        <a class="ls-btn ls-gray" href="/c/{{ country.slug }}/lunch-sales/">Сбросить</a>
+        <button class="ls-btn ls-green" type="submit">Применить</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- МЕТРИКИ -->
+  <div class="ls-tiles">
+    <div class="ls-tile"><div class="k">Записей</div><div class="v">{{ kpi_count }}</div></div>
+    <div class="ls-tile"><div class="k">Сетов</div><div class="v">{{ kpi_sets }}</div></div>
+    <div class="ls-tile"><div class="k">Выручка</div><div class="v green">{{ kpi_revenue_fmt }}</div></div>
+    <div class="ls-tile"><div class="k">Себестоимость</div><div class="v red">{{ kpi_cost_fmt }}</div></div>
+    <div class="ls-tile"><div class="k">Маржа</div><div class="v {% if kpi_margin_neg %}red{% else %}green{% endif %}">{{ kpi_margin_fmt }}</div></div>
+    <div class="ls-tile"><div class="k">Фудкост</div><div class="v">{{ kpi_foodcost }}%</div></div>
+    <div class="ls-tile"><div class="k">Средний чек</div><div class="v">{{ kpi_avg_fmt }}</div></div>
+  </div>
+
+  <!-- ДОБАВИТЬ -->
+  <form method="post" class="ls-card">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create_sale">
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <div class="ls-title">Добавить запись вручную</div>
+    <div class="ls-grid">
+      <div class="ls-f"><label>Дата *</label><input class="ls-in" type="date" name="date" value="{{ today }}" required></div>
+      <div class="ls-f"><label>Название сета</label><input class="ls-in" name="title" placeholder="Напр. Сытный"></div>
+      <div class="ls-f"><label>Кол-во сетов</label><input class="ls-in" type="number" name="quantity" value="1" min="1"></div>
+      <div class="ls-f"><label>Цена сета (UZS) *</label><input class="ls-in" name="sale_price" placeholder="0" required></div>
+    </div>
+    <div class="ls-grid" style="margin-top:12px;">
+      <div class="ls-f"><label>Клиент (имя)</label><input class="ls-in" name="customer_name" placeholder="необязательно"></div>
+      <div class="ls-f"><label>Телефон</label><input class="ls-in" name="customer_phone" placeholder="необязательно"></div>
+      <div class="ls-f"><label>Точка</label>
+        <select class="ls-sel" name="location_id"><option value="">—</option>{% for loc in locations %}<option value="{{ loc.id }}">{{ loc.name }}</option>{% endfor %}</select>
+      </div>
+      <div class="ls-f"><label>Себест. вручную (необяз.)</label><input class="ls-in" name="cost_override" placeholder="иначе из блюд"></div>
+    </div>
+    <div class="ls-grid" style="margin-top:12px;">
+      <div class="ls-f" style="grid-column:span 4;"><label>Комментарий</label><input class="ls-in" name="comment"></div>
+    </div>
+    <div class="ls-actions"><button class="ls-btn ls-green" type="submit">Добавить запись</button></div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0;">После создания откройте «Изменить» у записи, чтобы собрать сет из блюд — тогда себестоимость посчитается автоматически.</p>
+  </form>
+
+  <!-- ТАБЛИЦА -->
+  <div class="ls-card">
+    <div class="ls-title">Записи</div>
+    <table class="ls-table">
+      <thead>
+        <tr><th>Дата</th><th>Клиент</th><th>Сет / состав</th><th class="num">Кол-во</th><th class="num">Цена сета</th><th class="num">Выручка</th><th class="num">Себест.</th><th class="num">Маржа</th><th>Источник</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.sale.date|date:"d.m.Y" }}</td>
+          <td>{{ r.sale.customer_name|default:"—" }}{% if r.sale.customer_phone %}<div class="muted" style="font-size:12px;">{{ r.sale.customer_phone }}</div>{% endif %}</td>
+          <td>{{ r.sale.title|default:"Обед" }}
+            {% if r.composition %}<div class="comp">{% for c in r.composition %}{{ c.name }}{% if not forloop.last %} • {% endif %}{% endfor %}</div>{% endif %}
+          </td>
+          <td class="num">{{ r.sale.quantity }}</td>
+          <td class="num">{{ r.sale_price_fmt }}</td>
+          <td class="num green">{{ r.revenue_fmt }}</td>
+          <td class="num red">{{ r.cost_fmt }}</td>
+          <td class="num {% if r.margin < 0 %}red{% else %}green{% endif %}">{{ r.margin_fmt }}</td>
+          <td><span class="badge {% if r.sale.source == 'site' %}b-site{% else %}b-manual{% endif %}">{{ r.source_label }}</span></td>
+          <td class="num">
+            <button type="button" class="ls-btn ls-gray ls-sm" onclick="lsToggle({{ r.sale.id }})">Изменить</button>
+            <form method="post" style="display:inline;" onsubmit="return confirm('Удалить запись?');">
+              {% csrf_token %}<input type="hidden" name="action" value="delete_sale"><input type="hidden" name="sale_id" value="{{ r.sale.id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="ls-btn ls-red ls-sm" type="submit">Удалить</button>
+            </form>
+          </td>
+        </tr>
+        <tr class="edit-row" id="ls-edit-{{ r.sale.id }}" style="display:none;">
+          <td colspan="10">
+            <!-- поля записи -->
+            <form method="post">
+              {% csrf_token %}<input type="hidden" name="action" value="update_sale"><input type="hidden" name="sale_id" value="{{ r.sale.id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <div class="ls-grid">
+                <div class="ls-f"><label>Дата</label><input class="ls-in" type="date" name="date" value="{{ r.date_value }}"></div>
+                <div class="ls-f"><label>Название сета</label><input class="ls-in" name="title" value="{{ r.sale.title }}"></div>
+                <div class="ls-f"><label>Кол-во</label><input class="ls-in" type="number" name="quantity" value="{{ r.sale.quantity }}" min="1"></div>
+                <div class="ls-f"><label>Цена сета</label><input class="ls-in" name="sale_price" value="{{ r.sale.sale_price|floatformat:0 }}"></div>
+              </div>
+              <div class="ls-grid" style="margin-top:10px;">
+                <div class="ls-f"><label>Клиент</label><input class="ls-in" name="customer_name" value="{{ r.sale.customer_name }}"></div>
+                <div class="ls-f"><label>Телефон</label><input class="ls-in" name="customer_phone" value="{{ r.sale.customer_phone }}"></div>
+                <div class="ls-f"><label>Точка</label>
+                  <select class="ls-sel" name="location_id"><option value="">—</option>{% for loc in locations %}<option value="{{ loc.id }}" {% if r.sale.location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>{% endfor %}</select>
+                </div>
+                <div class="ls-f"><label>Себест. вручную</label><input class="ls-in" name="cost_override" value="{% if r.sale.cost_override is not None %}{{ r.sale.cost_override|floatformat:0 }}{% endif %}" placeholder="иначе из блюд"></div>
+              </div>
+              <div class="ls-grid" style="margin-top:10px;">
+                <div class="ls-f" style="grid-column:span 4;"><label>Комментарий</label><input class="ls-in" name="comment" value="{{ r.sale.comment }}"></div>
+              </div>
+              <div class="ls-actions"><button class="ls-btn ls-green ls-sm" type="submit">Сохранить запись</button></div>
+            </form>
+
+            <!-- состав из блюд -->
+            <div class="ls-title" style="margin-top:12px;">Состав сета (для себестоимости {{ r.per_set_cost_fmt }}/сет)</div>
+            {% for c in r.composition %}
+            <div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #f1f5f9;">
+              <span style="flex:1;">{{ c.name }} <span class="muted">× {{ c.qty|floatformat:"-3" }}</span></span>
+              <form method="post" onsubmit="return confirm('Убрать из сета?');">
+                {% csrf_token %}<input type="hidden" name="action" value="delete_item"><input type="hidden" name="item_id" value="{{ c.id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button class="ls-btn ls-red ls-sm" type="submit">✕</button>
+              </form>
+            </div>
+            {% empty %}<div class="muted" style="padding:6px 0;">Блюда не добавлены — себестоимость 0 (или ручная).</div>{% endfor %}
+            <form method="post" style="display:flex;gap:8px;align-items:flex-end;margin-top:10px;background:#f0fdf4;padding:10px;border-radius:10px;">
+              {% csrf_token %}<input type="hidden" name="action" value="add_item"><input type="hidden" name="sale_id" value="{{ r.sale.id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <div class="ls-f" style="flex:2;"><label>Блюдо</label>
+                <select class="ls-sel" name="dish_id"><option value="">— выбрать блюдо —</option>{% for d in dishes %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select>
+              </div>
+              <div class="ls-f" style="flex:1;"><label>или текстом</label><input class="ls-in" name="name" placeholder="название"></div>
+              <div class="ls-f" style="width:90px;"><label>Кол-во</label><input class="ls-in" name="quantity" value="1"></div>
+              <button class="ls-btn ls-green ls-sm" type="submit">+ В сет</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="empty">Записей нет. Добавьте вручную выше или они появятся с сайта.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function lsToggle(id){
+  var r=document.getElementById('ls-edit-'+id);
+  if(r){ r.style.display=(r.style.display==='none'||!r.style.display)?'table-row':'none'; }
+}
+</script>
+{% endblock %}

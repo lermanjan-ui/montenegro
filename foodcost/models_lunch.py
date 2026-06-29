@@ -15,9 +15,11 @@
 
 Маржа размера = price − Σ(себестоимость строк); фудкост% = cost/price.
 
-Модели определены отдельным модулем и подключаются строкой
-`from .models_lunch import *` в конце foodcost/models.py — так базовый
-models.py не переписывается целиком.
+Доп. поля (аддендум «выгода + доп. порции»):
+  у строки  — separate_price (à la carte цена позиции в базовом наборе),
+              extra_price (цена одной доп. порции; null = добавка запрещена),
+              extra_weight (подпись), extra_max (лимит доп. порций);
+  у размера — separate_price() = Σ separate_price строк, savings() = separate−price.
 """
 
 from decimal import Decimal
@@ -117,6 +119,18 @@ class LunchSize(models.Model):
             return Decimal(0)
         return (self.margin() / price * Decimal(100)).quantize(Decimal("0.1"))
 
+    # --- выгода комплекса (аддендум) ---
+    def separate_price(self):
+        """Сумма позиций базового состава по отдельной (à la carte) цене."""
+        total = Decimal(0)
+        for it in self.items.all():
+            total += _D(it.separate_price)
+        return total
+
+    def savings(self):
+        """Выгода базового набора = separate_price − price (может быть 0/отриц.)."""
+        return self.separate_price() - _D(self.price)
+
 
 class LunchSizeItem(models.Model):
     """Строка состава размера. Привязка к компоненту опциональна."""
@@ -174,6 +188,20 @@ class LunchSizeItem(models.Model):
         max_digits=12, decimal_places=2, null=True, blank=True
     )
 
+    # --- выгода + доп. порции (аддендум) ---
+    # Отдельная (à la carte) цена позиции в базовом наборе → в separate_price размера.
+    separate_price = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+    # Цена ОДНОЙ доп. порции этого пункта; null → доп. порция запрещена.
+    extra_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    # Граммовка одной доп. порции ("120 г") — подпись, опционально.
+    extra_weight = models.CharField(max_length=40, blank=True, default="")
+    # Максимум доп. порций на пункт; null → без жёсткого лимита.
+    extra_max = models.PositiveIntegerField(null=True, blank=True)
+
     class Meta:
         ordering = ["sort_order", "id"]
 
@@ -192,7 +220,7 @@ class LunchSizeItem(models.Model):
         return "—"
 
     def component_cost(self):
-        """Себестоимость строки по привязке (или ручная/0)."""
+        """Себестоимость ОДНОЙ порции строки по привязке (или ручная/0)."""
         if self.dish_id and self.dish:
             return _D(self.dish.cached_total_cost) * _D(self.quantity or 1)
         if self.preparation_id and self.preparation:
@@ -205,3 +233,11 @@ class LunchSizeItem(models.Model):
         if self.cost_override is not None:
             return _D(self.cost_override)
         return Decimal(0)
+
+    def extra_allowed(self):
+        """Разрешена ли доп. порция (extra_price задан)."""
+        return self.extra_price is not None
+
+    def extra_unit_cost(self):
+        """Себестоимость одной доп. порции (= себестоимость порции компонента)."""
+        return self.component_cost()

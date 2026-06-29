@@ -88,6 +88,16 @@ def _apply_component(item, raw, country):
         item.product = Product.objects.filter(id=cid, country=country).first()
 
 
+def _apply_extras(item, post):
+    """Поля выгоды и доп. порций (аддендум)."""
+    item.separate_price = _dec(post.get("separate_price"))
+    ep = post.get("extra_price")
+    item.extra_price = _dec(ep) if (ep or "").strip() != "" else None
+    item.extra_weight = (post.get("extra_weight") or "").strip()
+    em = post.get("extra_max")
+    item.extra_max = _int(em) if (em or "").strip() != "" else None
+
+
 # ===========================================================================
 #  СПИСОК ОБЕДОВ
 # ===========================================================================
@@ -238,6 +248,7 @@ def lunch_builder(request, country_slug, lunch_id):
             co = request.POST.get("cost_override")
             item.cost_override = _dec(co) if (co or "").strip() != "" else None
             _apply_component(item, request.POST.get("component"), country)
+            _apply_extras(item, request.POST)
             item.save()
             return redirect(base_url)
 
@@ -254,6 +265,7 @@ def lunch_builder(request, country_slug, lunch_id):
             co = request.POST.get("cost_override")
             item.cost_override = _dec(co) if (co or "").strip() != "" else None
             _apply_component(item, request.POST.get("component"), country)
+            _apply_extras(item, request.POST)
             item.save()
             return redirect(base_url)
 
@@ -302,6 +314,8 @@ def lunch_builder(request, country_slug, lunch_id):
                 "cost_fmt": _money(cost),
             })
         total_cost = size.total_cost()
+        separate = size.separate_price()
+        savings = size.savings()
         sizes_data.append({
             "size": size,
             "items": items,
@@ -312,6 +326,9 @@ def lunch_builder(request, country_slug, lunch_id):
             "margin_fmt": _money(size.margin()),
             "foodcost": size.foodcost_percent(),
             "margin_pct": size.margin_percent(),
+            "separate_fmt": _money(separate),
+            "savings": savings,
+            "savings_fmt": _money(savings),
         })
 
     context = {

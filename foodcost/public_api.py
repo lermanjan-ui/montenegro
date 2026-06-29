@@ -2571,6 +2571,7 @@ def _serialize_order_for_tracking(order):
             "unit_price": _to_float(c.unit_price),
             "total_price": _to_float(c.total_price),
             "composition": c.composition or [],
+            "extras": getattr(c, "extras", None) or [],
         }
         for c in order.lunch_combos.all()
     ]
@@ -3332,6 +3333,8 @@ def order_create(request):
 
         # Снимок комплексных обедов ("Обед дня"): состав фиксируется на момент
         # заказа — последующее изменение меню не влияет на эту запись.
+        # Снимок комплексных обедов: состав фиксируется на момент заказа.
+        # Поддерживает и старый LunchMenu, и новый Lunch (там lunch_menu=None).
         for co in combo_objects:
             OrderLunchCombo.objects.create(
                 order=order,
@@ -3342,7 +3345,34 @@ def order_create(request):
                 unit_price=co["unit_price"],
                 total_price=co["line_total"],
                 composition=co["composition"],
+                extras=co.get("extras") or [],
             )
+
+        # 🍱📒 Автозапись продаж обедов в журнал «Учёт обедов»:
+        #   выручка = цена сета (unit_price), себестоимость = снапшот размера
+        #   (unit_cost). Дедуп по заказу. Любой сбой не влияет на оформление.
+        try:
+            from .models_lunch_sales import LunchSale
+            if combo_objects and not LunchSale.objects.filter(order=order).exists():
+                for co in combo_objects:
+                    sale_date = co.get("date")
+                    if not sale_date:
+                        continue
+                    LunchSale.objects.create(
+                        country=country,
+                        location=getattr(order, "location", None),
+                        date=sale_date,
+                        customer_name=(getattr(order, "customer_name", "") or ""),
+                        customer_phone=(getattr(order, "customer_phone", "") or ""),
+                        title=co.get("name") or "Обед",
+                        quantity=co.get("quantity") or 1,
+                        sale_price=co.get("unit_price") or 0,
+                        cost_override=co.get("unit_cost"),
+                        source=LunchSale.SOURCE_SITE,
+                        order=order,
+                    )
+        except Exception:
+            pass
 
     # Уведомление о новом заказе в Telegram (в тред филиала). Сбой Telegram
     # не должен влиять на оформление — функция сама проглатывает ошибки.

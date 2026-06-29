@@ -33,6 +33,11 @@
 .row-btns{display:flex;gap:6px;align-self:center;}
 .muted{color:#9ca3af;}
 @media(max-width:1000px){.lb-grid{grid-template-columns:1fr 1fr;}.irow{grid-template-columns:1fr 1fr;}}
+.item-block{border-bottom:1px solid #f1f5f9;padding:6px 0;}
+.irow-extra{display:grid;grid-template-columns:120px 110px 90px 90px 1fr;gap:8px;align-items:end;padding:2px 8px 8px;}
+.irow-extra .lb-f label{font-size:11px;color:#9ca3af;}
+.irow-extra .lb-in{padding:7px 8px;font-size:13px;}
+.extra-hint{font-size:11px;color:#9ca3af;align-self:center;}
 </style>
 
 <div class="lb-wrap">
@@ -119,32 +124,44 @@
         <div class="kpi">Маржа<b class="{% if sd.margin < 0 %}red{% else %}green{% endif %}">{{ sd.margin_fmt }}</b></div>
         <div class="kpi">Фудкост<b>{{ sd.foodcost }}%</b></div>
         <div class="kpi">Маржа %<b>{{ sd.margin_pct }}%</b></div>
+        <div class="kpi">По отдельности<b>{{ sd.separate_fmt }}</b></div>
+        <div class="kpi">Выгода<b class="{% if sd.savings < 0 %}red{% else %}green{% endif %}">{{ sd.savings_fmt }}</b></div>
       </div>
+      <p class="muted" style="font-size:12px;margin:-6px 0 10px;">«По отдельности» = сумма цен позиций (поле «отд.цена» в строках). «Выгода» = по отдельности − цена комплекса.</p>
 
       <!-- состав -->
       <div class="irow irow-head">
         <div>Роль</div><div>Название (текст)</div><div>Грамм.</div><div>Привязка (для себест.)</div><div>net</div><div>кол-во</div><div>Себест.вручную</div><div>Себест.</div>
       </div>
       {% for li in sd.items %}
-      <div class="irow">
-        <form method="post" style="display:contents;">
+      <div class="item-block">
+        <form method="post">
           {% csrf_token %}
           <input type="hidden" name="action" value="update_item">
           <input type="hidden" name="item_id" value="{{ li.item.id }}">
-          <div class="lb-f"><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}" {% if li.item.role == r.0 %}selected{% endif %}>{{ r.1 }}</option>{% endfor %}</select></div>
-          <div class="lb-f"><input class="lb-in" name="name" value="{{ li.item.name }}" placeholder="{{ li.display_name }}"></div>
-          <div class="lb-f"><input class="lb-in" name="weight" value="{{ li.item.weight }}" placeholder="120 г"></div>
-          <div class="lb-f"><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected=li.comp_value %}</select></div>
-          <div class="lb-f"><input class="lb-in" name="net" value="{{ li.item.net|floatformat:3 }}"></div>
-          <div class="lb-f"><input class="lb-in" name="quantity" value="{{ li.item.quantity|floatformat:3 }}"></div>
-          <div class="lb-f"><input class="lb-in" name="cost_override" value="{% if li.item.cost_override is not None %}{{ li.item.cost_override|floatformat:0 }}{% endif %}" placeholder="—"></div>
-          <div class="cost-cell">{{ li.cost_fmt }}<br><button class="lb-btn lb-green lb-sm" type="submit" style="margin-top:4px;">✓</button></div>
+          <div class="irow" style="border-bottom:0;padding-bottom:0;">
+            <div class="lb-f"><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}" {% if li.item.role == r.0 %}selected{% endif %}>{{ r.1 }}</option>{% endfor %}</select></div>
+            <div class="lb-f"><input class="lb-in" name="name" value="{{ li.item.name }}" placeholder="{{ li.display_name }}"></div>
+            <div class="lb-f"><input class="lb-in" name="weight" value="{{ li.item.weight }}" placeholder="120 г"></div>
+            <div class="lb-f"><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected=li.comp_value %}</select></div>
+            <div class="lb-f"><input class="lb-in" name="net" value="{{ li.item.net|floatformat:3 }}"></div>
+            <div class="lb-f"><input class="lb-in" name="quantity" value="{{ li.item.quantity|floatformat:3 }}"></div>
+            <div class="lb-f"><input class="lb-in" name="cost_override" value="{% if li.item.cost_override is not None %}{{ li.item.cost_override|floatformat:0 }}{% endif %}" placeholder="—"></div>
+            <div class="cost-cell">{{ li.cost_fmt }}</div>
+          </div>
+          <div class="irow-extra">
+            <div class="lb-f"><label>Отд. цена</label><input class="lb-in" name="separate_price" value="{{ li.item.separate_price|floatformat:0 }}"></div>
+            <div class="lb-f"><label>Доп.порция, цена</label><input class="lb-in" name="extra_price" value="{% if li.item.extra_price is not None %}{{ li.item.extra_price|floatformat:0 }}{% endif %}" placeholder="нет"></div>
+            <div class="lb-f"><label>Доп. грамм.</label><input class="lb-in" name="extra_weight" value="{{ li.item.extra_weight }}" placeholder="120 г"></div>
+            <div class="lb-f"><label>Макс.</label><input class="lb-in" name="extra_max" value="{% if li.item.extra_max is not None %}{{ li.item.extra_max }}{% endif %}" placeholder="∞"></div>
+            <div style="align-self:end;text-align:right;"><button class="lb-btn lb-green lb-sm" type="submit">Сохранить строку</button></div>
+          </div>
         </form>
-        <form method="post" style="align-self:center;" onsubmit="return confirm('Удалить строку?');">
+        <form method="post" style="text-align:right;padding:0 8px 4px;" onsubmit="return confirm('Удалить строку?');">
           {% csrf_token %}
           <input type="hidden" name="action" value="delete_item">
           <input type="hidden" name="item_id" value="{{ li.item.id }}">
-          <button class="lb-btn lb-red lb-sm" type="submit" style="grid-column:9;">✕</button>
+          <button class="lb-btn lb-red lb-sm" type="submit">✕ удалить строку</button>
         </form>
       </div>
       {% empty %}
@@ -152,18 +169,27 @@
       {% endfor %}
 
       <!-- добавить строку -->
-      <form method="post" class="irow" style="border-bottom:0;background:#f0fdf4;border-radius:10px;margin-top:8px;">
+      <form method="post" style="background:#f0fdf4;border-radius:10px;margin-top:8px;padding-bottom:8px;">
         {% csrf_token %}
         <input type="hidden" name="action" value="add_item">
         <input type="hidden" name="size_id" value="{{ sd.size.id }}">
-        <div class="lb-f"><label>Роль</label><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}">{{ r.1 }}</option>{% endfor %}</select></div>
-        <div class="lb-f"><label>Название</label><input class="lb-in" name="name" placeholder="Куриная котлета"></div>
-        <div class="lb-f"><label>Грамм.</label><input class="lb-in" name="weight" placeholder="120 г"></div>
-        <div class="lb-f"><label>Привязка</label><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected="none" %}</select></div>
-        <div class="lb-f"><label>net</label><input class="lb-in" name="net" value="0"></div>
-        <div class="lb-f"><label>кол-во</label><input class="lb-in" name="quantity" value="1"></div>
-        <div class="lb-f"><label>Себест.вручную</label><input class="lb-in" name="cost_override" placeholder="—"></div>
-        <div style="align-self:end;"><button class="lb-btn lb-green lb-sm" type="submit">+ Добавить</button></div>
+        <div class="irow" style="border-bottom:0;padding-bottom:0;">
+          <div class="lb-f"><label>Роль</label><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}">{{ r.1 }}</option>{% endfor %}</select></div>
+          <div class="lb-f"><label>Название</label><input class="lb-in" name="name" placeholder="Куриная котлета"></div>
+          <div class="lb-f"><label>Грамм.</label><input class="lb-in" name="weight" placeholder="120 г"></div>
+          <div class="lb-f"><label>Привязка</label><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected="none" %}</select></div>
+          <div class="lb-f"><label>net</label><input class="lb-in" name="net" value="0"></div>
+          <div class="lb-f"><label>кол-во</label><input class="lb-in" name="quantity" value="1"></div>
+          <div class="lb-f"><label>Себест.вручную</label><input class="lb-in" name="cost_override" placeholder="—"></div>
+          <div></div>
+        </div>
+        <div class="irow-extra">
+          <div class="lb-f"><label>Отд. цена</label><input class="lb-in" name="separate_price" value="0"></div>
+          <div class="lb-f"><label>Доп.порция, цена</label><input class="lb-in" name="extra_price" placeholder="нет"></div>
+          <div class="lb-f"><label>Доп. грамм.</label><input class="lb-in" name="extra_weight" placeholder="120 г"></div>
+          <div class="lb-f"><label>Макс.</label><input class="lb-in" name="extra_max" placeholder="∞"></div>
+          <div style="align-self:end;text-align:right;"><button class="lb-btn lb-green lb-sm" type="submit">+ Добавить</button></div>
+        </div>
       </form>
     </div>
     {% empty %}

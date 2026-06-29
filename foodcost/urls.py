@@ -28,6 +28,7 @@ from . import app_push
 from . import app_repeat_order
 from . import lunch_api          # 🍽️ публичные эндпоинты «Обед дня»
 from . import views_lunch_builder  # 🍱 конструктор обедов (этап 2)
+from . import views_lunch_sales  # 🍱📒 журнал учёта обедов
 # TEMPORARY — one-off Tilda CSV import (delete this import + the route below
 # once the historical data is loaded). See foodcost/views_tilda_import.py.
 from . import views_tilda_import
@@ -118,6 +119,7 @@ urlpatterns = [
     path("c/<slug:country_slug>/lunch/<int:menu_id>/", views.lunch_detail, name="lunch_detail"),
     path("c/<slug:country_slug>/lunches/", views_lunch_builder.lunches_list, name="lunches_list"),
     path("c/<slug:country_slug>/lunches/<int:lunch_id>/", views_lunch_builder.lunch_builder, name="lunch_builder"),
+    path("c/<slug:country_slug>/lunch-sales/", views_lunch_sales.lunch_sales_list, name="lunch_sales_list"),
 
     # сотрудники
     path("c/<slug:country_slug>/employees/", views_employees.employee_list, name="employee_list"),

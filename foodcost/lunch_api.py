@@ -222,17 +222,12 @@ def _new_lunch_composition(size):
 
 
 def price_combos(request, country, combo_items):
-    """Оценить позиции-комбо.
+    """Оценить позиции-комбо (новый Lunch/LunchSize приоритетно, затем LunchMenu).
 
-    Поддерживает ДВА слоя:
-      • НОВЫЙ Lunch/LunchSize (lunch_combo_id = Lunch.id,
-        lunch_combo_size_id = LunchSize.id) — приоритетно;
-      • СТАРЫЙ LunchMenu («Обед дня») — если по id не нашёлся Lunch.
-
-    Цена и состав берутся с СЕРВЕРА (клиентскую цену игнорируем).
-    Возвращает (result, error). objects[] несут явные поля для снапшота:
-      { lunch_menu (LunchMenu|None), date, name, quantity, unit_price,
-        line_total, composition }.
+    Цена и состав — с сервера. objects[] несут явные поля для снапшота и
+    автозаписи в журнал:
+      { lunch_menu (LunchMenu|None), lunch_id, size_id, date, name, quantity,
+        unit_price, unit_cost, line_total, composition }.
     """
     lines = []
     objects = []
@@ -256,16 +251,13 @@ def price_combos(request, country, combo_items):
 
         # --- НОВЫЙ слой: Lunch + размеры ---
         lunch = (
-            Lunch.objects
-            .filter(id=combo_id, country=country, is_active=True)
-            .first()
+            Lunch.objects.filter(id=combo_id, country=country, is_active=True).first()
         )
         if lunch is not None:
             if not lunch.available:
                 return None, api_error(
                     "LUNCH_UNAVAILABLE", "Обед сейчас недоступен",
-                    details={"index": index, "lunch_combo_id": combo_id},
-                    status=409,
+                    details={"index": index, "lunch_combo_id": combo_id}, status=409,
                 )
             if size_id:
                 size = LunchSize.objects.filter(id=size_id, lunch=lunch).first()
@@ -274,19 +266,60 @@ def price_combos(request, country, combo_items):
                         "LUNCH_SIZE_NOT_FOUND",
                         "Размер не найден или не принадлежит этому обеду",
                         details={"index": index, "lunch_combo_id": combo_id,
-                                 "lunch_combo_size_id": size_id},
-                        status=404,
+                                 "lunch_combo_size_id": size_id}, status=404,
                     )
             else:
                 size = lunch.default_size()
                 if size is None:
                     return None, api_error(
                         "LUNCH_NO_SIZE", "У обеда нет размеров",
-                        details={"index": index, "lunch_combo_id": combo_id},
-                        status=404,
+                        details={"index": index, "lunch_combo_id": combo_id}, status=404,
                     )
 
-            unit = Decimal(size.price or 0)
+            base_price = Decimal(size.price or 0)
+            base_cost = size.total_cost()
+
+            # --- доп. порции по пунктам (аддендум) ---
+            # extra_qty задаётся НА ОДНУ единицу обеда; сервер умножит на quantity.
+            size_items = {it.id: it for it in size.items.all()}
+            extras_sum = Decimal("0")
+            extras_cost = Decimal("0")
+            extras_snapshot = []
+            for ex in (raw.get("item_extras") or []):
+                item_id = _coerce_int((ex or {}).get("item_id"))
+                ex_qty = _coerce_int((ex or {}).get("extra_qty"), default=0) or 0
+                it = size_items.get(item_id)
+                if it is None:
+                    return None, api_error(
+                        "LUNCH_ITEM_NOT_FOUND",
+                        "Пункт не принадлежит выбранному размеру",
+                        details={"index": index, "item_id": item_id}, status=404,
+                    )
+                if it.extra_price is None:
+                    return None, api_error(
+                        "LUNCH_ITEM_NO_EXTRA",
+                        "Для этого пункта доп. порция недоступна",
+                        details={"index": index, "item_id": item_id}, status=409,
+                    )
+                if ex_qty < 1 or (it.extra_max is not None and ex_qty > it.extra_max):
+                    return None, api_error(
+                        "INVALID_EXTRA_QTY", "Неверное количество доп. порций",
+                        details={"index": index, "item_id": item_id,
+                                 "extra_qty": ex_qty, "extra_max": it.extra_max},
+                        status=400,
+                    )
+                ep = Decimal(it.extra_price or 0)
+                extras_sum += ep * Decimal(ex_qty)
+                extras_cost += it.extra_unit_cost() * Decimal(ex_qty)
+                extras_snapshot.append({
+                    "item_id": it.id,
+                    "name": it.display_name(),
+                    "extra_qty": ex_qty,
+                    "extra_price": _money(ep),
+                })
+
+            unit = base_price + extras_sum          # combo_total за 1 ед. обеда (§3)
+            unit_cost = base_cost + extras_cost
             line_total = unit * Decimal(quantity)
             subtotal += line_total
             total_qty += quantity
@@ -303,16 +336,21 @@ def price_combos(request, country, combo_items):
                 "unit_price": _money(unit),
                 "total_price": _money(line_total),
                 "composition": composition,
+                "extras": extras_snapshot,
             })
             objects.append({
                 "menu": None,
                 "lunch_menu": None,
+                "lunch_id": lunch.id,
+                "size_id": size.id,
                 "date": lunch.date,
                 "name": name,
                 "quantity": quantity,
                 "unit_price": unit,
+                "unit_cost": unit_cost,
                 "line_total": line_total,
                 "composition": composition,
+                "extras": extras_snapshot,
             })
             continue
 
@@ -333,7 +371,6 @@ def price_combos(request, country, combo_items):
         line_total = unit * Decimal(quantity)
         subtotal += line_total
         total_qty += quantity
-
         composition = menu.composition_names()
         lines.append({
             "type": "lunch_combo",
@@ -348,12 +385,16 @@ def price_combos(request, country, combo_items):
         objects.append({
             "menu": menu,
             "lunch_menu": menu,
+            "lunch_id": None,
+            "size_id": None,
             "date": menu.date,
             "name": menu.title or "Обед дня",
             "quantity": quantity,
             "unit_price": unit,
+            "unit_cost": Decimal("0"),
             "line_total": line_total,
             "composition": composition,
+            "extras": [],
         })
 
     return {
@@ -389,10 +430,8 @@ def corporate_discount(country, total_qty, combo_subtotal):
 
 
 # ===========================================================================
-#  🍱 НОВЫЙ слой: несколько обедов на дату × размеры × состав (ТЗ фронта)
-#     GET /api/public/lunches?date=YYYY-MM-DD
-#     GET /api/public/lunches/<date>
-#     GET /api/public/lunches/dates   — доступные даты для селектора
+#  🍱 Публичный список обедов (несколько на дату × размеры × состав)
+#     GET /api/public/lunches?date=YYYY-MM-DD ; /<date> ; /dates
 # ===========================================================================
 
 def _serialize_lunch_size(size):
@@ -401,12 +440,18 @@ def _serialize_lunch_size(size):
         "label": size.label,
         "is_default": bool(size.is_default),
         "price": _money(size.price),
+        "separate_price": _money(size.separate_price()),
+        "savings": _money(size.savings()),
         "weight_total": size.weight_total or None,
         "items": [
             {
+                "id": it.id,
                 "name": it.display_name(),
                 "weight": (it.weight or None),
                 "role": it.role,
+                "extra_price": (_money(it.extra_price) if it.extra_price is not None else None),
+                "extra_weight": (it.extra_weight or None),
+                "extra_max": it.extra_max,
             }
             for it in size.items.all()
         ],
@@ -427,26 +472,21 @@ def _serialize_lunch_full(request, lunch):
 
 @csrf_exempt
 def lunches(request, date=None):
-    """Список обедов-комплексов на дату (несколько обедов × размеры × состав)."""
+    """Список обедов-комплексов на дату."""
     country, err = get_public_country(request)
     if err:
         return err
-
     raw = date if date is not None else request.GET.get("date")
     today = _today()
     if raw:
         target = _parse_date(raw)
         if target is None:
-            return api_error(
-                "INVALID_DATE", "Неверный формат даты (YYYY-MM-DD)", status=400
-            )
+            return api_error("INVALID_DATE", "Неверный формат даты (YYYY-MM-DD)", status=400)
     else:
         target = (
             Lunch.objects
             .filter(country=country, is_active=True, date__gte=today)
-            .order_by("date")
-            .values_list("date", flat=True)
-            .first()
+            .order_by("date").values_list("date", flat=True).first()
         ) or today
 
     rows = list(
@@ -454,12 +494,9 @@ def lunches(request, date=None):
         .filter(country=country, date=target, is_active=True)
         .order_by("sort_order", "id")
         .prefetch_related(
-            "sizes__items__dish",
-            "sizes__items__preparation",
-            "sizes__items__product",
+            "sizes__items__dish", "sizes__items__preparation", "sizes__items__product"
         )
     )
-
     order_cutoff = ""
     for lu in rows:
         if (lu.order_cutoff or "").strip():
@@ -475,7 +512,7 @@ def lunches(request, date=None):
 
 @csrf_exempt
 def lunches_dates(request):
-    """Доступные даты с обедами (для переключателя дней на фронте)."""
+    """Доступные даты с обедами (селектор дней)."""
     country, err = get_public_country(request)
     if err:
         return err
@@ -484,9 +521,7 @@ def lunches_dates(request):
     raw_dates = (
         Lunch.objects
         .filter(country=country, is_active=True, date__gte=today, date__lte=horizon)
-        .order_by("date")
-        .values_list("date", flat=True)
-        .distinct()
+        .order_by("date").values_list("date", flat=True).distinct()
     )
     seen = []
     for d in raw_dates:
@@ -494,11 +529,7 @@ def lunches_dates(request):
             seen.append(d)
     return api_success({
         "dates": [
-            {
-                "date": d.isoformat(),
-                "label": _label_for(d, today),
-                "weekday": _weekday_ru(d),
-            }
+            {"date": d.isoformat(), "label": _label_for(d, today), "weekday": _weekday_ru(d)}
             for d in seen
         ]
     })
