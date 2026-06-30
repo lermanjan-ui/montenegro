@@ -1,0 +1,88 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Апсейл обедов{% endblock %}
+{% block content %}
+<style>
+.up-wrap{max-width:900px;margin:0 auto;}
+.up-h1{font-size:24px;font-weight:800;margin:0 0 4px;}
+.up-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.up-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
+.up-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
+.up-in{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:11px 12px;font-size:15px;box-sizing:border-box;}
+.up-btn{border:0;border-radius:10px;padding:8px 14px;font-weight:700;font-size:14px;cursor:pointer;}
+.up-green{background:#047857;color:#fff;} .up-red{background:#fff;color:#b91c1c;border:1px solid #fee2e2;}
+.up-list{max-height:340px;overflow:auto;border:1px solid #eef2f7;border-radius:12px;margin-top:10px;}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid #f4f6f9;}
+.opt:last-child{border-bottom:0;}
+.opt .nm{font-size:14px;}
+.cur{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-bottom:1px solid #f1f5f9;}
+.cur:last-child{border-bottom:0;}
+.cur .nm{font-weight:600;}
+.muted{color:#9ca3af;font-size:13px;}
+.warn{color:#b45309;font-size:12px;}
+.count{color:#6b7280;font-size:13px;margin:6px 0 0;}
+.empty{text-align:center;color:#9ca3af;padding:20px;}
+</style>
+
+<div class="up-wrap">
+  <h1 class="up-h1">Апсейл на странице обедов</h1>
+  <p class="up-sub">Единый список товаров-апсейла на всю страницу обедов (не на каждый обед). Эти позиции отдаются фронту и добавляются в заказ как обычные товары.</p>
+
+  <!-- ДОБАВИТЬ -->
+  <div class="up-card">
+    <div class="up-title">Добавить товар в апсейл</div>
+    <input id="dishFilter" class="up-in" type="text" autocomplete="off"
+           placeholder="Начните вводить название товара…" oninput="filterDishes()">
+    <p class="count" id="cnt"></p>
+    <div class="up-list" id="dishList">
+      {% for d in candidates %}
+      <form method="post" class="opt" data-name="{{ d.name|lower }}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_upsell">
+        <input type="hidden" name="dish_id" value="{{ d.id }}">
+        <span class="nm">{{ d.name }}</span>
+        <button class="up-btn up-green" type="submit">+ Добавить</button>
+      </form>
+      {% empty %}
+      <div class="empty">Нет доступных товаров (все уже в апсейле или нет видимых на сайте).</div>
+      {% endfor %}
+    </div>
+    <p class="muted" style="margin-top:8px;">Список сокращается по мере ввода названия.</p>
+  </div>
+
+  <!-- ТЕКУЩИЕ -->
+  <div class="up-card">
+    <div class="up-title">В апсейле сейчас ({{ current|length }})</div>
+    {% for d in current %}
+    <div class="cur">
+      <div>
+        <span class="nm">{{ d.name }}</span>
+        {% if not d.is_visible_on_site %}<span class="warn"> · скрыт на сайте</span>{% endif %}
+        {% if d.is_stop_list %}<span class="warn"> · стоп-лист</span>{% endif %}
+      </div>
+      <form method="post" onsubmit="return confirm('Убрать из апсейла?');">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="remove_upsell">
+        <input type="hidden" name="dish_id" value="{{ d.id }}">
+        <button class="up-btn up-red" type="submit">Убрать</button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="empty">Пока пусто — добавьте товары выше.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+function filterDishes(){
+  var q = (document.getElementById('dishFilter').value || '').trim().toLowerCase();
+  var opts = document.querySelectorAll('#dishList .opt');
+  var shown = 0;
+  opts.forEach(function(el){
+    var match = !q || (el.dataset.name || '').indexOf(q) > -1;
+    el.style.display = match ? '' : 'none';
+    if (match) shown++;
+  });
+  document.getElementById('cnt').textContent = q ? ('Найдено: ' + shown) : '';
+}
+</script>
+{% endblock %}

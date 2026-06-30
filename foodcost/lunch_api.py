@@ -533,3 +533,38 @@ def lunches_dates(request):
             for d in seen
         ]
     })
+
+
+# ===========================================================================
+#  🛒 Апсейл на странице обедов — ОДИН список на всю страницу (не на обед).
+#     GET /api/public/lunches/upsell?country_slug=uzbekistan
+#  Источник — блюда с флагом show_in_combo_block («Комбо с фудкорта»).
+#  Формат карточки — тот же serialize_product_card, что у витрины меню,
+#  поэтому фронт рисует их как обычные товары; в заказ уходят как dish_id.
+# ===========================================================================
+
+@csrf_exempt
+def lunches_upsell(request):
+    country, err = get_public_country(request)
+    if err:
+        return err
+
+    # локальные импорты — избегаем циклической зависимости с public_api
+    from .public_api import serialize_product_card
+    from .models import Dish
+
+    dishes = (
+        Dish.objects
+        .filter(country=country, show_in_combo_block=True, is_visible_on_site=True)
+        .exclude(is_stop_list=True)
+        .order_by("name")
+    )
+
+    items = []
+    for d in dishes:
+        try:
+            items.append(serialize_product_card(request, d))
+        except Exception:
+            continue
+
+    return api_success({"upsell": items})

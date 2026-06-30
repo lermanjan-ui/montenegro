@@ -619,6 +619,11 @@
 			                </a>
 			                {% endif %}
 			                    {% if can_menu_dishes %}
+			                    <a class="side-link {% if '/lunches/upsell/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/lunches/upsell/">
+			                        Апсейл обедов
+			                    </a>
+			                    {% endif %}
+			                    {% if can_menu_dishes %}
 			                    <a class="side-link {% if '/lunch-sales/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/lunch-sales/">
 			                        Учёт обедов
 			                    </a>

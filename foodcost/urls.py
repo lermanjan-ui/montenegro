@@ -118,6 +118,7 @@ urlpatterns = [
     path("c/<slug:country_slug>/lunch/", views.lunch_list, name="lunch_list"),
     path("c/<slug:country_slug>/lunch/<int:menu_id>/", views.lunch_detail, name="lunch_detail"),
     path("c/<slug:country_slug>/lunches/", views_lunch_builder.lunches_list, name="lunches_list"),
+    path("c/<slug:country_slug>/lunches/upsell/", views_lunch_builder.lunch_upsell_manage, name="lunch_upsell_manage"),
     path("c/<slug:country_slug>/lunches/<int:lunch_id>/", views_lunch_builder.lunch_builder, name="lunch_builder"),
     path("c/<slug:country_slug>/lunch-sales/", views_lunch_sales.lunch_sales_list, name="lunch_sales_list"),
 
@@ -413,6 +414,8 @@ urlpatterns = [
     path("api/public/lunches/", lunch_api.lunches, name="public_lunches_slash"),
     path("api/public/lunches/dates", lunch_api.lunches_dates, name="public_lunches_dates"),
     path("api/public/lunches/dates/", lunch_api.lunches_dates, name="public_lunches_dates_slash"),
+    path("api/public/lunches/upsell", lunch_api.lunches_upsell, name="public_lunches_upsell"),
+    path("api/public/lunches/upsell/", lunch_api.lunches_upsell, name="public_lunches_upsell_slash"),
     path("api/public/lunches/<str:date>", lunch_api.lunches, name="public_lunches_by_date"),
     path("api/public/lunches/<str:date>/", lunch_api.lunches, name="public_lunches_by_date_slash"),
     path(

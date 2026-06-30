@@ -343,3 +343,61 @@ def lunch_builder(request, country_slug, lunch_id):
         "date_value": lunch.date.strftime("%Y-%m-%d") if lunch.date else "",
     }
     return render(request, "foodcost/lunch_builder.html", context)
+
+
+# ===========================================================================
+#  🛒 Управление апсейлом страницы обедов (один список на всю страницу).
+#     /c/<slug>/lunches/upsell/  — добавить/убрать товары (флаг show_in_combo_block).
+#  Добавление через поле с фильтрацией по названию.
+# ===========================================================================
+
+@login_required
+def lunch_upsell_manage(request, country_slug):
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(request.user, LUNCH_SECTION)
+    if access_error:
+        return access_error
+
+    back = f"/c/{country.slug}/lunches/upsell/"
+
+    if request.method == "POST":
+        action = request.POST.get("action", "")
+        if action == "add_upsell":
+            d = Dish.objects.filter(
+                id=_int(request.POST.get("dish_id")), country=country
+            ).first()
+            if d is not None:
+                d.show_in_combo_block = True
+                d.save(update_fields=["show_in_combo_block"])
+            return redirect(back)
+        if action == "remove_upsell":
+            d = Dish.objects.filter(
+                id=_int(request.POST.get("dish_id")), country=country
+            ).first()
+            if d is not None:
+                d.show_in_combo_block = False
+                d.save(update_fields=["show_in_combo_block"])
+            return redirect(back)
+        return redirect(back)
+
+    current = list(
+        Dish.objects
+        .filter(country=country, show_in_combo_block=True)
+        .order_by("name")
+        .values("id", "name", "selling_price", "is_visible_on_site", "is_stop_list")
+    )
+    current_ids = {d["id"] for d in current}
+    candidates = [
+        d for d in Dish.objects
+        .filter(country=country, is_visible_on_site=True)
+        .order_by("name")
+        .values("id", "name")
+        if d["id"] not in current_ids
+    ]
+
+    context = {
+        "country": country,
+        "current": current,
+        "candidates": candidates,
+    }
+    return render(request, "foodcost/lunch_upsell.html", context)
