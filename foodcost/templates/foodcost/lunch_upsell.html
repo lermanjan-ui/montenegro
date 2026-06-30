@@ -54,12 +54,22 @@
     <div class="up-title">В апсейле сейчас ({{ current|length }})</div>
     {% for d in current %}
     <div class="cur">
-      <div>
-        <span class="nm">{{ d.name }}</span>
-        {% if not d.is_visible_on_site %}<span class="warn"> · скрыт на сайте</span>{% endif %}
-        {% if d.is_stop_list %}<span class="warn"> · стоп-лист</span>{% endif %}
+      <div style="flex:1;min-width:0;">
+        <div class="nm">{{ d.name }}
+          {% if not d.is_visible_on_site %}<span class="warn"> · скрыт на сайте</span>{% endif %}
+          {% if d.is_stop_list %}<span class="warn"> · стоп-лист</span>{% endif %}
+        </div>
+        <form method="post" style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="set_name">
+          <input type="hidden" name="dish_id" value="{{ d.id }}">
+          <input class="up-in" style="flex:1;padding:8px 10px;font-size:14px;"
+                 name="upsell_name" value="{{ d.upsell_name }}"
+                 placeholder="Название для выдачи (по умолч.: {{ d.name }})">
+          <button class="up-btn up-green" type="submit">Сохранить</button>
+        </form>
       </div>
-      <form method="post" onsubmit="return confirm('Убрать из апсейла?');">
+      <form method="post" onsubmit="return confirm('Убрать из апсейла?');" style="align-self:flex-start;">
         {% csrf_token %}
         <input type="hidden" name="action" value="remove_upsell">
         <input type="hidden" name="dish_id" value="{{ d.id }}">

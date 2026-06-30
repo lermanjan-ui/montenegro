@@ -378,13 +378,21 @@ def lunch_upsell_manage(request, country_slug):
                 d.show_in_combo_block = False
                 d.save(update_fields=["show_in_combo_block"])
             return redirect(back)
+        if action == "set_name":
+            d = Dish.objects.filter(
+                id=_int(request.POST.get("dish_id")), country=country
+            ).first()
+            if d is not None:
+                d.upsell_name = (request.POST.get("upsell_name") or "").strip()
+                d.save(update_fields=["upsell_name"])
+            return redirect(back)
         return redirect(back)
 
     current = list(
         Dish.objects
         .filter(country=country, show_in_combo_block=True)
         .order_by("name")
-        .values("id", "name", "selling_price", "is_visible_on_site", "is_stop_list")
+        .values("id", "name", "selling_price", "is_visible_on_site", "is_stop_list", "upsell_name")
     )
     current_ids = {d["id"] for d in current}
     candidates = [

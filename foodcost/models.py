@@ -564,6 +564,10 @@ class Dish(models.Model):
         default=False
     )
 
+    # Название для выдачи в апсейле страницы обедов (если задано — показывается
+    # вместо обычного названия блюда ТОЛЬКО в апсейле; на остальной сайт не влияет).
+    upsell_name = models.CharField(max_length=255, blank=True, default="")
+
     is_new = models.BooleanField(
         default=False
     )

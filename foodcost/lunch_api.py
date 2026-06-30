@@ -563,7 +563,11 @@ def lunches_upsell(request):
     items = []
     for d in dishes:
         try:
-            items.append(serialize_product_card(request, d))
+            card = serialize_product_card(request, d)
+            override = (getattr(d, "upsell_name", "") or "").strip()
+            if override:
+                card["name"] = override
+            items.append(card)
         except Exception:
             continue
 
