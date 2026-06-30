@@ -5010,6 +5010,8 @@ class OrderLunchCombo(models.Model):
     unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     composition = models.JSONField(default=list, blank=True)
+    # Снапшот доп. порций (аддендум «обеды»): [{item_id, name, extra_qty, extra_price}].
+    extras = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -5018,3 +5020,5 @@ class OrderLunchCombo(models.Model):
 
 # 🍱 Обеды-комплексы (новый слой рядом с LunchMenu) — модели в отдельном модуле.
 from .models_lunch import Lunch, LunchSize, LunchSizeItem  # noqa: E402,F401
+# 🍱📒 Журнал продаж обедов «Учёт обедов» — модели в отдельном модуле.
+from .models_lunch_sales import LunchSale, LunchSaleItem  # noqa: E402,F401
