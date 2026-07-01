@@ -88,8 +88,19 @@
       <div class="ls-f"><label>Цена сета (UZS) *</label><input class="ls-in" name="sale_price" placeholder="0" required></div>
     </div>
     <div class="ls-grid" style="margin-top:12px;">
-      <div class="ls-f"><label>Клиент (имя)</label><input class="ls-in" name="customer_name" placeholder="необязательно"></div>
-      <div class="ls-f"><label>Телефон</label><input class="ls-in" name="customer_phone" placeholder="необязательно"></div>
+      <div class="ls-f" style="grid-column:span 2;"><label>Корпоративный клиент (из списка)</label>
+        <select class="ls-sel" id="corpPick" onchange="fillCorp()">
+          <option value="">— выбрать из корпоративных —</option>
+          {% for c in corporate_customers %}
+          <option value="{{ c.id }}" data-name="{{ c.name }}" data-phone="{{ c.phone }}">{{ c.name }}{% if c.phone %} · {{ c.phone }}{% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="ls-f" style="grid-column:span 2;"><span class="muted" style="font-size:12px;">Выбор подставит имя и телефон ниже. Список — только корпоративные клиенты (отметить можно внизу страницы).</span></div>
+    </div>
+    <div class="ls-grid" style="margin-top:12px;">
+      <div class="ls-f"><label>Клиент (имя)</label><input class="ls-in" id="csName" name="customer_name" placeholder="необязательно"></div>
+      <div class="ls-f"><label>Телефон</label><input class="ls-in" id="csPhone" name="customer_phone" placeholder="необязательно"></div>
       <div class="ls-f"><label>Точка</label>
         <select class="ls-sel" name="location_id"><option value="">—</option>{% for loc in locations %}<option value="{{ loc.id }}">{{ loc.name }}</option>{% endfor %}</select>
       </div>
@@ -184,12 +195,74 @@
       </tbody>
     </table>
   </div>
+
+  <!-- КОРПОРАТИВНЫЕ КЛИЕНТЫ -->
+  <div class="ls-card">
+    <div class="ls-title">Корпоративные клиенты</div>
+    <p class="muted" style="font-size:13px;margin:0 0 10px;">Отмеченные здесь клиенты доступны для выбора в записи выше (выпадающий список «Корпоративный клиент»).</p>
+
+    <form method="get" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+      <input type="hidden" name="date_from" value="{{ f_from }}">
+      <input type="hidden" name="date_to" value="{{ f_to }}">
+      <input type="hidden" name="location_id" value="{{ f_location }}">
+      <input type="hidden" name="source" value="{{ f_source }}">
+      <input type="hidden" name="customer" value="{{ f_customer }}">
+      <div class="ls-f" style="flex:1;min-width:240px;"><label>Найти клиента (имя/телефон), чтобы отметить</label>
+        <input class="ls-in" name="cust_q" value="{{ cust_q }}" placeholder="напр. ООО… или 90…">
+      </div>
+      <button class="ls-btn ls-gray" type="submit">Найти</button>
+    </form>
+
+    {% if cust_q %}
+    <div style="margin-top:10px;">
+      {% for c in customer_matches %}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+        <span>{{ c.name }}{% if c.phone %} <span class="muted">· {{ c.phone }}</span>{% endif %}</span>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="mark_corporate">
+          <input type="hidden" name="customer_id" value="{{ c.id }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="ls-btn ls-green ls-sm" type="submit">Сделать корпоративным</button>
+        </form>
+      </div>
+      {% empty %}
+      <div class="muted" style="padding:8px 0;">Ничего не найдено (или все найденные уже корпоративные).</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="ls-title" style="margin-top:14px;">В списке корпоративных ({{ corporate_customers|length }})</div>
+    {% for c in corporate_customers %}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+      <span style="font-weight:600;">{{ c.name }}{% if c.phone %} <span class="muted" style="font-weight:400;">· {{ c.phone }}</span>{% endif %}</span>
+      <form method="post" onsubmit="return confirm('Убрать из корпоративных?');">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="unmark_corporate">
+        <input type="hidden" name="customer_id" value="{{ c.id }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button class="ls-btn ls-red ls-sm" type="submit">Убрать</button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="muted" style="padding:8px 0;">Пока никого. Найдите клиента выше и отметьте.</div>
+    {% endfor %}
+  </div>
 </div>
 
 <script>
 function lsToggle(id){
   var r=document.getElementById('ls-edit-'+id);
   if(r){ r.style.display=(r.style.display==='none'||!r.style.display)?'table-row':'none'; }
+}
+function fillCorp(){
+  var s=document.getElementById('corpPick');
+  if(!s) return;
+  var o=s.options[s.selectedIndex];
+  if(!o||!o.value) return;
+  var n=document.getElementById('csName'); var p=document.getElementById('csPhone');
+  if(n) n.value=o.getAttribute('data-name')||'';
+  if(p) p.value=o.getAttribute('data-phone')||'';
 }
 </script>
 {% endblock %}

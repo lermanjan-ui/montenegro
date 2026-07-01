@@ -17,12 +17,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.db.models import Q
 
-from .models import UserProfile, Location, Dish
+from .models import UserProfile, Location, Dish, Customer
 from .models_lunch_sales import LunchSale, LunchSaleItem
 from .views import get_country, require_section_access
 
 
-LUNCH_SECTION = UserProfile.SECTION_DISHES
+LUNCH_SECTION = UserProfile.SECTION_FINANCE
 
 
 def _int(value, default=None):
@@ -140,6 +140,18 @@ def lunch_sales_list(request, country_slug):
             ).delete()
             return redirect(_sales_url(request, country))
 
+        if action == "mark_corporate":
+            Customer.objects.filter(
+                id=_int(request.POST.get("customer_id")), country=country
+            ).update(is_corporate=True)
+            return redirect(_sales_url(request, country))
+
+        if action == "unmark_corporate":
+            Customer.objects.filter(
+                id=_int(request.POST.get("customer_id")), country=country
+            ).update(is_corporate=False)
+            return redirect(_sales_url(request, country))
+
         return redirect(_sales_url(request, country))
 
     # ----- GET: фильтры -----
@@ -212,12 +224,32 @@ def lunch_sales_list(request, country_slug):
     dishes = list(Dish.objects.filter(country=country).order_by("name").values("id", "name"))
     locations = Location.objects.filter(country=country).order_by("site_sort_order", "name")
 
+    # Корпоративные клиенты — для выпадающего выбора в записи.
+    corporate_customers = list(
+        Customer.objects.filter(country=country, is_corporate=True)
+        .order_by("name").values("id", "name", "phone")
+    )
+    # Поиск клиента, чтобы отметить его корпоративным (по имени/телефону).
+    cust_q = request.GET.get("cust_q", "").strip()
+    customer_matches = []
+    if cust_q:
+        customer_matches = list(
+            Customer.objects.filter(country=country)
+            .filter(Q(name__icontains=cust_q) | Q(phone__icontains=cust_q))
+            .exclude(is_corporate=True)
+            .order_by("name")
+            .values("id", "name", "phone")[:20]
+        )
+
     context = {
         "country": country,
         "rows": rows,
         "dishes": dishes,
         "locations": locations,
         "source_choices": LunchSale.SOURCE_CHOICES,
+        "corporate_customers": corporate_customers,
+        "customer_matches": customer_matches,
+        "cust_q": cust_q,
         # метрики
         "kpi_count": len(sales),
         "kpi_sets": total_sets,

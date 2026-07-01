@@ -589,7 +589,7 @@
 			{% endif %}
 			   
 			    {% if can_menu_dishes or can_menu_products or can_menu_preparations or can_menu_packaging %}
-			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path or '/combo-picks/' in request.path or '/lunch/' in request.path or '/lunches/' in request.path or '/lunch-sales/' in request.path %}open{% endif %}>
+			    <details class="menu-section" {% if '/dishes/' in request.path or '/dish-categories/' in request.path or '/products/' in request.path or '/preparations/' in request.path or '/packaging/' in request.path or '/combo-picks/' in request.path or '/lunch/' in request.path or '/lunches/' in request.path %}open{% endif %}>
 			        <summary class="menu-title">
 			            <span class="menu-title-left">
 			                <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
@@ -621,11 +621,6 @@
 			                    {% if can_menu_dishes %}
 			                    <a class="side-link {% if '/lunches/upsell/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/lunches/upsell/">
 			                        Апсейл обедов
-			                    </a>
-			                    {% endif %}
-			                    {% if can_menu_dishes %}
-			                    <a class="side-link {% if '/lunch-sales/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/lunch-sales/">
-			                        Учёт обедов
 			                    </a>
 			                    {% endif %}
 
@@ -724,7 +719,7 @@
 				
 				{% if can_menu_finance or can_menu_utilities %}
 
-				<details class="menu-section" {% if '/utilities/' in request.path or '/finance/' in request.path %}open{% endif %}>
+				<details class="menu-section" {% if '/utilities/' in request.path or '/finance/' in request.path or '/lunch-sales/' in request.path %}open{% endif %}>
 
 				    <summary class="menu-title">
 
@@ -753,6 +748,9 @@
                             </a>
                             <a class="side-link {% if '/finance/chart/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/finance/chart/">
                                 Приход / расход
+                            </a>
+                            <a class="side-link {% if '/lunch-sales/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/lunch-sales/">
+                                Учёт обедов
                             </a>
                         {% endif %}
                         {% if can_menu_utilities %}
