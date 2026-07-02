@@ -201,6 +201,21 @@
     <div class="ls-title">Корпоративные клиенты</div>
     <p class="muted" style="font-size:13px;margin:0 0 10px;">Отмеченные здесь клиенты доступны для выбора в записи выше (выпадающий список «Корпоративный клиент»).</p>
 
+    <!-- создать нового -->
+    <form method="post" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:#f0fdf4;padding:12px;border-radius:12px;margin-bottom:12px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create_corporate">
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <div class="ls-f" style="flex:2;min-width:200px;"><label>Новый корпоративный клиент — название *</label>
+        <input class="ls-in" name="new_name" placeholder="напр. ООО «Ромашка»" required>
+      </div>
+      <div class="ls-f" style="flex:1;min-width:150px;"><label>Телефон</label>
+        <input class="ls-in" name="new_phone" placeholder="+998…">
+      </div>
+      <button class="ls-btn ls-green" type="submit">+ Создать</button>
+    </form>
+    <p class="muted" style="font-size:12px;margin:-4px 0 12px;">Если клиент с таким телефоном уже есть — он просто станет корпоративным (без дубля).</p>
+
     <form method="get" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
       <input type="hidden" name="date_from" value="{{ f_from }}">
       <input type="hidden" name="date_to" value="{{ f_to }}">

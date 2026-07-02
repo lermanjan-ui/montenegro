@@ -152,6 +152,25 @@ def lunch_sales_list(request, country_slug):
             ).update(is_corporate=False)
             return redirect(_sales_url(request, country))
 
+        if action == "create_corporate":
+            name = (request.POST.get("new_name") or "").strip()
+            phone = (request.POST.get("new_phone") or "").strip()
+            if name:
+                existing = (
+                    Customer.objects.filter(country=country, phone=phone).first()
+                    if phone else None
+                )
+                if existing is not None:
+                    existing.is_corporate = True
+                    if not existing.name:
+                        existing.name = name
+                    existing.save(update_fields=["is_corporate", "name"])
+                else:
+                    Customer.objects.create(
+                        country=country, name=name, phone=phone, is_corporate=True
+                    )
+            return redirect(_sales_url(request, country))
+
         return redirect(_sales_url(request, country))
 
     # ----- GET: фильтры -----

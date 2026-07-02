@@ -194,6 +194,13 @@
                     <option value="top50" {% if amount == "top50" %}selected{% endif %}>Топ-50 по тратам</option>
                 </select>
             </div>
+            <div>
+                <label class="fc-label">Обеды</label>
+                <select class="fc-select" name="lunches">
+                    <option value="all" {% if lunches == "all" %}selected{% endif %}>Все</option>
+                    <option value="yes" {% if lunches == "yes" %}selected{% endif %}>Заказывал обеды</option>
+                </select>
+            </div>
 
             <input type="hidden" name="sort" value="{{ sort }}">
             <input type="hidden" name="per_page" value="{{ per_page }}">
@@ -229,6 +236,7 @@
                 <input type="hidden" name="min_orders" value="{{ min_orders }}">
                 <input type="hidden" name="source" value="{{ source }}">
                 <input type="hidden" name="amount" value="{{ amount }}">
+                <input type="hidden" name="lunches" value="{{ lunches }}">
                 <input type="hidden" name="sort" value="{{ sort }}">
                 <label class="fc-label" style="margin:0;">На странице</label>
                 <select class="fc-select" name="per_page" style="width:auto;" onchange="this.form.submit()">
@@ -265,6 +273,8 @@
                     </div>
                     <div data-label="Статус" class="cust-sources">
                         <span class="fc-badge {{ row.status_class }}">{{ row.status_label }}</span>
+                        {% if row.is_corporate %}<span class="fc-badge fc-badge-amber">Корп.</span>{% endif %}
+                        {% if row.ordered_lunches %}<span class="fc-badge fc-badge-green" title="Заказывал обеды">🍱</span>{% endif %}
                         {% if row.blocked %}<span class="fc-badge fc-badge-red">⚠ Отказ</span>{% endif %}
                     </div>
                     <div data-label="Источник" class="cust-sources">

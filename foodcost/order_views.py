@@ -567,7 +567,10 @@ def order_create(request, country_slug):
         if is_cancelled:
             customer_delivery_amount = Decimal("0")
 
-        total_amount = food_total + customer_delivery_amount
+        # Вклад комбо-обедов (пришёл с сайта) сохраняем в total_amount,
+        # иначе при пересохранении заказа обеды выпадают из суммы и
+        # "Выручка" (total_amount - обеды) уходит в минус.
+        total_amount = food_total + customer_delivery_amount + order.lunch_combo_net
         
         commission_amount = Decimal("0")
 
@@ -935,7 +938,10 @@ def order_detail(request, country_slug, order_id):
         if order.is_cancelled:
             customer_delivery_amount = Decimal("0")
 
-        total_amount = food_total + customer_delivery_amount
+        # Вклад комбо-обедов (пришёл с сайта) сохраняем в total_amount,
+        # иначе при пересохранении заказа обеды выпадают из суммы и
+        # "Выручка" (total_amount - обеды) уходит в минус.
+        total_amount = food_total + customer_delivery_amount + order.lunch_combo_net
         
         commission_amount = Decimal("0")
 

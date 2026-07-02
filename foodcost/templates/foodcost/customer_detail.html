@@ -145,6 +145,8 @@
             <p class="muted">{{ customer.phone }}</p>
             <div class="head-badges">
                 {% if customer.is_regular %}<span class="fc-badge fc-badge-green">Постоянный</span>{% endif %}
+                {% if customer.is_corporate %}<span class="fc-badge fc-badge-amber">Корпоративный</span>{% endif %}
+                {% if ordered_lunches %}<span class="fc-badge fc-badge-green">🍱 Заказывал обеды</span>{% endif %}
                 {% if customer.is_problematic %}<span class="fc-badge fc-badge-red">Проблемный</span>{% endif %}
                 {% if customer.delivery_blocked %}<span class="fc-badge fc-badge-red">⚠ Отказ в доставке</span>{% endif %}
                 {% if not customer.is_regular and not customer.is_problematic and not customer.delivery_blocked %}
@@ -202,6 +204,11 @@
                         <label class="toggle">
                             <input type="checkbox" name="is_regular" {% if customer.is_regular %}checked{% endif %}>
                             <span><span class="t-title">Постоянный</span><span class="t-sub">Лояльный клиент, заказывает регулярно.</span></span>
+                        </label>
+
+                        <label class="toggle">
+                            <input type="checkbox" name="is_corporate" {% if customer.is_corporate %}checked{% endif %}>
+                            <span><span class="t-title">Корпоративный (юрлицо)</span><span class="t-sub">Доступен для выбора в журнале «Учёт обедов».</span></span>
                         </label>
 
                         <label class="toggle">

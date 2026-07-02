@@ -109,6 +109,7 @@ def customer_list(request, country_slug):
     min_orders = g.get("min_orders", "all")
     source = g.get("source", "all")
     amount = g.get("amount", "all")
+    lunches = g.get("lunches", "all")
     sort = g.get("sort", "-last")
 
     try:
@@ -154,6 +155,10 @@ def customer_list(request, country_slug):
                 filter=Q(orders__is_legacy_import=True),
                 distinct=True,
             ),
+            lunch_orders=Count(
+                "orders__lunch_combos",
+                distinct=True,
+            ),
         )
     )
 
@@ -186,6 +191,9 @@ def customer_list(request, country_slug):
         customers = customers.filter(site_orders__gt=0)
     elif source == "tilda":
         customers = customers.filter(tilda_orders__gt=0)
+
+    if lunches == "yes":
+        customers = customers.filter(lunch_orders__gt=0)
 
     # период = активность: последний заказ в окне.
     # (нужна дата регистрации вместо активности? замени last_order_date__gte
@@ -255,6 +263,8 @@ def customer_list(request, country_slug):
             "status_class": status_class,
             "blocked": c.delivery_blocked,
             "source_badges": source_badges,
+            "is_corporate": c.is_corporate,
+            "ordered_lunches": (c.lunch_orders or 0) > 0,
         })
 
     # ---- KPI: фиксированное число запросов, по всей базе страны ----
@@ -367,6 +377,7 @@ def customer_list(request, country_slug):
         "min_orders": min_orders,
         "source": source,
         "amount": amount,
+        "lunches": lunches,
         "sort": sort,
         "per_page": per_page,
     })
@@ -402,6 +413,7 @@ def customer_detail(request, country_slug, customer_id):
 
         customer.is_regular = bool(request.POST.get("is_regular"))
         customer.is_problematic = bool(request.POST.get("is_problematic"))
+        customer.is_corporate = bool(request.POST.get("is_corporate"))
         customer.delivery_blocked = bool(request.POST.get("delivery_blocked"))
         customer.delivery_block_reason = request.POST.get(
             "delivery_block_reason", ""
@@ -410,6 +422,7 @@ def customer_detail(request, country_slug, customer_id):
         customer.save(update_fields=[
             "is_regular",
             "is_problematic",
+            "is_corporate",
             "delivery_blocked",
             "delivery_block_reason",
             "comment",
@@ -452,5 +465,6 @@ def customer_detail(request, country_slug, customer_id):
         "average_check_display": _fmt_money(average_check),
         "addresses_count": customer.addresses.count(),
         "can_edit": can_edit,
+        "ordered_lunches": customer.orders.filter(lunch_combos__isnull=False).exists(),
         "saved": request.GET.get("saved") == "1",
     })
