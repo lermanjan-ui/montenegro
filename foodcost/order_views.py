@@ -1787,6 +1787,59 @@ def order_analytics(request, country_slug):
 
 
 @login_required(login_url="/login/")
+def customer_create(request, country_slug):
+    """Отдельная страница «Новый клиент» (для заказов не через сайт)."""
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(
+        request.user, UserProfile.SECTION_CUSTOMERS,
+    )
+    if access_error:
+        return access_error
+
+    can_edit = user_can_edit(request.user)
+    error = ""
+    form = {"name": "", "phone": "", "is_corporate": False}
+
+    if request.method == "POST":
+        if not can_edit:
+            return HttpResponseForbidden("Недостаточно прав для создания клиента")
+        name = (request.POST.get("name") or "").strip()
+        phone = (request.POST.get("phone") or "").strip()
+        is_corp = bool(request.POST.get("is_corporate"))
+        form = {"name": name, "phone": phone, "is_corporate": is_corp}
+        if not name and not phone:
+            error = "Укажите имя/название или телефон."
+        else:
+            if phone:
+                existing = Customer.objects.filter(
+                    country=country, phone=phone
+                ).first()
+                if existing is not None:
+                    if is_corp and not existing.is_corporate:
+                        existing.is_corporate = True
+                        existing.save(update_fields=["is_corporate"])
+                    return redirect(
+                        f"/c/{country.slug}/customers/{existing.id}/"
+                    )
+            new_customer = Customer.objects.create(
+                country=country,
+                name=name or "Без имени",
+                phone=phone,
+                is_corporate=is_corp,
+            )
+            return redirect(
+                f"/c/{country.slug}/customers/{new_customer.id}/?saved=1"
+            )
+
+    return render(request, "foodcost/customer_create.html", {
+        "country": country,
+        "can_edit": can_edit,
+        "error": error,
+        "form": form,
+    })
+
+
+@login_required(login_url="/login/")
 def customer_list(request, country_slug):
 
     country = get_country(country_slug, request.user)

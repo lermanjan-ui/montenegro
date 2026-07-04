@@ -1,0 +1,53 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Новый клиент{% endblock %}
+{% block content %}
+<style>
+.nc-wrap{max-width:640px;margin:0 auto;}
+.nc-back{color:#047857;text-decoration:none;font-weight:700;font-size:14px;}
+.nc-h1{font-size:26px;font-weight:800;margin:10px 0 4px;}
+.nc-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.nc-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:22px;}
+.nc-f{margin-bottom:16px;}
+.nc-f label{display:block;font-size:13px;font-weight:700;color:#374151;margin:0 0 6px;}
+.nc-in{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:11px 12px;font-size:15px;box-sizing:border-box;}
+.nc-check{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;cursor:pointer;}
+.nc-actions{display:flex;gap:10px;margin-top:8px;}
+.nc-btn{border:0;border-radius:10px;padding:11px 18px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block;}
+.nc-green{background:#047857;color:#fff;}
+.nc-gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+.nc-err{background:#fef2f2;color:#b91c1c;border:1px solid #fee2e2;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:14px;}
+.nc-note{color:#9ca3af;font-size:13px;margin:12px 0 0;}
+</style>
+
+<div class="nc-wrap">
+  <a class="nc-back" href="/c/{{ country.slug }}/customers/">← К списку клиентов</a>
+  <h1 class="nc-h1">Новый клиент</h1>
+  <p class="nc-sub">Для клиентов, которые заказывают не через сайт (по телефону, самовывоз, юрлица и т.п.).</p>
+
+  <div class="nc-card">
+    {% if error %}<div class="nc-err">{{ error }}</div>{% endif %}
+    <form method="post" action="/c/{{ country.slug }}/customers/new/">
+      {% csrf_token %}
+      <div class="nc-f">
+        <label>Имя / название *</label>
+        <input class="nc-in" type="text" name="name" value="{{ form.name }}" placeholder="Имя или ООО «…»" autofocus>
+      </div>
+      <div class="nc-f">
+        <label>Телефон</label>
+        <input class="nc-in" type="text" name="phone" value="{{ form.phone }}" placeholder="+998…">
+      </div>
+      <div class="nc-f">
+        <label class="nc-check">
+          <input type="checkbox" name="is_corporate" {% if form.is_corporate %}checked{% endif %}>
+          Корпоративный клиент (юрлицо) — будет доступен в журнале «Учёт обедов»
+        </label>
+      </div>
+      <div class="nc-actions">
+        <button type="submit" class="nc-btn nc-green">Создать и открыть карточку</button>
+        <a class="nc-btn nc-gray" href="/c/{{ country.slug }}/customers/">Отмена</a>
+      </div>
+    </form>
+    <p class="nc-note">Если клиент с таким телефоном уже есть — откроется его карточка (без дубля).</p>
+  </div>
+</div>
+{% endblock %}

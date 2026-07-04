@@ -197,6 +197,11 @@ urlpatterns = [
         order_views.customer_list,
         name="customer_list"
     ),
+    path(
+        "c/<slug:country_slug>/customers/new/",
+        order_views.customer_create,
+        name="customer_create"
+    ),
     
     path(
         "c/<slug:country_slug>/orders/analytics/",
