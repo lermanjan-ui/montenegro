@@ -134,7 +134,40 @@
             <h1>Клиенты</h1>
             <p class="muted">База клиентов: заказы с сайта и импорт из Tilda. Сводка, фильтры и история по каждому клиенту.</p>
         </div>
+        {% if can_edit %}
+        <button type="button" class="fc-btn fc-btn-primary" onclick="toggleNewCust()">+ Новый клиент</button>
+        {% endif %}
     </div>
+
+    {% if can_edit %}
+    <div class="fc-card" id="newCustCard" style="display:none;">
+        <div class="fc-card-head"><h2>Новый клиент</h2></div>
+        <form method="post" action="/c/{{ country.slug }}/customers/">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_customer">
+            <div class="fc-filter-form">
+                <div>
+                    <label class="fc-label">Имя / название *</label>
+                    <input class="fc-input" type="text" name="name" placeholder="Имя или ООО «…»" required>
+                </div>
+                <div>
+                    <label class="fc-label">Телефон</label>
+                    <input class="fc-input" type="text" name="phone" placeholder="+998…">
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;cursor:pointer;">
+                        <input type="checkbox" name="is_corporate"> Корпоративный
+                    </label>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:8px;">
+                    <button type="submit" class="fc-btn fc-btn-primary">Создать и открыть</button>
+                    <button type="button" class="fc-btn fc-btn-secondary" onclick="toggleNewCust()">Отмена</button>
+                </div>
+            </div>
+        </form>
+        <p class="muted" style="font-size:13px;margin:12px 0 0;">Клиент для заказов не через сайт (по телефону, самовывоз и т.п.). Если клиент с таким телефоном уже есть — откроется его карточка, без дубля.</p>
+    </div>
+    {% endif %}
 
     <div class="fc-kpi-grid">
         <div class="fc-kpi-card"><div class="fc-kpi-label">Всего клиентов</div><div class="fc-kpi-value">{{ kpis.total }}</div></div>
@@ -315,4 +348,10 @@
 </div>
 </div>
 
+<script>
+function toggleNewCust(){
+  var c=document.getElementById('newCustCard');
+  if(c){ c.style.display=(c.style.display==='none'||!c.style.display)?'block':'none'; }
+}
+</script>
 {% endblock %}

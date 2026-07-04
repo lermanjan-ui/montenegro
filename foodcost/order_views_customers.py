@@ -102,6 +102,33 @@ def customer_list(request, country_slug):
     if access_error:
         return access_error
 
+    can_edit = user_can_edit(request.user)
+
+    # ---- создание клиента вручную (клиент заказал не через сайт) ----
+    if request.method == "POST" and request.POST.get("action") == "create_customer":
+        if not can_edit:
+            return redirect(f"/c/{country.slug}/customers/")
+        name = (request.POST.get("name") or "").strip()
+        phone = (request.POST.get("phone") or "").strip()
+        is_corp = bool(request.POST.get("is_corporate"))
+        # Если телефон уже есть — не плодим дубль, открываем существующего.
+        if phone:
+            existing = Customer.objects.filter(country=country, phone=phone).first()
+            if existing is not None:
+                if is_corp and not existing.is_corporate:
+                    existing.is_corporate = True
+                    existing.save(update_fields=["is_corporate"])
+                return redirect(f"/c/{country.slug}/customers/{existing.id}/")
+        if name or phone:
+            new_customer = Customer.objects.create(
+                country=country,
+                name=name or "Без имени",
+                phone=phone,
+                is_corporate=is_corp,
+            )
+            return redirect(f"/c/{country.slug}/customers/{new_customer.id}/?saved=1")
+        return redirect(f"/c/{country.slug}/customers/")
+
     g = request.GET
     search = g.get("search", "").strip()
     period = g.get("period", "all")
@@ -380,6 +407,7 @@ def customer_list(request, country_slug):
         "lunches": lunches,
         "sort": sort,
         "per_page": per_page,
+        "can_edit": can_edit,
     })
 
 
