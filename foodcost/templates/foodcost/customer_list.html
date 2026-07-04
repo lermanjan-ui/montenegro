@@ -134,12 +134,9 @@
             <h1>Клиенты</h1>
             <p class="muted">База клиентов: заказы с сайта и импорт из Tilda. Сводка, фильтры и история по каждому клиенту.</p>
         </div>
-        {% if can_edit %}
         <button type="button" class="fc-btn fc-btn-primary" onclick="toggleNewCust()">+ Новый клиент</button>
-        {% endif %}
     </div>
 
-    {% if can_edit %}
     <div class="fc-card" id="newCustCard" style="display:none;">
         <div class="fc-card-head"><h2>Новый клиент</h2></div>
         <form method="post" action="/c/{{ country.slug }}/customers/">
@@ -167,7 +164,6 @@
         </form>
         <p class="muted" style="font-size:13px;margin:12px 0 0;">Клиент для заказов не через сайт (по телефону, самовывоз и т.п.). Если клиент с таким телефоном уже есть — откроется его карточка, без дубля.</p>
     </div>
-    {% endif %}
 
     <div class="fc-kpi-grid">
         <div class="fc-kpi-card"><div class="fc-kpi-label">Всего клиентов</div><div class="fc-kpi-value">{{ kpis.total }}</div></div>
