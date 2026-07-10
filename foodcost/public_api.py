@@ -3336,7 +3336,7 @@ def order_create(request):
         # Снимок комплексных обедов: состав фиксируется на момент заказа.
         # Поддерживает и старый LunchMenu, и новый Lunch (там lunch_menu=None).
         for co in combo_objects:
-            OrderLunchCombo.objects.create(
+            combo_row = OrderLunchCombo(
                 order=order,
                 lunch_menu=co.get("lunch_menu"),
                 date=co.get("date"),
@@ -3345,8 +3345,12 @@ def order_create(request):
                 unit_price=co["unit_price"],
                 total_price=co["line_total"],
                 composition=co["composition"],
-                extras=co.get("extras") or [],
             )
+            # Снапшот доп. порций — только если в модели есть поле `extras`
+            # (миграция применена). Иначе пропускаем, без 500.
+            if any(f.name == "extras" for f in OrderLunchCombo._meta.get_fields()):
+                combo_row.extras = co.get("extras") or []
+            combo_row.save()
 
         # 🍱📒 Автозапись продаж обедов в журнал «Учёт обедов»:
         #   выручка = цена сета (unit_price), себестоимость = снапшот размера
