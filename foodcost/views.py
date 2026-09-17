@@ -4,6 +4,7 @@ from django.http import JsonResponse, HttpResponseForbidden, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+import datetime
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -53,6 +54,10 @@ from .models import (
     DishUpsellLink,
     # 🗺  Website delivery zones (Part 8)
     DeliveryZone,
+    # 🍽️ «Обед дня» (комплексные обеды)
+    LunchMenu,
+    LunchUpsell,
+    LunchCorporateTier,
 )
 
 
@@ -1030,12 +1035,18 @@ def dish_detail(request, country_slug, dish_id):
 
             dish.mxik_code = (request.POST.get("mxik_code") or "").strip()[:32]
             dish.package_code = (request.POST.get("package_code") or "").strip()[:32]
+            dish.uzum_name = (request.POST.get("uzum_name") or "").strip()[:255]
             dish.uzum_excluded = bool(request.POST.get("uzum_excluded"))
             _uzp = (request.POST.get("uzum_price") or "").strip().replace(",", ".")
             try:
                 dish.uzum_price = Decimal(_uzp) if _uzp else None
             except Exception:
                 dish.uzum_price = None
+            _yap = (request.POST.get("yandex_price") or "").strip().replace(",", ".")
+            try:
+                dish.yandex_price = Decimal(_yap) if _yap else None
+            except Exception:
+                dish.yandex_price = None
 
             dish.save()
             dish.recalculate_cache()
@@ -1562,6 +1573,48 @@ def dish_techcard_print(request, country_slug, dish_id):
 
 
 @login_required(login_url="/login/")
+def techcard_view(request, country_slug, dish_id):
+    """Полная карточка техкарты блюда (просмотр) с пересчётом по порциям.
+    Открывается из списка техкарт по кнопке «Открыть». Состав — на 1 порцию;
+    пересчёт по количеству порций делается на клиенте. Доступ — как у раздела
+    техкарт."""
+    country = get_country(country_slug, request.user)
+
+    access_error = require_section_access(request.user, UserProfile.SECTION_TECHCARDS)
+    if access_error:
+        return access_error
+
+    dish = get_object_or_404(Dish, id=dish_id, country=country, is_archived=False)
+
+    product_items = [
+        {
+            "name": it.product.name,
+            "gross": it.gross,
+            "net": it.net,
+            "unit": it.unit_label(),
+        }
+        for it in dish.product_items.select_related("product").all()
+    ]
+    preparation_items = [
+        {
+            "name": it.preparation.name,
+            "gross": it.gross,
+            "net": it.net,
+            "unit": it.unit_label(),
+        }
+        for it in dish.preparation_items.select_related("preparation").all()
+    ]
+
+    return render(request, "foodcost/techcard_view.html", {
+        "country": country,
+        "dish": dish,
+        "product_items": product_items,
+        "preparation_items": preparation_items,
+        "steps": [],
+    })
+
+
+@login_required(login_url="/login/")
 def techcards_page(request, country_slug):
     """Список техкарт для поваров: состав (продукты + заготовки) с брутто/нетто
     и текстом приготовления. Без финансов. Комбо не показываем."""
@@ -1943,6 +1996,11 @@ def preparation_detail(request, country_slug, prep_id):
             preparation.name = request.POST.get("name")
             preparation.final_weight = request.POST.get("final_weight")
             preparation.cooking_minutes = request.POST.get("cooking_minutes") or 0
+            cook_id = request.POST.get("cook_id")
+            preparation.cook = (
+                Employee.objects.filter(id=cook_id, country=country).first()
+                if cook_id else None
+            )
             preparation.save()
 
         if action == "add_item":
@@ -2107,6 +2165,34 @@ def preparation_detail(request, country_slug, prep_id):
                 dpi.dish.recalculate_cache()
             return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
+        # Состав или выход заготовки могли измениться → событийно обновляем
+        # кэш этой заготовки и всех зависящих от неё (родительские заготовки и
+        # блюда), чтобы себестоимость/цена за кг в списках были актуальны.
+        # Выполняется только при сохранении правок, БЕЗ пересчёта при открытии
+        # списка заготовок.
+        affected_prep_ids = {preparation.id}
+        frontier = {preparation.id}
+        while frontier:
+            parents = set(
+                PreparationSubItem.objects.filter(
+                    sub_preparation_id__in=frontier,
+                    preparation__country=country,
+                ).values_list("preparation_id", flat=True)
+            )
+            new_ids = parents - affected_prep_ids
+            affected_prep_ids |= new_ids
+            frontier = new_ids
+        for prep in Preparation.objects.filter(id__in=affected_prep_ids):
+            prep.recalculate_cache()
+        dish_ids = set(
+            DishPreparationItem.objects.filter(
+                preparation_id__in=affected_prep_ids,
+                dish__country=country,
+            ).values_list("dish_id", flat=True)
+        )
+        for dish in Dish.objects.filter(id__in=dish_ids, country=country):
+            dish.recalculate_cache()
+
         return redirect(f"/c/{country.slug}/preparations/{preparation.id}/")
 
     total_gross = (
@@ -2153,6 +2239,9 @@ def preparation_detail(request, country_slug, prep_id):
         "preparation": preparation,
         "products": products,
         "preparations": preparations,
+        "employees": Employee.objects.filter(
+            country=country, is_active=True
+        ).order_by("name"),
         "total_gross": total_gross,
         "total_net": total_net,
         "used_in_dishes": used_in_dishes,
@@ -2443,6 +2532,13 @@ def user_access_list(request, country_slug):
                     country=country,
                     location=zone_location,
                     name=zone_name,
+                    zone_kind=(
+                        request.POST.get("zone_kind")
+                        if request.POST.get("zone_kind") in (
+                            DeliveryZone.KIND_REGULAR, DeliveryZone.KIND_LUNCH
+                        )
+                        else DeliveryZone.KIND_REGULAR
+                    ),
                     center_latitude=_parse_optional_decimal(
                         request.POST.get("zone_center_latitude")
                     ),
@@ -2496,6 +2592,9 @@ def user_access_list(request, country_slug):
 
                 zone.name = new_name
                 zone.location = zone_location
+                _zk = request.POST.get("zone_kind")
+                if _zk in (DeliveryZone.KIND_REGULAR, DeliveryZone.KIND_LUNCH):
+                    zone.zone_kind = _zk
                 zone.center_latitude = _parse_optional_decimal(
                     request.POST.get("zone_center_latitude")
                 )
@@ -2829,4 +2928,170 @@ def tilda_webhook(request):
     return JsonResponse({
         "success": True,
         "order_id": order.id
+    })
+
+# =============================================================================
+# 🍽️ «Обед дня» — управление комплексными обедами (отдельная вкладка)
+# =============================================================================
+
+def _lunch_parse_decimal(raw):
+    """Сумма из формы → Decimal (пустое/мусор → 0)."""
+    s = str(raw or "").strip().replace(" ", "").replace(",", ".")
+    if not s:
+        return Decimal("0")
+    try:
+        return Decimal(s)
+    except Exception:
+        return Decimal("0")
+
+
+@login_required(login_url="/login/")
+def lunch_list(request, country_slug):
+    """Список меню «Обед дня» по датам + создание меню на дату + корп-пороги."""
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(request.user, UserProfile.SECTION_DISHES)
+    if access_error:
+        return access_error
+    can_edit = user_can_edit(request.user)
+
+    if request.method == "POST":
+        if not can_edit:
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+        action = request.POST.get("action")
+
+        if action == "create_menu":
+            raw_date = (request.POST.get("date") or "").strip()
+            try:
+                d = datetime.date.fromisoformat(raw_date)
+            except (TypeError, ValueError):
+                d = None
+            if d is not None:
+                menu, _created = LunchMenu.objects.get_or_create(
+                    country=country, date=d,
+                    defaults={"title": "Обед дня", "is_active": True},
+                )
+                return redirect(f"/c/{country.slug}/lunch/{menu.id}/")
+
+        elif action == "add_tier":
+            try:
+                min_qty = int(request.POST.get("min_qty") or 0)
+            except (TypeError, ValueError):
+                min_qty = 0
+            percent = _lunch_parse_decimal(request.POST.get("discount_percent"))
+            if min_qty > 0:
+                LunchCorporateTier.objects.update_or_create(
+                    country=country, min_qty=min_qty,
+                    defaults={"discount_percent": percent},
+                )
+
+        elif action == "delete_tier":
+            LunchCorporateTier.objects.filter(
+                id=request.POST.get("tier_id"), country=country
+            ).delete()
+
+        return redirect(f"/c/{country.slug}/lunch/")
+
+    menus = LunchMenu.objects.filter(country=country).order_by("-date")
+    tiers = LunchCorporateTier.objects.filter(country=country).order_by("min_qty")
+    return render(request, "foodcost/lunch_list.html", {
+        "country": country,
+        "menus": menus,
+        "tiers": tiers,
+        "can_edit": can_edit,
+    })
+
+
+@login_required(login_url="/login/")
+def lunch_detail(request, country_slug, menu_id):
+    """Редактирование меню на дату: слоты (блюдо/текст), цены, активность, допродажи."""
+    country = get_country(country_slug, request.user)
+    access_error = require_section_access(request.user, UserProfile.SECTION_DISHES)
+    if access_error:
+        return access_error
+    can_edit = user_can_edit(request.user)
+    menu = get_object_or_404(LunchMenu, id=menu_id, country=country)
+
+    if request.method == "POST":
+        if not can_edit:
+            return HttpResponseForbidden("У вас нет прав на редактирование")
+        action = request.POST.get("action")
+
+        if action == "save_menu":
+            menu.title = (request.POST.get("title") or "Обед дня").strip()[:120]
+            menu.delivery_from = (request.POST.get("delivery_from") or "").strip()[:20]
+            menu.combo_price = _lunch_parse_decimal(request.POST.get("combo_price"))
+            # separate_price считается из цен по слотам в LunchMenu.save()
+            menu.is_active = bool(request.POST.get("is_active"))
+            for slot in LunchMenu.SLOTS:
+                raw_dish = (request.POST.get(f"{slot}_dish") or "").strip()
+                dish_obj = None
+                if raw_dish:
+                    dish_obj = Dish.objects.filter(
+                        id=raw_dish, country=country
+                    ).first()
+                setattr(menu, f"{slot}_dish", dish_obj)
+                setattr(
+                    menu, f"{slot}_name",
+                    (request.POST.get(f"{slot}_name") or "").strip()[:255],
+                )
+                grams_raw = (request.POST.get(f"{slot}_grams") or "").strip()
+                try:
+                    grams = max(int(grams_raw), 0) if grams_raw else 0
+                except (TypeError, ValueError):
+                    grams = 0
+                setattr(menu, f"{slot}_grams", grams)
+                setattr(
+                    menu, f"{slot}_price",
+                    _lunch_parse_decimal(request.POST.get(f"{slot}_price")),
+                )
+            menu.save()
+
+        elif action == "add_upsell":
+            raw_dish = (request.POST.get("upsell_dish") or "").strip()
+            dish_obj = Dish.objects.filter(
+                id=raw_dish, country=country, is_archived=False
+            ).first() if raw_dish else None
+            if dish_obj is not None:
+                try:
+                    sort_order = int(request.POST.get("sort_order") or 0)
+                except (TypeError, ValueError):
+                    sort_order = 0
+                LunchUpsell.objects.update_or_create(
+                    menu=menu, dish=dish_obj,
+                    defaults={"sort_order": sort_order},
+                )
+
+        elif action == "delete_upsell":
+            LunchUpsell.objects.filter(
+                id=request.POST.get("upsell_id"), menu=menu
+            ).delete()
+
+        elif action == "delete_menu":
+            menu.delete()
+            return redirect(f"/c/{country.slug}/lunch/")
+
+        return redirect(f"/c/{country.slug}/lunch/{menu.id}/")
+
+    dishes = Dish.objects.filter(
+        country=country, is_archived=False
+    ).order_by("name")
+    upsells = menu.upsells.select_related("dish").order_by("sort_order", "id")
+    slots = [
+        {
+            "key": s,
+            "label": LunchMenu.SLOT_LABELS[s],
+            "dish_id": (menu.slot_dish(s).id if menu.slot_dish(s) else None),
+            "name": menu.slot_text(s),
+            "grams": menu.slot_grams(s),
+            "price": menu.slot_price(s),
+        }
+        for s in LunchMenu.SLOTS
+    ]
+    return render(request, "foodcost/lunch_detail.html", {
+        "country": country,
+        "menu": menu,
+        "dishes": dishes,
+        "upsells": upsells,
+        "slots": slots,
+        "can_edit": can_edit,
     })
