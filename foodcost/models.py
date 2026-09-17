@@ -122,6 +122,9 @@ class Preparation(models.Model):
         related_name="preparations",
     )
 
+    # Техкарта приготовления заготовки (свободный текст) — как tech_card у блюда.
+    tech_card = models.TextField("Техкарта приготовления", blank=True, default="")
+
     def __str__(self):
         return self.name
 
