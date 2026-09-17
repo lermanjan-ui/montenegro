@@ -45,6 +45,33 @@ table.tc-tab tr:last-child td{ border-bottom:none; }
   <div id="tcList">
     {% for row in rows %}
       {% ifchanged row.category %}<div class="tc-cat">{{ row.category }}</div>{% endifchanged %}
+      {% if row.is_prep %}
+      <details class="tc-dish" data-name="{{ row.prep.name|lower }}">
+        <summary>
+          <div class="tc-thumb-empty"></div>
+          <span class="tc-name">{{ row.prep.name }}</span>
+          <span class="tc-meta">{{ row.prep.final_weight }} г{% if row.prep.cooking_minutes %} · {{ row.prep.cooking_minutes }} мин{% endif %}</span>
+          <span class="tc-arrow">▸</span>
+        </summary>
+        <div class="tc-body">
+          {% if row.product_items or row.sub_items %}
+          <div class="tc-h">Состав</div>
+          <table class="tc-tab">
+            <thead><tr><th>Ингредиент</th><th class="r">Брутто</th><th class="r">Нетто</th></tr></thead>
+            <tbody>
+              {% for it in row.product_items %}
+              <tr><td>{{ it.name }}</td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
+              {% endfor %}
+              {% for it in row.sub_items %}
+              <tr><td>{{ it.name }}<span class="tc-tag">под-заготовка</span></td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+          <a class="tc-open" href="/c/{{ country.slug }}/preparations/{{ row.prep.id }}/">Открыть заготовку →</a>
+        </div>
+      </details>
+      {% else %}
       <details class="tc-dish" data-name="{{ row.dish.name|lower }}">
         <summary>
           {% if row.dish.photo_url %}<img class="tc-thumb" src="{{ row.dish.photo_url }}">
@@ -80,10 +107,11 @@ table.tc-tab tr:last-child td{ border-bottom:none; }
           <div class="tc-text">{{ row.dish.tech_card }}</div>
           {% endif %}
 
-          <a class="tc-open" href="/c/{{ country.slug }}/dish/{{ row.dish.id }}/">Открыть техкарту →</a>
+          <a class="tc-open" href="/c/{{ country.slug }}/techcards/{{ row.dish.id }}/">Открыть техкарту →</a>
           <a class="tc-print" href="/c/{{ country.slug }}/dish/{{ row.dish.id }}/techcard/" target="_blank">🖨 Печать техкарты</a>
         </div>
       </details>
+      {% endif %}
     {% empty %}
       <div class="tc-empty">Пока нет техкарт.</div>
     {% endfor %}

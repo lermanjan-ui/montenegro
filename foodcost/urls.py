@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import views_employees
 from . import order_views
+from . import views_techcards  # 🍳 просмотр техкарты «для повара»
 from . import views_settings
 from . import promotions_views
 from . import views_homepage
@@ -104,6 +105,11 @@ urlpatterns = [
         "c/<slug:country_slug>/techcards/",
         views.techcards_page,
         name="techcards_page",
+    ),
+    path(
+        "c/<slug:country_slug>/techcards/<int:dish_id>/",
+        views_techcards.techcard_view,
+        name="techcard_view",
     ),
 
     # продукты
