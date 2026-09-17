@@ -527,7 +527,7 @@
 				
 			{% if can_menu_customers or can_menu_order_analytics or can_menu_writeoff_analytics or can_menu_shift_handover_admin %}
 
-			<details class="menu-section" {% if '/customers/' in request.path or '/orders/analytics/' in request.path or '/writeoffs/analytics/' in request.path or '/shift-handover/admin/' in request.path %}open{% endif %}>
+			<details class="menu-section" {% if '/customers/' in request.path or '/orders/analytics/' in request.path or '/dish-sales/' in request.path or '/writeoffs/analytics/' in request.path or '/shift-handover/admin/' in request.path %}open{% endif %}>
 
 			    <summary class="menu-title">
 
@@ -563,6 +563,10 @@
 			            <a class="side-link {% if '/orders/analytics/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/orders/analytics/">
 			                Аналитика заказов
 			            </a>
+
+			                <a class="side-link {% if '/dish-sales/' in request.path %}active{% endif %}" href="/c/{{ country.slug }}/dish-sales/">
+			                    Продаваемость блюд
+			                </a>
 
 			        {% endif %}
 

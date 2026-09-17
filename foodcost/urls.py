@@ -3,6 +3,7 @@ from . import views
 from . import views_employees
 from . import order_views
 from . import views_techcards  # 🍳 просмотр техкарты «для повара»
+from . import views_dish_sales  # 📊 продаваемость блюд (CRM)
 from . import views_settings
 from . import promotions_views
 from . import views_homepage
@@ -207,6 +208,11 @@ urlpatterns = [
         "c/<slug:country_slug>/customers/",
         order_views.customer_list,
         name="customer_list"
+    ),
+    path(
+        "c/<slug:country_slug>/dish-sales/",
+        views_dish_sales.dish_sales,
+        name="dish_sales"
     ),
     path(
         "c/<slug:country_slug>/customers/new/",
