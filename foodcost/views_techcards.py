@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 
-from .models import Dish, UserProfile
+from .models import Dish, Preparation, UserProfile
 from .views import get_country, user_can_view_dish_page
 
 
@@ -81,4 +81,29 @@ def techcard_view(request, country_slug, dish_id):
         "product_items": product_items,
         "preparation_items": preparation_items,
         "steps": steps,
+    })
+
+
+@login_required(login_url="/login/")
+def techcard_prep_view(request, country_slug, prep_id):
+    """Просмотр техкарты заготовки (только чтение) — по образцу блюда."""
+    country = get_country(country_slug, request.user)
+    if not user_can_view_techcards(request.user):
+        return HttpResponseForbidden("У вас нет доступа к этому разделу")
+    prep = get_object_or_404(Preparation, id=prep_id, country=country)
+
+    product_items = [
+        {"name": it.product.name, "gross": it.gross, "net": it.net, "unit": it.unit_label()}
+        for it in prep.items.select_related("product").all()
+    ]
+    sub_items = [
+        {"name": it.sub_preparation.name, "gross": it.gross, "net": it.net, "unit": it.unit_label()}
+        for it in prep.subitems.select_related("sub_preparation").all()
+    ]
+
+    return render(request, "foodcost/techcard_prep_view.html", {
+        "country": country,
+        "prep": prep,
+        "product_items": product_items,
+        "sub_items": sub_items,
     })

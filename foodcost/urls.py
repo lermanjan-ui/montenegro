@@ -111,6 +111,11 @@ urlpatterns = [
         views_techcards.techcard_view,
         name="techcard_view",
     ),
+    path(
+        "c/<slug:country_slug>/preparations/<int:prep_id>/techcard/",
+        views_techcards.techcard_prep_view,
+        name="techcard_prep_view",
+    ),
 
     # продукты
     path("c/<slug:country_slug>/products/", views.product_list, name="product_list"),
