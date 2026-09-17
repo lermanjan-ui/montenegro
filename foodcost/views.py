@@ -1996,6 +1996,7 @@ def preparation_detail(request, country_slug, prep_id):
             preparation.name = request.POST.get("name")
             preparation.final_weight = request.POST.get("final_weight")
             preparation.cooking_minutes = request.POST.get("cooking_minutes") or 0
+            preparation.tech_card = (request.POST.get("tech_card") or "").strip()
             cook_id = request.POST.get("cook_id")
             preparation.cook = (
                 Employee.objects.filter(id=cook_id, country=country).first()
