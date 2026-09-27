@@ -254,7 +254,7 @@ _STATUS_TO_UZUM = {
     Order.STATUS_DELIVERY: "TAKEN_BY_COURIER",
     Order.STATUS_DONE: "DELIVERED",
     Order.STATUS_CANCELLED: "CANCELLED",
-    Order.STATUS_AWAITING_PAYMENT: "NEW",
+    Order.STATUS_AWAITING_PAYMENT: "ACCEPTED_BY_RESTAURANT",
     Order.STATUS_PAYMENT_FAILED: "CANCELLED",
 }
 
@@ -262,7 +262,9 @@ _STATUS_TO_UZUM = {
 def _uzum_status(order):
     if getattr(order, "is_cancelled", False):
         return "CANCELLED"
-    return _STATUS_TO_UZUM.get(order.status, "NEW")
+    # Для любого активного (не отменённого) заказа отдаём «принят», чтобы
+    # Uzum не отменял по таймауту из-за статуса "NEW".
+    return _STATUS_TO_UZUM.get(order.status, "ACCEPTED_BY_RESTAURANT")
 
 
 def _dec(value):
@@ -320,7 +322,7 @@ def order_create(request):
     existing = Order.objects.filter(uzum_eats_id=eats_id).first()
     if existing:
         return JsonResponse(
-            {"orderId": str(existing.pk), "eatsId": eats_id, "result": "OK"}
+            {"orderId": str(existing.pk), "eatsId": eats_id, "status": "ACCEPTED_BY_RESTAURANT", "result": "OK"}
         )
 
     store = _store(data.get("restaurantId"))
@@ -433,7 +435,7 @@ def order_create(request):
         pass
 
     return JsonResponse(
-        {"orderId": str(order.pk), "eatsId": eats_id, "result": "OK"}
+        {"orderId": str(order.pk), "eatsId": eats_id, "status": "ACCEPTED_BY_RESTAURANT", "result": "OK"}
     )
 
 
