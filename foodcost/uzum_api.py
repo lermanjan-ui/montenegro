@@ -9,6 +9,7 @@ storeId = id нашей точки (Location). Приём заказов — Э�
 Ошибки отдаём списком [{code, description}] по их схеме ErrorListV1.
 """
 
+import datetime
 import hashlib
 import json
 import secrets
@@ -80,14 +81,34 @@ def oauth_token(request):
     if not app or app.client_secret != client_secret:
         return _err(401, "Invalid client credentials", 401)
 
-    token = secrets.token_urlsafe(48)
-    app.access_token = token
-    app.token_issued_at = timezone.now()
-    app.save(update_fields=["access_token", "token_issued_at"])
+    # ВАЖНО: токен идемпотентен в пределах окна свежести.
+    # Раньше каждый вызов oauth_token генерировал новый токен и ПЕРЕЗАПИСЫВАЛ
+    # app.access_token — старый токен мгновенно инвалидировался. Платформа Uzum
+    # авторизуется несколькими узлами, поэтому опросы статуса на "старом" токене
+    # получали 401 "Access token missing or expired", и заказ отменялся за 15 мин.
+    # Теперь, пока текущий токен ещё свежий, возвращаем ЕГО ЖЕ — все узлы Uzum
+    # держат один валидный токен, ротации нет.
+    TOKEN_TTL_SECONDS = 24 * 60 * 60  # 24 часа
+
+    now = timezone.now()
+    issued = getattr(app, "token_issued_at", None)
+    existing = (app.access_token or "").strip()
+    age = (now - issued).total_seconds() if issued else None
+
+    if existing and age is not None and age < TOKEN_TTL_SECONDS:
+        token = existing
+        expires_in = int(TOKEN_TTL_SECONDS - age)
+    else:
+        token = secrets.token_urlsafe(48)
+        app.access_token = token
+        app.token_issued_at = now
+        app.save(update_fields=["access_token", "token_issued_at"])
+        expires_in = TOKEN_TTL_SECONDS
 
     return JsonResponse({
         "access_token": token,
         "token_type": "bearer",
+        "expires_in": expires_in,
         "scope": "read write",
     })
 
@@ -262,8 +283,6 @@ _STATUS_TO_UZUM = {
 def _uzum_status(order):
     if getattr(order, "is_cancelled", False):
         return "CANCELLED"
-    # Для любого активного (не отменённого) заказа отдаём «принят», чтобы
-    # Uzum не отменял по таймауту из-за статуса "NEW".
     return _STATUS_TO_UZUM.get(order.status, "ACCEPTED_BY_RESTAURANT")
 
 
@@ -322,7 +341,7 @@ def order_create(request):
     existing = Order.objects.filter(uzum_eats_id=eats_id).first()
     if existing:
         return JsonResponse(
-            {"orderId": str(existing.pk), "eatsId": eats_id, "status": "ACCEPTED_BY_RESTAURANT", "result": "OK"}
+            {"orderId": str(existing.pk), "eatsId": eats_id, "result": "OK"}
         )
 
     store = _store(data.get("restaurantId"))
@@ -435,7 +454,7 @@ def order_create(request):
         pass
 
     return JsonResponse(
-        {"orderId": str(order.pk), "eatsId": eats_id, "status": "ACCEPTED_BY_RESTAURANT", "result": "OK"}
+        {"orderId": str(order.pk), "eatsId": eats_id, "result": "OK"}
     )
 
 
