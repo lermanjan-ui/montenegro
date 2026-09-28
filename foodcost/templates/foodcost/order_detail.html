@@ -319,12 +319,6 @@ textarea{
 
         <h1>Заказ #{{ order.id }}</h1>
 
-        {% if order.uzum_eats_id %}
-        <div class="muted" style="font-weight:800;color:#111827;">
-            Номер Uzum: {{ order.uzum_eats_id }}
-        </div>
-        {% endif %}
-
         <div class="muted">
             Создание заказа кассиром
         </div>
@@ -376,13 +370,27 @@ textarea{
 
        <div style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E7EB;border-radius:14px;background:#fff;">
          <label style="font-weight:800;display:block;margin-bottom:8px;">Статус заказа</label>
-         <select name="status" class="fc-select" style="min-width:220px;">
+         <div style="margin-bottom:10px;color:#374151;">
+           Текущий статус: <b>{{ order.get_status_display }}</b>
+         </div>
+         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+           <button type="button" class="os-chip os-accept" data-status="new" onclick="setOrderStatus(this)">✓ Принят</button>
+           <button type="button" class="os-chip" data-status="cooking" onclick="setOrderStatus(this)">Готовится</button>
+           <button type="button" class="os-chip" data-status="ready" onclick="setOrderStatus(this)">Готов</button>
+           <button type="button" class="os-chip" data-status="delivery" onclick="setOrderStatus(this)">Доставка</button>
+           <button type="button" class="os-chip" data-status="done" onclick="setOrderStatus(this)">Завершён</button>
+         </div>
+         <select name="status" id="orderStatusSelect" class="fc-select" style="min-width:220px;">
            <option value="">— не менять —</option>
+           <option value="new" {% if order.status == "new" %}selected{% endif %}>Принят</option>
+           <option value="cooking" {% if order.status == "cooking" %}selected{% endif %}>Готовится</option>
+           <option value="ready" {% if order.status == "ready" %}selected{% endif %}>Готов</option>
            <option value="delivery" {% if order.status == "delivery" %}selected{% endif %}>Доставка</option>
            <option value="done" {% if order.status == "done" %}selected{% endif %}>Завершен</option>
          </select>
          <div style="margin-top:8px;color:#6B7280;font-size:13px;">
-           Текущий статус: <b>{{ order.get_status_display }}</b>
+           Кнопка выше меняет статус и сразу сохраняет заказ. Для заказов Uzum новый статус
+           передаётся автоматически при их следующем опросе (~1 мин).
          </div>
        </div>
 
@@ -747,6 +755,22 @@ setupCustomerLookup();
 setupDishSearch();
 setupSourceAutomation();
 updateOrderTotals();
+</script>
+
+<style>
+.os-chip{ border:1px solid #E5E7EB; background:#fff; color:#111827; border-radius:10px;
+  padding:8px 14px; font-size:14px; font-weight:700; cursor:pointer; }
+.os-chip:hover{ background:#F3F4F6; }
+.os-chip.os-accept{ background:#047857; color:#fff; border-color:#047857; }
+.os-chip.os-accept:hover{ background:#036b4d; }
+</style>
+<script>
+function setOrderStatus(btn){
+  var sel=document.getElementById('orderStatusSelect');
+  if(sel){ sel.value=btn.getAttribute('data-status'); }
+  var f=btn.closest('form');
+  if(f){ f.submit(); }
+}
 </script>
 
 {% endblock %}

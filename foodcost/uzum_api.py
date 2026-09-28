@@ -280,10 +280,45 @@ _STATUS_TO_UZUM = {
 }
 
 
+# Через сколько секунд после принятия авто-переводим Uzum-заказ в COOKING,
+# если менеджер не тронул статус вручную. Uzum отменяет заказ, если он
+# «застрял» в ACCEPTED_BY_RESTAURANT и не перешёл в готовку.
+_UZUM_AUTO_COOKING_AFTER_SEC = 90
+
+
 def _uzum_status(order):
+    """Статус заказа в формате Uzum.
+
+    Логика:
+      • отменён/готов/доставка и т.п. — как в карте (ручной статус приоритетен);
+      • пока заказ «Принят» (new) и менеджер его не двигал:
+          – первые ~90 сек отдаём ACCEPTED_BY_RESTAURANT (Uzum регистрирует приём),
+          – затем авто-COOKING, чтобы Uzum видел прогрессию и НЕ отменял заказ.
+        Выше COOKING сами не поднимаем — READY/выезд курьера ставит менеджер.
+    """
     if getattr(order, "is_cancelled", False):
         return "CANCELLED"
-    return _STATUS_TO_UZUM.get(order.status, "ACCEPTED_BY_RESTAURANT")
+
+    # Ручной статус менеджера всегда важнее авто-логики.
+    if order.status != Order.STATUS_NEW:
+        return _STATUS_TO_UZUM.get(order.status, "ACCEPTED_BY_RESTAURANT")
+
+    # Заказ ещё «Принят» и не тронут. Автопрогресс только для Uzum-заказов.
+    is_uzum = bool((getattr(order, "uzum_eats_id", "") or "").strip())
+    if not is_uzum:
+        return "ACCEPTED_BY_RESTAURANT"
+
+    started = getattr(order, "order_date", None)
+    if started is None:
+        return "ACCEPTED_BY_RESTAURANT"
+    try:
+        age = (timezone.now() - started).total_seconds()
+    except Exception:  # noqa: BLE001
+        return "ACCEPTED_BY_RESTAURANT"
+
+    if age < _UZUM_AUTO_COOKING_AFTER_SEC:
+        return "ACCEPTED_BY_RESTAURANT"
+    return "COOKING"
 
 
 def _dec(value):
