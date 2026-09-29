@@ -9,7 +9,7 @@
                 <div>
                     <label>Телефон</label>
                     <input type="text" name="customer_phone" id="customer-phone" placeholder="+998" value="{{ order.customer_phone|default:'' }}" required>
-                    <div id="customer-info" style="display:none;margin-top:10px;padding:12px;border-radius:12px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-weight:800;"></div>
+                    <div id="customer-info" style="display:none;margin-top:10px;padding:12px;border-radius:8px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-weight:600;"></div>
                 </div>
 
                 <div>
@@ -40,8 +40,8 @@
             {# these fields by phone. Public website orders pre-fill them via #}
             {# the order_create API. Empty values are fine — they just stay   #}
             {# blank in the DB.                                                #}
-            <div style="margin-top:14px;padding:14px 16px;border:1px solid #e5e7eb;border-radius:14px;background:#fbfcfd;">
-                <div style="font-weight:950;font-size:14px;color:#111827;margin-bottom:10px;">
+            <div style="margin-top:14px;padding:14px 16px;border:1px solid #e5e7eb;border-radius:10px;background:#fbfcfd;">
+                <div style="font-weight:600;font-size:14px;color:#111827;margin-bottom:10px;">
                     Курьеру
                 </div>
 
@@ -58,11 +58,11 @@
                               placeholder="Позвоните заранее, не звоните в домофон и т.д.">{{ order.courier_comment|default:'' }}</textarea>
                 </div>
 
-                <label style="display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;border:1px solid #e5e7eb;border-radius:12px;cursor:pointer;background:white;">
+                <label style="display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:white;">
                     <input type="checkbox" name="leave_at_door" id="leave-at-door"
                            style="width:18px;height:18px;"
                            {% if order.leave_at_door %}checked{% endif %}>
-                    <span style="font-weight:900;font-size:14px;">Оставить у двери</span>
+                    <span style="font-weight:600;font-size:14px;">Оставить у двери</span>
                 </label>
             </div>
 
@@ -161,7 +161,7 @@
 			           margin-top:28px;
 			           padding:12px 14px;
 			           border:1px solid #e5e7eb;
-			           border-radius:14px;
+			           border-radius:10px;
 			           cursor:pointer;
 			       "
 			   >
@@ -173,7 +173,7 @@
 					   {% if order.free_customer_delivery %}checked{% endif %}
 			       >
 
-			       <span style="font-weight:900;font-size:14px;">
+			       <span style="font-weight:600;font-size:14px;">
 			           Клиент не оплачивает доставку
 			       </span>
 			   </label>
@@ -194,7 +194,7 @@
 	       <div class="grid-2" style="margin-top:14px;">
 	           <label
 	               for="is-cancelled"
-	               style="display:flex;align-items:center;gap:12px;margin:0;padding:14px 16px;border:1px solid #e5e7eb;border-radius:14px;cursor:pointer;"
+	               style="display:flex;align-items:center;gap:12px;margin:0;padding:14px 16px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;"
 	           >
 	               <input
 	                   type="checkbox"
@@ -203,7 +203,7 @@
 	                   style="width:20px;height:20px;"
 	                   {% if order.is_cancelled %}checked{% endif %}
 	               >
-	               <span style="font-size:15px;font-weight:900;">Заказ отменен</span>
+	               <span style="font-size:15px;font-weight:600;">Заказ отменен</span>
 	           </label>
 
 	           <div>
@@ -324,11 +324,11 @@
                             </div>
                         {% endfor %}
                         {% for combo in order.lunch_combos.all %}
-                            <div class="order-items-row" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;">
-                                <div class="item-name">🍱 {{ combo.name }}{% if combo.date %} <span style="color:#9a3412;font-weight:800;font-size:12px;">на {{ combo.date|date:"d.m.Y" }}</span>{% endif %}{% if combo.composition %}<div style="color:#6b7280;font-weight:600;font-size:12px;margin-top:2px;">{{ combo.composition }}</div>{% endif %}</div>
-                                <div style="font-weight:800;color:#374151;align-self:center;">{{ combo.unit_price|floatformat:0 }}</div>
-                                <div style="font-weight:800;color:#374151;align-self:center;">× {{ combo.quantity }}</div>
-                                <div style="font-weight:900;align-self:center;">{{ combo.total_price|floatformat:0 }}</div>
+                            <div class="order-items-row" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;">
+                                <div class="item-name">🍱 {{ combo.name }}{% if combo.date %} <span style="color:#9a3412;font-weight:600;font-size:12px;">на {{ combo.date|date:"d.m.Y" }}</span>{% endif %}{% if combo.composition %}<div style="color:#6b7280;font-weight:600;font-size:12px;margin-top:2px;">{{ combo.composition }}</div>{% endif %}</div>
+                                <div style="font-weight:600;color:#374151;align-self:center;">{{ combo.unit_price|floatformat:0 }}</div>
+                                <div style="font-weight:600;color:#374151;align-self:center;">× {{ combo.quantity }}</div>
+                                <div style="font-weight:600;align-self:center;">{{ combo.total_price|floatformat:0 }}</div>
                                 <div></div>
                             </div>
                         {% endfor %}
@@ -405,8 +405,8 @@
 
             {% if order %}
             <div style="margin:6px 0 14px;">
-                <label style="display:block;font-weight:900;font-size:13px;color:#374151;margin-bottom:6px;">Статус заказа</label>
-                <select name="status" style="width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radius:12px;font-size:14px;font-weight:800;background:#fff;">
+                <label style="display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:6px;">Статус заказа</label>
+                <select name="status" style="width:100%;padding:11px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;background:#fff;">
                     <option value="new" {% if order.status == "new" %}selected{% endif %}>Принят</option>
                     <option value="cooking" {% if order.status == "cooking" %}selected{% endif %}>Готовится</option>
                     <option value="ready" {% if order.status == "ready" %}selected{% endif %}>Готов</option>

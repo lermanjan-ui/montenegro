@@ -6,77 +6,108 @@
 
 {% block content %}
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
+/* ===== FoodCost Design System 1.1 — Управление заказами ===== */
+:root{
+    --deep-blue:#123B7A; --deep-blue-dark:#0D2D5F;
+    --black:#111827; --white:#FFFFFF; --bg:#F7F8FA;
+    --border:#E5E7EB; --muted:#667085;
+    --success:#1E9E52; --success-soft:#E7F6ED;
+    --danger:#E23B3B;  --danger-soft:#FDECEC;
+    --warning:#E08A00; --warning-soft:#FBF0DC;
+    --purple:#7A5AF8;  --purple-soft:#EFEAFE;
+    --blue-soft:#E7EDF7;
+    --r-btn:8px; --r-card:10px;
+}
+
 .page{
     max-width:1450px;
     margin:0 auto;
+    font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    color:var(--black);
 }
+.page *{box-sizing:border-box;}
 
 /* HEADER */
 .topbar{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    gap:16px;
-    margin-bottom:18px;
+    gap:12px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
 }
 
 h1{
     margin:0;
-    font-size:34px;
-    line-height:1;
-    color:#111827;
+    font-size:28px;
+    line-height:34px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--black);
 }
 
 .create-btn{
-    background:#111827;
-    color:white;
+    background:var(--deep-blue);
+    color:#fff;
     text-decoration:none;
-    border-radius:12px;
-    padding:12px 16px;
-    font-weight:900;
+    border:1px solid var(--deep-blue);
+    border-radius:var(--r-btn);
+    height:40px;
+    padding:0 16px;
+    font-size:14px;
+    font-weight:600;
     display:inline-flex;
     align-items:center;
     justify-content:center;
+    transition:.15s;
+}
+
+.create-btn:hover{
+    background:var(--deep-blue-dark);
+    border-color:var(--deep-blue-dark);
 }
 
 /* STATS */
 .stats-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
     gap:12px;
     margin-bottom:16px;
 }
 
 .stat-card{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:18px;
-    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
     padding:16px;
-    min-height:118px;
+    min-height:96px;
 
     display:grid;
-    grid-template-columns:48px 1fr auto;
-    grid-template-rows:24px 40px 18px;
+    grid-template-columns:44px 1fr auto;
+    grid-template-rows:auto auto auto;
     column-gap:14px;
     align-items:center;
 }
 
 .stat-icon{
     grid-row:1 / 4;
-    width:46px;
-    height:46px;
-    border-radius:16px;
+    width:44px;
+    height:44px;
+    border-radius:12px;
     display:flex;
     align-items:center;
     justify-content:center;
 }
 
 .stat-icon svg{
-    width:23px;
-    height:23px;
-    stroke-width:2.4;
+    width:22px;
+    height:22px;
+    stroke-width:2;
 }
 
 .stat-main{
@@ -86,30 +117,30 @@ h1{
 .stat-label{
     grid-column:2;
     grid-row:1;
-    color:#6b7280;
-    font-size:14px;
-    font-weight:900;
-    line-height:1;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:600;
+    line-height:16px;
     white-space:nowrap;
 }
 
 .stat-value{
     grid-column:2;
     grid-row:2;
-    font-size:34px;
-    font-weight:950;
-    color:#111827;
-    line-height:1;
-    letter-spacing:-0.03em;
+    font-size:26px;
+    font-weight:700;
+    color:var(--black);
+    line-height:32px;
+    letter-spacing:-0.02em;
 }
 
 .stat-sub{
     grid-column:2;
     grid-row:3;
-    color:#6b7280;
-    font-size:13px;
-    font-weight:800;
-    line-height:1;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
+    line-height:16px;
     white-space:nowrap;
 }
 
@@ -117,22 +148,24 @@ h1{
     grid-column:3;
     grid-row:1;
     align-self:start;
-    padding:6px 10px;
+    padding:4px 8px;
     border-radius:999px;
-    font-size:13px;
-    font-weight:950;
+    font-size:12px;
+    font-weight:600;
     white-space:nowrap;
 }
 
-.stat-blue .stat-icon{background:#eff6ff;color:#2563eb;}
-.stat-green .stat-icon{background:#ecfdf5;color:#16a34a;}
-.stat-purple .stat-icon{background:#f5f3ff;color:#7c3aed;}
-.stat-orange .stat-icon{background:#fff7ed;color:#ea580c;}
+.stat-blue   .stat-icon{background:var(--blue-soft);   color:var(--deep-blue);}
+.stat-green  .stat-icon{background:var(--success-soft);color:var(--success);}
+.stat-purple .stat-icon{background:var(--purple-soft); color:var(--purple);}
+.stat-orange .stat-icon{background:var(--warning-soft);color:var(--warning);}
+.stat-red    .stat-icon{background:var(--danger-soft); color:var(--danger);}
 
-.stat-blue .stat-trend{background:#eff6ff;color:#2563eb;}
-.stat-green .stat-trend{background:#ecfdf5;color:#16a34a;}
-.stat-purple .stat-trend{background:#f5f3ff;color:#7c3aed;}
-.stat-orange .stat-trend{background:#fff7ed;color:#ea580c;}
+.stat-blue   .stat-trend{background:var(--blue-soft);   color:var(--deep-blue);}
+.stat-green  .stat-trend{background:var(--success-soft);color:var(--success);}
+.stat-purple .stat-trend{background:var(--purple-soft); color:var(--purple);}
+.stat-orange .stat-trend{background:var(--warning-soft);color:var(--warning);}
+.stat-red    .stat-trend{background:var(--danger-soft); color:var(--danger);}
 
 /* LAYOUT */
 .orders-layout{
@@ -154,10 +187,9 @@ h1{
 
 .card,
 .summary-card{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:18px;
-    box-shadow:0 10px 28px rgba(15,23,42,0.05);
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
 }
 
 .orders-card{
@@ -166,20 +198,21 @@ h1{
 }
 
 .orders-header{
-    padding:18px;
-    border-bottom:1px solid #eef2f7;
+    padding:16px 18px;
+    border-bottom:1px solid var(--border);
 }
 
 .orders-title{
-    font-size:24px;
-    font-weight:950;
-    color:#111827;
+    font-size:18px;
+    line-height:24px;
+    font-weight:600;
+    color:var(--black);
 }
 
 .orders-table{
     display:flex;
     flex-direction:column;
-    gap:12px;
+    gap:10px;
     padding:14px;
 }
 
@@ -188,86 +221,90 @@ h1{
     grid-template-columns:64px minmax(160px,1fr) 115px 115px 68px 96px;
     gap:10px;
     align-items:center;
-    border:1px solid #eef2f7;
-    border-radius:16px;
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
     padding:12px;
-    background:white;
+    background:var(--white);
+    transition:.15s;
+}
+
+.order-row:hover{
+    border-color:#D7DBE2;
+    background:#FCFCFD;
 }
 
 .order-id{
-    font-size:22px;
-    font-weight:950;
-    color:#111827;
+    font-size:18px;
+    font-weight:700;
+    color:var(--black);
 }
 
 .client-name{
-    font-size:17px;
-    font-weight:950;
-    color:#111827;
-    margin-bottom:4px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--black);
+    margin-bottom:3px;
 }
 
 .client-phone{
-    color:#6b7280;
-    font-size:13px;
-    font-weight:700;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
 }
 
 .payment-badge{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    background:#ecfdf5;
-    color:#047857;
+    background:var(--blue-soft);
+    color:var(--deep-blue);
     border-radius:999px;
-    padding:6px 10px;
+    padding:5px 10px;
     font-size:12px;
-    font-weight:900;
+    font-weight:600;
     width:max-content;
 }
 
 .order-sum{
-    font-size:19px;
-    font-weight:950;
-    color:#111827;
+    font-size:16px;
+    font-weight:700;
+    color:var(--black);
 }
 
 .cancel-badge{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    padding:6px 10px;
+    padding:4px 9px;
     border-radius:999px;
-    background:#fee2e2;
-    color:#b91c1c;
+    background:var(--danger-soft);
+    color:var(--danger);
     font-size:12px;
-    font-weight:900;
+    font-weight:600;
     margin-top:6px;
 }
 
-/* Compact indicator on order-row for leave_at_door=True. Warm orange so
-   it reads as a courier instruction, not an error. */
+/* Compact indicator on order-row for leave_at_door=True. */
 .door-badge{
     display:inline-flex;
     align-items:center;
     gap:4px;
     padding:4px 9px;
     border-radius:999px;
-    background:#fff7ed;
-    color:#c2410c;
+    background:var(--warning-soft);
+    color:var(--warning);
     font-size:11.5px;
-    font-weight:900;
+    font-weight:600;
     line-height:1;
     margin-top:6px;
     white-space:nowrap;
 }
 
-/* Tiny landmark line under client name. Truncates so the row keeps its
-   shape on long values. */
+/* Tiny landmark line under client name. */
 .client-landmark{
-    color:#6b7280;
+    color:var(--muted);
     font-size:12px;
-    font-weight:700;
+    font-weight:500;
     margin-top:4px;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -276,9 +313,9 @@ h1{
 }
 
 .order-time{
-    color:#6b7280;
-    font-size:14px;
-    font-weight:800;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:500;
 }
 
 /* SIDEBAR */
@@ -287,16 +324,16 @@ h1{
 }
 
 .summary-title{
-    font-size:20px;
-    font-weight:950;
-    color:#111827;
-    margin-bottom:16px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--black);
+    margin-bottom:14px;
 }
 
 .summary-block{
     padding-bottom:14px;
     margin-bottom:14px;
-    border-bottom:1px solid #f3f4f6;
+    border-bottom:1px solid var(--border);
 }
 
 .summary-block:last-child{
@@ -306,44 +343,48 @@ h1{
 }
 
 .summary-label{
-    color:#6b7280;
-    font-size:13px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
     margin-bottom:6px;
 }
 
 .summary-value{
-    font-size:26px;
-    font-weight:950;
-    color:#111827;
+    font-size:22px;
+    font-weight:700;
+    color:var(--black);
 }
 
 .cash-box{
-    background:#fff7ed;
-    border:1px solid #fed7aa;
+    background:var(--warning-soft);
+    border:1px solid #F3DFB8;
+}
+
+.cash-box .summary-title{
+    color:var(--black);
 }
 
 .cash-box .summary-value{
-    color:#c2410c;
+    color:var(--warning);
 }
 
 .empty{
     padding:60px 20px;
     text-align:center;
-    color:#6b7280;
+    color:var(--muted);
     font-size:14px;
 }
 
 .cancelled-row{
-    background:#fef2f2 !important;
+    background:var(--danger-soft) !important;
+    border-color:#F5C6C6 !important;
 }
 
-.cancelled-row td{
-    color:#b91c1c;
+.cancelled-row .order-id,
+.cancelled-row .client-name,
+.cancelled-row .order-sum{
+    color:var(--danger);
 }
-
-.stat-red .stat-icon{background:#fee2e2;color:#dc2626;}
-
-.stat-red .stat-trend{background:#fee2e2;color:#dc2626;}
 
 /* TABLET */
 @media (max-width:1200px){
@@ -385,7 +426,8 @@ h1{
     }
 
     h1{
-        font-size:30px;
+        font-size:24px;
+        line-height:30px;
     }
 
     .create-btn{
@@ -398,17 +440,17 @@ h1{
     }
 
     .stat-card{
-        min-height:96px;
+        min-height:88px;
         padding:12px;
         grid-template-columns:38px 1fr;
-        grid-template-rows:20px 32px 16px;
+        grid-template-rows:auto auto auto;
         column-gap:10px;
     }
 
     .stat-icon{
         width:36px;
         height:36px;
-        border-radius:12px;
+        border-radius:10px;
     }
 
     .stat-icon svg{
@@ -421,7 +463,8 @@ h1{
     }
 
     .stat-value{
-        font-size:24px;
+        font-size:22px;
+        line-height:28px;
     }
 
     .stat-sub{
@@ -457,22 +500,19 @@ h1{
 
     .order-row .create-btn{
         width:100%;
-        padding:10px 12px;
-        font-size:14px;
-        border-radius:10px;
     }
 }
 
 /* ===== Подсветка только что пришедшего заказа (подставлен без перезагрузки) ===== */
 .order-row-new{
-    border-color:#fdba74 !important;
-    background:#fff7ed !important;
+    border-color:var(--warning) !important;
+    background:var(--warning-soft) !important;
     animation:fcRowPulse 1.1s ease-in-out 3;
 }
 
 @keyframes fcRowPulse{
-    0%,100%{ box-shadow:0 0 0 3px rgba(234,88,12,0.10); }
-    50%{ box-shadow:0 0 0 6px rgba(234,88,12,0.22); }
+    0%,100%{ box-shadow:0 0 0 3px rgba(224,138,0,0.10); }
+    50%{ box-shadow:0 0 0 6px rgba(224,138,0,0.22); }
 }
 
 .row-new-badge{
@@ -480,10 +520,10 @@ h1{
     margin-top:6px;
     padding:3px 9px;
     border-radius:999px;
-    background:#ea580c;
+    background:var(--warning);
     color:#fff;
     font-size:11px;
-    font-weight:900;
+    font-weight:600;
     letter-spacing:.02em;
 }
 
@@ -508,7 +548,7 @@ h1{
 		</a>
 
         <div id="sound-hint"
-            style="display:none;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#6b7280;white-space:nowrap;">
+            style="display:none;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#667085;white-space:nowrap;">
             🔔 Кликните в любом месте, чтобы включить звук уведомлений
         </div>
 
@@ -705,7 +745,7 @@ h1{
                                     href="/c/{{ country.slug }}/orders/{{ order.id }}/"
                                     class="create-btn"
                                     style="
-                                        padding:10px 14px;
+                                        padding:0 14px;
                                         font-size:14px;
                                     "
                                 >
@@ -950,7 +990,7 @@ h1{
         c5.innerHTML = '<div class="order-time">' + (o.location ? esc(o.location) : "—") + '</div>';
 
         var c6 = document.createElement("div");
-        c6.innerHTML = '<a href="' + esc(o.url) + '" class="create-btn" style="padding:10px 14px;font-size:14px;">Открыть</a>';
+        c6.innerHTML = '<a href="' + esc(o.url) + '" class="create-btn" style="padding:0 14px;font-size:14px;">Открыть</a>';
 
         row.appendChild(c1); row.appendChild(c2); row.appendChild(c3);
         row.appendChild(c4); row.appendChild(c5); row.appendChild(c6);

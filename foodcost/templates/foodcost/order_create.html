@@ -4,117 +4,141 @@
 
 {% block content %}
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
+/* ===== FoodCost Design System 1.1 — Страница заказа ===== */
+:root{
+    --deep-blue:#123B7A; --deep-blue-dark:#0D2D5F;
+    --black:#111827; --white:#FFFFFF; --bg:#F7F8FA;
+    --border:#E5E7EB; --muted:#667085;
+    --success:#1E9E52; --success-soft:#E7F6ED;
+    --danger:#E23B3B;  --danger-soft:#FDECEC;
+    --warning:#E08A00; --warning-soft:#FBF0DC;
+    --blue-soft:#E7EDF7;
+    --r-btn:8px; --r-card:10px;
+}
 
 .page{
     max-width:1600px;
     margin:0 auto;
+    font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    color:var(--black);
 }
+.page *{box-sizing:border-box;}
 
 .topbar{
-    margin-bottom:24px;
+    margin-bottom:20px;
 }
 
 h1{
     margin:0;
-    font-size:42px;
-    line-height:1;
-    letter-spacing:-0.03em;
-    color:#111827;
+    font-size:28px;
+    line-height:34px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--black);
 }
 
 .muted{
-    color:#6b7280;
-    margin-top:8px;
-    font-size:15px;
+    color:var(--muted);
+    margin-top:6px;
+    font-size:14px;
 }
 
 .layout{
     display:grid;
     grid-template-columns:minmax(0,1fr) 360px;
-    gap:20px;
+    gap:16px;
     align-items:start;
 }
 
 .card{
-    background:white;
-    border:1px solid #e5e7eb;
-    border-radius:24px;
-    padding:24px;
-    box-shadow:0 10px 28px rgba(15,23,42,0.05);
-    margin-bottom:18px;
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
+    padding:18px;
+    margin-bottom:16px;
 }
 
 .section-title{
-    font-size:26px;
-    font-weight:950;
-    color:#111827;
-    margin-bottom:20px;
-    letter-spacing:-0.02em;
+    font-size:18px;
+    line-height:24px;
+    font-weight:600;
+    color:var(--black);
+    margin-bottom:16px;
+    letter-spacing:-0.01em;
 }
 
 .grid-2{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:16px;
+    gap:14px;
 }
 
 .grid-3{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
-    gap:16px;
+    gap:14px;
 }
 
 label{
     display:block;
-    margin-bottom:8px;
-    font-size:13px;
-    font-weight:900;
-    color:#111827;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
 }
 
 input,
 select,
 textarea{
     width:100%;
-    padding:14px 16px;
-    border:1px solid #d1d5db;
-    border-radius:14px;
+    height:40px;
+    padding:0 12px;
+    border:1px solid var(--border);
+    border-radius:var(--r-btn);
     box-sizing:border-box;
-    font-size:15px;
-    background:white;
-    transition:0.15s;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--black);
+    background:#fff;
+    transition:.15s;
+}
+
+textarea{
+    height:auto;
+    min-height:88px;
+    padding:10px 12px;
+    resize:vertical;
 }
 
 input:focus,
 select:focus,
 textarea:focus{
     outline:none;
-    border-color:#111827;
-    box-shadow:0 0 0 4px rgba(17,24,39,0.06);
-}
-
-textarea{
-    min-height:100px;
-    resize:vertical;
+    border-color:var(--deep-blue);
+    box-shadow:0 0 0 3px rgba(18,59,122,0.12);
 }
 
 .summary-card-sticky{
     position:sticky;
-    top:20px;
+    top:16px;
 }
 
 .summary-box{
     display:grid;
-    gap:18px;
+    gap:14px;
 }
 
 .summary-row{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding-bottom:16px;
-    border-bottom:1px solid #eef2f7;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--border);
 }
 
 .summary-row:last-child{
@@ -122,61 +146,71 @@ textarea{
 }
 
 .summary-label{
-    color:#6b7280;
-    font-weight:700;
-    font-size:15px;
+    color:var(--muted);
+    font-weight:500;
+    font-size:13px;
 }
 
 .summary-value{
-    font-size:28px;
-    font-weight:950;
-    color:#111827;
+    font-size:20px;
+    font-weight:700;
+    color:var(--black);
 }
 
 .summary-total{
-    color:#047857;
+    color:var(--deep-blue);
 }
 
 .save-btn{
     width:100%;
-    background:#111827;
-    color:white;
-    border:0;
-    border-radius:16px;
-    padding:18px;
-    font-size:17px;
-    font-weight:950;
+    background:var(--deep-blue);
+    color:#fff;
+    border:1px solid var(--deep-blue);
+    border-radius:var(--r-btn);
+    height:44px;
+    padding:0 18px;
+    font-size:14px;
+    font-weight:600;
+    font-family:inherit;
     cursor:pointer;
-    margin-top:20px;
-    transition:0.15s;
+    margin-top:18px;
+    transition:.15s;
 }
 
 .save-btn:hover{
-    transform:translateY(-1px);
+    background:var(--deep-blue-dark);
+    border-color:var(--deep-blue-dark);
 }
 
 .add-dish-row{
     display:grid;
     grid-template-columns:minmax(0,1fr) 140px 160px;
-    gap:14px;
+    gap:12px;
     align-items:end;
-    margin-bottom:20px;
+    margin-bottom:18px;
 }
 
 #add-item-btn{
-    height:52px;
-    border:0;
-    border-radius:14px;
-    background:#111827;
-    color:white;
-    font-weight:950;
+    height:40px;
+    border:1px solid var(--deep-blue);
+    border-radius:var(--r-btn);
+    background:var(--deep-blue);
+    color:#fff;
+    font-weight:600;
+    font-size:14px;
+    font-family:inherit;
     cursor:pointer;
-    font-size:15px;
+    transition:.15s;
+}
+
+#add-item-btn:hover{
+    background:var(--deep-blue-dark);
+    border-color:var(--deep-blue-dark);
 }
 
 .order-items-table{
-    border:1px solid #eef2f7;
-    border-radius:18px;
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
     overflow:hidden;
 }
 
@@ -184,11 +218,13 @@ textarea{
     display:grid;
     grid-template-columns:1.5fr 140px 120px 140px 70px;
     gap:14px;
-    padding:16px 18px;
-    background:#f9fafb;
-    font-size:13px;
-    font-weight:950;
-    color:#111827;
+    padding:12px 16px;
+    background:var(--bg);
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.03em;
 }
 
 .order-items-row{
@@ -196,18 +232,18 @@ textarea{
     grid-template-columns:1.5fr 140px 120px 140px 70px;
     gap:14px;
     align-items:center;
-    padding:16px 18px;
-    border-top:1px solid #f3f4f6;
+    padding:12px 16px;
+    border-top:1px solid var(--border);
 }
 
 .item-name{
-    font-weight:900;
-    color:#111827;
+    font-weight:600;
+    color:var(--black);
 }
 
 .item-price{
-    font-weight:800;
-    color:#111827;
+    font-weight:600;
+    color:var(--black);
 }
 
 .quantity-input{
@@ -215,21 +251,27 @@ textarea{
 }
 
 .item-total{
-    font-weight:950;
-    color:#047857;
+    font-weight:700;
+    color:var(--black);
     text-align:center;
 }
 
 .remove-item-btn{
-    width:44px;
-    height:44px;
-    border:1px solid #fecaca;
-    background:#fee2e2;
-    color:#991b1b;
-    border-radius:12px;
-    font-weight:950;
+    width:40px;
+    height:40px;
+    border:1px solid var(--danger-soft);
+    background:var(--danger-soft);
+    color:var(--danger);
+    border-radius:var(--r-btn);
+    font-weight:600;
     cursor:pointer;
-    font-size:20px;
+    font-size:18px;
+    font-family:inherit;
+    padding:0;
+}
+
+.remove-item-btn:hover{
+    background:#FBDCDC;
 }
 
 #customer-info{
@@ -247,8 +289,8 @@ textarea{
     right: 0;
     top: calc(100% + 6px);
     background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-card);
     box-shadow: 0 16px 35px rgba(15,23,42,0.12);
     max-height: 260px;
     overflow-y: auto;
@@ -256,23 +298,23 @@ textarea{
 }
 
 .dish-search-result {
-    padding: 12px 14px;
+    padding: 11px 14px;
     cursor: pointer;
-    font-weight: 800;
-    color: #111827;
-    border-bottom: 1px solid #f3f4f6;
+    font-weight: 500;
+    color: var(--black);
+    border-bottom: 1px solid var(--border);
 }
 
 .dish-search-result:hover {
-    background: #f9fafb;
+    background: var(--bg);
 }
 
 .dish-search-price {
     display: block;
     margin-top: 3px;
-    color: #6b7280;
-    font-size: 13px;
-    font-weight: 700;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
 }
 
 @media (max-width:1200px){
@@ -306,7 +348,8 @@ textarea{
     }
 
     h1{
-        font-size:34px;
+        font-size:24px;
+        line-height:30px;
     }
 
 }
