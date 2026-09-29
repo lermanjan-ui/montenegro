@@ -9,351 +9,121 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* ===== FoodCost Design System 1.1 — Страница заказа ===== */
+/* ===== FoodCost Design System 1.1 — страница заказа (новый UX) ===== */
 :root{
+    --bg:#F7F8FA; --card:#FFFFFF; --ink:#111827; --black:#111827; --muted:#667085; --faint:#8A93A3;
+    --border:#E5E7EB; --line:#EEF1F5;
+    --primary:#123B7A; --primary-dark:#0D2D5F; --primary-soft:#E7EDF7;
     --deep-blue:#123B7A; --deep-blue-dark:#0D2D5F;
-    --black:#111827; --white:#FFFFFF; --bg:#F7F8FA;
-    --border:#E5E7EB; --muted:#667085;
     --success:#1E9E52; --success-soft:#E7F6ED;
     --danger:#E23B3B;  --danger-soft:#FDECEC;
     --warning:#E08A00; --warning-soft:#FBF0DC;
-    --blue-soft:#E7EDF7;
     --r-btn:8px; --r-card:10px;
 }
 
-.page{
-    max-width:1600px;
-    margin:0 auto;
-    font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
-    color:var(--black);
-}
+.page{max-width:1500px;margin:0 auto;
+    font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);}
 .page *{box-sizing:border-box;}
 
-.topbar{
-    margin-bottom:20px;
+.topbar{margin-bottom:14px;}
+h1{margin:0;font-size:28px;line-height:34px;font-weight:700;letter-spacing:-0.02em;color:var(--ink);}
+.muted{color:var(--muted);margin-top:6px;font-size:13px;}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;}
+@media(max-width:960px){.layout{grid-template-columns:1fr;}}
+.work{min-width:0;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-card);
+    padding:18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,24,40,.04);}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 14px;}
+
+.f{margin-bottom:0;}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+input,select,textarea{width:100%;height:40px;border:1px solid var(--border);border-radius:var(--r-btn);
+    padding:0 12px;font:inherit;font-size:14px;color:var(--ink);background:#fff;transition:.15s;}
+textarea{height:auto;min-height:44px;padding:10px 12px;resize:vertical;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(18,59,122,.12);}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23667085' d='M6 8 0 2l1.5-1.5L6 5l4.5-4.5L12 2z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+input:disabled,select:disabled{background:var(--bg);color:var(--faint);}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:560px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+.reco{margin-top:8px;padding:8px 12px;border-radius:999px;background:var(--success-soft);
+    border:1px solid #C7E9D5;color:#166B3C;font-size:12.5px;font-weight:600;line-height:1.5;}
+
+.row-courier{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin-top:12px;}
+.row-courier .f{margin-bottom:0;}
+@media(max-width:560px){.row-courier{grid-template-columns:1fr;}}
+
+.check{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;margin:0;
+    border:1px solid var(--border);border-radius:var(--r-btn);background:#fff;cursor:pointer;
+    font-size:13px;font-weight:600;color:var(--ink);}
+.check input{width:18px;height:18px;flex:0 0 auto;accent-color:var(--primary);}
+.check.door{white-space:nowrap;}
+
+.divider{height:1px;background:var(--line);margin:16px 0;}
+.admin-tag{color:var(--faint);font-weight:500;}
+
+/* добавление блюда */
+.add-dish-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 130px;gap:12px;align-items:end;margin-bottom:16px;}
+.add-dish-row .f{margin-bottom:0;}
+#add-item-btn{height:40px;border:1px solid var(--primary);border-radius:var(--r-btn);background:var(--primary);
+    color:#fff;font-weight:600;font-size:14px;cursor:pointer;transition:.15s;}
+#add-item-btn:hover{background:var(--primary-dark);}
+.dish-search-wrap{position:relative;}
+.dish-search-results{display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;
+    border:1px solid var(--border);border-radius:var(--r-btn);box-shadow:0 16px 34px rgba(16,24,40,.14);
+    max-height:240px;overflow:auto;z-index:30;}
+.dish-search-result{padding:10px 14px;cursor:pointer;font-weight:600;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line);}
+.dish-search-result:last-child{border-bottom:0;}
+.dish-search-result:hover,.dish-search-result.selected{background:var(--bg);}
+.dish-search-price{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:500;}
+
+/* таблица позиций */
+.order-items-table{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;}
+.order-items-head,.order-items-row{display:grid;grid-template-columns:minmax(0,1.4fr) 120px 96px 120px 44px;gap:10px;align-items:center;}
+.order-items-head{padding:10px 14px;background:var(--bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);}
+.order-items-row{padding:12px 14px;border-top:1px solid var(--line);}
+.item-name{font-weight:600;font-size:14px;min-width:0;}
+.item-price-input,.quantity-input{height:36px;}
+.quantity-input{text-align:center;}
+.item-total{height:36px;text-align:right;font-weight:700;background:var(--bg);border-color:transparent;color:var(--ink);}
+.remove-item-btn{width:36px;height:36px;padding:0;border:1px solid var(--danger-soft);background:var(--danger-soft);
+    color:var(--danger);border-radius:var(--r-btn);font-size:16px;font-weight:600;cursor:pointer;}
+.remove-item-btn:hover{background:#FBDCDC;}
+.combo-row{background:var(--warning-soft);border-top:1px solid #F3DFB8;}
+.combo-row .item-name{color:#8A5B00;}
+.combo-date{color:#8A5B00;font-weight:600;font-size:12px;}
+.combo-comp{color:var(--muted);font-weight:500;font-size:12px;margin-top:2px;}
+.combo-fixed{font-weight:700;color:#8A5B00;text-align:right;font-size:13px;}
+@media(max-width:560px){
+    .add-dish-row{grid-template-columns:1fr;}
+    .order-items-head{display:none;}
+    .order-items-row{grid-template-columns:1fr 1fr;gap:8px;}
+    .order-items-row .item-name{grid-column:1 / -1;}
 }
 
-h1{
-    margin:0;
-    font-size:28px;
-    line-height:34px;
-    font-weight:600;
-    letter-spacing:-0.01em;
-    color:var(--black);
-}
+/* история клиента */
+.ch-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.link-btn{display:inline-flex;align-items:center;height:36px;padding:0 14px;width:auto;
+    border:1px solid var(--border);border-radius:var(--r-btn);background:#fff;color:var(--primary);
+    font-size:13px;font-weight:600;text-decoration:none;}
+.link-btn:hover{background:var(--bg);}
 
-.muted{
-    color:var(--muted);
-    margin-top:6px;
-    font-size:14px;
-}
-
-.layout{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 360px;
-    gap:16px;
-    align-items:start;
-}
-
-.card{
-    background:var(--white);
-    border:1px solid var(--border);
-    border-radius:var(--r-card);
-    padding:18px;
-    margin-bottom:16px;
-}
-
-.section-title{
-    font-size:18px;
-    line-height:24px;
-    font-weight:600;
-    color:var(--black);
-    margin-bottom:16px;
-    letter-spacing:-0.01em;
-}
-
-.grid-2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
-}
-
-.grid-3{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:14px;
-}
-
-label{
-    display:block;
-    margin-bottom:6px;
-    font-size:12px;
-    font-weight:600;
-    color:var(--muted);
-}
-
-input,
-select,
-textarea{
-    width:100%;
-    height:40px;
-    padding:0 12px;
-    border:1px solid var(--border);
-    border-radius:var(--r-btn);
-    box-sizing:border-box;
-    font-size:14px;
-    font-family:inherit;
-    color:var(--black);
-    background:#fff;
-    transition:.15s;
-}
-
-textarea{
-    height:auto;
-    min-height:88px;
-    padding:10px 12px;
-    resize:vertical;
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-    outline:none;
-    border-color:var(--deep-blue);
-    box-shadow:0 0 0 3px rgba(18,59,122,0.12);
-}
-
-.summary-card-sticky{
-    position:sticky;
-    top:16px;
-}
-
-.summary-box{
-    display:grid;
-    gap:14px;
-}
-
-.summary-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding-bottom:12px;
-    border-bottom:1px solid var(--border);
-}
-
-.summary-row:last-child{
-    border-bottom:0;
-}
-
-.summary-label{
-    color:var(--muted);
-    font-weight:500;
-    font-size:13px;
-}
-
-.summary-value{
-    font-size:20px;
-    font-weight:700;
-    color:var(--black);
-}
-
-.summary-total{
-    color:var(--deep-blue);
-}
-
-.save-btn{
-    width:100%;
-    background:var(--deep-blue);
-    color:#fff;
-    border:1px solid var(--deep-blue);
-    border-radius:var(--r-btn);
-    height:44px;
-    padding:0 18px;
-    font-size:14px;
-    font-weight:600;
-    font-family:inherit;
-    cursor:pointer;
-    margin-top:18px;
-    transition:.15s;
-}
-
-.save-btn:hover{
-    background:var(--deep-blue-dark);
-    border-color:var(--deep-blue-dark);
-}
-
-.add-dish-row{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 140px 160px;
-    gap:12px;
-    align-items:end;
-    margin-bottom:18px;
-}
-
-#add-item-btn{
-    height:40px;
-    border:1px solid var(--deep-blue);
-    border-radius:var(--r-btn);
-    background:var(--deep-blue);
-    color:#fff;
-    font-weight:600;
-    font-size:14px;
-    font-family:inherit;
-    cursor:pointer;
-    transition:.15s;
-}
-
-#add-item-btn:hover{
-    background:var(--deep-blue-dark);
-    border-color:var(--deep-blue-dark);
-}
-
-.order-items-table{
-    border:1px solid var(--border);
-    border-radius:var(--r-card);
-    overflow:hidden;
-}
-
-.order-items-head{
-    display:grid;
-    grid-template-columns:1.5fr 140px 120px 140px 70px;
-    gap:14px;
-    padding:12px 16px;
-    background:var(--bg);
-    font-size:12px;
-    font-weight:600;
-    color:var(--muted);
-    text-transform:uppercase;
-    letter-spacing:.03em;
-}
-
-.order-items-row{
-    display:grid;
-    grid-template-columns:1.5fr 140px 120px 140px 70px;
-    gap:14px;
-    align-items:center;
-    padding:12px 16px;
-    border-top:1px solid var(--border);
-}
-
-.item-name{
-    font-weight:600;
-    color:var(--black);
-}
-
-.item-price{
-    font-weight:600;
-    color:var(--black);
-}
-
-.quantity-input{
-    text-align:center;
-}
-
-.item-total{
-    font-weight:700;
-    color:var(--black);
-    text-align:center;
-}
-
-.remove-item-btn{
-    width:40px;
-    height:40px;
-    border:1px solid var(--danger-soft);
-    background:var(--danger-soft);
-    color:var(--danger);
-    border-radius:var(--r-btn);
-    font-weight:600;
-    cursor:pointer;
-    font-size:18px;
-    font-family:inherit;
-    padding:0;
-}
-
-.remove-item-btn:hover{
-    background:#FBDCDC;
-}
-
-#customer-info{
-    line-height:1.6;
-}
-
-.dish-search-wrap {
-    position: relative;
-}
-
-.dish-search-results {
-    display: none;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(100% + 6px);
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: var(--r-card);
-    box-shadow: 0 16px 35px rgba(15,23,42,0.12);
-    max-height: 260px;
-    overflow-y: auto;
-    z-index: 50;
-}
-
-.dish-search-result {
-    padding: 11px 14px;
-    cursor: pointer;
-    font-weight: 500;
-    color: var(--black);
-    border-bottom: 1px solid var(--border);
-}
-
-.dish-search-result:hover {
-    background: var(--bg);
-}
-
-.dish-search-price {
-    display: block;
-    margin-top: 3px;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 500;
-}
-
-@media (max-width:1200px){
-
-    .layout{
-        grid-template-columns:1fr;
-    }
-
-    .summary-card-sticky{
-        position:relative;
-        top:0;
-    }
-
-}
-
-@media (max-width:900px){
-
-    .grid-2,
-    .grid-3,
-    .add-dish-row{
-        grid-template-columns:1fr;
-    }
-
-    .order-items-head{
-        display:none;
-    }
-
-    .order-items-row{
-        grid-template-columns:1fr;
-        gap:12px;
-    }
-
-    h1{
-        font-size:24px;
-        line-height:30px;
-    }
-
-}
-
+/* итог */
+.summary-card-sticky{position:sticky;top:16px;}
+.summary-box{display:flex;flex-direction:column;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px;}
+.summary-label{color:var(--muted);}
+.summary-value{font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);}
+.summary-total-row{margin-top:6px;padding-top:12px;border-top:1px solid var(--border);align-items:baseline;}
+.summary-total-row .summary-label{font-weight:700;color:var(--ink);font-size:14px;}
+.summary-total{font-size:24px;font-weight:800;color:var(--primary);letter-spacing:-0.02em;}
+.save-btn{width:100%;height:44px;margin-top:16px;border:1px solid var(--primary);border-radius:var(--r-btn);
+    background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;}
+.save-btn:hover{background:var(--primary-dark);}
 </style>
 
 <div class="page">
@@ -363,7 +133,7 @@ textarea:focus{
         <h1>Заказ #{{ order.id }}</h1>
 
         <div class="muted">
-            Создание заказа кассиром
+            Статус: {{ order.get_status_display }}
         </div>
 
     </div>
@@ -795,10 +565,34 @@ function setupSourceAutomation() {
     updateSourceRules();
 }
 
+// Адрес необязателен для агрегаторов (Uzum / Яндекс): у таких заказов
+// адрес приходит пустым, и форма не должна блокировать пересохранение.
+function updateAddressRequirement() {
+    var addr = document.querySelector('textarea[name="delivery_address"]');
+    if (!addr) return;
+    function optText(id) {
+        var s = document.getElementById(id);
+        return (s && s.selectedOptions && s.selectedOptions[0])
+            ? s.selectedOptions[0].text.toLowerCase() : "";
+    }
+    var rx = /uzum|yandex|яндекс/;
+    var aggregator = rx.test(optText("source-select")) || rx.test(optText("delivery-provider-select"));
+    addr.required = !aggregator;
+    var note = document.getElementById("addr-optional-note");
+    if (note) note.style.display = aggregator ? "inline" : "none";
+}
+
+document.addEventListener("change", function (e) {
+    if (e.target.id === "source-select" || e.target.id === "delivery-provider-select") {
+        updateAddressRequirement();
+    }
+});
+
 setupCustomerLookup();
 setupDishSearch();
 setupSourceAutomation();
 updateOrderTotals();
+updateAddressRequirement();
 </script>
 
 <style>
