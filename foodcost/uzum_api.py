@@ -542,7 +542,7 @@ def order_detail(request, order_id):
             "price": float(oi.price_snapshot or 0),
             "quantity": float(oi.quantity or 0),
             "modifications": [],
-            "promos": {"discounts": []},
+            "promos": [],
         })
     pay_type = "CARD" if order.payment_status == Order.PAYMENT_STATUS_PAID else "CASH"
     return JsonResponse({
