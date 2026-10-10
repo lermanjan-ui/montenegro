@@ -185,10 +185,6 @@ def get_public_country(request):
     country = Country.objects.filter(slug=requested_slug).first()
 
     if country is None:
-        # Permissive fallback: e.g. name "Узбекистан" / "Uzbekistan"
-        country = Country.objects.filter(name__icontains="uzbek").first()
-
-    if country is None:
         return None, api_error(
             "COUNTRY_NOT_FOUND",
             "Public country is not configured",
@@ -1486,10 +1482,6 @@ def _get_country_from_payload(payload):
         requested_slug = DEFAULT_COUNTRY_SLUG
 
     country = Country.objects.filter(slug=requested_slug).first()
-
-    if country is None:
-        # Permissive fallback: e.g. name "Узбекистан" / "Uzbekistan"
-        country = Country.objects.filter(name__icontains="uzbek").first()
 
     if country is None:
         return None, api_error(

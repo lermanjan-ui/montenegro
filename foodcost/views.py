@@ -2395,7 +2395,10 @@ def user_access_list(request, country_slug):
     if not request.user.is_authenticated:
         return HttpResponseForbidden("Нет доступа")
 
-    if not request.user.is_superuser:
+    if not (request.user.is_superuser or (
+        hasattr(request.user, "profile")
+        and request.user.profile.is_super_admin()
+    )):
         return HttpResponseForbidden("Только главный админ может управлять пользователями")
 
     error = None

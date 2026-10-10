@@ -152,7 +152,7 @@ input:disabled,select:disabled{background:var(--bg);color:var(--faint);}
 	</a>
 
 
-{% if request.user.is_superuser %}
+{% if can_edit_orders %}
     <form
         method="post"
         style="display:inline-flex;margin-left:12px;"

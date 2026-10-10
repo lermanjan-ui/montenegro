@@ -261,7 +261,7 @@ def order_all_list(request, country_slug):
     if access_error:
         return access_error
         
-    if not request.user.is_superuser:
+    if not user_can_edit(request.user):
         return HttpResponseForbidden(
             "Только главный админ может смотреть все заказы"
         )
@@ -706,7 +706,7 @@ def order_detail(request, country_slug, order_id):
         action = request.POST.get("action")
 
         if action == "delete_order":
-            if not request.user.is_superuser:
+            if not user_can_edit(request.user):
                 return HttpResponseForbidden("Удалять заказы может только главный админ")
 
             order.delete()
@@ -962,7 +962,7 @@ def order_detail(request, country_slug, order_id):
         order.commission_amount = commission_amount
         order.net_revenue = net_revenue
 
-        if request.user.is_superuser:
+        if user_can_edit(request.user):
 
             order_date = request.POST.get("order_date")
 
@@ -2156,7 +2156,7 @@ def lunch_orders_list(request, country_slug):
     if access_error:
         return access_error
 
-    if not request.user.is_superuser:
+    if not user_can_edit(request.user):
         return HttpResponseForbidden(
             "Только главный админ может смотреть все заказы"
         )

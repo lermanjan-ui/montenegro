@@ -63,6 +63,9 @@ def menu_context(request):
         "can_menu_writeoff_analytics": user_has_section(request.user, UserProfile.SECTION_WRITE_OFF_ANALYTICS),
         "can_menu_shift_handover": user_has_section(request.user, UserProfile.SECTION_SHIFT_HANDOVER),
         "can_menu_orders": user_has_section(request.user, UserProfile.SECTION_ORDERS),
+        "can_edit_orders": request.user.is_superuser or (
+            hasattr(request.user, "profile") and request.user.profile.can_edit()
+        ),
         "can_menu_settings": user_has_section(request.user, UserProfile.SECTION_SETTINGS),
         
         "can_menu_customers": user_has_section(request.user, UserProfile.SECTION_CUSTOMERS),

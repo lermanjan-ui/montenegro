@@ -117,7 +117,7 @@
 	                   {% endfor %}
 	               </select>
 	           </div>
-			   {% if request.user.is_superuser %}
+			   {% if can_edit_orders %}
 			   <div>
 			       <label>Дата заказа</label>
 
