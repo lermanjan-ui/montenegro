@@ -1,36 +1,27 @@
 """
-URL configuration for config project.
+Корневой роутинг проекта.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+Медиа (загруженные фото блюд/категорий) отдаём ВСЕГДА, а не только при
+DEBUG=True — иначе при переходе на DEBUG=False фото перестанут открываться.
+Для роста нагрузки вынести медиа во внешнее хранилище (S3 / Cloudinary /
+смонтированный том) и убрать этот маршрут.
 """
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path, re_path
+from django.views.static import serve as _serve_media
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('foodcost.urls')),
+    path("admin/", admin.site.urls),
+    path("", include("foodcost.urls")),
 ]
 
-# 🖼 Serve uploaded media files in development (DEBUG=True).
-# In production (Railway), put MEDIA on a cloud storage backend
-# (S3 / Cloudinary / a mounted volume); WhiteNoise serves static
-# files only, not user uploads.
-if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT,
-    )
+# 🖼 Отдача пользовательских загрузок (MEDIA) не зависит от DEBUG.
+urlpatterns += [
+    re_path(
+        r"^media/(?P<path>.*)$",
+        _serve_media,
+        {"document_root": settings.MEDIA_ROOT},
+    ),
+]

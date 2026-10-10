@@ -1,9 +1,32 @@
+# ===== Python =====
 __pycache__/
 *.pyc
+*.pyo
 
+# ===== Django =====
 db.sqlite3
+db.sqlite3-journal
 
-venv/
+# Собранная статика — генерируется при деплое (collectstatic), не хранить в git
+staticfiles/
+
+# Пользовательские загрузки — не хранить в git (вынести во внешнее хранилище)
+media/
+
+# ===== Секреты / окружение — НИКОГДА не коммитить =====
 .env
+.env.*
+!.env.example
+
+# ===== Данные / выгрузки =====
+*.csv
+
+# ===== Окружения и инструменты =====
+venv/
+.venv/
 .aider*
 
+# ===== OS =====
+.DS_Store
+**/.DS_Store
+Thumbs.db

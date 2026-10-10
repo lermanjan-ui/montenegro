@@ -1,9 +1,14 @@
-Django
-gunicorn
-whitenoise
-dj-database-url
-psycopg2-binary
-python-dotenv
-Pillow
-django-cors-headers
-firebase-admin
+# Версии закреплены по минорной линии (~=), чтобы сборка была воспроизводимой.
+# ВАЖНО: перед деплоем сверь с тем, что реально стоит на проде —
+#   pip freeze > requirements.lock.txt
+# и при расхождении подгони строки ниже под рабочие версии прода
+# (особенно мажор Django — поведение между мажорами отличается).
+Django~=6.0
+gunicorn~=23.0
+whitenoise~=6.7
+dj-database-url~=2.2
+psycopg2-binary~=2.9
+python-dotenv~=1.0
+Pillow~=11.0
+django-cors-headers~=4.4
+firebase-admin~=6.5
