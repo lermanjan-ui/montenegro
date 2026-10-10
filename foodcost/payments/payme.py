@@ -220,11 +220,15 @@ def build_payme_payment_url(order) -> str:
     Base64 is standard (not URL-safe variant) — Payme accepts both, but
     we use standard to match every reference implementation.
     """
-    merchant_id = _require_env("PAYME_MERCHANT_ID")
-    checkout_base = _require_env("PAYME_CHECKOUT_URL").rstrip("/")
-    account_field = (
-        getattr(settings, "PAYME_ACCOUNT_FIELD", "") or "order_id"
-    ).strip()
+    from ..integration_config import payme_config
+    _cfg = payme_config(getattr(order, "country", None))
+    merchant_id = (_cfg["merchant_id"] or "").strip()
+    if not merchant_id:
+        raise PaymeConfigError("PAYME_MERCHANT_ID не настроен (ни у арендатора, ни в env).")
+    checkout_base = (_cfg["checkout_url"] or "").strip().rstrip("/")
+    if not checkout_base:
+        raise PaymeConfigError("PAYME_CHECKOUT_URL не настроен.")
+    account_field = (_cfg["account_field"] or "order_id").strip()
 
     # The token Payme will echo back in callback `params.account.<field>`.
     # Prefer the human-readable public_order_number ("RCN-2026-000123") so
@@ -243,7 +247,7 @@ def build_payme_payment_url(order) -> str:
     # string and is then base64 encoded as a whole. So a `;` inside the URL
     # itself would break the parameter parsing on Payme's side. Our return
     # URLs never contain `;` (just `?` and `&`), but be aware.
-    return_url_base = (getattr(settings, "PAYME_SUCCESS_URL", "") or "").strip()
+    return_url_base = (_cfg["success_url"] or "").strip()
     return_url = _append_order_number(return_url_base, order) if return_url_base else ""
 
     parts = [
@@ -290,7 +294,7 @@ def _append_order_number(base_url: str, order) -> str:
 # Callback authentication (HTTP Basic, NOT a signature)
 # =============================================================================
 
-def verify_payme_basic_auth(request) -> bool:
+def verify_payme_basic_auth(request, secret_key=None) -> bool:
     """
     Verify the Authorization: Basic <base64(Paycom:KEY)> header.
 
@@ -304,7 +308,9 @@ def verify_payme_basic_auth(request) -> bool:
     Anything else → False. The caller should then return error -32504
     (insufficient privileges). We never log the header contents.
     """
-    secret = (getattr(settings, "PAYME_SECRET_KEY", "") or "").strip()
+    secret = (secret_key if secret_key is not None
+              else getattr(settings, "PAYME_SECRET_KEY", "")) or ""
+    secret = secret.strip()
     if not secret:
         # Server misconfigured — fail closed. Returning False makes Payme
         # see -32504 and stop hammering us with calls that would otherwise

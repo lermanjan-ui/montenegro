@@ -185,6 +185,10 @@ def get_public_country(request):
     country = Country.objects.filter(slug=requested_slug).first()
 
     if country is None:
+        # Permissive fallback: e.g. name "Узбекистан" / "Uzbekistan"
+        country = Country.objects.filter(name__icontains="uzbek").first()
+
+    if country is None:
         return None, api_error(
             "COUNTRY_NOT_FOUND",
             "Public country is not configured",
@@ -1482,6 +1486,10 @@ def _get_country_from_payload(payload):
         requested_slug = DEFAULT_COUNTRY_SLUG
 
     country = Country.objects.filter(slug=requested_slug).first()
+
+    if country is None:
+        # Permissive fallback: e.g. name "Узбекистан" / "Uzbekistan"
+        country = Country.objects.filter(name__icontains="uzbek").first()
 
     if country is None:
         return None, api_error(
@@ -4388,7 +4396,7 @@ def _read_click_callback_params(request):
 
 @csrf_exempt
 @require_POST
-def click_callback(request):
+def click_callback(request, country_slug=None):
     """
     Click Prepare + Complete callback. ONE URL handles both actions.
     """
@@ -4428,6 +4436,12 @@ def click_callback(request):
     # 2) Signature check — BEFORE we hit the DB. Use the raw strings from
     # the wire; never re-format amount or sign_time. For PREPARE,
     # merchant_prepare_id is empty.
+    # Per-tenant: секрет/сервис берём у арендатора (slug из callback-URL).
+    # Легаси-URL без slug → дефолтный арендатор (фолбэк на settings).
+    from .integration_config import click_config
+    _pay_slug = (country_slug or DEFAULT_COUNTRY_SLUG or "").strip().lower()
+    _pay_country = Country.objects.filter(slug=_pay_slug).first() if _pay_slug else None
+    _click_cfg = click_config(_pay_country)
     sig_ok = verify_click_signature(
         sign_string=sign_string,
         click_trans_id=click_trans_id,
@@ -4437,6 +4451,8 @@ def click_callback(request):
         amount=amount,
         action=action_raw,
         sign_time=sign_time,
+        override_secret=_click_cfg["secret_key"],
+        override_service_id=_click_cfg["service_id"],
     )
     if not sig_ok:
         return _click_reply(
@@ -4455,9 +4471,15 @@ def click_callback(request):
     # 3) Locate the order. Try by public_order_number first (what we put in
     # the URL as transaction_param); fall back to numeric pk for older
     # orders that may have used the raw id.
-    order = Order.objects.filter(public_order_number=merchant_trans_id).first()
+    _order_qs = Order.objects.filter(public_order_number=merchant_trans_id)
+    if _pay_country is not None:
+        _order_qs = _order_qs.filter(country=_pay_country)
+    order = _order_qs.first()
     if order is None and merchant_trans_id.isdigit():
-        order = Order.objects.filter(pk=int(merchant_trans_id)).first()
+        _pk_qs = Order.objects.filter(pk=int(merchant_trans_id))
+        if _pay_country is not None:
+            _pk_qs = _pk_qs.filter(country=_pay_country)
+        order = _pk_qs.first()
 
     if order is None:
         return _click_reply(
@@ -5270,7 +5292,7 @@ _PAYME_HANDLERS = {
 
 
 @csrf_exempt
-def payme_callback(request):
+def payme_callback(request, country_slug=None):
     """Single JSON-RPC entry point for all 6 Merchant API methods."""
     from .payments.payme import (
         PaymeError, verify_payme_basic_auth,
@@ -5288,7 +5310,11 @@ def payme_callback(request):
         )
 
     # 1) Auth FIRST. Wrong creds → -32504, no body parsing.
-    if not verify_payme_basic_auth(request):
+    from .integration_config import payme_config
+    _pay_slug = (country_slug or DEFAULT_COUNTRY_SLUG or "").strip().lower()
+    _pay_country = Country.objects.filter(slug=_pay_slug).first() if _pay_slug else None
+    _payme_cfg = payme_config(_pay_country)
+    if not verify_payme_basic_auth(request, secret_key=_payme_cfg["secret_key"]):
         return _payme_rpc_response(
             request_id,
             error=_payme_error_body(PaymeError(ERROR_INSUFFICIENT_PRIVILEGE)),

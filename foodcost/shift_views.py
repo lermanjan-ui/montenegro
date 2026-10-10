@@ -11,6 +11,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.conf import settings
 
+from .integration_config import telegram_config
+
 
 from .models import (
     UserProfile,
@@ -43,8 +45,9 @@ def clean_decimal(value):
         return Decimal("0")
 
 def send_shift_handover_to_telegram(handover, is_update=False):
-    bot_token = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
-    chat_id = getattr(settings, "TELEGRAM_CHAT_ID", "")
+    _tg = telegram_config(getattr(handover, "country", None))
+    bot_token = _tg["bot_token"]
+    chat_id = _tg["chat_id"]
 
     if not bot_token or not chat_id:
         return
@@ -131,8 +134,9 @@ def send_shift_handover_to_telegram(handover, is_update=False):
         
         
 def send_shift_handover_deleted_to_telegram(handover):
-    bot_token = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
-    chat_id = getattr(settings, "TELEGRAM_CHAT_ID", "")
+    _tg = telegram_config(getattr(handover, "country", None))
+    bot_token = _tg["bot_token"]
+    chat_id = _tg["chat_id"]
 
     if not bot_token or not chat_id:
         return
@@ -189,8 +193,9 @@ def send_new_order_to_telegram(order):
     Любой сбой Telegram не должен влиять на создание заказа — всё в
     try/except, вызывающий код тоже оборачивает вызов.
     """
-    bot_token = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
-    chat_id = getattr(settings, "TELEGRAM_CHAT_ID", "")
+    _tg = telegram_config(getattr(order, "country", None))
+    bot_token = _tg["bot_token"]
+    chat_id = _tg["chat_id"]
 
     if not bot_token or not chat_id:
         return

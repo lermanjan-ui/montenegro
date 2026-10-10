@@ -5035,3 +5035,5 @@ class OrderLunchCombo(models.Model):
 from .models_lunch import Lunch, LunchSize, LunchSizeItem  # noqa: E402,F401
 # 🍱📒 Журнал продаж обедов «Учёт обедов» — модели в отдельном модуле.
 from .models_lunch_sales import LunchSale, LunchSaleItem  # noqa: E402,F401
+
+from .models_integrations import TenantIntegrationSettings  # noqa: E402,F401

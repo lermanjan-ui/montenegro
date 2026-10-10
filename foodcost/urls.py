@@ -594,6 +594,12 @@ urlpatterns = [
         public_api.click_callback,
         name="payments_click_callback_noslash",
     ),
+    # Per-tenant callback (slug арендатора в URL):
+    path(
+        "api/payments/click/<slug:country_slug>/callback/",
+        public_api.click_callback,
+        name="payments_click_callback_tenant",
+    ),
 
     # =========================================================================
     # 💳 PAYMENTS (Part 3) — Payme (Paycom) JSON-RPC callback
@@ -614,6 +620,11 @@ urlpatterns = [
         "api/payments/payme/callback",
         public_api.payme_callback,
         name="payments_payme_callback_noslash",
+    ),
+    path(
+        "api/payments/payme/<slug:country_slug>/callback/",
+        public_api.payme_callback,
+        name="payments_payme_callback_tenant",
     ),
 
     # --- Octo онлайн-оплата ---

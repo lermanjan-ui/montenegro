@@ -105,8 +105,10 @@ def build_click_payment_url(order) -> str:
     missing in settings, so the caller can return a clean API error
     instead of generating a broken URL.
     """
-    service_id = (getattr(settings, "CLICK_SERVICE_ID", "") or "").strip()
-    merchant_id = (getattr(settings, "CLICK_MERCHANT_ID", "") or "").strip()
+    from ..integration_config import click_config
+    _cfg = click_config(getattr(order, "country", None))
+    service_id = (_cfg["service_id"] or "").strip()
+    merchant_id = (_cfg["merchant_id"] or "").strip()
 
     if not service_id or not merchant_id:
         raise ClickConfigError(
@@ -129,7 +131,7 @@ def build_click_payment_url(order) -> str:
     # we have to bake order_number into the URL ourselves. Without it the
     # frontend lands on /order-success with no idea WHICH order — every
     # success-page lookup would fail.
-    success_url = (getattr(settings, "CLICK_SUCCESS_URL", "") or "").strip()
+    success_url = (_cfg["success_url"] or "").strip()
     if success_url:
         params["return_url"] = _append_order_number(success_url, order)
 
@@ -218,6 +220,8 @@ def verify_click_signature(
     amount: str,
     action: str,
     sign_time: str,
+    override_secret: str = None,
+    override_service_id: str = None,
 ) -> bool:
     """
     Constant-time signature check. Returns True iff the supplied sign_string
@@ -232,11 +236,15 @@ def verify_click_signature(
         raising — Click should get a clean -1 reply, not a 500.
     """
     import hmac
-    secret_key = (getattr(settings, "CLICK_SECRET_KEY", "") or "").strip()
+    secret_key = (override_secret if override_secret is not None
+                  else getattr(settings, "CLICK_SECRET_KEY", "")) or ""
+    secret_key = secret_key.strip()
     if not secret_key:
         return False
 
-    expected_service_id = (getattr(settings, "CLICK_SERVICE_ID", "") or "").strip()
+    expected_service_id = (override_service_id if override_service_id is not None
+                           else getattr(settings, "CLICK_SERVICE_ID", "")) or ""
+    expected_service_id = expected_service_id.strip()
     if not expected_service_id or service_id != expected_service_id:
         return False
 
