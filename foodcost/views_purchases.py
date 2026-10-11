@@ -48,6 +48,7 @@ from .views import (
     require_section_access,
     user_can_edit,
 )
+from .branch_scope import scope_by_location, scope_locations, user_location_ids
 
 
 def _fmt_money(value):
@@ -141,6 +142,9 @@ def purchase_list(request, country_slug):
         .select_related("supplier", "warehouse", "created_by")
         .annotate(items_count=Count("items"))
     )
+    _ids = user_location_ids(request.user)  # None = все филиалы (супер-админ)
+    if _ids is not None:
+        qs = qs.filter(Q(warehouse_id__in=_ids) | Q(warehouse__isnull=True, created_by=request.user))
 
     if date_from:
         qs = qs.filter(receipt_date__gte=date_from)
@@ -165,24 +169,24 @@ def purchase_list(request, country_slug):
 
     qs = qs.order_by("-receipt_date", "-id")
 
-    # ----- KPI (по стране, не зависят от фильтров) -----
+    # ----- KPI (в рамках филиалов пользователя) -----
     confirmed = PurchaseReceipt.STATUS_CONFIRMED
-    kpi_total = PurchaseReceipt.objects.filter(country=country).count()
+    _kpi = scope_by_location(
+        PurchaseReceipt.objects.filter(country=country), request.user, field="warehouse"
+    )
+    kpi_total = _kpi.count()
     kpi_sum = (
-        PurchaseReceipt.objects
-        .filter(country=country, status=confirmed)
+        _kpi.filter(status=confirmed)
         .aggregate(s=Sum("total_amount"))["s"] or Decimal(0)
     )
     unpaid = (
-        PurchaseReceipt.objects
-        .filter(country=country, status=confirmed, is_paid=False)
+        _kpi.filter(status=confirmed, is_paid=False)
         .aggregate(c=Count("id"), s=Sum("total_amount"))
     )
     kpi_unpaid_count = unpaid["c"] or 0
     kpi_unpaid_sum = unpaid["s"] or Decimal(0)
     kpi_suppliers = (
-        PurchaseReceipt.objects
-        .filter(country=country, status=confirmed, supplier__isnull=False)
+        _kpi.filter(status=confirmed, supplier__isnull=False)
         .values("supplier_id").distinct().count()
     )
 
@@ -219,7 +223,7 @@ def purchase_list(request, country_slug):
         "total_count": paginator.count,
         "base_qs": base_qs,
 
-        "warehouses": Location.objects.filter(country=country).order_by("name"),
+        "warehouses": scope_locations(Location.objects.filter(country=country).order_by("name"), request.user),
         "suppliers": Supplier.objects.filter(country=country).order_by("name"),
         "statuses": PurchaseReceipt.STATUS_CHOICES,
 
@@ -250,6 +254,9 @@ def purchase_detail(request, country_slug, receipt_id):
     show_money = _show_money(request)
 
     receipt = get_object_or_404(PurchaseReceipt, id=receipt_id, country=country)
+    _ids = user_location_ids(request.user)  # None = супер-админ (все филиалы)
+    if _ids is not None and receipt.warehouse_id not in _ids and receipt.created_by_id != request.user.id:
+        return redirect(f"/c/{country.slug}/purchases/")
     is_draft = receipt.status == PurchaseReceipt.STATUS_DRAFT
     is_confirmed = receipt.status == PurchaseReceipt.STATUS_CONFIRMED
 
@@ -286,10 +293,10 @@ def purchase_detail(request, country_slug, receipt_id):
                     Supplier.objects.filter(id=supplier_id, country=country).first()
                     if supplier_id else None
                 )
-                receipt.warehouse = (
-                    Location.objects.filter(id=warehouse_id, country=country).first()
-                    if warehouse_id else None
-                )
+                _wh = Location.objects.filter(id=warehouse_id, country=country).first() if warehouse_id else None
+                if _wh and _ids is not None and _wh.id not in _ids:
+                    _wh = None  # нельзя назначить приход на чужой филиал
+                receipt.warehouse = _wh
                 receipt.receipt_date = request.POST.get("receipt_date") or receipt.receipt_date
                 receipt.comment = (request.POST.get("comment") or "").strip()
             # оплата редактируется в любом статусе (кроме отменённого)
@@ -321,9 +328,10 @@ def purchase_detail(request, country_slug, receipt_id):
                 receipt.supplier = (
                     Supplier.objects.filter(id=hs, country=country).first() if hs else None
                 )
-                receipt.warehouse = (
-                    Location.objects.filter(id=hw, country=country).first() if hw else None
-                )
+                _wh = Location.objects.filter(id=hw, country=country).first() if hw else None
+                if _wh and _ids is not None and _wh.id not in _ids:
+                    _wh = None  # нельзя назначить приход на чужой филиал
+                receipt.warehouse = _wh
                 if request.POST.get("hdr_date"):
                     receipt.receipt_date = request.POST.get("hdr_date")
                 receipt.comment = (request.POST.get("hdr_comment") or "").strip()
@@ -460,7 +468,7 @@ def purchase_detail(request, country_slug, receipt_id):
         "debt_display": _fmt_money(receipt.debt()),
 
         "suppliers": Supplier.objects.filter(country=country, is_active=True).order_by("name"),
-        "warehouses": Location.objects.filter(country=country).order_by("name"),
+        "warehouses": scope_locations(Location.objects.filter(country=country).order_by("name"), request.user),
         "products": Product.objects.filter(country=country).order_by("name"),
 
         "logs": logs,

@@ -47,6 +47,7 @@ from .views import (
     require_section_access,
     user_can_edit,
 )
+from .branch_scope import scope_any_location, user_location_ids
 
 
 def _fmt_money(value):
@@ -197,6 +198,12 @@ def transfer_list(request, country_slug):
         .select_related("from_warehouse", "to_warehouse", "created_by")
         .annotate(items_count=Count("items"))
     )
+    _ids = user_location_ids(request.user)  # None = все филиалы (супер-админ)
+    if _ids is not None:
+        qs = qs.filter(
+            Q(from_warehouse_id__in=_ids) | Q(to_warehouse_id__in=_ids)
+            | Q(created_by=request.user, status=Transfer.STATUS_DRAFT)
+        )
     if date_from:
         qs = qs.filter(transfer_date__gte=date_from)
     if date_to:
@@ -212,11 +219,14 @@ def transfer_list(request, country_slug):
     qs = qs.order_by("-transfer_date", "-id")
 
     confirmed = Transfer.STATUS_CONFIRMED
-    kpi_total = Transfer.objects.filter(country=country).count()
-    kpi_confirmed = Transfer.objects.filter(country=country, status=confirmed).count()
-    kpi_drafts = Transfer.objects.filter(country=country, status=Transfer.STATUS_DRAFT).count()
-    kpi_positions = TransferItem.objects.filter(
-        transfer__country=country, transfer__status=confirmed
+    _kpi = scope_any_location(Transfer.objects.filter(country=country), request.user)
+    kpi_total = _kpi.count()
+    kpi_confirmed = _kpi.filter(status=confirmed).count()
+    kpi_drafts = _kpi.filter(status=Transfer.STATUS_DRAFT).count()
+    kpi_positions = scope_any_location(
+        TransferItem.objects.filter(transfer__country=country, transfer__status=confirmed),
+        request.user,
+        fields=("transfer__from_warehouse", "transfer__to_warehouse"),
     ).count()
 
     paginator = Paginator(qs, per_page)
@@ -264,6 +274,11 @@ def transfer_detail(request, country_slug, transfer_id):
     show_money = _show_money(request)
 
     transfer = get_object_or_404(Transfer, id=transfer_id, country=country)
+    _ids = user_location_ids(request.user)  # None = супер-админ
+    if (_ids is not None and transfer.from_warehouse_id not in _ids
+            and transfer.to_warehouse_id not in _ids
+            and transfer.created_by_id != request.user.id):
+        return redirect(f"/c/{country.slug}/transfers/")
     is_draft = transfer.status == Transfer.STATUS_DRAFT
 
     profile = getattr(request.user, "profile", None)
@@ -308,7 +323,10 @@ def transfer_detail(request, country_slug, transfer_id):
             if is_kitchen:
                 transfer.from_warehouse = kitchen_location
             else:
-                transfer.from_warehouse = Location.objects.filter(id=from_id, country=country).first() if from_id else None
+                _f = Location.objects.filter(id=from_id, country=country).first() if from_id else None
+                if _f and _ids is not None and _f.id not in _ids:
+                    _f = None  # нельзя отправлять с чужого склада
+                transfer.from_warehouse = _f
             transfer.to_warehouse = Location.objects.filter(id=to_id, country=country).first() if to_id else None
             transfer.transfer_date = request.POST.get("transfer_date") or transfer.transfer_date
             transfer.comment = (request.POST.get("comment") or "").strip()
@@ -325,7 +343,10 @@ def transfer_detail(request, country_slug, transfer_id):
                 if is_kitchen:
                     transfer.from_warehouse = kitchen_location
                 else:
-                    transfer.from_warehouse = Location.objects.filter(id=hf, country=country).first() if hf else transfer.from_warehouse
+                    _f = Location.objects.filter(id=hf, country=country).first() if hf else transfer.from_warehouse
+                    if _f and _ids is not None and _f.id not in _ids:
+                        _f = transfer.from_warehouse  # не переключаем на чужой склад
+                    transfer.from_warehouse = _f
                 transfer.to_warehouse = Location.objects.filter(id=ht, country=country).first() if ht else transfer.to_warehouse
                 if request.POST.get("hdr_date"):
                     transfer.transfer_date = request.POST.get("hdr_date")

@@ -21,6 +21,7 @@ from .views import (
     get_country,
     require_section_access,
 )
+from .branch_scope import scope_by_location, user_location_ids
 
 
 def _sync_writeoff_movement(writeoff, country, user):
@@ -196,11 +197,15 @@ def writeoff_list(request, country_slug):
         country=country,
         writeoff_date__gte=date_from,
     ).order_by("-writeoff_date", "-created_at")
+    writeoffs = scope_by_location(writeoffs, request.user)  # филиалы пользователя
 
     products = Product.objects.filter(country=country).order_by("name")
     preparations = Preparation.objects.filter(country=country).order_by("name")
 
     locations = Location.objects.filter(country=country).order_by("name")
+    _loc_ids = user_location_ids(request.user)
+    if _loc_ids is not None:
+        locations = locations.filter(id__in=_loc_ids)
     is_kitchen = request.user.profile.is_kitchen_staff()
     profile_location_id = request.user.profile.location_id
 
@@ -246,6 +251,7 @@ def writeoff_analytics(request, country_slug):
         writeoff_date__gte=date_from,
         writeoff_date__lte=date_to,
     )
+    writeoffs = scope_by_location(writeoffs, request.user)  # филиалы пользователя
 
     if item_type:
         writeoffs = writeoffs.filter(item_type=item_type)

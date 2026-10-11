@@ -46,6 +46,7 @@ from .views import (
     require_section_access,
     user_can_edit,
 )
+from .branch_scope import scope_by_location, scope_locations, user_location_ids
 
 
 def _fmt_money(value):
@@ -213,6 +214,9 @@ def inventory_list(request, country_slug):
             warehouse = Location.objects.filter(
                 id=request.POST.get("warehouse_id"), country=country
             ).first()
+            _ids = user_location_ids(request.user)
+            if warehouse and _ids is not None and warehouse.id not in _ids:
+                warehouse = None  # нельзя создавать инвентаризацию по чужому филиалу
             if warehouse:
                 inv_date = _parse_date(request.POST.get("inventory_date")) or timezone.now().date()
                 with transaction.atomic():
@@ -263,6 +267,7 @@ def inventory_list(request, country_slug):
         .select_related("warehouse", "created_by")
         .annotate(items_count=Count("items"))
     )
+    qs = scope_by_location(qs, request.user, field="warehouse")  # филиалы пользователя
     if date_from:
         qs = qs.filter(inventory_date__gte=date_from)
     if date_to:
@@ -275,12 +280,15 @@ def inventory_list(request, country_slug):
         qs = qs.filter(Q(document_number__icontains=search) | Q(comment__icontains=search))
     qs = qs.order_by("-inventory_date", "-id")
 
-    kpi_total = Inventory.objects.filter(country=country).count()
-    kpi_in_work = Inventory.objects.filter(
-        country=country, status__in=[Inventory.STATUS_DRAFT, Inventory.STATUS_IN_PROGRESS]
+    _kpi = scope_by_location(
+        Inventory.objects.filter(country=country), request.user, field="warehouse"
+    )
+    kpi_total = _kpi.count()
+    kpi_in_work = _kpi.filter(
+        status__in=[Inventory.STATUS_DRAFT, Inventory.STATUS_IN_PROGRESS]
     ).count()
-    kpi_awaiting = Inventory.objects.filter(country=country, status=Inventory.STATUS_AWAITING).count()
-    kpi_confirmed = Inventory.objects.filter(country=country, status=Inventory.STATUS_CONFIRMED).count()
+    kpi_awaiting = _kpi.filter(status=Inventory.STATUS_AWAITING).count()
+    kpi_confirmed = _kpi.filter(status=Inventory.STATUS_CONFIRMED).count()
 
     paginator = Paginator(qs, per_page)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
@@ -302,7 +310,7 @@ def inventory_list(request, country_slug):
         "page_obj": page_obj,
         "total_count": paginator.count,
         "base_qs": base_qs,
-        "warehouses": Location.objects.filter(country=country).order_by("name"),
+        "warehouses": scope_locations(Location.objects.filter(country=country).order_by("name"), request.user),
         "statuses": Inventory.STATUS_CHOICES,
         "date_from": date_from, "date_to": date_to, "warehouse_id": warehouse_id,
         "status": status, "search": search, "per_page": per_page,
@@ -323,6 +331,9 @@ def inventory_count(request, country_slug, inventory_id):
         return access_error
 
     inventory = get_object_or_404(Inventory, id=inventory_id, country=country)
+    _ids = user_location_ids(request.user)
+    if _ids is not None and inventory.warehouse_id not in _ids and inventory.created_by_id != request.user.id:
+        return redirect(f"/c/{country.slug}/inventory/")
     editable = inventory.status in (Inventory.STATUS_DRAFT, Inventory.STATUS_IN_PROGRESS)
 
     if request.method == "POST" and editable:
@@ -553,6 +564,9 @@ def inventory_detail(request, country_slug, inventory_id):
 
     can_edit = user_can_edit(request.user)
     inventory = get_object_or_404(Inventory, id=inventory_id, country=country)
+    _ids = user_location_ids(request.user)
+    if _ids is not None and inventory.warehouse_id not in _ids and inventory.created_by_id != request.user.id:
+        return redirect(f"/c/{country.slug}/inventory/")
 
     # Аналитика — интерфейс менеджера. Повар (без прав) уходит на форму подсчёта.
     if not can_edit:

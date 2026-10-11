@@ -36,6 +36,7 @@ from .views import (
     get_country,
     require_section_access,
 )
+from .branch_scope import scope_by_location, scope_locations
 
 
 def _fmt_money(value):
@@ -89,10 +90,11 @@ def stock_list(request, country_slug):
     if per_page not in (25, 50, 100):
         per_page = 50
 
-    locations = Location.objects.filter(country=country).order_by("name")
+    locations = scope_locations(Location.objects.filter(country=country).order_by("name"), request.user)
     loc_name = {loc.id: loc.name for loc in locations}
 
     base = StockMovement.objects.filter(country=country)
+    base = scope_by_location(base, request.user, field="warehouse")  # филиалы пользователя
     if warehouse_id:
         base = base.filter(warehouse_id=warehouse_id)
 
@@ -325,6 +327,7 @@ def stock_movements(request, country_slug):
         .filter(country=country)
         .select_related("warehouse", "product", "preparation", "created_by")
     )
+    qs = scope_by_location(qs, request.user, field="warehouse")  # филиалы пользователя
     if date_from:
         qs = qs.filter(movement_datetime__date__gte=date_from)
     if date_to:
@@ -404,7 +407,7 @@ def stock_movements(request, country_slug):
         "page_obj": page_obj,
         "total_count": paginator.count,
         "base_qs": base_qs,
-        "warehouses": Location.objects.filter(country=country).order_by("name"),
+        "warehouses": scope_locations(Location.objects.filter(country=country).order_by("name"), request.user),
         "movement_types": StockMovement.MOVEMENT_TYPE_CHOICES,
         "source_types": StockMovement.SOURCE_TYPE_CHOICES,
         "date_from": date_from, "date_to": date_to, "warehouse_id": warehouse_id,
@@ -444,8 +447,11 @@ def stock_product_detail(request, country_slug, product_id):
     # остатки по складам
     loc_name = {l.id: l.name for l in Location.objects.filter(country=country)}
     balances = (
-        StockMovement.objects
-        .filter(country=country, item_type=StockMovement.ITEM_TYPE_PRODUCT, product=product)
+        scope_by_location(
+            StockMovement.objects
+            .filter(country=country, item_type=StockMovement.ITEM_TYPE_PRODUCT, product=product),
+            request.user, field="warehouse",
+        )
         .values("warehouse_id").annotate(qty=Sum("quantity_delta"))
     )
     wh_rows = []
@@ -477,8 +483,11 @@ def stock_product_detail(request, country_slug, product_id):
     # последние движения
     movements = []
     for m in (
-        StockMovement.objects
-        .filter(country=country, item_type=StockMovement.ITEM_TYPE_PRODUCT, product=product)
+        scope_by_location(
+            StockMovement.objects
+            .filter(country=country, item_type=StockMovement.ITEM_TYPE_PRODUCT, product=product),
+            request.user, field="warehouse",
+        )
         .select_related("warehouse", "created_by")
         .order_by("-movement_datetime", "-id")[:100]
     ):

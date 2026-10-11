@@ -39,3 +39,33 @@ def user_allowed_locations(user, country):
     if ids is None:
         return qs
     return qs.filter(id__in=list(ids))
+
+
+def scope_locations(location_qs, user):
+    """Сузить справочник складов/филиалов (Location) до филиалов пользователя.
+    None из user_location_ids = полный доступ (супер-админ)."""
+    ids = user_location_ids(user)
+    return location_qs if ids is None else location_qs.filter(id__in=list(ids))
+
+
+def scope_any_location(qs, user, fields=("from_warehouse", "to_warehouse")):
+    """Документ виден, если ЛЮБОЙ из складов-полей принадлежит филиалам
+    пользователя (хаб-правило для перемещений). None = полный доступ."""
+    ids = user_location_ids(user)
+    if ids is None:
+        return qs
+    from django.db.models import Q
+    cond = Q()
+    for f in fields:
+        cond |= Q(**{f"{f}__in": list(ids)})
+    return qs.filter(cond)
+
+
+def scope_if_field(qs, user, field="location"):
+    """Как scope_by_location, но тихо пропускает фильтр, если у модели нет
+    такого поля (например, расход без привязки к филиалу)."""
+    try:
+        qs.model._meta.get_field(field)
+    except Exception:
+        return qs
+    return scope_by_location(qs, user, field=field)

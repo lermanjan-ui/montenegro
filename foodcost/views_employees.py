@@ -705,9 +705,9 @@ def schedule_page(request, country_slug):
                   "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 
     # сотрудники для попапа (все активные страны)
-    popup_employees = list(
-        Employee.objects.filter(country=country, is_active=True).order_by("position", "name")
-    )
+    _pe_qs = Employee.objects.filter(country=country, is_active=True).order_by("position", "name")
+    _pe_qs = scope_by_location(_pe_qs, request.user)
+    popup_employees = list(_pe_qs)
 
     # период недели (из ?week или сегодня) — для недельного вида и переключателя
     wref = _parse_date(request.GET.get("week")) or today
@@ -728,6 +728,9 @@ def schedule_page(request, country_slug):
     month_value = f"{my}-{mm:02d}"
 
     locations = Location.objects.filter(country=country, is_active=True).order_by("name")
+    _loc_ids = user_location_ids(request.user)
+    if _loc_ids is not None:
+        locations = locations.filter(id__in=_loc_ids)
 
     common = {
         "country": country,
@@ -769,6 +772,7 @@ def schedule_page(request, country_slug):
         emp_qs = Employee.objects.filter(country=country, is_active=True).select_related("location")
         if location_id:
             emp_qs = emp_qs.filter(location_id=location_id)
+        emp_qs = scope_by_location(emp_qs, request.user)
         employees = list(emp_qs.order_by("position", "name"))
 
         week_end = monday + _dt.timedelta(days=6)
@@ -777,6 +781,7 @@ def schedule_page(request, country_slug):
         ).exclude(status=EmployeeShift.STATUS_CANCELLED).select_related("location", "employee")
         if location_id:
             shift_qs = shift_qs.filter(location_id=location_id)
+        shift_qs = scope_by_location(shift_qs, request.user)
 
         shift_map = {}
         day_hours = {d.isoformat(): Decimal(0) for d in days}
@@ -824,6 +829,7 @@ def schedule_page(request, country_slug):
     ).exclude(status=EmployeeShift.STATUS_CANCELLED).select_related("location", "employee").order_by("start_time", "id")
     if location_id:
         shift_qs = shift_qs.filter(location_id=location_id)
+    shift_qs = scope_by_location(shift_qs, request.user)
 
     by_day = {}
     for s in shift_qs:

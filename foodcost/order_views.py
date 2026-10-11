@@ -38,7 +38,10 @@ from .views import (
     require_section_access,
     user_can_edit,
 )
+from .branch_scope import scope_by_location, scope_locations, user_location_ids
 
+
+from .branch_scope import scope_by_location, scope_locations, scope_if_field, user_location_ids
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +132,7 @@ def order_list(request, country_slug):
         )
         .order_by("-created_at")
     )
+    orders = scope_by_location(orders, request.user, field="location")  # филиалы пользователя
 
     active_orders = orders.filter(is_cancelled=False)
 
@@ -153,10 +157,10 @@ def order_list(request, country_slug):
     
     locations_summary = []
 
-    locations = Location.objects.filter(
+    locations = scope_locations(Location.objects.filter(
         country=country,
         is_active=True
-    ).order_by("name")
+    ).order_by("name"), request.user)
 
     for location in locations:
         location_orders = orders.filter(location=location)
@@ -204,6 +208,7 @@ def orders_count(request, country_slug):
 
     today = timezone.localdate()
     qs = Order.objects.filter(country=country, order_date__date=today)
+    qs = scope_by_location(qs, request.user, field="location")  # филиалы пользователя
 
     agg = qs.aggregate(n=Count("id"), last=Max("id"))
     payload = {
@@ -276,6 +281,7 @@ def order_all_list(request, country_slug):
         )
         .order_by("-order_date")
     )
+    orders = scope_by_location(orders, request.user, field="location")  # филиалы пользователя
 
     date_from = request.GET.get("date_from")
     date_to = request.GET.get("date_to")
@@ -334,10 +340,10 @@ def order_all_list(request, country_slug):
         for order in active_orders
     )
 
-    locations = Location.objects.filter(
+    locations = scope_locations(Location.objects.filter(
         country=country,
         is_active=True
-    ).order_by("name")
+    ).order_by("name"), request.user)
 
     return render(
         request,
@@ -402,6 +408,9 @@ def order_create(request, country_slug):
                 id=request.POST.get("location_id"),
                 country=country
             )
+            _ids = user_location_ids(request.user)
+            if _ids is not None and location.id not in _ids:
+                return HttpResponseForbidden("Нельзя оформлять заказ на чужой филиал")
 
         if request.POST.get("source_id"):
             source = get_object_or_404(
@@ -668,7 +677,7 @@ def order_create(request, country_slug):
     return render(request, "foodcost/order_create.html", {
         "country": country,
         "dishes": dishes,
-        "locations": locations,
+        "locations": scope_locations(locations, request.user),
         "payment_methods": payment_methods,
         "order_sources": order_sources,
         "delivery_providers": delivery_providers,
@@ -694,6 +703,9 @@ def order_detail(request, country_slug, order_id):
         id=order_id,
         country=country
     )
+    _ids = user_location_ids(request.user)  # None = супер-админ / все филиалы
+    if _ids is not None and order.location_id not in _ids and order.created_by_id != request.user.id:
+        return redirect(f"/c/{country.slug}/orders/")
 
     # Запоминаем, был ли заказ отменён ДО этой правки — чтобы поймать именно
     # переход «не отменён → отменён» и отправить компенсирующий Meta Refund
@@ -751,6 +763,9 @@ def order_detail(request, country_slug, order_id):
                 id=request.POST.get("location_id"),
                 country=country
             )
+            _ids = user_location_ids(request.user)
+            if _ids is not None and location.id not in _ids:
+                return HttpResponseForbidden("Нельзя оформлять заказ на чужой филиал")
 
         if request.POST.get("source_id"):
             source = get_object_or_404(
@@ -1082,7 +1097,7 @@ def order_detail(request, country_slug, order_id):
         "order": order,
 
         "dishes": dishes,
-        "locations": locations,
+        "locations": scope_locations(locations, request.user),
         "payment_methods": payment_methods,
         "order_sources": order_sources,
         "delivery_providers": delivery_providers,
@@ -1155,6 +1170,9 @@ def customer_detail(request, country_slug, customer_id):
         id=customer_id,
         country=country,
     )
+    _ids = user_location_ids(request.user)  # None = супер-админ / все филиалы
+    if _ids is not None and not customer.orders.filter(location_id__in=_ids).exists():
+        return redirect(f"/c/{country.slug}/customers/")
 
     can_edit = user_can_edit(request.user)
 
@@ -1288,6 +1306,7 @@ def order_analytics(request, country_slug):
         )
         .order_by("-order_date")
     )
+    orders_qs = scope_by_location(orders_qs, request.user, field="location")  # филиалы пользователя
 
     # Единственный проход по заказам периода. list() кэширует результат в
     # самом queryset, поэтому передача orders_qs в шаблон не делает повторных
@@ -1355,11 +1374,13 @@ def order_analytics(request, country_slug):
     )[:10]
 
     writeoffs_cost = (
-        WriteOff.objects
-        .filter(
-            country=country,
-            writeoff_date__gte=date_from,
-            writeoff_date__lte=date_to,
+        scope_by_location(
+            WriteOff.objects.filter(
+                country=country,
+                writeoff_date__gte=date_from,
+                writeoff_date__lte=date_to,
+            ),
+            request.user, field="location",
         )
         .aggregate(total=Sum("cost"))["total"]
         or ZERO
@@ -1370,12 +1391,14 @@ def order_analytics(request, country_slug):
 
     def _expense(expense_type):
         return (
-            FinancialExpense.objects
-            .filter(
-                country=country,
-                expense_type=expense_type,
-                expense_date__gte=date_from,
-                expense_date__lte=date_to,
+            scope_if_field(
+                FinancialExpense.objects.filter(
+                    country=country,
+                    expense_type=expense_type,
+                    expense_date__gte=date_from,
+                    expense_date__lte=date_to,
+                ),
+                request.user, field="location",
             )
             .aggregate(total=Sum("amount"))["total"]
             or ZERO
@@ -1436,12 +1459,14 @@ def order_analytics(request, country_slug):
     active_customer_ids = {o.customer_id for o in active if o.customer_id is not None}
 
     prior_customer_ids = set(
-        Order.objects
-        .filter(
-            country=country,
-            is_cancelled=False,
-            order_date__date__lt=date_from,
-            customer_id__in=active_customer_ids,
+        scope_by_location(
+            Order.objects.filter(
+                country=country,
+                is_cancelled=False,
+                order_date__date__lt=date_from,
+                customer_id__in=active_customer_ids,
+            ),
+            request.user, field="location",
         )
         .values_list("customer_id", flat=True)
         .distinct()
@@ -1455,10 +1480,11 @@ def order_analytics(request, country_slug):
     # ---- сводка по филиалам (в памяти) ----
     locations_summary = []
 
-    locations = (
+    locations = scope_locations(
         Location.objects
         .filter(country=country, is_active=True)
-        .order_by("name")
+        .order_by("name"),
+        request.user,
     )
 
     for location in locations:
@@ -1634,12 +1660,14 @@ def order_analytics(request, country_slug):
     # ---- по часам: ОДИН группирующий запрос (ExtractHour даёт тот же
     #      tz-срез, что прежний created_at__hour) ----
     hour_rows = (
-        Order.objects
-        .filter(
-            country=country,
-            order_date__date__gte=date_from,
-            order_date__date__lte=date_to,
-            is_cancelled=False,
+        scope_by_location(
+            Order.objects.filter(
+                country=country,
+                order_date__date__gte=date_from,
+                order_date__date__lte=date_to,
+                is_cancelled=False,
+            ),
+            request.user, field="location",
         )
         .annotate(h=ExtractHour("order_date"))
         .values("h")
@@ -1673,11 +1701,13 @@ def order_analytics(request, country_slug):
     # ---- по дням: ОДИН группирующий запрос (TruncDate = тот же tz-срез,
     #      что прежний order_date__date) ----
     day_rows = (
-        Order.objects
-        .filter(
-            country=country,
-            order_date__date__gte=date_from,
-            order_date__date__lte=date_to,
+        scope_by_location(
+            Order.objects.filter(
+                country=country,
+                order_date__date__gte=date_from,
+                order_date__date__lte=date_to,
+            ),
+            request.user, field="location",
         )
         .annotate(d=TruncDate("order_date"))
         .values("d")
@@ -1929,6 +1959,11 @@ def customer_list(request, country_slug):
         )
     )
 
+    _ids = user_location_ids(request.user)  # None = все филиалы (супер-админ)
+    if _ids is not None:
+        _branch_customers = Order.objects.filter(location_id__in=_ids).values("customer_id")
+        customers = customers.filter(id__in=_branch_customers)
+
     if search:
         customers = customers.filter(
             Q(name__icontains=search) | Q(phone__icontains=search)
@@ -2036,6 +2071,8 @@ def customer_list(request, country_slug):
 
     # ---- KPI: фиксированное число запросов, по всей базе страны ----
     base = Customer.objects.filter(country=country)
+    if _ids is not None:
+        base = base.filter(id__in=Order.objects.filter(location_id__in=_ids).values("customer_id"))
 
     cust_agg = base.aggregate(
         total=Count("pk"),
@@ -2170,6 +2207,7 @@ def lunch_orders_list(request, country_slug):
         .order_by("-order_date")
         .distinct()
     )
+    orders = scope_by_location(orders, request.user, field="location")  # филиалы пользователя
 
     date_from = request.GET.get("date_from")
     date_to = request.GET.get("date_to")
@@ -2209,10 +2247,10 @@ def lunch_orders_list(request, country_slug):
         Decimal("0"),
     )
 
-    locations = Location.objects.filter(
+    locations = scope_locations(Location.objects.filter(
         country=country,
         is_active=True
-    ).order_by("name")
+    ).order_by("name"), request.user)
 
     return render(
         request,
