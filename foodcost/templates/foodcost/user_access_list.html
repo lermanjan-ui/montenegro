@@ -109,10 +109,10 @@
 
 .edit-panel{ display:none; padding:18px; background:var(--fc-card-soft); border-top:1px solid var(--fc-border); }
 .user-card.editing .edit-panel{ display:block; }
-.edit-main-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.edit-main-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
 
 /* ---- access panels / grouped sections ---- */
-.access-grid{ display:grid; grid-template-columns:260px 1fr; gap:16px; margin:6px 0 16px; }
+.access-grid{ display:grid; grid-template-columns:minmax(190px,230px) minmax(190px,230px) 1fr; gap:16px; margin:6px 0 16px; }
 .checkbox-panel{ background:var(--fc-card-soft); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); padding:16px; }
 .checkbox-title{ font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--fc-muted); margin-bottom:12px; }
 .checkboxes{ display:flex; flex-direction:column; gap:10px; }
@@ -121,7 +121,7 @@
 .sec-group-title{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:700; color:var(--fc-text); margin-bottom:10px; }
 .sec-group-title svg{ width:16px; height:16px; color:var(--fc-muted); }
 .sec-items{ display:flex; flex-direction:column; gap:10px; }
-.create-top-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:6px; }
+.create-top-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:6px; }
 .pw-wrap{ position:relative; }
 .pw-wrap .pw-eye{ position:absolute; right:6px; top:50%; transform:translateY(-50%); height:30px!important; width:34px!important; padding:0!important; border:0!important; background:transparent!important; color:var(--fc-muted)!important; }
 
@@ -226,12 +226,14 @@ details > summary::-webkit-details-marker{ display:none; }
                         </div>
 
                         <div>
-                            <div class="small-label">Филиал</div>
+                            <div class="small-label">Филиалы</div>
                             <div class="country-list">
-                                {% if user.profile.location %}
+                                {% if user.profile.locations.all %}
+                                    {% for loc in user.profile.locations.all %}{{ loc.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                {% elif user.profile.location %}
                                     {{ user.profile.location.name }}
                                 {% else %}
-                                    <span class="muted">Без филиала</span>
+                                    <span class="muted">Все филиалы</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -274,15 +276,6 @@ details > summary::-webkit-details-marker{ display:none; }
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div>
-                                    <label>Филиал</label>
-                                    <select name="location_id">
-                                        <option value="">Без филиала</option>
-                                        {% for location in locations %}
-                                            <option value="{{ location.id }}" {% if user.profile.location_id == location.id %}selected{% endif %}>{{ location.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
                             </div>
 
                             <div class="access-grid">
@@ -296,6 +289,19 @@ details > summary::-webkit-details-marker{ display:none; }
                                             </label>
                                         {% endfor %}
                                     </div>
+                                </div>
+
+                                <div class="checkbox-panel">
+                                    <div class="checkbox-title">Филиалы</div>
+                                    <div class="checkboxes">
+                                        {% for location in locations %}
+                                            <label class="check-row">
+                                                <input type="checkbox" name="locations" value="{{ location.id }}" {% if location in user.profile.locations.all or user.profile.location_id == location.id %}checked{% endif %}>
+                                                <span>{{ location.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <p class="muted" style="margin-top:10px;font-size:12px;">Пусто = доступ ко всем филиалам.</p>
                                 </div>
 
                                 <div class="checkbox-panel">
@@ -365,15 +371,6 @@ details > summary::-webkit-details-marker{ display:none; }
                         {% endfor %}
                     </select>
                 </div>
-                <div>
-                    <label>Филиал</label>
-                    <select name="location_id">
-                        <option value="">Без филиала</option>
-                        {% for location in locations %}
-                            <option value="{{ location.id }}">{{ location.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
             </div>
 
             <div class="access-grid">
@@ -387,6 +384,19 @@ details > summary::-webkit-details-marker{ display:none; }
                             </label>
                         {% endfor %}
                     </div>
+                </div>
+
+                <div class="checkbox-panel">
+                    <div class="checkbox-title">Филиалы</div>
+                    <div class="checkboxes">
+                        {% for location in locations %}
+                            <label class="check-row">
+                                <input type="checkbox" name="locations" value="{{ location.id }}">
+                                <span>{{ location.name }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    <p class="muted" style="margin-top:10px;font-size:12px;">Пусто = доступ ко всем филиалам.</p>
                 </div>
 
                 <div class="checkbox-panel">

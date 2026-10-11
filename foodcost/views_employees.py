@@ -19,6 +19,7 @@ from .models import (
 )
 
 from .views import get_country, require_section_access
+from .branch_scope import scope_by_location, user_location_ids
 
 
 def clean_decimal(value):
@@ -928,6 +929,8 @@ def shifts_journal(request, country_slug):
     if emp_id:
         qs = qs.filter(employee_id=emp_id)
 
+    qs = scope_by_location(qs, request.user)  # филиалы пользователя
+
     rows = []
     total_hours = Decimal(0)
     in_progress = 0
@@ -949,6 +952,13 @@ def shifts_journal(request, country_slug):
             "status_label": s.get_status_display(),
         })
 
+    _loc_ids = user_location_ids(request.user)
+    _locs = Location.objects.filter(country=country, is_active=True).order_by("name")
+    _emps = Employee.objects.filter(country=country, is_active=True).order_by("name")
+    if _loc_ids is not None:
+        _locs = _locs.filter(id__in=_loc_ids)
+        _emps = _emps.filter(location_id__in=_loc_ids)
+
     return render(request, "foodcost/shifts.html", {
         "country": country,
         "can_edit": can_edit,
@@ -960,8 +970,8 @@ def shifts_journal(request, country_slug):
         "date_to": date_to.isoformat(),
         "location_id": location_id,
         "emp_id": emp_id,
-        "locations": Location.objects.filter(country=country, is_active=True).order_by("name"),
-        "employees": Employee.objects.filter(country=country, is_active=True).order_by("name"),
+        "locations": _locs,
+        "employees": _emps,
     })
 
 

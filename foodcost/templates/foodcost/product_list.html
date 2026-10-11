@@ -277,6 +277,7 @@
             {% with price=product.get_price %}
             <div class="product-row">
                 <div class="product-name">{{ product.name }}</div>
+                {% if product.category %}<div style="font-size:12px;color:var(--muted);margin-top:2px;">{{ product.category.name }} · {{ product.category.get_accounting_type_display }}</div>{% endif %}
 
                 <div>
                     <span class="badge">{{ product.unit }}</span>

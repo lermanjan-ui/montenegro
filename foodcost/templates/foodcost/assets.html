@@ -1,0 +1,43 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Активы · {{ country.name }}{% endblock %}
+{% block content %}
+<style>
+.as-note{color:var(--muted);margin:0 0 16px;max-width:70ch;}
+.as-sum{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.as-tile{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 18px;min-width:160px;}
+.as-tile .n{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;}
+.as-tile .l{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-top:2px;}
+table{width:100%;border-collapse:collapse;}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);font-size:14px;}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;}
+tr:last-child td{border-bottom:0;}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+.badge{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--primary-soft);color:var(--primary);}
+.muted{color:var(--muted);}
+</style>
+
+<h1 style="margin:0 0 4px;">Активы (основные средства)</h1>
+<p class="as-note">Товары из категорий с типом учёта «Основное средство»: оборудование, мебель и т.п. На баланс, а не в расход. Стоимость — последняя цена закупки.</p>
+
+<div class="as-sum">
+  <div class="as-tile"><div class="n">{{ count }}</div><div class="l">Позиций</div></div>
+  <div class="as-tile"><div class="n">{{ total|floatformat:0 }}</div><div class="l">Стоимость, UZS</div></div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <table>
+    <thead><tr><th>Наименование</th><th>Категория</th><th class="num">Стоимость</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td style="font-weight:600;">{{ r.product.name }}</td>
+        <td><span class="badge">{{ r.category.name }}</span></td>
+        <td class="num">{% if r.value %}{{ r.value|floatformat:0 }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" style="padding:22px;text-align:center;" class="muted">Активов пока нет. Отметьте товары категорией с типом «Основное средство».</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

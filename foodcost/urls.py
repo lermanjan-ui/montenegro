@@ -39,7 +39,37 @@ from . import views_tilda_import
 from . import views_payme_merge
 
 
+from . import views_catalog
+
+from . import views_assets
+from . import views_auth
+from . import platform_console
+from . import views_account
+from . import views_company
+from . import views_team
+from . import views_subscription
+from . import views_landing
+
 urlpatterns = [
+    # ===== Регистрация (по коду) =====
+    path("signup/", views_auth.signup, name="signup"),
+    path("signup/verify/", views_auth.signup_verify, name="signup_verify"),
+    # ===== Публичный лендинг =====
+    path("welcome/", views_landing.landing, name="landing"),
+    # ===== Консоль супер-админа =====
+    path("platform/", platform_console.platform_dashboard, name="platform_dashboard"),
+    path("platform/clients/new/", platform_console.platform_client_create, name="platform_client_create"),
+    path("platform/clients/<slug:country_slug>/", platform_console.platform_client_detail, name="platform_client_detail"),
+    path("platform/clients/<slug:country_slug>/open/", platform_console.platform_open_client, name="platform_open_client"),
+    path("platform/team/", platform_console.platform_team, name="platform_team"),
+    path("platform/team/<int:user_id>/remove/", platform_console.platform_team_remove, name="platform_team_remove"),
+    # ===== Кабинеты клиента =====
+    path("c/<slug:country_slug>/account/", views_account.my_account, name="my_account"),
+    path("c/<slug:country_slug>/company/", views_company.company_profile, name="company_profile"),
+    path("c/<slug:country_slug>/team/", views_team.company_team, name="company_team"),
+    path("c/<slug:country_slug>/subscription/", views_subscription.my_subscription, name="my_subscription"),
+    path("c/<slug:country_slug>/assets/", views_assets.assets, name="assets"),
+    path("c/<slug:country_slug>/product-categories/", views_catalog.product_categories, name="product_categories"),
     
     # TEMPORARY — Tilda CSV import (superuser-only). After the import
     # is done, REMOVE this route and the views_tilda_import module so
@@ -64,7 +94,9 @@ urlpatterns = [
         name="tilda_webhook",
     ),
     
-    path("login/", views.login_page, name="login_page"),
+    path("login/", views_auth.login_otp, name="login_page"),
+    path("login/verify/", views_auth.login_verify, name="login_verify"),
+    path("login/password/", views.login_page, name="login_password"),
     path("logout/", views.logout_page, name="logout_page"),
     
     

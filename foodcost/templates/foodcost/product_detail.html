@@ -354,6 +354,20 @@
                 {% endif %}
             </div>
 
+            <div>
+                <label>Категория товара</label>
+                {% if can_edit %}
+                <select name="category_id">
+                    <option value="">— без категории (ингредиент) —</option>
+                    {% for c in product_categories %}
+                    <option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>{{ c.name }} · {{ c.get_accounting_type_display }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="text" value="{% if product.category %}{{ product.category.name }}{% else %}—{% endif %}" readonly>
+                {% endif %}
+            </div>
+
             {% if can_edit %}
                 <button type="submit">Сохранить</button>
             {% endif %}

@@ -1,0 +1,15 @@
+ФИКС: module 'foodcost.views_landing' has no attribute 'landing'
+================================================================
+Твой foodcost/views_landing.py на диске — пустой/старый, без функции landing,
+из-за этого падает ВЕСЬ urls.py при старте. Этот архив кладёт корректную версию.
+
+Распаковать ИЗ КОРНЯ проекта (где manage.py):
+
+    tar xzf ~/Downloads/fc_landing_fix.tgz -C .
+
+Заменит/добавит:
+  • foodcost/views_landing.py                      — функция landing(request)
+  • foodcost/templates/foodcost/landing.html       — публичная страница /welcome/
+
+Затем:
+    python manage.py runserver     # должно подняться без ошибки

@@ -1,0 +1,79 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Моя подписка · {{ country.name }}{% endblock %}
+{% block content %}
+<style>
+.sb-row{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--border);}
+.sb-row:last-child{border-bottom:0;}
+.sb-row .k{color:var(--muted);font-weight:500;}
+.sb-row .v{font-weight:600;text-align:right;}
+.sb-badge{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;}
+.sb-ok{background:var(--green-soft);color:var(--primary);}
+.sb-warn{background:#FFF4D6;color:#9A6700;}
+.sb-off{background:var(--danger-soft);color:var(--danger);}
+.sb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.sb-chip{font-size:12px;font-weight:600;background:var(--primary-soft);color:var(--primary);padding:4px 10px;border-radius:999px;}
+.sb-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+table.sb{width:100%;border-collapse:collapse;}
+table.sb th,table.sb td{text-align:left;padding:10px 10px;border-bottom:1px solid var(--border);font-size:13px;}
+table.sb th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;}
+@media(max-width:820px){.sb-grid{grid-template-columns:1fr;}}
+</style>
+
+<h1 style="margin:0 0 4px;">Моя подписка</h1>
+<div style="color:var(--muted);margin-bottom:16px;">Компания: {{ country.name }}</div>
+
+<div class="sb-grid">
+  <div class="card">
+    <h2 style="margin-top:0;">Тариф и статус</h2>
+    <div class="sb-row">
+      <span class="k">Тариф</span>
+      <span class="v">{% if sub and sub.plan_id %}{{ sub.plan.name }}{% else %}—{% endif %}</span>
+    </div>
+    <div class="sb-row">
+      <span class="k">Статус</span>
+      <span class="v">
+        {% if not sub %}<span class="sb-badge sb-warn">Без подписки</span>
+        {% elif sub.status == "active" %}<span class="sb-badge sb-ok">Активна</span>
+        {% elif sub.status == "trial" %}<span class="sb-badge sb-warn">Триал</span>
+        {% else %}<span class="sb-badge sb-off">{{ sub.get_status_display }}</span>{% endif %}
+      </span>
+    </div>
+    {% if sub %}
+    <div class="sb-row"><span class="k">Триал до</span><span class="v">{{ sub.trial_ends_at|date:"d.m.Y"|default:"—" }}</span></div>
+    <div class="sb-row"><span class="k">Оплачено до</span><span class="v">{{ sub.current_period_end|date:"d.m.Y"|default:"—" }}</span></div>
+    {% endif %}
+    <div style="margin-top:14px;">
+      <div class="k" style="color:var(--muted);font-weight:500;">Доступные модули</div>
+      <div class="sb-chips">
+        {% for m in modules %}<span class="sb-chip">{{ m }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">Счета</h2>
+    {% if invoices %}
+    <table class="sb">
+      <thead><tr><th>Дата</th><th>Период</th><th>Сумма</th><th>Статус</th></tr></thead>
+      <tbody>
+        {% for inv in invoices %}
+        <tr>
+          <td>{{ inv.created_at|date:"d.m.Y" }}</td>
+          <td>{{ inv.period_start|date:"d.m.y" }}–{{ inv.period_end|date:"d.m.y" }}</td>
+          <td style="font-weight:600;">{{ inv.amount|floatformat:0 }} UZS</td>
+          <td>
+            {% if inv.status == "paid" %}<span class="sb-badge sb-ok">Оплачен</span>
+            {% elif inv.status == "pending" %}<span class="sb-badge sb-warn">Ожидает</span>
+            {% else %}<span class="sb-badge sb-off">Аннулирован</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted);">Счетов пока нет.</p>
+    {% endif %}
+    <p style="color:var(--muted);font-size:13px;margin-top:14px;">По вопросам оплаты и смены тарифа свяжитесь с поддержкой платформы.</p>
+  </div>
+</div>
+{% endblock %}

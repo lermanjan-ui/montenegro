@@ -1,0 +1,29 @@
+ФАЗА 1 «Пользователи + Доступы»: вторая ось доступа — ФИЛИАЛЫ
+=============================================================
+Доступ становится двумерным: ЧТО (секции) × ГДЕ (филиалы).
+Поведение экранов НЕ меняется — просто в карточке сотрудника появляется
+мультивыбор филиалов. Реальное ограничение экранов — Фаза 2.
+
+Распаковать ИЗ КОРНЯ проекта (где manage.py):
+
+    tar xzf ~/Downloads/fc_branch_p1.tgz -C .
+
+Положит/заменит:
+  • apply_branch_phase1.py                              — патч (в корень)
+  • foodcost/templates/foodcost/user_access_list.html   — редактор: мультивыбор филиалов
+  • foodcost/tests/test_branch_access.py                — тест
+
+Применить:
+
+    python apply_branch_phase1.py          # патчит models.py + views.py, создаёт branch_scope.py
+    python manage.py makemigrations foodcost
+    python manage.py migrate
+    python manage.py test foodcost.tests.test_branch_access
+    python manage.py runserver
+
+Что проверить глазами на /c/<slug>/users/:
+  • в карточке пользователя и в форме создания — панель «Филиалы» (чекбоксы)
+    рядом со «Странами»; пусто = доступ ко всем филиалам;
+  • в списке колонка показывает набор филиалов (или «Все филиалы»).
+
+Патч идемпотентный. Расчёты и операционные экраны не тронуты.

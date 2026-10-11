@@ -1,0 +1,22 @@
+ВОССТАНОВЛЕНИЕ ПОСЛЕ git checkout
+=================================
+Распакуй архив ИЗ КОРНЯ проекта (там, где manage.py):
+
+    tar xzf ~/Downloads/fc_recovery.tgz -C .
+
+Это положит/заменит:
+  • foodcost/urls.py                      — все маршруты (платформа, вход по коду,
+                                            кабинет, компания, команда, подписка,
+                                            активы, категории товаров)
+  • foodcost/templates/foodcost/base.html — меню + выпадающий профиль
+  • apply_roles.py                        — патч ролей платформы
+
+Затем, тоже из корня:
+
+    python apply_roles.py       # вернёт ROLE_SUPER_ADMIN / ROLE_PLATFORM_MANAGER
+    python manage.py runserver  # проверь
+
+И СРАЗУ ЗАФИКСИРУЙ, чтобы больше не терять:
+
+    git add -A
+    git commit -m "restore platform/auth/cabinet wiring after checkout"

@@ -60,6 +60,10 @@ class Product(models.Model):
         default=0,
     )
 
+    category = models.ForeignKey(
+        "ProductCategory", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="products")
+
     def __str__(self):
         return self.name
 
@@ -1129,12 +1133,14 @@ class Location(models.Model):
         return self.name
 
 class UserProfile(models.Model):
+    ROLE_PLATFORM_MANAGER = "platform_manager"
     ROLE_SUPER_ADMIN = "super_admin"
     ROLE_ADMIN = "admin"
     ROLE_VIEWER = "viewer"
     ROLE_KITCHEN_STAFF = "kitchen_staff"
 
     ROLE_CHOICES = [
+        (ROLE_PLATFORM_MANAGER, "Менеджер платформы"),
         (ROLE_SUPER_ADMIN, "Главный админ"),
         (ROLE_ADMIN, "Администратор"),
         (ROLE_VIEWER, "Просмотр"),
@@ -1226,6 +1232,14 @@ class UserProfile(models.Model):
         null=True,
         blank=True,
         related_name="user_profiles"
+    )
+
+    # Несколько филиалов на сотрудника (доступ к данным филиала).
+    # Пусто → ограничения нет (все филиалы). Back-compat со старым `location`.
+    locations = models.ManyToManyField(
+        Location,
+        blank=True,
+        related_name="staff_profiles",
     )
 
     def __str__(self):
@@ -5037,3 +5051,5 @@ from .models_lunch import Lunch, LunchSize, LunchSizeItem  # noqa: E402,F401
 from .models_lunch_sales import LunchSale, LunchSaleItem  # noqa: E402,F401
 
 from .models_integrations import TenantIntegrationSettings  # noqa: E402,F401
+
+from .models_catalog import ProductCategory  # noqa: E402,F401

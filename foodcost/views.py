@@ -681,7 +681,8 @@ def dish_detail(request, country_slug, dish_id):
 
     perms = compute_dish_permissions(request.user)
 
-    products = Product.objects.filter(country=country)
+    from .accounting import ingredient_product_qs  # B4: фильтр подбора ингредиентов
+    products = ingredient_product_qs(country)
     preparations = Preparation.objects.filter(country=country)
     employees = Employee.objects.filter(country=country)
     packagings = Packaging.objects.filter(country=country)
@@ -1752,6 +1753,14 @@ def product_detail(request, country_slug, product_id):
         if action == "save":
             product.name = request.POST.get("name")
             product.unit = request.POST.get("unit")
+            # категорию меняем только если поле реально пришло
+            if "category_id" in request.POST:
+                from .models_catalog import ProductCategory
+                _cid = request.POST.get("category_id") or None
+                if _cid and ProductCategory.objects.filter(id=_cid, country=country).exists():
+                    product.category_id = _cid
+                else:
+                    product.category = None
             product.save()
 
             price = request.POST.get("price")
@@ -1919,9 +1928,11 @@ def product_detail(request, country_slug, product_id):
                 "previous_foodcost": previous_foodcost,
             })
 
+    from .models_catalog import ProductCategory
     return render(request, "foodcost/product_detail.html", {
         "country": country,
         "product": product,
+        "product_categories": ProductCategory.objects.filter(country=country),
         "prices": prices,
         "current_price": current_price,
         "previous_price": previous_price,
@@ -1983,7 +1994,8 @@ def preparation_detail(request, country_slug, prep_id):
 
     preparation = get_object_or_404(Preparation, id=prep_id, country=country)
 
-    products = Product.objects.filter(country=country)
+    from .accounting import ingredient_product_qs  # B4: фильтр подбора ингредиентов
+    products = ingredient_product_qs(country)
     preparations = Preparation.objects.filter(country=country).exclude(id=preparation.id)
 
     if request.method == "POST":
@@ -2661,9 +2673,11 @@ def user_access_list(request, country_slug):
                 profile, created = UserProfile.objects.get_or_create(user=user)
                 profile.role = role
                 profile.allowed_sections = allowed_sections
-                profile.location_id = location_id or None
+                _loc_ids = request.POST.getlist("locations") or ([location_id] if location_id else [])
+                profile.location_id = (_loc_ids[0] if _loc_ids else None)
                 profile.save()
                 profile.countries.set(country_ids)
+                profile.locations.set(_loc_ids)
 
                 return redirect(f"/c/{country.slug}/users/")
 
@@ -2692,10 +2706,12 @@ def user_access_list(request, country_slug):
 
             profile.allowed_sections = allowed_sections
 
-            profile.location_id = location_id or None
+            _loc_ids = request.POST.getlist("locations") or ([location_id] if location_id else [])
+            profile.location_id = (_loc_ids[0] if _loc_ids else None)
 
             profile.save()
             profile.countries.set(country_ids)
+            profile.locations.set(_loc_ids)
             
 
             return redirect(f"/c/{country.slug}/users/")

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация · FoodCost</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root{--bg:#F7F8FA;--text:#111827;--muted:#667085;--border:#E5E7EB;--primary:#123B7A;--primary-dark:#0D2D5F;--primary-soft:#E7EDF7;--danger:#E23B3B;--danger-soft:#FDECEC;}
+*{box-sizing:border-box;}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);margin:0;color:var(--text);font-size:14px;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.wrap{width:100%;max-width:460px;}
+.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;margin-bottom:6px;}
+.brand .tag{font-size:11px;font-weight:600;color:var(--primary);background:var(--primary-soft);padding:2px 8px;border-radius:999px;}
+.lead{color:var(--muted);margin:0 0 18px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;}
+.field{margin-bottom:14px;}
+label{display:block;font-weight:600;font-size:13px;margin:0 0 6px;}
+input[type=text],input[type=email]{width:100%;height:42px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit;font-size:14px;}
+input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.channel{display:flex;gap:10px;}
+.channel label{flex:1;border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;margin:0;}
+.channel input{width:16px;height:16px;}
+.btn{width:100%;height:44px;background:var(--primary);color:#fff;border:0;border-radius:8px;font-weight:600;cursor:pointer;font-size:15px;margin-top:16px;}
+.btn:hover{background:var(--primary-dark);}
+.err{background:var(--danger-soft);color:var(--danger);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-weight:600;}
+.hint{color:var(--muted);font-size:12px;margin-top:6px;}
+.foot{text-align:center;color:var(--muted);margin-top:16px;font-size:13px;}
+.foot a{color:var(--primary);text-decoration:none;font-weight:600;}
+@media(max-width:480px){.row2,.channel{grid-template-columns:1fr;flex-direction:column;}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">FoodCost <span class="tag">для ресторанов</span></div>
+    <p class="lead">Создайте аккаунт компании — {{ trial_days }} дней бесплатно.</p>
+    <div class="card">
+      {% if error %}<div class="err">{{ error }}</div>{% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="field">
+          <label>Название компании</label>
+          <input type="text" name="company_name" value="{{ form.company_name }}" required placeholder="ООО «Navruz Catering»">
+        </div>
+        <div class="field">
+          <label>ИНН (СТИР)</label>
+          <input type="text" name="inn" value="{{ form.inn }}" required maxlength="9" inputmode="numeric" pattern="\d{9}" placeholder="9 цифр">
+          <div class="hint">9 цифр — реквизит юрлица</div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Телефон</label>
+            <input type="text" name="phone" value="{{ form.phone }}" required placeholder="+998 ..">
+          </div>
+          <div class="field">
+            <label>E-mail</label>
+            <input type="email" name="email" value="{{ form.email }}" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Куда прислать код подтверждения</label>
+          <div class="channel">
+            <label><input type="radio" name="channel" value="sms" {% if form.channel != "email" %}checked{% endif %}> По SMS</label>
+            <label><input type="radio" name="channel" value="email" {% if form.channel == "email" %}checked{% endif %}> На e-mail</label>
+          </div>
+          <div class="hint">Телефон и e-mail обязательны оба — код придёт на выбранный.</div>
+        </div>
+        <button class="btn" type="submit">Получить код</button>
+      </form>
+    </div>
+    <div class="foot">Уже есть аккаунт? <a href="/login/">Войти</a></div>
+  </div>
+</body>
+</html>

@@ -33,6 +33,7 @@ from .views import (
     get_country,
     require_section_access,
 )
+from .branch_scope import scope_by_location, user_location_ids
 
 
 def clean_decimal(value):
@@ -436,6 +437,8 @@ def shift_handover_list(request, country_slug):
         country=country
     )
 
+    handovers = scope_by_location(handovers, request.user)  # филиалы пользователя
+
     now = timezone.now()
 
     # Кухонный сотрудник видит передачи только за последние 23 часа и только
@@ -518,6 +521,8 @@ def shift_handover_admin(request, country_slug):
 
     )
 
+    handovers = scope_by_location(handovers, request.user)  # филиалы пользователя
+
     if location_id:
 
         handovers = handovers.filter(
@@ -539,6 +544,10 @@ def shift_handover_admin(request, country_slug):
         country=country
 
     ).order_by("name")
+
+    _loc_ids = user_location_ids(request.user)
+    if _loc_ids is not None:
+        locations = locations.filter(id__in=_loc_ids)
 
     return render(
 
