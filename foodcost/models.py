@@ -1225,6 +1225,11 @@ class UserProfile(models.Model):
         default=list,
         blank=True
     )
+
+    # Телефон пользователя кабинета (вход и восстановление по номеру).
+    # Нормализованный вид "+998...". Не уникальный на уровне БД (у части
+    # пользователей пусто); поиск при входе — по этому полю.
+    phone = models.CharField(max_length=40, blank=True, default="", db_index=True)
     
     location = models.ForeignKey(
         Location,
@@ -5053,3 +5058,5 @@ from .models_lunch_sales import LunchSale, LunchSaleItem  # noqa: E402,F401
 from .models_integrations import TenantIntegrationSettings  # noqa: E402,F401
 
 from .models_catalog import ProductCategory  # noqa: E402,F401
+
+from .models_invoices import SubscriptionInvoice  # noqa: E402,F401
