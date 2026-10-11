@@ -5,6 +5,7 @@ from . import order_views
 from . import views_techcards  # 🍳 просмотр техкарты «для повара»
 from . import views_dish_sales  # 📊 продаваемость блюд (CRM)
 from . import views_settings
+from . import views_integrations
 from . import promotions_views
 from . import views_homepage
 from . import writeoff_views
@@ -94,8 +95,9 @@ urlpatterns = [
         name="tilda_webhook",
     ),
     
-    path("login/", views_auth.login_otp, name="login_page"),
-    path("login/verify/", views_auth.login_verify, name="login_verify"),
+    path("login/", views_auth.login_password, name="login_page"),
+    path("login/forgot/", views_auth.forgot_password, name="forgot_password"),
+    path("login/forgot/verify/", views_auth.forgot_verify, name="forgot_verify"),
     path("login/password/", views.login_page, name="login_password"),
     path("logout/", views.logout_page, name="logout_page"),
     
@@ -286,6 +288,11 @@ urlpatterns = [
         "c/<slug:country_slug>/settings/",
         views_settings.settings_page,
         name="settings_page"
+    ),
+    path(
+        "c/<slug:country_slug>/settings/integrations/",
+        views_integrations.integration_settings_page,
+        name="integration_settings",
     ),
 
     # Категории блюд — отдельная страница (раньше блок в настройках).

@@ -16,7 +16,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);margin:0;color:
 .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;}
 .field{margin-bottom:14px;}
 label{display:block;font-weight:600;font-size:13px;margin:0 0 6px;}
-input[type=text],input[type=email]{width:100%;height:42px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit;font-size:14px;}
+input[type=text],input[type=email],input[type=password]{width:100%;height:42px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit;font-size:14px;}
 input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .channel{display:flex;gap:10px;}
@@ -58,13 +58,23 @@ input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--
             <input type="email" name="email" value="{{ form.email }}" required>
           </div>
         </div>
+        <div class="row2">
+          <div class="field">
+            <label>Пароль</label>
+            <input type="password" name="password" required minlength="6" placeholder="Не короче 6 символов">
+          </div>
+          <div class="field">
+            <label>Повторите пароль</label>
+            <input type="password" name="password2" required minlength="6" placeholder="Ещё раз">
+          </div>
+        </div>
         <div class="field">
           <label>Куда прислать код подтверждения</label>
           <div class="channel">
             <label><input type="radio" name="channel" value="sms" {% if form.channel != "email" %}checked{% endif %}> По SMS</label>
             <label><input type="radio" name="channel" value="email" {% if form.channel == "email" %}checked{% endif %}> На e-mail</label>
           </div>
-          <div class="hint">Телефон и e-mail обязательны оба — код придёт на выбранный.</div>
+          <div class="hint">Телефон и e-mail обязательны оба — код придёт на выбранный. Пароль понадобится для входа.</div>
         </div>
         <button class="btn" type="submit">Получить код</button>
       </form>
