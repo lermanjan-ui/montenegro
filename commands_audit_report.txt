@@ -1,0 +1,27 @@
+================================================================
+АУДИТ management-команд (шаг 3.4) — арендатор-контекст
+================================================================
+[GLOBAL?] 6
+    autoclose_shifts.py
+    cancel_stale_awaiting_payment.py
+    createadmin.py
+    fix_banner_urls.py
+    recalculate_orders_finance.py
+    send_pending_meta_purchases.py
+
+[SCOPED] 2
+    create_tenant.py
+    import_tilda_orders.py
+
+[PLATFORM] 1
+    seed_billing.py
+
+[READONLY] 4
+    autowriteoff_yesterday.py
+    import_tilda_analyze.py
+    push_ltv_audience.py
+    recompute_sales_all.py
+
+GLOBAL? — приоритет: команда ПИШЕТ в БД, но нигде не упоминает арендатора.
+Проверить: если трогает данные арендатора без скоупа — добавить аргумент
+--country и .filter(country=...). Если платформенное (общие справочники) — ок.

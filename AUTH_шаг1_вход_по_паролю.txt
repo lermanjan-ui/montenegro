@@ -1,0 +1,40 @@
+AUTH, шаг 1: вход по паролю + восстановление по коду
+=====================================================
+Модель: /login/ — e-mail/телефон/логин + пароль (все роли). Восстановление —
+код на e-mail/телефон → новый пароль. Регистрация с паролем — следующий шаг.
+
+ЗАВИСИМОСТИ (применить ДО этого, если ещё нет):
+  • поле UserProfile.phone + миграция (бандл fc_fix_phone.tgz);
+  • флаг в тестовом settings.py:
+        import sys as _sys
+        if "test" in _sys.argv:
+            OTP_EXPOSE_CODE_FOR_TESTING = True
+
+Применение из корня проекта:
+
+    tar xzf ~/Downloads/fc_auth_step1.tgz -C .
+    python apply_auth_password_login.py
+    python manage.py test foodcost.tests.test_auth_web
+
+Что кладёт архив (перезаписывает файлы — это осознанный рефактор):
+  • foodcost/views_auth.py                         — вход по паролю + forgot-флоу
+  • foodcost/templates/foodcost/login_password.html — форма входа (пароль)
+  • foodcost/templates/foodcost/forgot_password.html — запрос кода
+  • foodcost/templates/foodcost/forgot_verify.html   — код + новый пароль
+  • foodcost/tests/test_auth_web.py                — переписан под пароль+восстановление
+  • apply_auth_password_login.py                   — патч маршрутов в urls.py
+
+Маршруты после патча:
+  /login/               — вход по паролю
+  /login/forgot/        — запрос кода восстановления
+  /login/forgot/verify/ — код + новый пароль
+  /login/password/      — прежний вход персонала по логину/паролю (оставлен)
+Старый OTP-вход /login/verify/ убран.
+
+ВАЖНО по текущему состоянию: регистрация компании пока создаёт админа БЕЗ
+пароля (set_unusable_password) — такой пользователь задаёт первый пароль через
+«Забыли пароль?» (код на e-mail/телефон). Задание пароля прямо на регистрации
+сделаем следующим шагом — для него пришли foodcost/templates/foodcost/signup.html.
+
+Старые шаблоны login_otp.html / login_verify.html больше не используются
+(можно удалить позже, вручную — на работу не влияют).

@@ -1,0 +1,20 @@
+Включение флага OTP для тестов (OTP_EXPOSE_CODE_FOR_TESTING)
+============================================================
+Из корня проекта:
+
+    tar xzf ~/Downloads/fc_otp_flag.tgz -C .
+    python apply_add_otp_test_flag.py
+
+Скрипт сам найдёт твой Django-settings (settings.py с INSTALLED_APPS) и
+допишет в конец безопасный блок — флаг активен ТОЛЬКО при `manage.py test`,
+прод не затрагивается. venv/site-packages/.git пропускаются. Идемпотентно.
+
+ВАЖНО: это ВТОРОЙ из двух пред-шагов. Первый — поле UserProfile.phone + миграция:
+
+    tar xzf ~/Downloads/fc_fix_phone.tgz -C .
+    python apply_add_userprofile_phone.py
+    python manage.py makemigrations foodcost
+    python manage.py migrate
+
+После обоих:
+    python manage.py test foodcost.tests.test_auth_web

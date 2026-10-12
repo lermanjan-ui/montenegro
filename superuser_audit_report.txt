@@ -1,0 +1,50 @@
+======================================================================
+АУДИТ is_superuser (шаг 3.5) — read-only
+======================================================================
+[ALONE]  кандидаты (нет роли рядом): 11
+    foodcost/views_tilda_import.py:16: - @login_required + is_superuser check. Anyone without superuser
+    foodcost/views_tilda_import.py:64: if not request.user.is_superuser:
+    foodcost/views_employees.py:66: q = Q(profile__countries=country) | Q(is_superuser=True) | Q(employee_profile__country=country)
+    foodcost/tenant_guard.py:77: if user.is_superuser:
+    foodcost/branch_scope.py:10: """None  → все филиалы (супер-админ, is_superuser, или филиалы не назначены).
+    foodcost/views_account.py:56: if request.user.is_superuser:
+    foodcost/context_processors.py:43: if user.is_superuser:
+    foodcost/context_processors.py:60: _country = None if user.is_superuser else current_country(request)
+    foodcost/context_processors.py:63: if user.is_superuser or section not in _gated or _country is None:
+    foodcost/views_payme_merge.py:116: if not request.user.is_superuser:
+    foodcost/views.py:586: if user.is_superuser:
+
+[COMBINED] уже со связкой роли (ок): 22
+    foodcost/views_team.py:122: is_superuser=False, is_staff=False)
+    foodcost/views_team.py:167: .exclude(is_superuser=True)
+    foodcost/views_signup.py:68: is_superuser=False, is_staff=False)
+    foodcost/branch_scope.py:12: if getattr(user, "is_superuser", False):
+    foodcost/views_auth.py:273: is_superuser=False, is_staff=False)
+    foodcost/views_purchases.py:89: """Суперадмин = Django is_superuser ИЛИ UserProfile.role == super_admin.
+    foodcost/views_purchases.py:91: if getattr(user, "is_superuser", False):
+    foodcost/context_processors.py:8: if user.is_superuser:
+    foodcost/context_processors.py:22: if user.is_superuser:
+    foodcost/context_processors.py:86: "can_edit_orders": user.is_superuser or (
+    foodcost/views.py:101: if user.is_superuser:
+    foodcost/views.py:111: if user.is_superuser:
+    foodcost/views.py:121: if user.is_superuser:
+    foodcost/views.py:148: if request.user.is_superuser:
+    foodcost/views.py:648: if user.is_superuser:
+    foodcost/views.py:1505: request.user.is_superuser or (
+    foodcost/views.py:2105: if not (request.user.is_superuser or (
+    foodcost/views.py:2263: request.user.is_superuser or (
+    foodcost/views.py:2410: if not (request.user.is_superuser or (
+    foodcost/management/commands/createadmin.py:18: user.is_superuser = True
+    foodcost/management/commands/create_tenant.py:67: admin.is_superuser = False
+    foodcost/management/commands/create_tenant.py:68: admin.save(update_fields=["is_staff", "is_superuser"])
+
+[PLATFORM] доступ к консоли платформы (не трогать): 4
+    foodcost/platform_console.py:43: if user.is_superuser:
+    foodcost/platform_console.py:58: if user.is_superuser:
+    foodcost/platform_console.py:351: is_superuser=False,
+    foodcost/platform_console.py:410: is_superuser=False, is_staff=False,
+
+Разбор ALONE: helper-ы доступа (user_can_access_country/edit/section) —
+оставляем superuser-ветку, но проверяем, что НИЖЕ есть ветка роли для
+админа арендатора. Остальные ALONE — решаем точечно: платформенное (оставить)
+или админ арендатора (добавить ROLE_ADMIN).

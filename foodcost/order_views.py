@@ -1931,31 +1931,36 @@ def customer_list(request, country_slug):
     # Все аннотации идут по ОДНОЙ связи (orders) -> один LEFT JOIN, без
     # размножения строк. site_orders / tilda_orders считаем по
     # is_legacy_import (надёжнее, чем сверять source.name строкой).
+    # Суммы по клиенту — только по заказам филиалов пользователя (как и
+    # видимость ниже). None = все филиалы (супер-админ) → без фильтра, как было.
+    _ids = user_location_ids(request.user)
+    _bq = Q(orders__location_id__in=_ids) if _ids is not None else None
+
+    if _bq is None:
+        _a_orders = Count("orders", distinct=True)
+        _a_spent = Coalesce(Sum("orders__total_amount"), Value(Decimal("0")), output_field=money_field)
+        _a_last = Max("orders__order_date")
+        _a_site = Count("orders", filter=Q(orders__is_legacy_import=False), distinct=True)
+        _a_tilda = Count("orders", filter=Q(orders__is_legacy_import=True), distinct=True)
+        _a_lunch = Count("orders__lunch_combos", distinct=True)
+    else:
+        _a_orders = Count("orders", filter=_bq, distinct=True)
+        _a_spent = Coalesce(Sum("orders__total_amount", filter=_bq), Value(Decimal("0")), output_field=money_field)
+        _a_last = Max("orders__order_date", filter=_bq)
+        _a_site = Count("orders", filter=Q(orders__is_legacy_import=False) & _bq, distinct=True)
+        _a_tilda = Count("orders", filter=Q(orders__is_legacy_import=True) & _bq, distinct=True)
+        _a_lunch = Count("orders__lunch_combos", filter=_bq, distinct=True)
+
     customers = (
         Customer.objects
         .filter(country=country)
         .annotate(
-            orders_count=Count("orders", distinct=True),
-            total_spent=Coalesce(
-                Sum("orders__total_amount"),
-                Value(Decimal("0")),
-                output_field=money_field,
-            ),
-            last_order_date=Max("orders__order_date"),
-            site_orders=Count(
-                "orders",
-                filter=Q(orders__is_legacy_import=False),
-                distinct=True,
-            ),
-            tilda_orders=Count(
-                "orders",
-                filter=Q(orders__is_legacy_import=True),
-                distinct=True,
-            ),
-            lunch_orders=Count(
-                "orders__lunch_combos",
-                distinct=True,
-            ),
+            orders_count=_a_orders,
+            total_spent=_a_spent,
+            last_order_date=_a_last,
+            site_orders=_a_site,
+            tilda_orders=_a_tilda,
+            lunch_orders=_a_lunch,
         )
     )
 

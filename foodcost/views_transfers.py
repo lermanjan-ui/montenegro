@@ -47,7 +47,7 @@ from .views import (
     require_section_access,
     user_can_edit,
 )
-from .branch_scope import scope_any_location, user_location_ids
+from .branch_scope import scope_any_location, scope_locations, user_location_ids
 
 
 def _fmt_money(value):
@@ -446,6 +446,7 @@ def transfer_detail(request, country_slug, transfer_id):
         "total_qty_display": _fmt_qty(sum((it.quantity for it in items), Decimal(0))),
         "delivery_cost_display": _fmt_money(transfer.delivery_cost),
         "warehouses": Location.objects.filter(country=country).order_by("name"),
+        "from_warehouses": scope_locations(Location.objects.filter(country=country).order_by("name"), request.user),
         "products": Product.objects.filter(country=country).order_by("name"),
         "preparations": Preparation.objects.filter(country=country).order_by("name"),
         "logs": logs,

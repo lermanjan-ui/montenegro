@@ -1,0 +1,27 @@
+======================================================================
+УТОЧНЁННЫЙ АУДИТ B (чтение дочерних по request-id без скоупа)
+======================================================================
+[RISKY] id/pk из запроса, без country и без второго ключа: 0
+
+[REVIEW] есть второй ключ-фильтр (вероятно скоуп через родителя): 17
+    foodcost/public_api.py:5230: PaymeTransaction.objects.filter(payme_transaction_id) — PaymeTransaction.objects.filter(
+    foodcost/public_api.py:5021: PaymeTransaction.objects.filter(payme_transaction_id) — PaymeTransaction.objects.filter(
+    foodcost/views_inventory.py:122: PurchaseReceiptItem.objects.filter(receipt__status, product_id) — PurchaseReceiptItem.objects
+    foodcost/views_suppliers.py:304: SupplierProduct.objects.filter(id, supplier) — SupplierProduct.objects.filter(
+    foodcost/views_lunch_builder.py:229: LunchSize.objects.filter(id, lunch) — LunchSize.objects.filter(
+    foodcost/views_lunch_builder.py:273: LunchSizeItem.objects.filter(id, size__lunch) — LunchSizeItem.objects.filter(
+    foodcost/lunch_api.py:263: LunchSize.objects.filter(id, lunch) — LunchSize.objects.filter(id=size_id, lunch=lunch)
+    foodcost/views_purchases.py:369: PurchaseReceiptItem.objects.filter(id, receipt) — PurchaseReceiptItem.objects.filter(
+    foodcost/views_purchases.py:381: PurchaseReceiptItem.objects.filter(id, receipt) — PurchaseReceiptItem.objects.filter(
+    foodcost/app_favorites.py:84: CustomerFavorite.objects.filter(customer, dish_id, dish__is_archived) — CustomerFavorite.objects.filter(
+    foodcost/app_favorites.py:90: CustomerFavorite.objects.filter(customer, dish_id) — CustomerFavorite.objects.filter(customer=customer, dish_id=dish_id)
+    foodcost/views_transfers.py:378: TransferItem.objects.filter(id, transfer) — TransferItem.objects.filter(id=request.POST.get("item_id"), transfer=transfer)
+    foodcost/views.py:907: DishAddon.objects.filter(id, dish) — DishAddon.objects.filter(
+    foodcost/views.py:948: DishUpsellLink.objects.filter(id, from_dish) — DishUpsellLink.objects.filter(
+    foodcost/views.py:964: DishUpsellLink.objects.filter(id, from_dish) — DishUpsellLink.objects.filter(
+    foodcost/views.py:1079: DishComboItem.objects.filter(id, combo) — DishComboItem.objects.filter(
+    foodcost/views.py:3085: LunchUpsell.objects.filter(id, menu) — LunchUpsell.objects.filter(
+
+RISKY — проверить: объект берётся по id из запроса; если рядом нет проверки,
+что его родитель принадлежит арендатору пользователя → потенциальная утечка.
+REVIEW — убедиться, что второй ключ (parent=...) уже отрезолвлен по арендатору.

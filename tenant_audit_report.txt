@@ -1,0 +1,208 @@
+======================================================================
+АУДИТ ТОЧЕК ВХОДА (шаг 3.2) — read-only, ничего не менялось
+======================================================================
+Моделей со своим FK на Country (scopeable): 48
+Дочерних моделей (без своего FK на Country): 40
+  CategoryAddonGroup, CustomerAddress, CustomerFavorite, CustomerToken, DeviceToken, DishAdditionalExpense, DishAddon, DishAddonGroup, DishComboItem, DishGalleryImage, DishLaborItem, DishPackagingItem, DishPreparationItem, DishProductItem, DishTechStep, DishUpsellLink, EmployeePayment, EmployeePenalty, HomepageCompactUpsellItem, HomepageProductBlockItem, InventoryItem, LunchSaleItem, LunchSize, LunchSizeItem, LunchUpsell, OrderItem, OrderItemAddon, OrderLunchCombo, PaymeTransaction, PreparationItem, PreparationSubItem, ProductPrice, PurchaseReceiptItem, ShiftHandoverTask, ShiftPreparationNeed, ShiftPurchaseNeed, ShiftStopItem, SupplierProduct, TransferItem, UserProfile
+
+[A] Вьюхи с country_slug без get_country(): 4
+    foodcost/public_api.py:4399: def click_callback(...) принимает country_slug, но не вызывает get_country()
+    foodcost/public_api.py:5295: def payme_callback(...) принимает country_slug, но не вызывает get_country()
+    foodcost/platform_console.py:199: def platform_client_detail(...) принимает country_slug, но не вызывает get_country()
+    foodcost/platform_console.py:382: def platform_open_client(...) принимает country_slug, но не вызывает get_country()
+
+[B] Прямые запросы к дочерним моделям (проверить скоуп через родителя): 167
+    foodcost/views_team.py:123: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof = UserProfile.objects.create(
+    foodcost/views_team.py:131: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof, _ = UserProfile.objects.get_or_create(user=u)
+    foodcost/views_uzum.py:117: UserProfile.objects — дочерняя модель (нет своего FK на Country): if UserProfile.objects.filter(location=item).exists():
+    foodcost/views_signup.py:69: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof = UserProfile.objects.create(
+    foodcost/public_api.py:639: DishGalleryImage.objects — дочерняя модель (нет своего FK на Country): images = DishGalleryImage.objects.filter(
+    foodcost/public_api.py:705: DishAddon.objects — дочерняя модель (нет своего FK на Country): DishAddon.objects.filter(dish=dish, is_active=True)
+    foodcost/public_api.py:791: DishUpsellLink.objects — дочерняя модель (нет своего FK на Country): DishUpsellLink.objects
+    foodcost/public_api.py:1704: DishAddon.objects — дочерняя модель (нет своего FK на Country): DishAddon.objects.filter(
+    foodcost/public_api.py:3293: OrderItem.objects — дочерняя модель (нет своего FK на Country): oi = OrderItem.objects.create(
+    foodcost/public_api.py:3304: OrderItemAddon.objects — дочерняя модель (нет своего FK на Country): OrderItemAddon.objects.create(
+    foodcost/public_api.py:3325: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/public_api.py:3399: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): CustomerAddress.objects.create(
+    foodcost/public_api.py:3801: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): CustomerAddress.objects
+    foodcost/public_api.py:4169: HomepageProductBlockItem.objects — дочерняя модель (нет своего FK на Country): HomepageProductBlockItem.objects
+    foodcost/public_api.py:4301: HomepageCompactUpsellItem.objects — дочерняя модель (нет своего FK на Country): HomepageCompactUpsellItem.objects
+    foodcost/public_api.py:4838: HomepageCompactUpsellItem.objects — дочерняя модель (нет своего FK на Country): HomepageCompactUpsellItem.objects
+    foodcost/public_api.py:5021: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): existing = PaymeTransaction.objects.filter(
+    foodcost/public_api.py:5038: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): active = PaymeTransaction.objects.filter(
+    foodcost/public_api.py:5051: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): ptx = PaymeTransaction.objects.create(
+    foodcost/public_api.py:5092: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): PaymeTransaction.objects
+    foodcost/public_api.py:5166: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): PaymeTransaction.objects
+    foodcost/public_api.py:5230: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): ptx = PaymeTransaction.objects.filter(
+    foodcost/public_api.py:5256: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): qs = PaymeTransaction.objects.filter(
+    foodcost/views_tilda_import.py:414: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/views_inventory.py:122: PurchaseReceiptItem.objects — дочерняя модель (нет своего FK на Country): PurchaseReceiptItem.objects
+    foodcost/views_inventory.py:164: PurchaseReceiptItem.objects — дочерняя модель (нет своего FK на Country): PurchaseReceiptItem.objects
+    foodcost/views_inventory.py:194: InventoryItem.objects — дочерняя модель (нет своего FK на Country): InventoryItem.objects.bulk_create(bulk)
+    foodcost/views_inventory.py:349: InventoryItem.objects — дочерняя модель (нет своего FK на Country): InventoryItem.objects.bulk_update(items, ["fact_qty"])
+    foodcost/views_inventory.py:365: InventoryItem.objects — дочерняя модель (нет своего FK на Country): InventoryItem.objects.create(
+    foodcost/views_inventory.py:385: InventoryItem.objects — дочерняя модель (нет своего FK на Country): InventoryItem.objects.create(
+    foodcost/views_suppliers.py:152: SupplierProduct.objects — дочерняя модель (нет своего FK на Country): SupplierProduct.objects
+    foodcost/views_suppliers.py:300: SupplierProduct.objects — дочерняя модель (нет своего FK на Country): SupplierProduct.objects.get_or_create(supplier=supplier, product=product)
+    foodcost/views_suppliers.py:304: SupplierProduct.objects — дочерняя модель (нет своего FK на Country): SupplierProduct.objects.filter(
+    foodcost/views_suppliers.py:335: PurchaseReceiptItem.objects — дочерняя модель (нет своего FK на Country): PurchaseReceiptItem.objects
+    foodcost/views_suppliers.py:352: SupplierProduct.objects — дочерняя модель (нет своего FK на Country): for sp in SupplierProduct.objects.filter(supplier=supplier).select_related("product").order_by("product__name"):
+    foodcost/shift_views.py:370: ShiftPurchaseNeed.objects — дочерняя модель (нет своего FK на Country): ShiftPurchaseNeed.objects.create(
+    foodcost/shift_views.py:391: ShiftPreparationNeed.objects — дочерняя модель (нет своего FK на Country): ShiftPreparationNeed.objects.create(
+    foodcost/shift_views.py:410: ShiftStopItem.objects — дочерняя модель (нет своего FK на Country): ShiftStopItem.objects.create(
+    foodcost/shift_views.py:422: ShiftHandoverTask.objects — дочерняя модель (нет своего FK на Country): ShiftHandoverTask.objects.create(
+    foodcost/models.py:4803: PreparationItem.objects — дочерняя модель (нет своего FK на Country): PreparationItem.objects
+    foodcost/models.py:4811: PreparationSubItem.objects — дочерняя модель (нет своего FK на Country): PreparationSubItem.objects
+    foodcost/models.py:4821: DishProductItem.objects — дочерняя модель (нет своего FK на Country): DishProductItem.objects
+    foodcost/models.py:4827: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): DishPreparationItem.objects
+    foodcost/customer_dedupe.py:143: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): addresses_to_move = CustomerAddress.objects.filter(
+    foodcost/customer_dedupe.py:202: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): reattached_addrs = CustomerAddress.objects.filter(
+    foodcost/customer_dedupe.py:212: CustomerFavorite.objects — дочерняя модель (нет своего FK на Country): CustomerFavorite.objects.filter(
+    foodcost/views_autowriteoff.py:207: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects
+    foodcost/app_auth.py:75: CustomerToken.objects — дочерняя модель (нет своего FK на Country): row = CustomerToken.objects.create(
+    foodcost/app_auth.py:101: CustomerToken.objects — дочерняя модель (нет своего FK на Country): CustomerToken.objects.select_related("customer")
+    foodcost/app_auth.py:307: CustomerToken.objects — дочерняя модель (нет своего FK на Country): CustomerToken.objects.select_for_update()
+    foodcost/public_api (1).py:639: DishGalleryImage.objects — дочерняя модель (нет своего FK на Country): images = DishGalleryImage.objects.filter(
+    foodcost/public_api (1).py:705: DishAddon.objects — дочерняя модель (нет своего FK на Country): DishAddon.objects.filter(dish=dish, is_active=True)
+    foodcost/public_api (1).py:791: DishUpsellLink.objects — дочерняя модель (нет своего FK на Country): DishUpsellLink.objects
+    foodcost/public_api (1).py:1704: DishAddon.objects — дочерняя модель (нет своего FK на Country): DishAddon.objects.filter(
+    foodcost/public_api (1).py:3293: OrderItem.objects — дочерняя модель (нет своего FK на Country): oi = OrderItem.objects.create(
+    foodcost/public_api (1).py:3304: OrderItemAddon.objects — дочерняя модель (нет своего FK на Country): OrderItemAddon.objects.create(
+    foodcost/public_api (1).py:3325: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/public_api (1).py:3399: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): CustomerAddress.objects.create(
+    foodcost/public_api (1).py:3801: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): CustomerAddress.objects
+    foodcost/public_api (1).py:4169: HomepageProductBlockItem.objects — дочерняя модель (нет своего FK на Country): HomepageProductBlockItem.objects
+    foodcost/public_api (1).py:4301: HomepageCompactUpsellItem.objects — дочерняя модель (нет своего FK на Country): HomepageCompactUpsellItem.objects
+    foodcost/public_api (1).py:4824: HomepageCompactUpsellItem.objects — дочерняя модель (нет своего FK на Country): HomepageCompactUpsellItem.objects
+    foodcost/public_api (1).py:5007: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): existing = PaymeTransaction.objects.filter(
+    foodcost/public_api (1).py:5024: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): active = PaymeTransaction.objects.filter(
+    foodcost/public_api (1).py:5037: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): ptx = PaymeTransaction.objects.create(
+    foodcost/public_api (1).py:5078: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): PaymeTransaction.objects
+    foodcost/public_api (1).py:5152: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): PaymeTransaction.objects
+    foodcost/public_api (1).py:5216: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): ptx = PaymeTransaction.objects.filter(
+    foodcost/public_api (1).py:5242: PaymeTransaction.objects — дочерняя модель (нет своего FK на Country): qs = PaymeTransaction.objects.filter(
+    foodcost/views_auth.py:85: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof = (UserProfile.objects
+    foodcost/views_auth.py:100: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof = (UserProfile.objects.filter(phone=phone).select_related("user").first()
+    foodcost/views_auth.py:281: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof = UserProfile.objects.create(
+    foodcost/views_lunch_builder.py:119: LunchSize.objects — дочерняя модель (нет своего FK на Country): LunchSize.objects.create(
+    foodcost/views_lunch_builder.py:203: LunchSize.objects — дочерняя модель (нет своего FK на Country): LunchSize.objects.create(
+    foodcost/views_lunch_builder.py:229: LunchSize.objects — дочерняя модель (нет своего FK на Country): LunchSize.objects.filter(
+    foodcost/views_lunch_builder.py:273: LunchSizeItem.objects — дочерняя модель (нет своего FK на Country): LunchSizeItem.objects.filter(
+    foodcost/lunch_api.py:263: LunchSize.objects — дочерняя модель (нет своего FK на Country): size = LunchSize.objects.filter(id=size_id, lunch=lunch).first()
+    foodcost/platform_console.py:86: UserProfile.objects — дочерняя модель (нет своего FK на Country): "users": UserProfile.objects.filter(countries=country).distinct().count(),
+    foodcost/platform_console.py:354: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof, _ = UserProfile.objects.get_or_create(user=admin_user)
+    foodcost/platform_console.py:412: UserProfile.objects — дочерняя модель (нет своего FK на Country): prof, _ = UserProfile.objects.get_or_create(user=u)
+    foodcost/platform_console.py:418: UserProfile.objects — дочерняя модель (нет своего FK на Country): UserProfile.objects
+    foodcost/order_views.py:539: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/order_views.py:611: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): existing_address = CustomerAddress.objects.filter(
+    foodcost/order_views.py:620: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): CustomerAddress.objects.create(
+    foodcost/order_views.py:918: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/order_views.py:1037: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): existing_address = CustomerAddress.objects.filter(
+    foodcost/order_views.py:1046: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): CustomerAddress.objects.create(
+    foodcost/order_views.py:1345: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects
+    foodcost/views_purchases.py:359: PurchaseReceiptItem.objects — дочерняя модель (нет своего FK на Country): PurchaseReceiptItem.objects.create(
+    foodcost/views_purchases.py:369: PurchaseReceiptItem.objects — дочерняя модель (нет своего FK на Country): PurchaseReceiptItem.objects.filter(
+    foodcost/views_purchases.py:381: PurchaseReceiptItem.objects — дочерняя модель (нет своего FK на Country): it = PurchaseReceiptItem.objects.filter(
+    foodcost/views_purchases.py:415: PurchaseReceiptItem.objects — дочерняя модель (нет своего FK на Country): PurchaseReceiptItem.objects.create(
+    foodcost/views_purchases.py:537: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects.create(
+    foodcost/views_purchases.py:543: SupplierProduct.objects — дочерняя модель (нет своего FK на Country): SupplierProduct.objects.get_or_create(
+    foodcost/views_purchases.py:580: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects.filter(
+    foodcost/views_purchases.py:628: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects.create(
+    foodcost/views_dish_sales.py:81: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects
+    foodcost/uzum_api.py:462: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/views_stock.py:149: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects
+    foodcost/views_stock.py:438: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects
+    foodcost/views_stock.py:480: ProductPrice.objects — дочерняя модель (нет своего FK на Country): for p in ProductPrice.objects.filter(product=product).order_by("-date_from")[:20]
+    foodcost/views_lunch_sales.py:129: LunchSaleItem.objects — дочерняя модель (нет своего FK на Country): LunchSaleItem.objects.create(
+    foodcost/views_lunch_sales.py:138: LunchSaleItem.objects — дочерняя модель (нет своего FK на Country): LunchSaleItem.objects.filter(
+    foodcost/app_favorites.py:25: CustomerFavorite.objects — дочерняя модель (нет своего FK на Country): return CustomerFavorite.objects.filter(
+    foodcost/app_favorites.py:60: CustomerFavorite.objects — дочерняя модель (нет своего FK на Country): CustomerFavorite.objects.get_or_create(customer=customer, dish=dish)
+    foodcost/app_favorites.py:84: CustomerFavorite.objects — дочерняя модель (нет своего FK на Country): exists = CustomerFavorite.objects.filter(
+    foodcost/app_favorites.py:90: CustomerFavorite.objects — дочерняя модель (нет своего FK на Country): CustomerFavorite.objects.filter(customer=customer, dish_id=dish_id).delete()
+    foodcost/push_fcm.py:73: DeviceToken.objects — дочерняя модель (нет своего FK на Country): DeviceToken.objects.filter(token=token).update(is_active=False)
+    foodcost/push_fcm.py:91: DeviceToken.objects — дочерняя модель (нет своего FK на Country): DeviceToken.objects.filter(customer=customer, is_active=True)
+    foodcost/views_homepage.py:454: HomepageProductBlockItem.objects — дочерняя модель (нет своего FK на Country): HomepageProductBlockItem.objects.get_or_create(
+    foodcost/views_homepage.py:593: HomepageCompactUpsellItem.objects — дочерняя модель (нет своего FK на Country): HomepageCompactUpsellItem.objects.get_or_create(
+    foodcost/views_homepage.py:909: HomepageProductBlockItem.objects — дочерняя модель (нет своего FK на Country): HomepageProductBlockItem.objects
+    foodcost/views_homepage.py:939: HomepageCompactUpsellItem.objects — дочерняя модель (нет своего FK на Country): HomepageCompactUpsellItem.objects
+    foodcost/app_push.py:41: DeviceToken.objects — дочерняя модель (нет своего FK на Country): DeviceToken.objects.update_or_create(
+    foodcost/app_push.py:62: DeviceToken.objects — дочерняя модель (нет своего FK на Country): DeviceToken.objects.filter(
+    foodcost/views_transfers.py:227: TransferItem.objects — дочерняя модель (нет своего FK на Country): TransferItem.objects.filter(transfer__country=country, transfer__status=confirmed),
+    foodcost/views_transfers.py:364: TransferItem.objects — дочерняя модель (нет своего FK на Country): TransferItem.objects.create(
+    foodcost/views_transfers.py:371: TransferItem.objects — дочерняя модель (нет своего FK на Country): TransferItem.objects.create(
+    foodcost/views_transfers.py:378: TransferItem.objects — дочерняя модель (нет своего FK на Country): TransferItem.objects.filter(id=request.POST.get("item_id"), transfer=transfer).delete()
+    foodcost/views_transfers.py:393: TransferItem.objects — дочерняя модель (нет своего FK на Country): TransferItem.objects.create(
+    foodcost/views.py:689: DishTechStep.objects — дочерняя модель (нет своего FK на Country): tech_steps = DishTechStep.objects.filter(dish=dish)
+    foodcost/views.py:823: DishGalleryImage.objects — дочерняя модель (нет своего FK на Country): DishGalleryImage.objects.create(
+    foodcost/views.py:891: DishAddon.objects — дочерняя модель (нет своего FK на Country): DishAddon.objects.get_or_create(
+    foodcost/views.py:907: DishAddon.objects — дочерняя модель (нет своего FK на Country): DishAddon.objects.filter(
+    foodcost/views.py:932: DishUpsellLink.objects — дочерняя модель (нет своего FK на Country): DishUpsellLink.objects.get_or_create(
+    foodcost/views.py:948: DishUpsellLink.objects — дочерняя модель (нет своего FK на Country): link = DishUpsellLink.objects.filter(
+    foodcost/views.py:964: DishUpsellLink.objects — дочерняя модель (нет своего FK на Country): DishUpsellLink.objects.filter(
+    foodcost/views.py:1070: DishComboItem.objects — дочерняя модель (нет своего FK на Country): DishComboItem.objects.create(
+    foodcost/views.py:1079: DishComboItem.objects — дочерняя модель (нет своего FK на Country): DishComboItem.objects.filter(
+    foodcost/views.py:1089: DishTechStep.objects — дочерняя модель (нет своего FK на Country): last_step = DishTechStep.objects.filter(dish=dish).order_by("-step_number").first()
+    foodcost/views.py:1092: DishTechStep.objects — дочерняя модель (нет своего FK на Country): step = DishTechStep.objects.create(
+    foodcost/views.py:1122: DishProductItem.objects — дочерняя модель (нет своего FK на Country): item = DishProductItem.objects.create(
+    foodcost/views.py:1173: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): item = DishPreparationItem.objects.create(
+    foodcost/views.py:1219: DishPackagingItem.objects — дочерняя модель (нет своего FK на Country): item = DishPackagingItem.objects.create(
+    foodcost/views.py:1262: DishLaborItem.objects — дочерняя модель (нет своего FK на Country): item = DishLaborItem.objects.create(
+    foodcost/views.py:1303: DishAdditionalExpense.objects — дочерняя модель (нет своего FK на Country): item = DishAdditionalExpense.objects.create(
+    foodcost/views.py:1389: DishGalleryImage.objects — дочерняя модель (нет своего FK на Country): gallery_images = DishGalleryImage.objects.filter(
+    foodcost/views.py:1395: DishAddon.objects — дочерняя модель (нет своего FK на Country): DishAddon.objects.filter(dish=dish)
+    foodcost/views.py:1471: DishUpsellLink.objects — дочерняя модель (нет своего FK на Country): DishUpsellLink.objects
+    foodcost/views.py:1510: OrderItem.objects — дочерняя модель (нет своего FK на Country): "orders_count": OrderItem.objects.filter(dish=dish).count(),
+    foodcost/views.py:1516: DishComboItem.objects — дочерняя модель (нет своего FK на Country): DishComboItem.objects
+    foodcost/views.py:1716: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects.create(
+    foodcost/views.py:1770: ProductPrice.objects — дочерняя модель (нет своего FK на Country): ProductPrice.objects.create(
+    foodcost/views.py:1819: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): for dpi in DishPreparationItem.objects.filter(
+    foodcost/views.py:1831: DishProductItem.objects — дочерняя модель (нет своего FK на Country): dish_items = DishProductItem.objects.filter(
+    foodcost/views.py:1836: PreparationItem.objects — дочерняя модель (нет своего FK на Country): preparation_items = PreparationItem.objects.filter(
+    foodcost/views.py:1889: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): for dish_prep_item in DishPreparationItem.objects.filter(
+    foodcost/views.py:2026: PreparationItem.objects — дочерняя модель (нет своего FK на Country): PreparationItem.objects.create(
+    foodcost/views.py:2040: PreparationSubItem.objects — дочерняя модель (нет своего FK на Country): PreparationSubItem.objects.create(
+    foodcost/views.py:2114: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): for dpi in DishPreparationItem.objects.filter(
+    foodcost/views.py:2119: PreparationSubItem.objects — дочерняя модель (нет своего FK на Country): psi.preparation for psi in PreparationSubItem.objects.filter(
+    foodcost/views.py:2127: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): for dpi in DishPreparationItem.objects.filter(
+    foodcost/views.py:2175: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): for dpi in DishPreparationItem.objects.filter(
+    foodcost/views.py:2190: PreparationSubItem.objects — дочерняя модель (нет своего FK на Country): PreparationSubItem.objects.filter(
+    foodcost/views.py:2201: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): DishPreparationItem.objects.filter(
+    foodcost/views.py:2230: DishPreparationItem.objects — дочерняя модель (нет своего FK на Country): for dpi in DishPreparationItem.objects.filter(
+    foodcost/views.py:2244: PreparationSubItem.objects — дочерняя модель (нет своего FK на Country): for psi in PreparationSubItem.objects.filter(
+    foodcost/views.py:2419: UserProfile.objects — дочерняя модель (нет своего FK на Country): UserProfile.objects.get_or_create(user=user)
+    foodcost/views.py:2516: UserProfile.objects — дочерняя модель (нет своего FK на Country): if UserProfile.objects.filter(location=item).exists():
+    foodcost/views.py:2673: UserProfile.objects — дочерняя модель (нет своего FK на Country): profile, created = UserProfile.objects.get_or_create(user=user)
+    foodcost/views.py:2686: UserProfile.objects — дочерняя модель (нет своего FK на Country): profile, created = UserProfile.objects.get_or_create(user=user)
+    foodcost/views.py:2873: CustomerAddress.objects — дочерняя модель (нет своего FK на Country): CustomerAddress.objects.get_or_create(
+    foodcost/views.py:2939: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/views.py:3079: LunchUpsell.objects — дочерняя модель (нет своего FK на Country): LunchUpsell.objects.update_or_create(
+    foodcost/views.py:3085: LunchUpsell.objects — дочерняя модель (нет своего FK на Country): LunchUpsell.objects.filter(
+    foodcost/management/commands/import_tilda_orders.py:329: OrderItem.objects — дочерняя модель (нет своего FK на Country): OrderItem.objects.create(
+    foodcost/management/commands/create_tenant.py:71: UserProfile.objects — дочерняя модель (нет своего FK на Country): profile, _ = UserProfile.objects.update_or_create(
+
+[C] Country.objects по slug вне helper-резолверов: 21
+    foodcost/recompute_sales_all.py:49: Country.objects по slug вне helper: country = Country.objects.get(slug=opts["country"])
+    foodcost/views_signup.py:27: Country.objects по slug вне helper: while Country.objects.filter(slug=slug).exists():
+    foodcost/views_signup.py:63: Country.objects по slug вне helper: country = Country.objects.create(name=name, slug=slug)
+    foodcost/public_api.py:4443: Country.objects по slug вне helper: _pay_country = Country.objects.filter(slug=_pay_slug).first() if _pay_slug else None
+    foodcost/public_api.py:5315: Country.objects по slug вне helper: _pay_country = Country.objects.filter(slug=_pay_slug).first() if _pay_slug else None
+    foodcost/views_tilda_import.py:84: Country.objects по slug вне helper: countries = list(Country.objects.all().order_by("slug"))
+    foodcost/views_tilda_import.py:108: Country.objects по slug вне helper: country = Country.objects.get(slug=country_slug)
+    foodcost/views_tilda_import.py:139: Country.objects по slug вне helper: country = Country.objects.get(slug=country_slug)
+    foodcost/tenant_guard.py:58: Country.objects по slug вне helper: return Country.objects.filter(slug=m.group("slug")).first()
+    foodcost/tenant_guard.py:88: Country.objects по slug вне helper: country = Country.objects.filter(slug=m.group("slug")).first()
+    foodcost/views_auth.py:55: Country.objects по slug вне helper: while Country.objects.filter(slug=slug).exists():
+    foodcost/views_auth.py:267: Country.objects по slug вне helper: country = Country.objects.create(name=name, slug=slug)
+    foodcost/platform_console.py:338: Country.objects по slug вне helper: elif Country.objects.filter(slug=slug).exists():
+    foodcost/platform_console.py:345: Country.objects по slug вне helper: country = Country.objects.create(name=name, slug=slug)
+    foodcost/views.py:2843: Country.objects по slug вне helper: country = Country.objects.get(slug="uzbekistan")
+    foodcost/management/commands/recompute_sales_all.py:49: Country.objects по slug вне helper: country = Country.objects.get(slug=opts["country"])
+    foodcost/management/commands/push_ltv_audience.py:39: Country.objects по slug вне helper: country = Country.objects.filter(slug=country_slug).first()
+    foodcost/management/commands/import_tilda_orders.py:121: Country.objects по slug вне helper: country = Country.objects.get(slug=country_slug)
+    foodcost/management/commands/import_tilda_analyze.py:78: Country.objects по slug вне helper: country = Country.objects.get(slug=country_slug)
+    foodcost/management/commands/create_tenant.py:45: Country.objects по slug вне helper: if Country.objects.filter(slug=slug).exists():
+    foodcost/management/commands/create_tenant.py:54: Country.objects по slug вне helper: tenant = Country.objects.create(name=o["name"], slug=slug)
+
+Как читать: A и C — приоритетные (прямой резолв арендатора мимо проверки).
+B — кандидаты: каждая строка ОК, если родитель уже отфильтрован по арендатору;
+    фиксим только там, где родитель берётся без .filter(country=...).

@@ -199,3 +199,10 @@ PAYME_FAIL_URL = os.environ.get(
 ORDER_AWAITING_PAYMENT_TTL_HOURS = int(
     os.environ.get("ORDER_AWAITING_PAYMENT_TTL_HOURS", "24")
 )
+
+
+# OTP: в тестах показывать код подтверждения (каналы реально не шлют) —
+# нужно тестам авторизации (test_auth_web). Прод не затрагивается.
+import sys as _sys  # noqa: E402
+if "test" in _sys.argv:
+    OTP_EXPOSE_CODE_FOR_TESTING = True

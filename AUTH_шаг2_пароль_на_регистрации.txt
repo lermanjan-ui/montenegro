@@ -1,0 +1,25 @@
+AUTH, шаг 2: пароль задаётся на регистрации
+============================================
+Требует применённый шаг 1 (fc_auth_step1) и поле UserProfile.phone (+миграция).
+
+Из корня проекта:
+
+    tar xzf ~/Downloads/fc_auth_step2.tgz -C .
+    python apply_auth_signup_password.py
+    python manage.py test foodcost.tests.test_auth_web
+
+Что кладёт/меняет:
+  • apply_auth_signup_password.py — патчит foodcost/views_auth.py:
+       signup() читает и валидирует пароль (длина ≥6, совпадение),
+       signup_verify() создаёт пользователя С ПАРОЛЕМ (set_password).
+  • foodcost/templates/foodcost/signup.html — добавлены поля «Пароль» и
+       «Повторите пароль».
+  • foodcost/tests/test_auth_web.py — обновлён: после регистрации
+       has_usable_password()=True, добавлены тесты (короткий пароль,
+       несовпадение, вход по паролю сразу после регистрации).
+
+Итог модели входа:
+  • компания/верхние пользователи — e-mail/телефон + пароль; пароль задаётся
+    на регистрации; восстановление — код на e-mail/телефон → новый пароль;
+  • сотрудники — логин+пароль (создаёт админ компании, уже было);
+  • супер-админ — любой способ.

@@ -1,0 +1,16 @@
+ФИКС: маршрут страницы интеграций (чинит test_integration_settings_page.*)
+===========================================================================
+Причина падений (404): вьюха views_integrations.integration_settings_page есть,
+но в urls.py не было маршрута на неё (и модуль не был импортирован).
+
+Из корня проекта:
+
+    tar xzf ~/Downloads/fc_fix_integrations.tgz -C .
+    python apply_fix_integrations_route.py
+    python manage.py test foodcost.tests.test_integration_settings_page
+
+Ждём OK (4 теста). Правка только в foodcost/urls.py: импорт + один path.
+
+Если вдруг тест упадёт не на 404, а на assertContains (callback-URL не нашёлся
+в ответе) или TemplateDoesNotExist — значит вопрос к шаблону
+foodcost/templates/foodcost/integration_settings.html; пришли его, гляну.

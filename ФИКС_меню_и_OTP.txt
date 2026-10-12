@@ -1,0 +1,39 @@
+ФИКСЫ №4 (меню/тариф) и №1 (signup OTP)
+========================================
+
+────────────────────────────────────────────────────────────────────────
+№4 — меню скрывает неоплаченные модули (чинит
+     test_tenant_guard.MenuContextTests.test_menu_hides_unpaid_module)
+────────────────────────────────────────────────────────────────────────
+Из корня проекта:
+
+    tar xzf ~/Downloads/fc_fix_menu.tgz -C .
+    python apply_fix_menu_plan.py
+    python manage.py test foodcost.tests.test_tenant_guard
+
+Правка только в foodcost/context_processors.py: пункты модульных разделов
+(из tenant_guard._SEGMENT_SECTION) в меню скрываются, если модуль не входит в
+план подписки — ровно как это делает middleware. Служебные разделы
+(settings/users/…), супер-админ и компании без подписки — без ограничений.
+
+────────────────────────────────────────────────────────────────────────
+№1 — signup OTP (test_auth_web.SignupOtpTests.test_full_signup_flow)
+────────────────────────────────────────────────────────────────────────
+Это НЕ баг кода. В тестах e-mail «уходит» через locmem-backend Django, поэтому
+otp_core.start_otp считает отправку успешной и не возвращает дебаг-код. Для
+тестов ровно для этого есть флаг OTP_EXPOSE_CODE_FOR_TESTING — его надо
+включить в тестовой среде. Добавь в settings.py (например, в самый низ файла):
+
+    # OTP: в тестах показывать код (каналы реально не шлют) — для assert'ов.
+    import sys as _sys
+    if "test" in _sys.argv:
+        OTP_EXPOSE_CODE_FOR_TESTING = True
+
+Прод не затрагивается (флаг включается только при `manage.py test`). После
+этого:
+
+    python manage.py test foodcost.tests.test_auth_web
+
+Если у тебя отдельный модуль тест-настроек (settings_test.py / DJANGO_SETTINGS
+для тестов) — добавь туда строку `OTP_EXPOSE_CODE_FOR_TESTING = True` без
+обёртки с sys.argv. Пришлёшь settings.py — сделаю точечный патч, если хочешь.

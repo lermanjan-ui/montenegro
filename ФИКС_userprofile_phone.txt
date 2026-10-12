@@ -1,0 +1,21 @@
+ФИКС: поле UserProfile.phone (чинит test_auth_web.LoginOtpTests.* и signup)
+============================================================================
+Причина: код авторизации и тесты используют UserProfile.phone, но поля в
+модели не было → TypeError в LoginOtpTests.setUp и падение ассерта в signup.
+
+Из корня проекта:
+
+    tar xzf ~/Downloads/fc_fix_phone.tgz -C .
+    python apply_add_userprofile_phone.py
+    python manage.py makemigrations foodcost
+    python manage.py migrate
+    python manage.py test foodcost.tests.test_auth_web
+
+Важно: обязательно makemigrations + migrate — добавляется новое поле в БД.
+Поле blank/default="" → миграция безопасная, данные не теряются.
+
+Чтобы test_auth_web стал полностью зелёным, также нужен флаг OTP в тестовом
+settings (из прошлого бандла):
+    import sys as _sys
+    if "test" in _sys.argv:
+        OTP_EXPOSE_CODE_FOR_TESTING = True
