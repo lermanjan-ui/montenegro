@@ -266,6 +266,8 @@ def signup_verify(request):
             slug = _unique_slug(name)
             country = Country.objects.create(name=name, slug=slug)
             Location.objects.create(country=country, name="Основной филиал")
+            from .provisioning import provision_tenant_defaults
+            provision_tenant_defaults(country)  # дефолтные справочники нового арендатора
 
             username = _unique_username(data["email"].split("@")[0] or "admin")
             user = User.objects.create_user(
