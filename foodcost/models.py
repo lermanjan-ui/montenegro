@@ -8,7 +8,7 @@ from django.utils import timezone
 
 
 # 🌍 СТРАНА
-class Country(models.Model):
+class Tenant(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
@@ -29,6 +29,11 @@ class Country(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# 3.7: канонично модель называется Tenant; Country — временный алиас
+# обратной совместимости (убрать на этапе 2 после полной зачистки ссылок).
+Country = Tenant
 
 
 # 🥦 ПРОДУКТ
@@ -4488,7 +4493,7 @@ class Promotion(models.Model):
     ]
 
     country = models.ForeignKey(
-        "Country",
+        "Tenant",
         on_delete=models.CASCADE,
         related_name="promotions",
         null=True,
