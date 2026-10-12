@@ -344,6 +344,8 @@ def platform_client_create(request):
         else:
             country = Country.objects.create(name=name, slug=slug)
             Location.objects.create(country=country, name=location_name)
+            from .provisioning import provision_tenant_defaults
+            provision_tenant_defaults(country)  # дефолтные справочники нового клиента
 
             admin_user = User.objects.create_user(
                 username=admin_login,
