@@ -204,6 +204,9 @@ def signup(request):
     if request.user.is_authenticated:
         return redirect("/")
 
+    if request.method == "GET" and not (request.session.get("signup_funnel") or {}).get("business_type"):
+        return redirect("/start/")
+
     error = None
     form = {}
     if request.method == "POST":
@@ -264,10 +267,11 @@ def signup_verify(request):
         else:
             name = data["company_name"]
             slug = _unique_slug(name)
-            country = Country.objects.create(name=name, slug=slug)
+            _bt = (request.session.get("signup_funnel") or {}).get("business_type") or Country.BUSINESS_RESTAURANT
+            country = Country.objects.create(name=name, slug=slug, business_type=_bt)
             Location.objects.create(country=country, name="Основной филиал")
             from .provisioning import provision_tenant_defaults
-            provision_tenant_defaults(country)  # дефолтные справочники нового арендатора
+            provision_tenant_defaults(country, business_type=_bt)  # дефолты под тип бизнеса
 
             username = _unique_username(data["email"].split("@")[0] or "admin")
             user = User.objects.create_user(
@@ -307,6 +311,7 @@ def signup_verify(request):
                 pass
 
             request.session.pop("signup", None)
+            request.session.pop("signup_funnel", None)
             request.session.pop("otp", None)
             request.session.pop("otp_debug", None)
             request.session.pop("otp_target", None)
@@ -318,3 +323,24 @@ def signup_verify(request):
         "target": request.session.get("otp_target", ""),
         "debug_code": request.session.get("otp_debug", ""),
     })
+
+
+# ---------------------------------------------------------------------------
+# Пред-регистрация: выбор типа бизнеса (воронка)
+# ---------------------------------------------------------------------------
+def business_type_select(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+    valid = {c for c, _ in Country.BUSINESS_TYPE_CHOICES}
+    if request.method == "POST":
+        bt = (request.POST.get("business_type") or "").strip()
+        if bt in valid:
+            funnel = request.session.get("signup_funnel") or {}
+            funnel["business_type"] = bt
+            request.session["signup_funnel"] = funnel
+            return redirect("/signup/")
+        return render(request, "foodcost/business_type.html",
+                      {"error": "Выберите тип бизнеса",
+                       "choices": Country.BUSINESS_TYPE_CHOICES})
+    return render(request, "foodcost/business_type.html",
+                  {"choices": Country.BUSINESS_TYPE_CHOICES})
