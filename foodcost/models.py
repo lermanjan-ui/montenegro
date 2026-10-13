@@ -10,6 +10,9 @@ from django.utils import timezone
 # 🌍 СТРАНА
 class Tenant(models.Model):
     # --- Тип бизнеса (POS-вертикаль): определяет онбординг, навигацию и дефолты ---
+    # --- POS-онбординг: выбранные модули (интерим; позже заменит конструктор цены) ---
+    onboarding_modules = models.JSONField(default=list, blank=True)
+
     BUSINESS_RETAIL = "retail"
     BUSINESS_RESTAURANT = "restaurant"
     BUSINESS_SERVICES = "services"

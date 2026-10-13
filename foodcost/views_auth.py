@@ -269,6 +269,9 @@ def signup_verify(request):
             slug = _unique_slug(name)
             _bt = (request.session.get("signup_funnel") or {}).get("business_type") or Country.BUSINESS_RESTAURANT
             country = Country.objects.create(name=name, slug=slug, business_type=_bt)
+            country.onboarding_modules = (request.session.get("signup_funnel") or {}).get("modules") or []
+            if country.onboarding_modules:
+                country.save(update_fields=["onboarding_modules"])
             Location.objects.create(country=country, name="Основной филиал")
             from .provisioning import provision_tenant_defaults
             provision_tenant_defaults(country, business_type=_bt)  # дефолты под тип бизнеса
@@ -338,7 +341,7 @@ def business_type_select(request):
             funnel = request.session.get("signup_funnel") or {}
             funnel["business_type"] = bt
             request.session["signup_funnel"] = funnel
-            return redirect("/signup/")
+            return redirect("/start/questions/")
         return render(request, "foodcost/business_type.html",
                       {"error": "Выберите тип бизнеса",
                        "choices": Country.BUSINESS_TYPE_CHOICES})
@@ -373,3 +376,26 @@ def set_language(request):
         resp.set_cookie(getattr(_s, "LANGUAGE_COOKIE_NAME", "django_language"),
                         lang, max_age=60 * 60 * 24 * 365)
     return resp
+
+
+# ---------------------------------------------------------------------------
+# Пред-регистрация: опросник модулей по типу бизнеса
+# ---------------------------------------------------------------------------
+def business_type_questions(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+    from .onboarding import questions_for, valid_keys, TYPE_LABELS
+    funnel = request.session.get("signup_funnel") or {}
+    bt = funnel.get("business_type")
+    if not bt:
+        return redirect("/start/")
+    if request.method == "POST":
+        chosen = [k for k in request.POST.getlist("modules") if k in valid_keys(bt)]
+        funnel["modules"] = chosen
+        request.session["signup_funnel"] = funnel
+        return redirect("/signup/")
+    return render(request, "foodcost/business_type_questions.html", {
+        "questions": questions_for(bt),
+        "type_label": TYPE_LABELS.get(bt, ""),
+        "business_type": bt,
+    })

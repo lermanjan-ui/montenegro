@@ -54,6 +54,7 @@ from . import views_landing
 urlpatterns = [
     # ===== Регистрация (по коду) =====
     path("start/", views_auth.business_type_select, name="business_type_select"),
+    path("start/questions/", views_auth.business_type_questions, name="business_type_questions"),
     path("signup/", views_auth.signup, name="signup"),
     path("signup/verify/", views_auth.signup_verify, name="signup_verify"),
     path("i18n/set/", views_auth.set_language, name="set_language"),
