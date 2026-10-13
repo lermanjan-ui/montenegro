@@ -470,6 +470,15 @@ button:hover,.button:hover{background:var(--primary-dark);}
             </div>
 
             <div class="topbar-actions">
+                <form method="post" action="/i18n/set/" style="margin:0;">{% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <select name="language" onchange="this.form.submit()" aria-label="Язык"
+                        style="height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-weight:600;font-size:13px;padding:0 8px;cursor:pointer;">
+                        <option value="uz" {% if request.LANGUAGE_CODE|slice:':2' == 'uz' %}selected{% endif %}>UZ</option>
+                        <option value="ru" {% if request.LANGUAGE_CODE|slice:':2' == 'ru' %}selected{% endif %}>RU</option>
+                        <option value="en" {% if request.LANGUAGE_CODE|slice:':2' == 'en' %}selected{% endif %}>EN</option>
+                    </select>
+                </form>
                 {% if request.user.is_authenticated %}
                     <div class="profile" id="profileMenu">
                         <button type="button" class="profile-btn" onclick="toggleProfileMenu(event)">

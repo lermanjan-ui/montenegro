@@ -56,6 +56,7 @@ urlpatterns = [
     path("start/", views_auth.business_type_select, name="business_type_select"),
     path("signup/", views_auth.signup, name="signup"),
     path("signup/verify/", views_auth.signup_verify, name="signup_verify"),
+    path("i18n/set/", views_auth.set_language, name="set_language"),
     # ===== Публичный лендинг =====
     path("welcome/", views_landing.landing, name="landing"),
     # ===== Консоль супер-админа =====

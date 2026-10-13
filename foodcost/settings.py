@@ -37,9 +37,11 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'foodcost.i18n_middleware.UserLanguageMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -206,3 +208,13 @@ ORDER_AWAITING_PAYMENT_TTL_HOURS = int(
 import sys as _sys  # noqa: E402
 if "test" in _sys.argv:
     OTP_EXPOSE_CODE_FOR_TESTING = True
+
+
+# --- FC_I18N: мультиязычный интерфейс. Добавить язык = строка ниже + папка locale/<code>/ ---
+from django.utils.translation import gettext_lazy as _  # noqa: E402
+LANGUAGES = [
+    ("uz", _("Oʻzbekcha")),
+    ("ru", _("Русский")),
+    ("en", _("English")),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]

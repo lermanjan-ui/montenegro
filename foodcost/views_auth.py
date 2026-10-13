@@ -344,3 +344,32 @@ def business_type_select(request):
                        "choices": Country.BUSINESS_TYPE_CHOICES})
     return render(request, "foodcost/business_type.html",
                   {"choices": Country.BUSINESS_TYPE_CHOICES})
+
+
+# ---------------------------------------------------------------------------
+# Переключатель языка интерфейса
+# ---------------------------------------------------------------------------
+def set_language(request):
+    from django.conf import settings as _s
+    from django.utils import translation as _t
+    from django.utils.http import url_has_allowed_host_and_scheme as _safe
+    lang = (request.POST.get("language") or request.GET.get("language") or "").strip()
+    nxt = (request.POST.get("next") or request.GET.get("next")
+           or request.META.get("HTTP_REFERER") or "/")
+    if not _safe(nxt, allowed_hosts={request.get_host()},
+                 require_https=request.is_secure()):
+        nxt = "/"
+    resp = redirect(nxt)
+    valid = {c for c, _ in getattr(_s, "LANGUAGES", [])}
+    if lang in valid:
+        _t.activate(lang)
+        if request.user.is_authenticated:
+            try:
+                p = request.user.profile
+                p.language = lang
+                p.save(update_fields=["language"])
+            except Exception:
+                pass
+        resp.set_cookie(getattr(_s, "LANGUAGE_COOKIE_NAME", "django_language"),
+                        lang, max_age=60 * 60 * 24 * 365)
+    return resp
