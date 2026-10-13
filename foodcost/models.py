@@ -9,6 +9,31 @@ from django.utils import timezone
 
 # 🌍 СТРАНА
 class Tenant(models.Model):
+    # --- Тип бизнеса (POS-вертикаль): определяет онбординг, навигацию и дефолты ---
+    BUSINESS_RETAIL = "retail"
+    BUSINESS_RESTAURANT = "restaurant"
+    BUSINESS_SERVICES = "services"
+    BUSINESS_TYPE_CHOICES = [
+        (BUSINESS_RETAIL, "Магазин"),
+        (BUSINESS_RESTAURANT, "Кафе / ресторан"),
+        (BUSINESS_SERVICES, "Услуги"),
+    ]
+    business_type = models.CharField(
+        max_length=20, choices=BUSINESS_TYPE_CHOICES,
+        default=BUSINESS_RESTAURANT, db_index=True)
+
+    @property
+    def is_retail(self):
+        return self.business_type == self.BUSINESS_RETAIL
+
+    @property
+    def is_restaurant(self):
+        return self.business_type == self.BUSINESS_RESTAURANT
+
+    @property
+    def is_services(self):
+        return self.business_type == self.BUSINESS_SERVICES
+
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
@@ -1138,6 +1163,9 @@ class Location(models.Model):
         return self.name
 
 class UserProfile(models.Model):
+    # --- i18n: язык интерфейса пользователя (пусто = по браузеру/дефолту) ---
+    language = models.CharField(max_length=8, blank=True, default="")
+
     ROLE_PLATFORM_MANAGER = "platform_manager"
     ROLE_SUPER_ADMIN = "super_admin"
     ROLE_ADMIN = "admin"
