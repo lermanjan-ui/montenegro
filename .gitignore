@@ -30,3 +30,7 @@ venv/
 .DS_Store
 **/.DS_Store
 Thumbs.db
+
+.DS_Store
+apply_*.py
+audit_*.py
