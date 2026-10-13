@@ -37,6 +37,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -205,3 +206,13 @@ OTP_EXPOSE_CODE_FOR_TESTING = (
 )
 OTP_CODE_TTL_SECONDS = int(os.environ.get("OTP_CODE_TTL_SECONDS", "300"))
 OTP_CODE_LENGTH = int(os.environ.get("OTP_CODE_LENGTH", "4"))
+
+
+# --- FC_I18N: мультиязычный интерфейс. Добавить язык = строка ниже + папка locale/<code>/ ---
+from django.utils.translation import gettext_lazy as _  # noqa: E402
+LANGUAGES = [
+    ("uz", _("Oʻzbekcha")),
+    ("ru", _("Русский")),
+    ("en", _("English")),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]
