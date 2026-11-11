@@ -1,0 +1,335 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Категории{% endblock %}
+
+{% block content %}
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-border:#E5E7EB; --fc-text:#111827;
+    --fc-muted:#6B7280; --fc-green:#16A34A; --fc-green-soft:#DCFCE7;
+    --fc-warning:#F59E0B; --fc-danger:#EF4444; --fc-info:#3B82F6;
+    --fc-hover:#F9FAFB; --fc-radius-card:12px; --fc-radius-input:10px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+}
+.cat-wrap{ max-width:1100px; margin:0 auto; font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.cat-pagehead{ margin-bottom:20px; }
+.cat-pagehead h1{ margin:0; font-size:32px; font-weight:600; color:var(--fc-text); }
+.cat-pagehead p{ margin:4px 0 0; font-size:14px; color:var(--fc-muted); }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px 22px; margin-bottom:20px; }
+.fc-card h2{ margin:0 0 16px; font-size:18px; font-weight:600; color:var(--fc-text); }
+.fc-block-title{ font-size:13px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.03em; margin:18px 0 10px; }
+.fc-block-title:first-child{ margin-top:0; }
+
+.fc-label{ display:block; font-size:13px; font-weight:500; color:var(--fc-text); margin-bottom:6px; }
+.fc-hint{ font-size:12px; color:var(--fc-muted); margin-top:5px; }
+.fc-input, .fc-select, .fc-textarea{
+    width:100%; box-sizing:border-box; min-height:40px; border:1px solid var(--fc-border);
+    border-radius:var(--fc-radius-input); padding:8px 12px; font-size:14px; color:var(--fc-text);
+    background:#fff; font-family:inherit;
+}
+.fc-textarea{ min-height:74px; resize:vertical; }
+.fc-input:focus, .fc-select:focus, .fc-textarea:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px var(--fc-green-soft); }
+.fc-field{ margin-bottom:14px; }
+.fc-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.fc-grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+@media(max-width:640px){ .fc-grid, .fc-grid-3{ grid-template-columns:1fr; } }
+
+.fc-check{ display:flex; align-items:center; gap:9px; font-size:14px; color:var(--fc-text); cursor:pointer; padding:7px 0; }
+.fc-check input{ width:16px; height:16px; accent-color:var(--fc-green); }
+.fc-checks{ display:flex; flex-wrap:wrap; gap:6px 20px; margin-bottom:6px; }
+
+.fc-btn{ height:40px; border-radius:var(--fc-radius-input); padding:0 18px; font-weight:600; font-size:14px; border:1px solid transparent; cursor:pointer; font-family:inherit; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; }
+.fc-btn-primary:hover{ background:#15803D; }
+.fc-btn-secondary{ background:#fff; color:var(--fc-text); border-color:var(--fc-border); }
+.fc-btn-secondary:hover{ background:var(--fc-hover); }
+.fc-row-end{ display:flex; justify-content:flex-end; margin-top:18px; }
+
+/* список категорий */
+.cat-row{ display:flex; align-items:center; gap:14px; padding:12px 4px; border-bottom:1px solid var(--fc-border); }
+.cat-row:last-of-type{ border-bottom:none; }
+.cat-thumb{ width:48px; height:48px; border-radius:10px; object-fit:cover; background:var(--fc-hover); flex:none; border:1px solid var(--fc-border); }
+.cat-thumb-empty{ width:48px; height:48px; border-radius:10px; background:var(--fc-hover); border:1px solid var(--fc-border); flex:none; display:flex; align-items:center; justify-content:center; color:#C2C8D0; font-size:11px; }
+.cat-info{ flex:1; min-width:0; }
+.cat-name{ font-size:15px; font-weight:600; color:var(--fc-text); }
+.cat-badges{ display:flex; flex-wrap:wrap; gap:6px; margin-top:5px; }
+.fc-badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:2px 9px; border-radius:999px; line-height:1.6; }
+.fc-badge-green{ background:var(--fc-green-soft); color:#166534; }
+.fc-badge-gray{ background:#F1F3F5; color:var(--fc-muted); }
+.fc-badge-blue{ background:#DBEAFE; color:#1E40AF; }
+.fc-badge-amber{ background:#FEF3C7; color:#92400E; }
+.cat-actions{ display:flex; align-items:center; gap:8px; flex:none; }
+.cat-del{ width:38px; height:38px; border:1px solid var(--fc-border); background:#fff; border-radius:10px; color:var(--fc-danger); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.cat-del:hover{ background:#FEF2F2; border-color:var(--fc-danger); }
+.cat-del svg{ width:18px; height:18px; stroke:currentColor; fill:none; }
+
+/* раскрываемое редактирование */
+.cat-edit{ border-bottom:1px solid var(--fc-border); }
+.cat-edit > summary{ list-style:none; cursor:pointer; font-size:13px; font-weight:600; color:var(--fc-info); padding:8px 4px 14px; user-select:none; }
+.cat-edit > summary::-webkit-details-marker{ display:none; }
+.cat-edit > summary::before{ content:"✎ Редактировать"; }
+.cat-edit[open] > summary::before{ content:"✕ Свернуть"; }
+.cat-edit-body{ padding:4px 4px 18px; }
+
+.cat-photo-row{ display:flex; gap:14px; align-items:flex-start; margin-bottom:14px; }
+.cat-photo-preview{ width:96px; height:96px; border-radius:10px; border:1px solid var(--fc-border); overflow:hidden; flex:none; background:var(--fc-hover); display:flex; align-items:center; justify-content:center; }
+.cat-photo-preview img{ width:100%; height:100%; object-fit:cover; }
+.cat-photo-empty{ color:#C2C8D0; font-size:12px; text-align:center; padding:6px; }
+.cat-photo-controls{ flex:1; }
+.cat-photo-file{ font-size:13px; }
+.cat-photo-clear{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--fc-danger); margin-top:8px; cursor:pointer; }
+.cat-empty{ padding:30px; text-align:center; color:var(--fc-muted); font-size:14px; }
+</style>
+
+<div class="cat-wrap">
+
+    <div class="cat-pagehead">
+        <h1>Категории</h1>
+        <p>Категории меню и их карточки на сайте: видимость, блоки главной, фото и оформление.</p>
+    </div>
+
+    <!-- ============ СОЗДАНИЕ ============ -->
+    <div class="fc-card">
+        <h2>Новая категория</h2>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_category">
+
+            <div class="fc-field">
+                <label class="fc-label">Название</label>
+                <input class="fc-input" name="name" placeholder="Например: Пицца" required>
+            </div>
+
+            <div class="fc-block-title">Сайт</div>
+            <div class="fc-checks">
+                <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1"> Показывать на сайте</label>
+                <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" checked> Блок 1 (основной)</label>
+                <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1"> Блок 2 (новый)</label>
+            </div>
+            <div class="fc-field">
+                <label class="fc-label" for="cat-create-photo-url">Ссылка на фото (приоритет)</label>
+                <input class="fc-input" id="cat-create-photo-url" name="photo_url" type="url" placeholder="https://example.com/category.jpg">
+                <div class="fc-hint">Используется на сайте вместо загруженного файла.</div>
+            </div>
+            <div class="fc-field">
+                <label class="fc-label">Галерея фото (по одной ссылке в строке)</label>
+                <textarea class="fc-textarea" name="gallery" rows="3" placeholder="https://.../1.jpg"></textarea>
+            </div>
+
+            <div class="fc-block-title">Карточка «ресторана»</div>
+            <div class="fc-field">
+                <label class="fc-label">Логотип бренда — ссылка</label>
+                <input class="fc-input" name="logo_url" type="url" placeholder="https://example.com/logo.png">
+                <div class="fc-hint">Блок «Наши рестораны». Можно вместо ссылки загрузить файл ниже.</div>
+                <input class="cat-photo-file" type="file" name="logo" accept="image/*" style="margin-top:8px;">
+            </div>
+            <div class="fc-grid">
+                <div class="fc-field">
+                    <label class="fc-label">Подзаголовок (тип кухни)</label>
+                    <input class="fc-input" name="subtitle" type="text" placeholder="Напр. Римская пинца">
+                </div>
+                <div class="fc-field">
+                    <label class="fc-label">Рейтинг</label>
+                    <input class="fc-input" name="rating" type="number" step="0.1" min="0" max="5" placeholder="напр. 4.9">
+                </div>
+                <div class="fc-field">
+                    <label class="fc-label">Бейдж на фото</label>
+                    <input class="fc-input" name="badge_label" type="text" placeholder="напр. -50%">
+                </div>
+                <div class="fc-field">
+                    <label class="fc-label">Цвет бейджа</label>
+                    <select class="fc-select" name="badge_style">
+                        <option value="">По умолчанию</option>
+                        <option value="red">Красный</option>
+                        <option value="green">Зелёный</option>
+                        <option value="orange">Оранжевый</option>
+                    </select>
+                </div>
+                <div class="fc-field">
+                    <label class="fc-label">Время доставки</label>
+                    <input class="fc-input" name="delivery_time_label" type="text" placeholder="напр. 15–25 мин">
+                </div>
+            </div>
+
+            <div class="fc-block-title">Фото (резерв)</div>
+            <div class="cat-photo-row">
+                <div class="cat-photo-preview"><div class="cat-photo-empty">Фото не выбрано</div></div>
+                <div class="cat-photo-controls">
+                    <label class="fc-label" for="cat-create-photo">Загруженное фото</label>
+                    <input id="cat-create-photo" class="cat-photo-file" type="file" name="photo" accept="image/*">
+                    <div class="fc-hint">JPG, PNG или WebP. Используется, только если выше не указана внешняя ссылка.</div>
+                </div>
+            </div>
+
+            <div class="fc-row-end">
+                <button type="submit" class="fc-btn fc-btn-primary">Добавить категорию</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============ СПИСОК ============ -->
+    <div class="fc-card">
+        <h2>Все категории</h2>
+
+        {% for item in categories %}
+        <div class="cat-row">
+            {% if item.photo_url %}
+                <img class="cat-thumb" src="{{ item.photo_url }}" alt="{{ item.name }}">
+            {% elif item.photo %}
+                <img class="cat-thumb" src="{{ item.photo.url }}" alt="{{ item.name }}">
+            {% else %}
+                <div class="cat-thumb-empty">нет фото</div>
+            {% endif %}
+
+            <div class="cat-info">
+                <div class="cat-name">{{ item.name }}</div>
+                <div class="cat-badges">
+                    {% if item.is_visible_on_site %}
+                        <span class="fc-badge fc-badge-green">На сайте</span>
+                    {% else %}
+                        <span class="fc-badge fc-badge-gray">Скрыта</span>
+                    {% endif %}
+                    {% if item.in_home_block_1 %}<span class="fc-badge fc-badge-blue">Блок 1</span>{% endif %}
+                    {% if item.in_home_block_2 %}<span class="fc-badge fc-badge-blue">Блок 2</span>{% endif %}
+                    {% if item.rating %}<span class="fc-badge fc-badge-amber">★ {{ item.rating }}</span>{% endif %}
+                </div>
+            </div>
+
+            <div class="cat-actions">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_category">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <button type="submit" class="cat-del" onclick="return confirm('Удалить категорию?')" title="Удалить">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/>
+                            <path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <details class="cat-edit">
+            <summary></summary>
+            <div class="cat-edit-body">
+                <form method="post" enctype="multipart/form-data" class="cat-edit-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_category">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <div class="fc-block-title">Основное</div>
+                    <div class="fc-grid">
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-name-{{ item.id }}">Название</label>
+                            <input class="fc-input" id="cat-name-{{ item.id }}" name="name" value="{{ item.name }}" placeholder="Название (для админки)" required>
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-public-name-{{ item.id }}">Название на сайте</label>
+                            <input class="fc-input" id="cat-public-name-{{ item.id }}" name="public_name" value="{{ item.public_name }}" placeholder="Если пусто — берётся обычное">
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-slug-{{ item.id }}">Slug (адрес)</label>
+                            <input class="fc-input" id="cat-slug-{{ item.id }}" name="slug" value="{{ item.slug }}" placeholder="pizza">
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-sort-{{ item.id }}">Порядок</label>
+                            <input class="fc-input" id="cat-sort-{{ item.id }}" name="site_sort_order" type="number" min="0" step="1" value="{{ item.site_sort_order }}">
+                        </div>
+                    </div>
+
+                    <div class="fc-block-title">Сайт</div>
+                    <div class="fc-checks">
+                        <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1" {% if item.is_visible_on_site %}checked{% endif %}> Показывать на сайте</label>
+                        <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" {% if item.in_home_block_1 %}checked{% endif %}> Блок 1 (основной)</label>
+                        <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1" {% if item.in_home_block_2 %}checked{% endif %}> Блок 2 (новый)</label>
+                    </div>
+                    <div class="fc-grid">
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-sort2-{{ item.id }}">Порядок (блок 2)</label>
+                            <input class="fc-input" id="cat-sort2-{{ item.id }}" name="home_block_2_sort_order" type="number" min="0" step="1" value="{{ item.home_block_2_sort_order }}">
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-photo-url-{{ item.id }}">Ссылка на фото (приоритет)</label>
+                            <input class="fc-input" id="cat-photo-url-{{ item.id }}" name="photo_url" type="url" value="{{ item.photo_url }}" placeholder="https://example.com/category.jpg">
+                        </div>
+                    </div>
+                    <div class="fc-field">
+                        <label class="fc-label" for="cat-gallery-{{ item.id }}">Галерея фото (по одной ссылке в строке)</label>
+                        <textarea class="fc-textarea" id="cat-gallery-{{ item.id }}" name="gallery" rows="3" placeholder="https://.../1.jpg">{% for u in item.gallery %}{{ u }}
+{% endfor %}</textarea>
+                    </div>
+
+                    <div class="fc-block-title">Карточка «ресторана»</div>
+                    <div class="fc-field">
+                        <label class="fc-label" for="cat-logo-url-{{ item.id }}">Логотип бренда — ссылка</label>
+                        <input class="fc-input" id="cat-logo-url-{{ item.id }}" name="logo_url" type="url" value="{{ item.logo_url }}" placeholder="https://example.com/logo.png">
+                        <input class="cat-photo-file" type="file" name="logo" accept="image/*" style="margin-top:8px;">
+                        {% if item.logo %}
+                        <label class="cat-photo-clear"><input type="checkbox" name="logo_clear" value="1"> Удалить логотип</label>
+                        {% endif %}
+                    </div>
+                    <div class="fc-grid">
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-subtitle-{{ item.id }}">Подзаголовок (тип кухни)</label>
+                            <input class="fc-input" id="cat-subtitle-{{ item.id }}" name="subtitle" type="text" value="{{ item.subtitle }}" placeholder="Напр. Римская пинца">
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-rating-{{ item.id }}">Рейтинг</label>
+                            <input class="fc-input" id="cat-rating-{{ item.id }}" name="rating" type="number" step="0.1" min="0" max="5" value="{{ item.rating|default_if_none:'' }}" placeholder="напр. 4.9">
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-badge-{{ item.id }}">Бейдж на фото</label>
+                            <input class="fc-input" id="cat-badge-{{ item.id }}" name="badge_label" type="text" value="{{ item.badge_label }}" placeholder="напр. -50%">
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-badge-style-{{ item.id }}">Цвет бейджа</label>
+                            <select class="fc-select" id="cat-badge-style-{{ item.id }}" name="badge_style">
+                                <option value="" {% if not item.badge_style %}selected{% endif %}>По умолчанию</option>
+                                <option value="red" {% if item.badge_style == 'red' %}selected{% endif %}>Красный</option>
+                                <option value="green" {% if item.badge_style == 'green' %}selected{% endif %}>Зелёный</option>
+                                <option value="orange" {% if item.badge_style == 'orange' %}selected{% endif %}>Оранжевый</option>
+                            </select>
+                        </div>
+                        <div class="fc-field">
+                            <label class="fc-label" for="cat-delivery-{{ item.id }}">Время доставки</label>
+                            <input class="fc-input" id="cat-delivery-{{ item.id }}" name="delivery_time_label" type="text" value="{{ item.delivery_time_label }}" placeholder="напр. 15–25 мин">
+                        </div>
+                    </div>
+
+                    <div class="fc-block-title">Фото (резерв)</div>
+                    <div class="cat-photo-row">
+                        <div class="cat-photo-preview">
+                            {% if item.photo_url %}
+                                <img src="{{ item.photo_url }}" alt="{{ item.name }}">
+                            {% elif item.photo %}
+                                <img src="{{ item.photo.url }}" alt="{{ item.name }}">
+                            {% else %}
+                                <div class="cat-photo-empty">Фото не загружено</div>
+                            {% endif %}
+                        </div>
+                        <div class="cat-photo-controls">
+                            <label class="fc-label" for="cat-photo-{{ item.id }}">Загруженное фото</label>
+                            <input id="cat-photo-{{ item.id }}" class="cat-photo-file" type="file" name="photo" accept="image/*">
+                            {% if item.photo %}
+                            <label class="cat-photo-clear"><input type="checkbox" name="photo_clear" value="1"> Удалить загруженный файл</label>
+                            {% endif %}
+                            <div class="fc-hint">Используется, только если выше не указана внешняя ссылка.</div>
+                        </div>
+                    </div>
+
+                    <div class="fc-row-end">
+                        <button type="submit" class="fc-btn fc-btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </details>
+        {% empty %}
+        <div class="cat-empty">Пока нет категорий. Добавьте первую категорию выше.</div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Журнал смен{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Журнал смен (факт): начать/завершить, автоподсчёт часов. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1280px; margin:0 auto; padding:24px; }
+.fc-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+.fc-head h1{ margin:0 0 6px; font-size:28px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:18px; }
+.kpi-label{ color:var(--fc-muted); font-size:13px; font-weight:600; margin-bottom:4px; }
+.kpi-value{ font-size:24px; font-weight:700; }
+
+.filters{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:12px; align-items:end; }
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input,.fc-select{ width:100%; height:42px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; }
+.filter-actions{ display:flex; gap:10px; }
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:42px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.fc-btn-dark{ background:#0F172A; color:#fff; } .fc-btn-sm{ height:34px; padding:0 12px; font-size:13px; }
+
+.items{ width:100%; border-collapse:collapse; }
+.items th{ text-align:left; font-size:11px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; padding:10px 8px; border-bottom:1px solid var(--fc-border); }
+.items td{ padding:11px 8px; border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.items tr:last-child td{ border-bottom:0; } .items th.r,.items td.r{ text-align:right; }
+.num{ font-variant-numeric:tabular-nums; }
+.emp{ display:flex; align-items:center; gap:10px; }
+.ava{ width:32px; height:32px; border-radius:50%; background:var(--fc-info-soft); color:var(--fc-info-text); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex:0 0 auto; }
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:var(--fc-radius-pill); font-size:12px; font-weight:600; }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); } .badge-info{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); } .badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.badge-live{ background:var(--fc-info); color:#fff; }
+.empty{ text-align:center; padding:36px; color:var(--fc-muted); }
+
+.ov{ position:fixed; inset:0; background:rgba(15,23,42,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
+.ov.show{ display:flex; }
+.modal{ background:var(--fc-card); border-radius:14px; width:100%; max-width:480px; padding:24px; }
+.modal h3{ margin:0 0 16px; font-size:19px; font-weight:600; }
+.modal .fc-label{ margin-top:12px; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+@media (max-width:760px){ .kpi-grid{ grid-template-columns:1fr; } .filters{ grid-template-columns:1fr 1fr; } }
+@media (max-width:680px){ table.items{ display:block; overflow-x:auto; white-space:nowrap; } .fc-page{ padding:16px; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="fc-head">
+        <div><h1>Журнал смен</h1><p class="muted">Фактический учёт рабочего времени — начать и завершить смену</p></div>
+        {% if can_edit %}<button type="button" class="fc-btn fc-btn-dark" onclick="document.getElementById('ovStart').classList.add('show')">▶ Начать смену</button>{% endif %}
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Смен в выборке</div><div class="kpi-value">{{ count }}</div></div>
+        <div class="kpi"><div class="kpi-label">Сейчас идёт</div><div class="kpi-value" style="color:var(--fc-info-text);">{{ in_progress }}</div></div>
+        <div class="kpi"><div class="kpi-label">Отработано часов</div><div class="kpi-value num">{{ total_hours_display }} ч</div></div>
+    </div>
+
+    <div class="fc-card">
+        <form method="get">
+            <div class="filters">
+                <div><label class="fc-label">Дата от</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
+                <div><label class="fc-label">Дата до</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
+                <div><label class="fc-label">Сотрудник</label><select class="fc-select" name="employee"><option value="">Все</option>{% for e in employees %}<option value="{{ e.id }}" {% if emp_id == e.id|stringformat:'s' %}selected{% endif %}>{{ e.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">Филиал</label><select class="fc-select" name="location"><option value="">Все</option>{% for l in locations %}<option value="{{ l.id }}" {% if location_id == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/shifts/" class="fc-btn fc-btn-secondary">Сброс</a></div>
+            </div>
+        </form>
+    </div>
+
+    <div class="fc-card">
+        <table class="items">
+            <thead><tr><th>Сотрудник</th><th>Локация</th><th>Дата</th><th>Начало</th><th>Конец</th><th class="r">Часы</th><th>Статус</th>{% if can_edit %}<th class="r">Действие</th>{% endif %}</tr></thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td><div class="emp"><div class="ava">{{ r.initials }}</div>{{ r.employee }}</div></td>
+                    <td>{{ r.location }}</td>
+                    <td class="num">{{ r.date|date:"d.m.Y" }}</td>
+                    <td class="num">{{ r.start }}</td>
+                    <td class="num">{{ r.end }}</td>
+                    <td class="r num">{{ r.hours }}</td>
+                    <td>
+                        {% if r.status == 'in_progress' %}<span class="badge badge-live">● Идёт</span>
+                        {% elif r.status == 'done' %}<span class="badge badge-green">Отработана</span>
+                        {% elif r.status == 'late' %}<span class="badge badge-amber">Опоздание</span>
+                        {% elif r.status == 'missed' %}<span class="badge badge-red">Пропуск</span>
+                        {% elif r.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>
+                        {% else %}<span class="badge badge-info">Запланирована</span>{% endif %}
+                    </td>
+                    {% if can_edit %}
+                    <td class="r">
+                        {% if r.status == 'planned' %}
+                            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="start_shift"><input type="hidden" name="shift_id" value="{{ r.id }}"><button type="submit" class="fc-btn fc-btn-primary fc-btn-sm">▶ Начать</button></form>
+                        {% elif r.status == 'in_progress' %}
+                            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="finish_shift"><input type="hidden" name="shift_id" value="{{ r.id }}"><button type="submit" class="fc-btn fc-btn-dark fc-btn-sm">■ Завершить</button></form>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                    <tr><td colspan="8" class="empty">Смен по выбранным условиям нет.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</div>
+
+{% if can_edit %}
+<div class="ov" id="ovStart">
+    <div class="modal">
+        <h3>Начать смену</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="start_new">
+            <label class="fc-label">Сотрудник</label>
+            <select class="fc-input" name="employee_id" required><option value="">— выберите —</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select>
+            <label class="fc-label">Локация</label>
+            <select class="fc-input" name="location_id"><option value="">— по умолчанию —</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select>
+            <p class="muted" style="margin-top:12px;font-size:13px;">Время начала будет записано автоматически (сейчас). Завершите смену кнопкой «Завершить» — часы посчитаются сами.</p>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="document.getElementById('ovStart').classList.remove('show')">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">▶ Начать</button></div>
+        </form>
+    </div>
+</div>
+<script>
+document.getElementById('ovStart').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
+</script>
+{% endif %}
+
+{% endblock %}

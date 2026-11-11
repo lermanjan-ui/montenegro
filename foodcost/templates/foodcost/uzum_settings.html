@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Локации{% endblock %}
+{% block title %}{% trans "Локации" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -151,23 +152,21 @@ details > summary::-webkit-details-marker{ display:none; }
 <div class="fc-page">
 
     <div class="fc-page-head">
-        <div><h1>Локации</h1>
-        <p class="muted">Филиалы, их видимость, отдача в Uzum и зоны доставки. Доступ пользователей — на странице «Пользователи».</p></div>
+        <div><h1>{% trans "Локации" %}</h1>
+        <p class="muted">{% trans "Филиалы, их видимость, отдача в Uzum и зоны доставки. Доступ пользователей — на странице «Пользователи»." %}</p></div>
     </div>
 
     {% if error %}<div class="card" style="border-color:#EF4444;color:#EF4444;">{{ error }}</div>{% endif %}
 
     {# ============================ ФИЛИАЛЫ ============================ #}
     <div class="card">
-        <h2>Филиалы</h2>
+        <h2>{% trans "Филиалы" %}</h2>
         <p class="muted" style="margin-bottom:14px;">
-            Создание, редактирование и отключение филиалов. Поля с пометкой
-            «для сайта» используются на публичном фронте — если филиал скрыт,
-            он не появится в каталоге и не примет онлайн-заказы.
+            {% trans "Создание, редактирование и отключение филиалов. Поля с пометкой «для сайта» используются на публичном фронте — если филиал скрыт, он не появится в каталоге и не примет онлайн-заказы." %}
         </p>
 
         <details style="margin-bottom:8px;">
-            <summary class="create-summary">+ Создать новый филиал</summary>
+            <summary class="create-summary">{% trans "+ Создать новый филиал" %}</summary>
 
             <form method="post" class="create-form" style="margin-top:14px;">
                 {% csrf_token %}
@@ -175,61 +174,61 @@ details > summary::-webkit-details-marker{ display:none; }
 
                 <div class="form-grid">
                     <div>
-                        <label>Название филиала *</label>
-                        <input name="location_name" placeholder="Например: Яшнобод" required>
+                        <label>{% trans "Название филиала *" %}</label>
+                        <input name="location_name" placeholder="{% trans "Например: Яшнобод" %}" required>
                     </div>
                     <div>
                         <label>Telegram thread ID</label>
-                        <input name="telegram_thread_id" placeholder="Например: 2" type="number">
+                        <input name="telegram_thread_id" placeholder="{% trans "Например: 2" %}" type="number">
                     </div>
                     <div>
-                        <label>Название для сайта</label>
-                        <input name="public_name" placeholder="Raccoon · Яшнобод">
+                        <label>{% trans "Название для сайта" %}</label>
+                        <input name="public_name" placeholder="{% trans "Raccoon · Яшнобод" %}">
                     </div>
                     <div>
-                        <label>Порядок на сайте</label>
+                        <label>{% trans "Порядок на сайте" %}</label>
                         <input name="site_sort_order" type="number" min="0" step="1" value="0">
                     </div>
                 </div>
 
                 <div class="form-grid">
                     <div style="grid-column: span 2;">
-                        <label>Адрес</label>
-                        <input name="address" placeholder="ул. Шахрисабз, 14">
+                        <label>{% trans "Адрес" %}</label>
+                        <input name="address" placeholder="{% trans "ул. Шахрисабз, 14" %}">
                     </div>
                     <div>
-                        <label>Телефон</label>
+                        <label>{% trans "Телефон" %}</label>
                         <input name="phone" placeholder="+998 ...">
                     </div>
                     <div>
-                        <label>Часы работы</label>
+                        <label>{% trans "Часы работы" %}</label>
                         <input name="working_hours" placeholder="12:00–24:00">
                     </div>
                 </div>
 
                 <div class="form-grid">
                     <div>
-                        <label>Широта</label>
+                        <label>{% trans "Широта" %}</label>
                         <input name="latitude" placeholder="41.2995">
                     </div>
                     <div>
-                        <label>Долгота</label>
+                        <label>{% trans "Долгота" %}</label>
                         <input name="longitude" placeholder="69.2401">
                     </div>
                     <div class="checkbox-panel" style="grid-column: span 2;">
-                        <div class="checkbox-title">Статус</div>
+                        <div class="checkbox-title">{% trans "Статус" %}</div>
                         <div class="checkboxes">
-                            <label class="check-row"><input type="checkbox" name="is_active" checked> <span>Активен</span></label>
-                            <label class="check-row"><input type="checkbox" name="is_visible_on_site"> <span>Показывать на сайте</span></label>
-                            <label class="check-row"><input type="checkbox" name="supports_delivery" checked> <span>Доставка</span></label>
-                            <label class="check-row"><input type="checkbox" name="supports_pickup"> <span>Самовывоз</span></label>
-                            <label class="check-row"><input type="checkbox" name="uzum_enabled"> <span>Uzum (подключён)</span></label>
+                            <label class="check-row"><input type="checkbox" name="is_active" checked> <span>{% trans "Активен" %}</span></label>
+                            <label class="check-row"><input type="checkbox" name="is_visible_on_site"> <span>{% trans "Показывать на сайте" %}</span></label>
+                            <label class="check-row"><input type="checkbox" name="supports_delivery" checked> <span>{% trans "Доставка" %}</span></label>
+                            <label class="check-row"><input type="checkbox" name="supports_pickup"> <span>{% trans "Самовывоз" %}</span></label>
+                            <label class="check-row"><input type="checkbox" name="uzum_enabled"> <span>{% trans "Uzum (подключён)" %}</span></label>
                         </div>
                     </div>
                 </div>
 
                 <div class="edit-actions">
-                    <button type="submit">Создать филиал</button>
+                    <button type="submit">{% trans "Создать филиал" %}</button>
                 </div>
             </form>
         </details>
@@ -246,16 +245,16 @@ details > summary::-webkit-details-marker{ display:none; }
                         </div>
                     </div>
                     <div class="branch-badges">
-                        {% if branch.is_active %}<span class="branch-badge branch-badge-on">Активен</span>{% else %}<span class="branch-badge branch-badge-off">Отключён</span>{% endif %}
-                        {% if branch.is_visible_on_site %}<span class="branch-badge branch-badge-on">На сайте</span>{% else %}<span class="branch-badge branch-badge-off">Скрыт</span>{% endif %}
-                        {% if branch.supports_delivery %}<span class="branch-badge branch-badge-on">Доставка</span>{% else %}<span class="branch-badge branch-badge-off">Без доставки</span>{% endif %}
-                        {% if branch.supports_pickup %}<span class="branch-badge branch-badge-on">Самовывоз</span>{% else %}<span class="branch-badge branch-badge-off">Без самовывоза</span>{% endif %}
-                        {% if branch.uzum_enabled %}<span class="branch-badge branch-badge-on">Uzum</span>{% else %}<span class="branch-badge branch-badge-off">Без Uzum</span>{% endif %}
+                        {% if branch.is_active %}<span class="branch-badge branch-badge-on">{% trans "Активен" %}</span>{% else %}<span class="branch-badge branch-badge-off">{% trans "Отключён" %}</span>{% endif %}
+                        {% if branch.is_visible_on_site %}<span class="branch-badge branch-badge-on">{% trans "На сайте" %}</span>{% else %}<span class="branch-badge branch-badge-off">{% trans "Скрыт" %}</span>{% endif %}
+                        {% if branch.supports_delivery %}<span class="branch-badge branch-badge-on">{% trans "Доставка" %}</span>{% else %}<span class="branch-badge branch-badge-off">{% trans "Без доставки" %}</span>{% endif %}
+                        {% if branch.supports_pickup %}<span class="branch-badge branch-badge-on">{% trans "Самовывоз" %}</span>{% else %}<span class="branch-badge branch-badge-off">{% trans "Без самовывоза" %}</span>{% endif %}
+                        {% if branch.uzum_enabled %}<span class="branch-badge branch-badge-on">Uzum</span>{% else %}<span class="branch-badge branch-badge-off">{% trans "Без Uzum" %}</span>{% endif %}
                     </div>
                 </div>
 
                 <details class="branch-edit">
-                    <summary>Редактировать</summary>
+                    <summary>{% trans "Редактировать" %}</summary>
 
                     <form method="post" class="create-form" style="margin-top:14px;">
                         {% csrf_token %}
@@ -264,7 +263,7 @@ details > summary::-webkit-details-marker{ display:none; }
 
                         <div class="form-grid">
                             <div>
-                                <label>Название филиала *</label>
+                                <label>{% trans "Название филиала *" %}</label>
                                 <input name="location_name" value="{{ branch.name }}" required>
                             </div>
                             <div>
@@ -272,53 +271,53 @@ details > summary::-webkit-details-marker{ display:none; }
                                 <input name="telegram_thread_id" type="number" value="{% if branch.telegram_thread_id is not None %}{{ branch.telegram_thread_id }}{% endif %}">
                             </div>
                             <div>
-                                <label>Название для сайта</label>
+                                <label>{% trans "Название для сайта" %}</label>
                                 <input name="public_name" value="{{ branch.public_name }}">
                             </div>
                             <div>
-                                <label>Порядок на сайте</label>
+                                <label>{% trans "Порядок на сайте" %}</label>
                                 <input name="site_sort_order" type="number" min="0" step="1" value="{{ branch.site_sort_order }}">
                             </div>
                         </div>
 
                         <div class="form-grid">
                             <div style="grid-column: span 2;">
-                                <label>Адрес</label>
+                                <label>{% trans "Адрес" %}</label>
                                 <input name="address" value="{{ branch.address }}">
                             </div>
                             <div>
-                                <label>Телефон</label>
+                                <label>{% trans "Телефон" %}</label>
                                 <input name="phone" value="{{ branch.phone }}">
                             </div>
                             <div>
-                                <label>Часы работы</label>
+                                <label>{% trans "Часы работы" %}</label>
                                 <input name="working_hours" value="{{ branch.working_hours }}">
                             </div>
                         </div>
 
                         <div class="form-grid">
                             <div>
-                                <label>Широта</label>
+                                <label>{% trans "Широта" %}</label>
                                 <input name="latitude" value="{% if branch.latitude is not None %}{{ branch.latitude }}{% endif %}">
                             </div>
                             <div>
-                                <label>Долгота</label>
+                                <label>{% trans "Долгота" %}</label>
                                 <input name="longitude" value="{% if branch.longitude is not None %}{{ branch.longitude }}{% endif %}">
                             </div>
                             <div class="checkbox-panel" style="grid-column: span 2;">
-                                <div class="checkbox-title">Статус</div>
+                                <div class="checkbox-title">{% trans "Статус" %}</div>
                                 <div class="checkboxes">
-                                    <label class="check-row"><input type="checkbox" name="is_active" {% if branch.is_active %}checked{% endif %}> <span>Активен</span></label>
-                                    <label class="check-row"><input type="checkbox" name="is_visible_on_site" {% if branch.is_visible_on_site %}checked{% endif %}> <span>Показывать на сайте</span></label>
-                                    <label class="check-row"><input type="checkbox" name="supports_delivery" {% if branch.supports_delivery %}checked{% endif %}> <span>Доставка</span></label>
-                                    <label class="check-row"><input type="checkbox" name="supports_pickup" {% if branch.supports_pickup %}checked{% endif %}> <span>Самовывоз</span></label>
-                                    <label class="check-row"><input type="checkbox" name="uzum_enabled" {% if branch.uzum_enabled %}checked{% endif %}> <span>Uzum (подключён)</span></label>
+                                    <label class="check-row"><input type="checkbox" name="is_active" {% if branch.is_active %}checked{% endif %}> <span>{% trans "Активен" %}</span></label>
+                                    <label class="check-row"><input type="checkbox" name="is_visible_on_site" {% if branch.is_visible_on_site %}checked{% endif %}> <span>{% trans "Показывать на сайте" %}</span></label>
+                                    <label class="check-row"><input type="checkbox" name="supports_delivery" {% if branch.supports_delivery %}checked{% endif %}> <span>{% trans "Доставка" %}</span></label>
+                                    <label class="check-row"><input type="checkbox" name="supports_pickup" {% if branch.supports_pickup %}checked{% endif %}> <span>{% trans "Самовывоз" %}</span></label>
+                                    <label class="check-row"><input type="checkbox" name="uzum_enabled" {% if branch.uzum_enabled %}checked{% endif %}> <span>{% trans "Uzum (подключён)" %}</span></label>
                                 </div>
                             </div>
                         </div>
 
                         <div class="edit-actions">
-                            <button type="submit">Сохранить</button>
+                            <button type="submit">{% trans "Сохранить" %}</button>
                         </div>
                     </form>
 
@@ -326,31 +325,28 @@ details > summary::-webkit-details-marker{ display:none; }
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete_location">
                         <input type="hidden" name="location_id" value="{{ branch.id }}">
+                        {% blocktrans with n=branch.name asvar _c_delbranch %}Удалить филиал «{{ n }}»? Это действие необратимо.{% endblocktrans %}
                         <button type="submit" class="branch-delete-btn"
-                                onclick="return confirm('Удалить филиал «{{ branch.name|escapejs }}»? Это действие необратимо.')">
-                            Удалить филиал
+                                onclick="return confirm('{{ _c_delbranch|escapejs }}')">
+                            {% trans "Удалить филиал" %}
                         </button>
                     </form>
                 </details>
             </div>
         {% empty %}
-            <div class="empty">Пока нет филиалов</div>
+            <div class="empty">{% trans "Пока нет филиалов" %}</div>
         {% endfor %}
     </div>
 
     {# ============================ ЗОНЫ ДОСТАВКИ ============================ #}
     <div class="card">
-        <h2>Зоны доставки</h2>
+        <h2>{% trans "Зоны доставки" %}</h2>
         <p class="muted" style="margin-bottom:14px;">
-            Круглые зоны (центр + радиус) для автоматического выбора филиала,
-            который повезёт заказ. Если у клиента есть координаты — ERP сам
-            подберёт ближайшую активную зону. Если зон нет, сайт использует
-            правило по умолчанию: 15 000 при сумме до 150 000, бесплатно от
-            150 000.
+            {% trans "Круглые зоны (центр + радиус) для автоматического выбора филиала, который повезёт заказ. Если у клиента есть координаты — ERP сам подберёт ближайшую активную зону. Если зон нет, сайт использует правило по умолчанию: 15 000 при сумме до 150 000, бесплатно от 150 000." %}
         </p>
 
         <details style="margin-bottom:8px;">
-            <summary class="create-summary">+ Создать зону доставки</summary>
+            <summary class="create-summary">{% trans "+ Создать зону доставки" %}</summary>
 
             <form method="post" class="create-form" style="margin-top:14px;">
                 {% csrf_token %}
@@ -358,69 +354,69 @@ details > summary::-webkit-details-marker{ display:none; }
 
                 <div class="form-grid">
                     <div>
-                        <label>Название зоны *</label>
-                        <input name="zone_name" placeholder="Мирабад зона 1" required>
+                        <label>{% trans "Название зоны *" %}</label>
+                        <input name="zone_name" placeholder="{% trans "Мирабад зона 1" %}" required>
                     </div>
                     <div>
-                        <label>Филиал *</label>
+                        <label>{% trans "Филиал *" %}</label>
                         <select name="zone_location_id" required>
-                            <option value="">— выбери филиал —</option>
+                            <option value="">{% trans "— выбери филиал —" %}</option>
                             {% for loc in locations %}
                                 <option value="{{ loc.id }}">{{ loc.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label>Время доставки</label>
-                        <input name="zone_estimated_time" value="35–45 мин">
+                        <label>{% trans "Время доставки" %}</label>
+                        {% trans "35–45 мин" as _zt %}<input name="zone_estimated_time" value="{{ _zt }}">
                     </div>
                     <div>
-                        <label>Порядок</label>
+                        <label>{% trans "Порядок" %}</label>
                         <input name="zone_sort_order" type="number" min="0" step="1" value="0">
                     </div>
                 </div>
 
                 <div class="form-grid">
                     <div>
-                        <label>Широта центра</label>
+                        <label>{% trans "Широта центра" %}</label>
                         <input name="zone_center_latitude" placeholder="41.2995">
                     </div>
                     <div>
-                        <label>Долгота центра</label>
+                        <label>{% trans "Долгота центра" %}</label>
                         <input name="zone_center_longitude" placeholder="69.2401">
                     </div>
                     <div>
-                        <label>Радиус (км)</label>
+                        <label>{% trans "Радиус (км)" %}</label>
                         <input name="zone_radius_km" placeholder="3">
                     </div>
                     <div class="checkbox-panel">
-                        <div class="checkbox-title">Статус</div>
+                        <div class="checkbox-title">{% trans "Статус" %}</div>
                         <div class="checkboxes">
-                            <label class="check-row"><input type="checkbox" name="zone_is_active" checked> <span>Активна</span></label>
+                            <label class="check-row"><input type="checkbox" name="zone_is_active" checked> <span>{% trans "Активна" %}</span></label>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-grid">
                     <div>
-                        <label>Тип зоны</label>
+                        <label>{% trans "Тип зоны" %}</label>
                         <select name="zone_kind">
-                            <option value="regular" selected>Обычная</option>
-                            <option value="lunch">Обеденная (Обед дня)</option>
+                            <option value="regular" selected>{% trans "Обычная" %}</option>
+                            <option value="lunch">{% trans "Обеденная (Обед дня)" %}</option>
                         </select>
                     </div>
                     <div>
-                        <label>Стоимость доставки</label>
+                        <label>{% trans "Стоимость доставки" %}</label>
                         <input name="zone_delivery_price" type="number" min="0" step="1" value="15000">
                     </div>
                     <div>
-                        <label>Бесплатно от</label>
+                        <label>{% trans "Бесплатно от" %}</label>
                         <input name="zone_free_delivery_threshold" type="number" min="0" step="1" value="150000">
                     </div>
                 </div>
 
                 <div class="edit-actions">
-                    <button type="submit">Создать зону</button>
+                    <button type="submit">{% trans "Создать зону" %}</button>
                 </div>
             </form>
         </details>
@@ -431,24 +427,24 @@ details > summary::-webkit-details-marker{ display:none; }
                     <div>
                         <div class="branch-title">{{ zone.name }}</div>
                         <div class="branch-sub">
-                            Филиал: {{ zone.location.name }}
-                            {% if zone.radius_km %} · радиус {{ zone.radius_km }} км{% endif %}
+                            {% blocktrans with n=zone.location.name %}Филиал: {{ n }}{% endblocktrans %}
+                            {% if zone.radius_km %} · {% blocktrans with r=zone.radius_km %}радиус {{ r }} км{% endblocktrans %}{% endif %}
                             {% if zone.center_latitude is not None and zone.center_longitude is not None %}
-                                · центр {{ zone.center_latitude }}, {{ zone.center_longitude }}
+                                · {% blocktrans with la=zone.center_latitude lo=zone.center_longitude %}центр {{ la }}, {{ lo }}{% endblocktrans %}
                             {% endif %}
-                            · {{ zone.estimated_time|default:"35–45 мин" }}
+                            · {% if zone.estimated_time %}{{ zone.estimated_time }}{% else %}{% trans "35–45 мин" %}{% endif %}
                         </div>
                     </div>
                     <div class="branch-badges">
-                        {% if zone.zone_kind == "lunch" %}<span class="branch-badge branch-badge-on">🍽 Обеденная</span>{% endif %}
-                        {% if zone.is_active %}<span class="branch-badge branch-badge-on">Активна</span>{% else %}<span class="branch-badge branch-badge-off">Отключена</span>{% endif %}
+                        {% if zone.zone_kind == "lunch" %}<span class="branch-badge branch-badge-on">{% trans "🍽 Обеденная" %}</span>{% endif %}
+                        {% if zone.is_active %}<span class="branch-badge branch-badge-on">{% trans "Активна" %}</span>{% else %}<span class="branch-badge branch-badge-off">{% trans "Отключена" %}</span>{% endif %}
                         <span class="branch-badge branch-badge-off">{{ zone.delivery_price|floatformat:0 }}</span>
-                        {% if zone.free_delivery_threshold %}<span class="branch-badge branch-badge-off">free от {{ zone.free_delivery_threshold|floatformat:0 }}</span>{% endif %}
+                        {% if zone.free_delivery_threshold %}<span class="branch-badge branch-badge-off">{% blocktrans with v=zone.free_delivery_threshold|floatformat:0 %}free от {{ v }}{% endblocktrans %}</span>{% endif %}
                     </div>
                 </div>
 
                 <details class="branch-edit">
-                    <summary>Редактировать</summary>
+                    <summary>{% trans "Редактировать" %}</summary>
 
                     <form method="post" class="create-form" style="margin-top:14px;">
                         {% csrf_token %}
@@ -457,11 +453,11 @@ details > summary::-webkit-details-marker{ display:none; }
 
                         <div class="form-grid">
                             <div>
-                                <label>Название зоны *</label>
+                                <label>{% trans "Название зоны *" %}</label>
                                 <input name="zone_name" value="{{ zone.name }}" required>
                             </div>
                             <div>
-                                <label>Филиал *</label>
+                                <label>{% trans "Филиал *" %}</label>
                                 <select name="zone_location_id" required>
                                     {% for loc in locations %}
                                         <option value="{{ loc.id }}" {% if loc.id == zone.location_id %}selected{% endif %}>{{ loc.name }}</option>
@@ -469,56 +465,56 @@ details > summary::-webkit-details-marker{ display:none; }
                                 </select>
                             </div>
                             <div>
-                                <label>Время доставки</label>
+                                <label>{% trans "Время доставки" %}</label>
                                 <input name="zone_estimated_time" value="{{ zone.estimated_time }}">
                             </div>
                             <div>
-                                <label>Порядок</label>
+                                <label>{% trans "Порядок" %}</label>
                                 <input name="zone_sort_order" type="number" min="0" step="1" value="{{ zone.site_sort_order }}">
                             </div>
                         </div>
 
                         <div class="form-grid">
                             <div>
-                                <label>Широта центра</label>
+                                <label>{% trans "Широта центра" %}</label>
                                 <input name="zone_center_latitude" value="{% if zone.center_latitude is not None %}{{ zone.center_latitude }}{% endif %}">
                             </div>
                             <div>
-                                <label>Долгота центра</label>
+                                <label>{% trans "Долгота центра" %}</label>
                                 <input name="zone_center_longitude" value="{% if zone.center_longitude is not None %}{{ zone.center_longitude }}{% endif %}">
                             </div>
                             <div>
-                                <label>Радиус (км)</label>
+                                <label>{% trans "Радиус (км)" %}</label>
                                 <input name="zone_radius_km" value="{% if zone.radius_km is not None %}{{ zone.radius_km }}{% endif %}">
                             </div>
                             <div class="checkbox-panel">
-                                <div class="checkbox-title">Статус</div>
+                                <div class="checkbox-title">{% trans "Статус" %}</div>
                                 <div class="checkboxes">
-                                    <label class="check-row"><input type="checkbox" name="zone_is_active" {% if zone.is_active %}checked{% endif %}> <span>Активна</span></label>
+                                    <label class="check-row"><input type="checkbox" name="zone_is_active" {% if zone.is_active %}checked{% endif %}> <span>{% trans "Активна" %}</span></label>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-grid">
                             <div>
-                                <label>Тип зоны</label>
+                                <label>{% trans "Тип зоны" %}</label>
                                 <select name="zone_kind">
-                                    <option value="regular" {% if zone.zone_kind != "lunch" %}selected{% endif %}>Обычная</option>
-                                    <option value="lunch" {% if zone.zone_kind == "lunch" %}selected{% endif %}>Обеденная (Обед дня)</option>
+                                    <option value="regular" {% if zone.zone_kind != "lunch" %}selected{% endif %}>{% trans "Обычная" %}</option>
+                                    <option value="lunch" {% if zone.zone_kind == "lunch" %}selected{% endif %}>{% trans "Обеденная (Обед дня)" %}</option>
                                 </select>
                             </div>
                             <div>
-                                <label>Стоимость доставки</label>
+                                <label>{% trans "Стоимость доставки" %}</label>
                                 <input name="zone_delivery_price" type="number" min="0" step="1" value="{{ zone.delivery_price|floatformat:0 }}">
                             </div>
                             <div>
-                                <label>Бесплатно от</label>
+                                <label>{% trans "Бесплатно от" %}</label>
                                 <input name="zone_free_delivery_threshold" type="number" min="0" step="1" value="{{ zone.free_delivery_threshold|floatformat:0 }}">
                             </div>
                         </div>
 
                         <div class="edit-actions">
-                            <button type="submit">Сохранить</button>
+                            <button type="submit">{% trans "Сохранить" %}</button>
                         </div>
                     </form>
 
@@ -526,15 +522,16 @@ details > summary::-webkit-details-marker{ display:none; }
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete_delivery_zone">
                         <input type="hidden" name="zone_id" value="{{ zone.id }}">
+                        {% blocktrans with n=zone.name asvar _c_delzone %}Удалить зону доставки «{{ n }}»? Филиал останется, только зона будет удалена.{% endblocktrans %}
                         <button type="submit" class="branch-delete-btn"
-                                onclick="return confirm('Удалить зону доставки «{{ zone.name|escapejs }}»? Филиал останется, только зона будет удалена.')">
-                            Удалить зону
+                                onclick="return confirm('{{ _c_delzone|escapejs }}')">
+                            {% trans "Удалить зону" %}
                         </button>
                     </form>
                 </details>
             </div>
         {% empty %}
-            <div class="empty">Зон доставки пока нет. Сайт будет использовать правило по умолчанию.</div>
+            <div class="empty">{% trans "Зон доставки пока нет. Сайт будет использовать правило по умолчанию." %}</div>
         {% endfor %}
     </div>
 

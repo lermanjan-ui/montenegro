@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Техкарты{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Техкарты" %}{% endblock %}
 {% block content %}
 <style>
 :root{ --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-border:#E5E7EB; --fc-text:#111827;
@@ -37,10 +38,10 @@ table.tc-tab tr:last-child td{ border-bottom:none; }
 </style>
 
 <div class="tc-wrap">
-  <h1>Техкарты</h1>
-  <p class="tc-sub">Состав блюд для кухни: продукты и заготовки с брутто/нетто и описанием приготовления.</p>
+  <h1>{% trans "Техкарты" %}</h1>
+  <p class="tc-sub">{% trans "Состав блюд для кухни: продукты и заготовки с брутто/нетто и описанием приготовления." %}</p>
 
-  <input type="text" class="tc-search" id="tcSearch" placeholder="Поиск блюда по названию…" autocomplete="off">
+  <input type="text" class="tc-search" id="tcSearch" placeholder="{% trans "Поиск блюда по названию…" %}" autocomplete="off">
 
   <div id="tcList">
     {% for row in rows %}
@@ -50,25 +51,25 @@ table.tc-tab tr:last-child td{ border-bottom:none; }
         <summary>
           <div class="tc-thumb-empty"></div>
           <span class="tc-name">{{ row.prep.name }}</span>
-          <span class="tc-meta">{{ row.prep.final_weight }} г{% if row.prep.cooking_minutes %} · {{ row.prep.cooking_minutes }} мин{% endif %}</span>
+          <span class="tc-meta">{{ row.prep.final_weight }} {% trans "г" %}{% if row.prep.cooking_minutes %} · {{ row.prep.cooking_minutes }} {% trans "мин" %}{% endif %}</span>
           <span class="tc-arrow">▸</span>
         </summary>
         <div class="tc-body">
           {% if row.product_items or row.sub_items %}
-          <div class="tc-h">Состав</div>
+          <div class="tc-h">{% trans "Состав" %}</div>
           <table class="tc-tab">
-            <thead><tr><th>Ингредиент</th><th class="r">Брутто</th><th class="r">Нетто</th></tr></thead>
+            <thead><tr><th>{% trans "Ингредиент" %}</th><th class="r">{% trans "Брутто" %}</th><th class="r">{% trans "Нетто" %}</th></tr></thead>
             <tbody>
               {% for it in row.product_items %}
               <tr><td>{{ it.name }}</td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
               {% endfor %}
               {% for it in row.sub_items %}
-              <tr><td>{{ it.name }}<span class="tc-tag">под-заготовка</span></td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
+              <tr><td>{{ it.name }}<span class="tc-tag">{% trans "под-заготовка" %}</span></td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
               {% endfor %}
             </tbody>
           </table>
           {% endif %}
-          <a class="tc-open" href="/c/{{ country.slug }}/preparations/{{ row.prep.id }}/techcard/">Открыть техкарту →</a>
+          <a class="tc-open" href="/c/{{ country.slug }}/preparations/{{ row.prep.id }}/techcard/">{% trans "Открыть техкарту →" %}</a>
         </div>
       </details>
       {% else %}
@@ -78,44 +79,44 @@ table.tc-tab tr:last-child td{ border-bottom:none; }
           {% elif row.dish.photo %}<img class="tc-thumb" src="{{ row.dish.photo.url }}">
           {% else %}<div class="tc-thumb-empty"></div>{% endif %}
           <span class="tc-name">{{ row.dish.name }}</span>
-          <span class="tc-meta">{{ row.dish.final_weight }} г{% if row.dish.cooking_minutes %} · {{ row.dish.cooking_minutes }} мин{% endif %}</span>
+          <span class="tc-meta">{{ row.dish.final_weight }} {% trans "г" %}{% if row.dish.cooking_minutes %} · {{ row.dish.cooking_minutes }} {% trans "мин" %}{% endif %}</span>
           <span class="tc-arrow">▸</span>
         </summary>
         <div class="tc-body">
           {% if row.product_items or row.preparation_items %}
-          <div class="tc-h">Состав</div>
+          <div class="tc-h">{% trans "Состав" %}</div>
           <table class="tc-tab">
-            <thead><tr><th>Ингредиент</th><th class="r">Брутто</th><th class="r">Нетто</th></tr></thead>
+            <thead><tr><th>{% trans "Ингредиент" %}</th><th class="r">{% trans "Брутто" %}</th><th class="r">{% trans "Нетто" %}</th></tr></thead>
             <tbody>
               {% for it in row.product_items %}
               <tr><td>{{ it.name }}</td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
               {% endfor %}
               {% for it in row.preparation_items %}
-              <tr><td>{{ it.name }}<span class="tc-tag">заготовка</span></td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
+              <tr><td>{{ it.name }}<span class="tc-tag">{% trans "заготовка" %}</span></td><td class="r">{{ it.gross }} {{ it.unit }}</td><td class="r">{{ it.net }} {{ it.unit }}</td></tr>
               {% endfor %}
             </tbody>
           </table>
           {% endif %}
 
           {% if row.dish.composition %}
-          <div class="tc-h">Состав (для гостя)</div>
+          <div class="tc-h">{% trans "Состав (для гостя)" %}</div>
           <div class="tc-text">{{ row.dish.composition }}</div>
           {% endif %}
 
           {% if row.dish.tech_card %}
-          <div class="tc-h">Приготовление</div>
+          <div class="tc-h">{% trans "Приготовление" %}</div>
           <div class="tc-text">{{ row.dish.tech_card }}</div>
           {% endif %}
 
-          <a class="tc-open" href="/c/{{ country.slug }}/techcards/{{ row.dish.id }}/">Открыть техкарту →</a>
-          <a class="tc-print" href="/c/{{ country.slug }}/dish/{{ row.dish.id }}/techcard/" target="_blank">🖨 Печать техкарты</a>
+          <a class="tc-open" href="/c/{{ country.slug }}/techcards/{{ row.dish.id }}/">{% trans "Открыть техкарту →" %}</a>
+          <a class="tc-print" href="/c/{{ country.slug }}/dish/{{ row.dish.id }}/techcard/" target="_blank">{% trans "🖨 Печать техкарты" %}</a>
         </div>
       </details>
       {% endif %}
     {% empty %}
-      <div class="tc-empty">Пока нет техкарт.</div>
+      <div class="tc-empty">{% trans "Пока нет техкарт." %}</div>
     {% endfor %}
-    <div class="tc-none" id="tcNone">Ничего не найдено.</div>
+    <div class="tc-none" id="tcNone">{% trans "Ничего не найдено." %}</div>
   </div>
 </div>
 

@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}{{ product.name }} — остаток{% endblock %}
+{% block title %}{{ product.name }} — {% trans "остаток" %}{% endblock %}
 
 {% block content %}
 
@@ -59,33 +60,33 @@
 <div class="fc-scope">
 <div class="fc-page">
 
-    <div class="crumbs"><a href="/c/{{ country.slug }}/stock/">Остатки</a> › {{ product.name }}</div>
+    <div class="crumbs"><a href="/c/{{ country.slug }}/stock/">{% trans "Остатки" %}</a> › {{ product.name }}</div>
 
     <div class="fc-head">
         <h1>{{ product.name }}</h1>
-        <div class="sku">{% if sku %}Артикул: {{ sku }} · {% endif %}Ед.: {{ unit }} · Мин. остаток: {{ min_display }}</div>
+        <div class="sku">{% if sku %}{% trans "Артикул:" %} {{ sku }} · {% endif %}{% trans "Ед.:" %} {{ unit }} · {% trans "Мин. остаток:" %} {{ min_display }}</div>
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Всего на складах</div><div class="kpi-value num">{{ total_qty_display }} <span style="font-size:14px;color:var(--fc-muted);">{{ unit }}</span></div></div>
-        {% if show_money %}<div class="kpi"><div class="kpi-label">Последняя закуп. цена</div><div class="kpi-value num">{{ last_price_display }}</div></div>{% endif %}
-        {% if show_money %}<div class="kpi"><div class="kpi-label">Стоимость остатка</div><div class="kpi-value num">{{ total_value_display }}</div></div>{% endif %}
-        <div class="kpi"><div class="kpi-label">Складов с остатком</div><div class="kpi-value">{{ wh_rows|length }}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Всего на складах" %}</div><div class="kpi-value num">{{ total_qty_display }} <span style="font-size:14px;color:var(--fc-muted);">{{ unit }}</span></div></div>
+        {% if show_money %}<div class="kpi"><div class="kpi-label">{% trans "Последняя закуп. цена" %}</div><div class="kpi-value num">{{ last_price_display }}</div></div>{% endif %}
+        {% if show_money %}<div class="kpi"><div class="kpi-label">{% trans "Стоимость остатка" %}</div><div class="kpi-value num">{{ total_value_display }}</div></div>{% endif %}
+        <div class="kpi"><div class="kpi-label">{% trans "Складов с остатком" %}</div><div class="kpi-value">{{ wh_rows|length }}</div></div>
     </div>
 
     <div class="fc-card">
-        <h2>Остаток по складам</h2>
+        <h2>{% trans "Остаток по складам" %}</h2>
         <table class="items">
-            <thead><tr><th>Склад</th><th class="r">Остаток</th><th>Статус</th>{% if show_money %}<th class="r">Стоимость</th>{% endif %}</tr></thead>
+            <thead><tr><th>{% trans "Склад" %}</th><th class="r">{% trans "Остаток" %}</th><th>{% trans "Статус" %}</th>{% if show_money %}<th class="r">{% trans "Стоимость" %}</th>{% endif %}</tr></thead>
             <tbody>
                 {% for w in wh_rows %}
                 <tr>
                     <td>{{ w.warehouse }}</td>
                     <td class="r num">{{ w.qty_display }}</td>
-                    <td>{% if w.status == 'negative' %}<span class="badge badge-neg">Минусовой</span>{% elif w.status == 'low' %}<span class="badge badge-low">Ниже минимума</span>{% else %}<span class="badge badge-ok">ОК</span>{% endif %}</td>
+                    <td>{% if w.status == 'negative' %}<span class="badge badge-neg">{% trans "Минусовой" %}</span>{% elif w.status == 'low' %}<span class="badge badge-low">{% trans "Ниже минимума" %}</span>{% else %}<span class="badge badge-ok">{% trans "ОК" %}</span>{% endif %}</td>
                     {% if show_money %}<td class="r num">{{ w.value_display }}</td>{% endif %}
                 </tr>
-                {% empty %}<tr><td colspan="4" class="empty">Движений по этому товару пока нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="4" class="empty">{% trans "Движений по этому товару пока нет." %}</td></tr>{% endfor %}
             </tbody>
         </table>
     </div>
@@ -93,21 +94,21 @@
     <div class="two">
         {% if show_money %}
         <div class="fc-card">
-            <h2>История закупочных цен</h2>
+            <h2>{% trans "История закупочных цен" %}</h2>
             <table class="items">
-                <thead><tr><th>Дата</th><th class="r">Цена</th></tr></thead>
+                <thead><tr><th>{% trans "Дата" %}</th><th class="r">{% trans "Цена" %}</th></tr></thead>
                 <tbody>
                     {% for p in price_history %}<tr><td>{{ p.date|date:"d.m.Y" }}</td><td class="r num">{{ p.price_display }}</td></tr>
-                    {% empty %}<tr><td colspan="2" class="empty">Цен пока нет.</td></tr>{% endfor %}
+                    {% empty %}<tr><td colspan="2" class="empty">{% trans "Цен пока нет." %}</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>
         {% endif %}
 
         <div class="fc-card">
-            <h2>Последние движения</h2>
+            <h2>{% trans "Последние движения" %}</h2>
             <table class="items">
-                <thead><tr><th>Дата</th><th>Склад</th><th>Тип</th><th class="r">Кол-во</th>{% if show_money %}<th class="r">Сумма</th>{% endif %}<th>Автор</th></tr></thead>
+                <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Склад" %}</th><th>{% trans "Тип" %}</th><th class="r">{% trans "Кол-во" %}</th>{% if show_money %}<th class="r">{% trans "Сумма" %}</th>{% endif %}<th>{% trans "Автор" %}</th></tr></thead>
                 <tbody>
                     {% for m in movements %}
                     <tr>
@@ -118,7 +119,7 @@
                         {% if show_money %}<td class="r num">{{ m.total_cost_display }}</td>{% endif %}
                         <td class="muted">{{ m.obj.created_by.username|default:"—" }}</td>
                     </tr>
-                    {% empty %}<tr><td colspan="6" class="empty">Движений нет.</td></tr>{% endfor %}
+                    {% empty %}<tr><td colspan="6" class="empty">{% trans "Движений нет." %}</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>

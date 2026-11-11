@@ -9,7 +9,9 @@ from django.views.static import serve as _serve_media
 
 
 urlpatterns = [
+    path('i18n/', include('django.conf.urls.i18n')),  # i18n
     path("admin/", admin.site.urls),
+    path('', include('pos.urls')),  # касса (POS)
     path("", include("foodcost.urls")),
 ]
 

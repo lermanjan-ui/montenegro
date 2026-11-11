@@ -1,4 +1,5 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
 {% block title %}{{ employee.name }}{% endblock %}
 
@@ -103,32 +104,32 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
 <div class="fc-scope">
 <div class="fc-page">
 
-    <div class="crumbs"><a href="/c/{{ country.slug }}/employees/">Сотрудники</a> › {{ employee.name }}</div>
+    <div class="crumbs"><a href="/c/{{ country.slug }}/employees/">{% trans "Сотрудники" %}</a> › {{ employee.name }}</div>
 
     <div class="fc-head">
         <h1>{{ employee.name }}
-            {% if employee.is_active %}<span class="badge badge-green">● Активен</span>{% else %}<span class="badge badge-gray">Неактивен</span>{% endif %}
+            {% if employee.is_active %}<span class="badge badge-green">{% trans "● Активен" %}</span>{% else %}<span class="badge badge-gray">{% trans "Неактивен" %}</span>{% endif %}
         </h1>
         {% if can_edit %}
         <div class="head-actions">
-            <button type="button" class="fc-btn fc-btn-secondary" onclick="openEdit()">✎ Редактировать</button>
-            <button type="button" class="fc-btn fc-btn-dark" onclick="openPayroll()">+ Добавить начисление</button>
+            <button type="button" class="fc-btn fc-btn-secondary" onclick="openEdit()">{% trans "✎ Редактировать" %}</button>
+            <button type="button" class="fc-btn fc-btn-dark" onclick="openPayroll()">{% trans "+ Добавить начисление" %}</button>
         </div>
         {% endif %}
     </div>
     <p class="sub">{{ employee.position|default:"—" }} · {{ employee.location.name|default:"—" }}</p>
 
     <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Отработано часов</div><div class="kpi-value num">{{ month_hours_display }} ч</div><div class="kpi-sub">план: {{ plan_hours_display }} ч</div></div>
-        <div class="kpi"><div class="kpi-label">Начислено</div><div class="kpi-value num">{{ accrued_month_display }}</div><div class="kpi-sub">за месяц</div></div>
-        <div class="kpi"><div class="kpi-label">Выплачено</div><div class="kpi-value num">{{ paid_month_display }}</div><div class="kpi-sub">за месяц</div></div>
-        <div class="kpi"><div class="kpi-label">Остаток к выплате</div><div class="kpi-value num pos">{{ balance_display }}</div><div class="kpi-sub">на {{ balance_date|date:"d.m.Y" }}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Отработано часов" %}</div><div class="kpi-value num">{{ month_hours_display }} {% trans "ч" %}</div><div class="kpi-sub">{% trans "план:" %} {{ plan_hours_display }} {% trans "ч" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Начислено" %}</div><div class="kpi-value num">{{ accrued_month_display }}</div><div class="kpi-sub">{% trans "за месяц" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Выплачено" %}</div><div class="kpi-value num">{{ paid_month_display }}</div><div class="kpi-sub">{% trans "за месяц" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Остаток к выплате" %}</div><div class="kpi-value num pos">{{ balance_display }}</div><div class="kpi-sub">{% trans "на" %} {{ balance_date|date:"d.m.Y" }}</div></div>
     </div>
 
     <div class="tabs">
-        <button class="tab" data-tab="general">Общее</button>
-        <button class="tab" data-tab="schedule">График и смены</button>
-        <button class="tab" data-tab="payroll">Начисления</button>
+        <button class="tab" data-tab="general">{% trans "Общее" %}</button>
+        <button class="tab" data-tab="schedule">{% trans "График и смены" %}</button>
+        <button class="tab" data-tab="payroll">{% trans "Начисления" %}</button>
     </div>
 
     <!-- ОБЩЕЕ -->
@@ -136,48 +137,48 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
         <div class="two">
             <div>
                 <div class="fc-card">
-                    <h2>Основная информация</h2>
-                    <div class="info-row"><span class="k">ФИО</span><span class="v">{{ employee.name|default:"—" }}</span></div>
-                    <div class="info-row"><span class="k">Телефон</span><span class="v">{{ employee.phone|default:"—" }}</span></div>
-                    <div class="info-row"><span class="k">Должность</span><span class="v">{{ employee.position|default:"—" }}</span></div>
-                    <div class="info-row"><span class="k">Тип</span><span class="v">{% if employee.role %}{{ employee.get_role_display }}{% else %}—{% endif %}</span></div>
-                    <div class="info-row"><span class="k">Локация</span><span class="v">{{ employee.location.name|default:"—" }}</span></div>
-                    <div class="info-row"><span class="k">Тип оплаты</span><span class="v">{{ pay_type_label }}</span></div>
-                    <div class="info-row"><span class="k">Ставка</span><span class="v">{{ rate_display }} {{ rate_unit }}</span></div>
-                    <div class="info-row"><span class="k">Дата приёма</span><span class="v">{% if employee.hire_date %}{{ employee.hire_date|date:"d.m.Y" }}{% else %}—{% endif %}</span></div>
-                    <div class="info-row"><span class="k">Статус</span><span class="v">{% if employee.is_active %}Активен{% else %}Неактивен{% endif %}</span></div>
+                    <h2>{% trans "Основная информация" %}</h2>
+                    <div class="info-row"><span class="k">{% trans "ФИО" %}</span><span class="v">{{ employee.name|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Телефон" %}</span><span class="v">{{ employee.phone|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Должность" %}</span><span class="v">{{ employee.position|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Тип" %}</span><span class="v">{% if employee.role %}{{ employee.get_role_display }}{% else %}—{% endif %}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Локация" %}</span><span class="v">{{ employee.location.name|default:"—" }}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Тип оплаты" %}</span><span class="v">{{ pay_type_label }}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Ставка" %}</span><span class="v">{{ rate_display }} {{ rate_unit }}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Дата приёма" %}</span><span class="v">{% if employee.hire_date %}{{ employee.hire_date|date:"d.m.Y" }}{% else %}—{% endif %}</span></div>
+                    <div class="info-row"><span class="k">{% trans "Статус" %}</span><span class="v">{% if employee.is_active %}{% trans "Активен" %}{% else %}{% trans "Неактивен" %}{% endif %}</span></div>
                 </div>
                 <div class="fc-card">
-                    <h2>Расчёт остатка к выплате</h2>
-                    <div class="calc-row"><span>Начислено</span><span class="num pos">{{ calc_accrued }}</span></div>
-                    <div class="calc-row"><span>Премии</span><span class="num pos">{{ calc_bonus }}</span></div>
-                    <div class="calc-row"><span>Выплаты</span><span class="num neg">−{{ calc_payout }}</span></div>
-                    <div class="calc-row"><span>Авансы</span><span class="num neg">−{{ calc_advance }}</span></div>
-                    <div class="calc-row"><span>Штрафы</span><span class="num neg">−{{ calc_penalty }}</span></div>
-                    <div class="calc-total"><span>К выплате</span><span class="num pos">{{ balance_display }}</span></div>
+                    <h2>{% trans "Расчёт остатка к выплате" %}</h2>
+                    <div class="calc-row"><span>{% trans "Начислено" %}</span><span class="num pos">{{ calc_accrued }}</span></div>
+                    <div class="calc-row"><span>{% trans "Премии" %}</span><span class="num pos">{{ calc_bonus }}</span></div>
+                    <div class="calc-row"><span>{% trans "Выплаты" %}</span><span class="num neg">−{{ calc_payout }}</span></div>
+                    <div class="calc-row"><span>{% trans "Авансы" %}</span><span class="num neg">−{{ calc_advance }}</span></div>
+                    <div class="calc-row"><span>{% trans "Штрафы" %}</span><span class="num neg">−{{ calc_penalty }}</span></div>
+                    <div class="calc-total"><span>{% trans "К выплате" %}</span><span class="num pos">{{ balance_display }}</span></div>
                 </div>
             </div>
             <div>
                 <div class="fc-card">
-                    <div class="sec-head"><h2 style="margin:0;">Последние смены</h2><button class="tab" style="padding:0;color:var(--fc-info-text);" data-tab="schedule">Перейти к сменам →</button></div>
+                    <div class="sec-head"><h2 style="margin:0;">{% trans "Последние смены" %}</h2><button class="tab" style="padding:0;color:var(--fc-info-text);" data-tab="schedule">{% trans "Перейти к сменам →" %}</button></div>
                     <table class="items">
-                        <thead><tr><th>Дата</th><th>Начало</th><th>Конец</th><th>Локация</th><th class="r">Часы</th><th>Статус</th></tr></thead>
+                        <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Начало" %}</th><th>{% trans "Конец" %}</th><th>{% trans "Локация" %}</th><th class="r">{% trans "Часы" %}</th><th>{% trans "Статус" %}</th></tr></thead>
                         <tbody>
                             {% for s in last_shifts %}
                             <tr><td class="num">{{ s.date|date:"d.m.Y" }}</td><td class="num">{{ s.start }}</td><td class="num">{{ s.end }}</td><td>{{ s.location }}</td><td class="r num">{{ s.hours }}</td>
-                            <td>{% if s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td></tr>
-                            {% empty %}<tr><td colspan="6" class="empty">Смен нет.</td></tr>{% endfor %}
+                            <td>{% if s.status == 'done' %}<span class="badge badge-green">{% trans "Отработана" %}</span>{% elif s.status == 'late' %}<span class="badge badge-amber">{% trans "Опоздание" %}</span>{% elif s.status == 'missed' %}<span class="badge badge-red">{% trans "Пропуск" %}</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">{% trans "Отменена" %}</span>{% else %}<span class="badge badge-info">{% trans "Запланирована" %}</span>{% endif %}</td></tr>
+                            {% empty %}<tr><td colspan="6" class="empty">{% trans "Смен нет." %}</td></tr>{% endfor %}
                         </tbody>
                     </table>
                 </div>
                 <div class="fc-card">
-                    <div class="sec-head"><h2 style="margin:0;">Последние начисления</h2><button class="tab" style="padding:0;color:var(--fc-info-text);" data-tab="payroll">Перейти к начислениям →</button></div>
+                    <div class="sec-head"><h2 style="margin:0;">{% trans "Последние начисления" %}</h2><button class="tab" style="padding:0;color:var(--fc-info-text);" data-tab="payroll">{% trans "Перейти к начислениям →" %}</button></div>
                     <table class="items">
-                        <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th></tr></thead>
+                        <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Тип" %}</th><th>{% trans "Комментарий" %}</th><th class="r">{% trans "Сумма" %}</th></tr></thead>
                         <tbody>
                             {% for p in last_payroll %}
                             <tr><td class="num">{{ p.date|date:"d.m.Y" }}</td><td>{{ p.type_label }}</td><td class="muted">{{ p.comment|default:"—" }}</td><td class="r num {% if p.is_negative %}neg{% else %}pos{% endif %}">{% if p.is_negative %}−{% else %}+{% endif %}{{ p.amount_display }}</td></tr>
-                            {% empty %}<tr><td colspan="4" class="empty">Начислений нет.</td></tr>{% endfor %}
+                            {% empty %}<tr><td colspan="4" class="empty">{% trans "Начислений нет." %}</td></tr>{% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -194,19 +195,19 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
                     <span class="month-lbl">{{ sel_month_label }}</span>
                     <a href="?tab=schedule&month={{ next_month }}">›</a>
                 </div>
-                {% if can_edit %}<button type="button" class="fc-btn fc-btn-primary fc-btn-sm" onclick="openShift()">+ Добавить смену</button>{% endif %}
+                {% if can_edit %}<button type="button" class="fc-btn fc-btn-primary fc-btn-sm" onclick="openShift()">{% trans "+ Добавить смену" %}</button>{% endif %}
             </div>
             <table class="items">
-                <thead><tr><th>Дата</th><th>Начало</th><th>Конец</th><th>Локация</th><th class="r">Часы</th><th>Статус</th>{% if can_edit %}<th class="r"></th>{% endif %}</tr></thead>
+                <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Начало" %}</th><th>{% trans "Конец" %}</th><th>{% trans "Локация" %}</th><th class="r">{% trans "Часы" %}</th><th>{% trans "Статус" %}</th>{% if can_edit %}<th class="r"></th>{% endif %}</tr></thead>
                 <tbody>
                     {% for s in shifts %}
                     <tr>
                         <td class="num">{{ s.date|date:"d.m.Y" }}</td><td class="num">{{ s.start }}</td><td class="num">{{ s.end }}</td>
                         <td>{{ s.location }}</td><td class="r num">{{ s.hours }}</td>
-                        <td>{% if s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
-                        {% if can_edit %}<td class="r"><form method="post" onsubmit="return confirm('Удалить смену?');" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ s.id }}"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
+                        <td>{% if s.status == 'done' %}<span class="badge badge-green">{% trans "Отработана" %}</span>{% elif s.status == 'late' %}<span class="badge badge-amber">{% trans "Опоздание" %}</span>{% elif s.status == 'missed' %}<span class="badge badge-red">{% trans "Пропуск" %}</span>{% elif s.status == 'cancelled' %}<span class="badge badge-gray">{% trans "Отменена" %}</span>{% else %}<span class="badge badge-info">{% trans "Запланирована" %}</span>{% endif %}</td>
+                        {% if can_edit %}<td class="r"><form method="post" onsubmit="return confirm('{% trans "Удалить смену?" as jt %}{{ jt|escapejs }}');" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ s.id }}"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
                     </tr>
-                    {% empty %}<tr><td colspan="7" class="empty">В этом месяце смен нет.</td></tr>{% endfor %}
+                    {% empty %}<tr><td colspan="7" class="empty">{% trans "В этом месяце смен нет." %}</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>
@@ -215,19 +216,19 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
     <!-- НАЧИСЛЕНИЯ -->
     <div class="pane" id="pane-payroll">
         <div class="pay-kpi">
-            <div class="kpi"><div class="kpi-label">Начислено</div><div class="kpi-value num">{{ k_accrued }}</div><div class="kpi-sub">за месяц</div></div>
-            <div class="kpi"><div class="kpi-label">Выплачено</div><div class="kpi-value num">{{ k_paid }}</div><div class="kpi-sub">за месяц</div></div>
-            <div class="kpi"><div class="kpi-label">Авансы</div><div class="kpi-value num">{{ k_advance }}</div><div class="kpi-sub">за месяц</div></div>
-            <div class="kpi"><div class="kpi-label">Штрафы</div><div class="kpi-value num">{{ k_penalty }}</div><div class="kpi-sub">за месяц</div></div>
-            <div class="kpi"><div class="kpi-label">Премии</div><div class="kpi-value num">{{ k_bonus }}</div><div class="kpi-sub">за месяц</div></div>
+            <div class="kpi"><div class="kpi-label">{% trans "Начислено" %}</div><div class="kpi-value num">{{ k_accrued }}</div><div class="kpi-sub">{% trans "за месяц" %}</div></div>
+            <div class="kpi"><div class="kpi-label">{% trans "Выплачено" %}</div><div class="kpi-value num">{{ k_paid }}</div><div class="kpi-sub">{% trans "за месяц" %}</div></div>
+            <div class="kpi"><div class="kpi-label">{% trans "Авансы" %}</div><div class="kpi-value num">{{ k_advance }}</div><div class="kpi-sub">{% trans "за месяц" %}</div></div>
+            <div class="kpi"><div class="kpi-label">{% trans "Штрафы" %}</div><div class="kpi-value num">{{ k_penalty }}</div><div class="kpi-sub">{% trans "за месяц" %}</div></div>
+            <div class="kpi"><div class="kpi-label">{% trans "Премии" %}</div><div class="kpi-value num">{{ k_bonus }}</div><div class="kpi-sub">{% trans "за месяц" %}</div></div>
         </div>
         <div class="fc-card">
             <div class="filter-bar">
-                <select class="fc-select" id="fltType" onchange="filterPay()"><option value="">Все типы операций</option>{% for v,l in payroll_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
-                <select class="fc-select" id="fltStatus" onchange="filterPay()"><option value="">Все статусы</option>{% for v,l in payroll_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+                <select class="fc-select" id="fltType" onchange="filterPay()"><option value="">{% trans "Все типы операций" %}</option>{% for v,l in payroll_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+                <select class="fc-select" id="fltStatus" onchange="filterPay()"><option value="">{% trans "Все статусы" %}</option>{% for v,l in payroll_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
             </div>
             <table class="items">
-                <thead><tr><th>Дата</th><th>Тип операции</th><th>Комментарий</th><th class="r">Сумма</th><th>Статус</th><th>Создал</th>{% if is_super %}<th class="r"></th>{% endif %}</tr></thead>
+                <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Тип операции" %}</th><th>{% trans "Комментарий" %}</th><th class="r">{% trans "Сумма" %}</th><th>{% trans "Статус" %}</th><th>{% trans "Создал" %}</th>{% if is_super %}<th class="r"></th>{% endif %}</tr></thead>
                 <tbody id="payBody">
                     {% for p in payroll %}
                     <tr data-type="{{ p.type }}" data-status="{{ p.status }}">
@@ -235,11 +236,11 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
                         <td>{{ p.type_label }}</td>
                         <td class="muted">{{ p.comment|default:"—" }}</td>
                         <td class="r num {% if p.is_negative %}neg{% else %}pos{% endif %}">{% if p.is_negative %}−{% else %}+{% endif %}{{ p.amount_display }}</td>
-                        <td>{% if p.status == 'done' %}<span class="badge badge-green">Проведено</span>{% else %}<span class="badge badge-gray">Планируется</span>{% endif %}</td>
+                        <td>{% if p.status == 'done' %}<span class="badge badge-green">{% trans "Проведено" %}</span>{% else %}<span class="badge badge-gray">{% trans "Планируется" %}</span>{% endif %}</td>
                         <td class="muted">{{ p.author }}</td>
-                        {% if is_super %}<td class="r"><form method="post" onsubmit="return confirm('Удалить операцию?');" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="delete_payroll"><input type="hidden" name="payroll_id" value="{{ p.id }}"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
+                        {% if is_super %}<td class="r"><form method="post" onsubmit="return confirm('{% trans "Удалить операцию?" as jt %}{{ jt|escapejs }}');" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="delete_payroll"><input type="hidden" name="payroll_id" value="{{ p.id }}"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
                     </tr>
-                    {% empty %}<tr><td colspan="7" class="empty">Начислений нет.</td></tr>{% endfor %}
+                    {% empty %}<tr><td colspan="7" class="empty">{% trans "Начислений нет." %}</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>
@@ -252,19 +253,19 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
 <!-- Попап: добавить начисление -->
 <div class="ov" id="ovPayroll">
     <div class="modal">
-        <h3>Добавить начисление</h3>
+        <h3>{% trans "Добавить начисление" %}</h3>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_payroll">
             <div class="mg">
-                <div class="full"><label class="fc-label">Тип операции</label><select class="fc-input" name="entry_type">{% for v,l in payroll_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Дата</label><input class="fc-input" type="date" name="entry_date" value="{{ balance_date|date:'Y-m-d' }}"></div>
-                <div><label class="fc-label">Период</label><input class="fc-input" name="period" placeholder="напр. Май 2026"></div>
-                <div class="full"><label class="fc-label">Сумма</label><input class="fc-input" name="amount" inputmode="decimal" placeholder="0"></div>
-                <div class="full"><label class="fc-label">Статус</label><select class="fc-input" name="status">{% for v,l in payroll_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div class="full"><label class="fc-label">Комментарий</label><textarea class="fc-input" name="comment" rows="2"></textarea></div>
+                <div class="full"><label class="fc-label">{% trans "Тип операции" %}</label><select class="fc-input" name="entry_type">{% for v,l in payroll_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Дата" %}</label><input class="fc-input" type="date" name="entry_date" value="{{ balance_date|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">{% trans "Период" %}</label><input class="fc-input" name="period" placeholder="{% trans "напр. Май 2026" %}"></div>
+                <div class="full"><label class="fc-label">{% trans "Сумма" %}</label><input class="fc-input" name="amount" inputmode="decimal" placeholder="0"></div>
+                <div class="full"><label class="fc-label">{% trans "Статус" %}</label><select class="fc-input" name="status">{% for v,l in payroll_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">{% trans "Комментарий" %}</label><textarea class="fc-input" name="comment" rows="2"></textarea></div>
             </div>
-            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">Сохранить</button></div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">{% trans "Отмена" %}</button><button type="submit" class="fc-btn fc-btn-primary">{% trans "Сохранить" %}</button></div>
         </form>
     </div>
 </div>
@@ -272,21 +273,21 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
 <!-- Попап: добавить смену -->
 <div class="ov" id="ovShift">
     <div class="modal">
-        <h3>Добавить смену</h3>
+        <h3>{% trans "Добавить смену" %}</h3>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_shift">
             <div class="mg">
-                <div class="full"><label class="fc-label">Дата</label><input class="fc-input" type="date" name="shift_date" value="{{ balance_date|date:'Y-m-d' }}"></div>
-                <div><label class="fc-label">Время начала</label><input class="fc-input" type="time" name="start_time" value="08:00"></div>
-                <div><label class="fc-label">Время окончания</label><input class="fc-input" type="time" name="end_time" value="17:00"></div>
-                <div><label class="fc-label">Перерыв, мин</label><input class="fc-input" name="break_minutes" inputmode="numeric" value="0"></div>
-                <div><label class="fc-label">Тип смены</label><select class="fc-input" name="shift_type">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Локация</label><select class="fc-input" name="location_id"><option value="">— по умолчанию —</option>{% for l in locations %}<option value="{{ l.id }}" {% if employee.location_id == l.id %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Статус</label><select class="fc-input" name="status">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div class="full"><label class="fc-label">Комментарий</label><textarea class="fc-input" name="comment" rows="2"></textarea></div>
+                <div class="full"><label class="fc-label">{% trans "Дата" %}</label><input class="fc-input" type="date" name="shift_date" value="{{ balance_date|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">{% trans "Время начала" %}</label><input class="fc-input" type="time" name="start_time" value="08:00"></div>
+                <div><label class="fc-label">{% trans "Время окончания" %}</label><input class="fc-input" type="time" name="end_time" value="17:00"></div>
+                <div><label class="fc-label">{% trans "Перерыв, мин" %}</label><input class="fc-input" name="break_minutes" inputmode="numeric" value="0"></div>
+                <div><label class="fc-label">{% trans "Тип смены" %}</label><select class="fc-input" name="shift_type">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Локация" %}</label><select class="fc-input" name="location_id"><option value="">{% trans "— по умолчанию —" %}</option>{% for l in locations %}<option value="{{ l.id }}" {% if employee.location_id == l.id %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Статус" %}</label><select class="fc-input" name="status">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">{% trans "Комментарий" %}</label><textarea class="fc-input" name="comment" rows="2"></textarea></div>
             </div>
-            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">Сохранить</button></div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">{% trans "Отмена" %}</button><button type="submit" class="fc-btn fc-btn-primary">{% trans "Сохранить" %}</button></div>
         </form>
     </div>
 </div>
@@ -294,27 +295,27 @@ textarea.fc-input{ height:auto; padding:10px 12px; min-height:70px; }
 <!-- Попап: редактировать сотрудника -->
 <div class="ov" id="ovEdit">
     <div class="modal">
-        <h3>Редактировать сотрудника</h3>
+        <h3>{% trans "Редактировать сотрудника" %}</h3>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="update_employee">
             <div class="mg">
-                <div class="full"><label class="fc-label">ФИО *</label><input class="fc-input" name="name" value="{{ employee.name }}" required></div>
-                <div><label class="fc-label">Телефон</label><input class="fc-input" name="phone" value="{{ employee.phone }}"></div>
-                <div><label class="fc-label">Должность</label><input class="fc-input" name="position" value="{{ employee.position }}"></div>
-                <div><label class="fc-label">Тип сотрудника</label><select class="fc-input" name="role"><option value="">— не указан —</option>{% for v,lb in roles %}<option value="{{ v }}" {% if employee.role == v %}selected{% endif %}>{{ lb }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Локация</label><select class="fc-input" name="location_id"><option value="">— не выбрана —</option>{% for l in locations %}<option value="{{ l.id }}" {% if employee.location_id == l.id %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Тип оплаты</label><select class="fc-input" name="pay_type">{% for v,l in pay_types %}<option value="{{ v }}" {% if employee.pay_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Ставка, сум/ч</label><input class="fc-input" name="hourly_rate_amount" value="{{ employee.hourly_rate_amount }}"></div>
-                <div><label class="fc-label">Оклад, сум/мес</label><input class="fc-input" name="monthly_salary" value="{{ employee.monthly_salary }}"></div>
-                <div><label class="fc-label">Ставка за смену</label><input class="fc-input" name="shift_rate_amount" value="{{ employee.shift_rate_amount }}"></div>
-                <div><label class="fc-label">KPI за смену</label><input class="fc-input" name="shift_kpi_amount" value="{{ employee.shift_kpi_amount }}"></div>
-                <div><label class="fc-label">Часов в смене</label><input class="fc-input" name="default_shift_hours" value="{{ employee.default_shift_hours }}"></div>
-                <div><label class="fc-label">Дата приёма</label><input class="fc-input" type="date" name="hire_date" value="{{ employee.hire_date|date:'Y-m-d' }}"></div>
-                <div class="full"><label class="fc-label">Аккаунт для входа (необязательно)</label><select class="fc-input" name="user_id"><option value="">— без аккаунта —</option>{% for u in users %}<option value="{{ u.id }}" {% if employee.user_id == u.id %}selected{% endif %}>{{ u.username }}{% if u.first_name or u.last_name %} ({{ u.first_name }} {{ u.last_name }}){% endif %}</option>{% endfor %}</select></div>
-                <div class="full"><label class="chk"><input type="checkbox" name="is_active" {% if employee.is_active %}checked{% endif %}> Активен</label></div>
+                <div class="full"><label class="fc-label">{% trans "ФИО *" %}</label><input class="fc-input" name="name" value="{{ employee.name }}" required></div>
+                <div><label class="fc-label">{% trans "Телефон" %}</label><input class="fc-input" name="phone" value="{{ employee.phone }}"></div>
+                <div><label class="fc-label">{% trans "Должность" %}</label><input class="fc-input" name="position" value="{{ employee.position }}"></div>
+                <div><label class="fc-label">{% trans "Тип сотрудника" %}</label><select class="fc-input" name="role"><option value="">{% trans "— не указан —" %}</option>{% for v,lb in roles %}<option value="{{ v }}" {% if employee.role == v %}selected{% endif %}>{{ lb }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Локация" %}</label><select class="fc-input" name="location_id"><option value="">{% trans "— не выбрана —" %}</option>{% for l in locations %}<option value="{{ l.id }}" {% if employee.location_id == l.id %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Тип оплаты" %}</label><select class="fc-input" name="pay_type">{% for v,l in pay_types %}<option value="{{ v }}" {% if employee.pay_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Ставка, сум/ч" %}</label><input class="fc-input" name="hourly_rate_amount" value="{{ employee.hourly_rate_amount }}"></div>
+                <div><label class="fc-label">{% trans "Оклад, сум/мес" %}</label><input class="fc-input" name="monthly_salary" value="{{ employee.monthly_salary }}"></div>
+                <div><label class="fc-label">{% trans "Ставка за смену" %}</label><input class="fc-input" name="shift_rate_amount" value="{{ employee.shift_rate_amount }}"></div>
+                <div><label class="fc-label">{% trans "KPI за смену" %}</label><input class="fc-input" name="shift_kpi_amount" value="{{ employee.shift_kpi_amount }}"></div>
+                <div><label class="fc-label">{% trans "Часов в смене" %}</label><input class="fc-input" name="default_shift_hours" value="{{ employee.default_shift_hours }}"></div>
+                <div><label class="fc-label">{% trans "Дата приёма" %}</label><input class="fc-input" type="date" name="hire_date" value="{{ employee.hire_date|date:'Y-m-d' }}"></div>
+                <div class="full"><label class="fc-label">{% trans "Аккаунт для входа (необязательно)" %}</label><select class="fc-input" name="user_id"><option value="">{% trans "— без аккаунта —" %}</option>{% for u in users %}<option value="{{ u.id }}" {% if employee.user_id == u.id %}selected{% endif %}>{{ u.username }}{% if u.first_name or u.last_name %} ({{ u.first_name }} {{ u.last_name }}){% endif %}</option>{% endfor %}</select></div>
+                <div class="full"><label class="chk"><input type="checkbox" name="is_active" {% if employee.is_active %}checked{% endif %}> {% trans "Активен" %}</label></div>
             </div>
-            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">Сохранить</button></div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeAll()">{% trans "Отмена" %}</button><button type="submit" class="fc-btn fc-btn-primary">{% trans "Сохранить" %}</button></div>
         </form>
     </div>
 </div>

@@ -1,7 +1,8 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 {% load humanize %}
 
-{% block title %}Все заказы{% endblock %}
+{% block title %}{% trans "Все заказы" %}{% endblock %}
 
 {% block content %}
 
@@ -225,10 +226,10 @@ select:focus{
 
     <div class="topbar">
 
-        <h1>Все заказы</h1>
+        <h1>{% trans "Все заказы" %}</h1>
 
         <div class="muted">
-            История заказов и фильтрация
+            {% trans "История заказов и фильтрация" %}
         </div>
 
     </div>
@@ -240,18 +241,18 @@ select:focus{
             <div class="filters-grid">
 
                 <div>
-                    <label>Поиск</label>
+                    <label>{% trans "Поиск" %}</label>
 
                     <input
                         type="text"
                         name="search"
-                        placeholder="Имя, телефон, ID заказа"
+                        placeholder="{% trans "Имя, телефон, ID заказа" %}"
                         value="{{ search|default:'' }}"
                     >
                 </div>
 
                 <div>
-                    <label>С даты</label>
+                    <label>{% trans "С даты" %}</label>
 
                     <input
                         type="date"
@@ -261,7 +262,7 @@ select:focus{
                 </div>
 
                 <div>
-                    <label>По дату</label>
+                    <label>{% trans "По дату" %}</label>
 
                     <input
                         type="date"
@@ -271,12 +272,12 @@ select:focus{
                 </div>
 
                 <div>
-                    <label>Филиал</label>
+                    <label>{% trans "Филиал" %}</label>
 
                     <select name="location_id">
 
                         <option value="">
-                            Все филиалы
+                            {% trans "Все филиалы" %}
                         </option>
 
                         {% for item in locations %}
@@ -294,26 +295,26 @@ select:focus{
                 </div>
 
                 <div>
-                    <label>Статус</label>
+                    <label>{% trans "Статус" %}</label>
 
                     <select name="status">
 
                         <option value="">
-                            Все заказы
+                            {% trans "Все заказы" %}
                         </option>
 
                         <option
                             value="active"
                             {% if status == "active" %}selected{% endif %}
                         >
-                            Активные
+                            {% trans "Активные" %}
                         </option>
 
                         <option
                             value="cancelled"
                             {% if status == "cancelled" %}selected{% endif %}
                         >
-                            Отмененные
+                            {% trans "Отмененные" %}
                         </option>
 
                     </select>
@@ -321,7 +322,7 @@ select:focus{
 
                 <div>
                     <button type="submit" class="filter-btn">
-                        Применить
+                        {% trans "Применить" %}
                     </button>
                 </div>
 
@@ -336,7 +337,7 @@ select:focus{
         <div class="stat-card">
 
             <div class="stat-label">
-                Всего заказов
+                {% trans "Всего заказов" %}
             </div>
 
             <div class="stat-value">
@@ -348,7 +349,7 @@ select:focus{
         <div class="stat-card">
 
             <div class="stat-label">
-                Выручка
+                {% trans "Выручка" %}
             </div>
 
             <div class="stat-value">
@@ -360,7 +361,7 @@ select:focus{
         <div class="stat-card">
 
             <div class="stat-label">
-                Доставка
+                {% trans "Доставка" %}
             </div>
 
             <div class="stat-value">
@@ -382,14 +383,14 @@ select:focus{
                     <tr>
 
                         <th>ID</th>
-                        <th>Клиент</th>
-                        <th>Дата</th>
-                        <th>Филиал</th>
-                        <th>Источник</th>
-                        <th>Оплата</th>
-                        <th>Сумма</th>
-                        <th>Доставка</th>
-                        <th>Статус</th>
+                        <th>{% trans "Клиент" %}</th>
+                        <th>{% trans "Дата" %}</th>
+                        <th>{% trans "Филиал" %}</th>
+                        <th>{% trans "Источник" %}</th>
+                        <th>{% trans "Оплата" %}</th>
+                        <th>{% trans "Сумма" %}</th>
+                        <th>{% trans "Доставка" %}</th>
+                        <th>{% trans "Статус" %}</th>
 
                     </tr>
 
@@ -468,13 +469,13 @@ select:focus{
                                 {% if order.is_cancelled %}
 
                                     <span class="badge badge-cancelled">
-                                        Отменен
+                                        {% trans "Отменен" %}
                                     </span>
 
                                 {% else %}
 
                                     <span class="badge badge-active">
-                                        Активный
+                                        {% trans "Активный" %}
                                     </span>
 
                                 {% endif %}
@@ -490,7 +491,7 @@ select:focus{
                             <td colspan="9">
 
                                 <div class="empty">
-                                    Заказы не найдены
+                                    {% trans "Заказы не найдены" %}
                                 </div>
 
                             </td>

@@ -1,0 +1,233 @@
+{% extends "foodcost/base.html" %}
+{% load i18n %}
+
+{% block title %}Кухня — KDS{% endblock %}
+
+{% block content %}
+<style>
+.poswrap{--pw-ink:#111827;--pw-muted:#667085;--pw-subtle:#98a2b3;--pw-border:#e5e7eb;--pw-bstrong:#d1d5db;--pw-surface:#fff;--pw-sunken:#f4f6f9;--pw-primary:#123b7a;--pw-primary-soft:#e7edf7;--pw-success:#157347;--pw-success-soft:#e6f4ec;--pw-warning:#9a6700;--pw-warning-soft:#fdf3d8;--pw-danger:#d92d20;--pw-danger-soft:#fdecec;
+  font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--pw-ink);}
+.poswrap *{box-sizing:border-box;}
+.poswrap .pw-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:14px;}
+.poswrap .pw-h1{font-weight:700;font-size:22px;letter-spacing:-.02em;margin:0;}
+.poswrap .pw-sp{flex:1 1 auto;}
+.poswrap .pw-lbl{font-size:12px;color:var(--pw-muted);font-weight:600;}
+.poswrap select.pw-in{height:38px;padding:0 10px;border:1px solid var(--pw-bstrong);border-radius:8px;background:var(--pw-surface);font-family:inherit;font-size:13px;color:var(--pw-ink);outline:none;}
+.poswrap select.pw-in:focus{border-color:var(--pw-primary);box-shadow:0 0 0 3px var(--pw-primary-soft);}
+.poswrap .pw-conn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--pw-success);}
+.poswrap .pw-dot{width:8px;height:8px;border-radius:50%;background:var(--pw-success);}
+.poswrap .pw-tabs{display:inline-flex;border:1px solid var(--pw-border);border-radius:9px;overflow:hidden;}
+.poswrap .pw-tab{border:0;background:var(--pw-surface);padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--pw-muted);font-family:inherit;}
+.poswrap .pw-tab.active{background:var(--pw-primary);color:#fff;}
+
+/* доска тикетов */
+.poswrap .pw-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px;align-items:start;}
+.poswrap .pw-tk{border:1px solid var(--pw-border);border-top:4px solid var(--pw-primary);border-radius:12px;background:var(--pw-surface);box-shadow:0 1px 3px rgba(16,24,40,.08);display:flex;flex-direction:column;overflow:hidden;}
+.poswrap .pw-tk.warn{border-top-color:var(--pw-warning);}
+.poswrap .pw-tk.late{border-top-color:var(--pw-danger);}
+.poswrap .pw-tkh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 13px;border-bottom:1px solid var(--pw-border);}
+.poswrap .pw-tkt{font-size:15px;font-weight:800;}
+.poswrap .pw-tkg{font-size:11px;color:var(--pw-muted);font-weight:600;}
+.poswrap .pw-timer{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;padding:3px 9px;border-radius:999px;background:var(--pw-sunken);color:var(--pw-ink);}
+.poswrap .pw-timer.warn{background:var(--pw-warning-soft);color:var(--pw-warning);}
+.poswrap .pw-timer.late{background:var(--pw-danger-soft);color:var(--pw-danger);}
+.poswrap .pw-its{padding:4px 0;}
+.poswrap .pw-it{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:1px solid var(--pw-sunken);}
+.poswrap .pw-it:last-child{border-bottom:0;}
+.poswrap .pw-iq{min-width:30px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:var(--pw-primary-soft);color:var(--pw-primary);font-size:13px;font-weight:800;padding:0 7px;}
+.poswrap .pw-inm{flex:1 1 auto;min-width:0;font-size:14px;font-weight:600;line-height:1.2;}
+.poswrap .pw-ist{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--pw-muted);}
+.poswrap .pw-ist.warn{color:var(--pw-warning);}
+.poswrap .pw-ist.late{color:var(--pw-danger);}
+.poswrap .pw-btn{border:1px solid var(--pw-bstrong);background:var(--pw-surface);color:var(--pw-ink);height:30px;padding:0 11px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.poswrap .pw-btn.ok{border:0;background:var(--pw-success);color:#fff;}
+.poswrap .pw-it.done .pw-inm{color:var(--pw-subtle);text-decoration:line-through;}
+.poswrap .pw-it.done .pw-iq{background:var(--pw-success-soft);color:var(--pw-success);}
+.poswrap .pw-done-badge{font-size:11px;font-weight:800;color:var(--pw-success);}
+
+/* группировка */
+.poswrap .pw-grp{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+.poswrap .pw-grow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--pw-border);border-radius:10px;background:var(--pw-surface);padding:12px 14px;}
+.poswrap .pw-grn{font-size:14px;font-weight:600;}
+.poswrap .pw-grc{font-size:18px;font-weight:800;color:var(--pw-primary);}
+
+.poswrap .pw-empty{grid-column:1/-1;padding:40px 16px;text-align:center;color:var(--pw-subtle);font-size:14px;}
+.poswrap [hidden]{display:none !important;}
+
+.poswrap .pw-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;}
+.poswrap .pw-toast.show{opacity:1;}
+.poswrap .pw-toast.err{background:var(--pw-danger);}
+
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .poswrap{
+  --pw-ink:#e5e7eb;--pw-muted:#9aa4b2;--pw-subtle:#6b7280;--pw-border:#2a2f3a;--pw-bstrong:#3a4150;--pw-surface:#161b22;--pw-sunken:#1e242e;--pw-primary:#4f82d6;--pw-primary-soft:#1b2740;--pw-warning-soft:#2a2410;--pw-danger-soft:#2a1613;--pw-success-soft:#122018;}}
+:root[data-theme="dark"] .poswrap{
+  --pw-ink:#e5e7eb;--pw-muted:#9aa4b2;--pw-subtle:#6b7280;--pw-border:#2a2f3a;--pw-bstrong:#3a4150;--pw-surface:#161b22;--pw-sunken:#1e242e;--pw-primary:#4f82d6;--pw-primary-soft:#1b2740;--pw-warning-soft:#2a2410;--pw-danger-soft:#2a1613;--pw-success-soft:#122018;}
+</style>
+
+<div class="poswrap"
+     data-board-url="/c/{{ country.slug }}/pos/kds/api/board/"
+     data-ready-url="/c/{{ country.slug }}/pos/kds/api/ready/"
+     data-undo-url="/c/{{ country.slug }}/pos/kds/api/undo/"
+     data-screen="{{ preselect_screen }}">
+  {% csrf_token %}
+
+  <div class="pw-top">
+    <h1 class="pw-h1">{% trans "Кухня — KDS" %}</h1>
+    <span class="pw-conn" id="pw-conn"><span class="pw-dot"></span>{% trans "подключено" %}</span>
+    <span class="pw-sp"></span>
+    <div class="pw-tabs" id="pw-tabs">
+      <button class="pw-tab active" data-tab="tickets" type="button">{% trans "Тикеты" %}</button>
+      <button class="pw-tab" data-tab="group" type="button">{% trans "Группировка" %}</button>
+    </div>
+    <span class="pw-lbl">{% trans "Экран" %}</span>
+    <select class="pw-in" id="pw-screen">
+      <option value="0">{% trans "Все экраны" %}</option>
+      {% for s in screens %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="pw-board" id="pw-board"></div>
+  <div class="pw-grp" id="pw-group" hidden></div>
+
+  <div class="pw-toast" id="pw-toast"></div>
+</div>
+
+<script>
+(function(){
+  var root = document.querySelector('.poswrap'); if(!root) return;
+  var URLS = {board:root.dataset.boardUrl, ready:root.dataset.readyUrl, undo:root.dataset.undoUrl};
+  var csrf = (root.querySelector('[name=csrfmiddlewaretoken]')||{}).value || '';
+  var state = {tickets:[], screen:parseInt(root.dataset.screen||'0',10)||0, tab:'tickets'};
+
+  function pad(n){ return (n<10?'0':'')+n; }
+  function mmss(s){ s=Math.max(0,Math.floor(s)); return pad(Math.floor(s/60))+':'+pad(s%60); }
+  function urgency(cs, warn, late){ if(cs>=late) return 'late'; if(cs>=warn) return 'warn'; return ''; }
+
+  var toastT;
+  function toast(msg, isErr){
+    var el=document.getElementById('pw-toast');
+    el.textContent=msg; el.classList.toggle('err',!!isErr); el.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(function(){ el.classList.remove('show'); },2000);
+  }
+  function conn(ok){
+    var el=document.getElementById('pw-conn');
+    el.style.color = ok ? 'var(--pw-success)' : 'var(--pw-danger)';
+    el.querySelector('.pw-dot').style.background = ok ? 'var(--pw-success)' : 'var(--pw-danger)';
+    el.lastChild.textContent = ok ? '{% trans "подключено" as jt %}{{ jt|escapejs }}' : '{% trans "нет связи" as jt %}{{ jt|escapejs }}';
+  }
+
+  function post(url, data){
+    return fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data).toString()})
+      .then(function(r){ return r.json().catch(function(){return {error:'HTTP '+r.status};}).then(function(j){ if(!r.ok||j.error){throw new Error(j.error||('HTTP '+r.status));} return j; }); });
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  function ticketUrgency(t){
+    var u=''; t.items.forEach(function(it){ if(it.ready) return; var x=urgency(it.cook_seconds,it.warn_seconds,it.late_seconds); if(x==='late')u='late'; else if(x==='warn'&&u!=='late')u='warn'; });
+    return u;
+  }
+
+  function render(){
+    var board=document.getElementById('pw-board'), group=document.getElementById('pw-group');
+    board.hidden = state.tab!=='tickets';
+    group.hidden = state.tab!=='group';
+    if(state.tab==='tickets') renderBoard(board); else renderGroup(group);
+  }
+
+  function renderBoard(board){
+    if(!state.tickets.length){ board.innerHTML='<div class="pw-empty">{% trans "Активных заказов нет." as jt %}{{ jt|escapejs }}</div>'; return; }
+    var h='';
+    state.tickets.forEach(function(t){
+      var u=ticketUrgency(t);
+      var title = t.table ? ('{% trans "Стол" as jt %}{{ jt|escapejs }} '+t.table) : (t.public_number ? ('#'+t.public_number) : ('{% trans "Заказ #" as jt %}{{ jt|escapejs }}'+t.order_id));
+      h+='<div class="pw-tk '+u+'" data-order="'+t.order_id+'">'
+       +  '<div class="pw-tkh"><div><div class="pw-tkt">'+esc(title)+'</div>'
+       +     (t.guests?('<div class="pw-tkg">'+t.guests+' {% trans "гост." as jt %}{{ jt|escapejs }}</div>'):'')+'</div>'
+       +    '<span class="pw-timer '+urgencyByElapsed(t)+'" data-elapsed>'+mmss(t.elapsed)+'</span></div>'
+       +  '<div class="pw-its">';
+      t.items.forEach(function(it){
+        var iu=it.ready?'':urgency(it.cook_seconds,it.warn_seconds,it.late_seconds);
+        h+='<div class="pw-it '+(it.ready?'done':'')+'" data-id="'+it.id+'">'
+         +   '<span class="pw-iq">'+(it.qty%1===0?it.qty:it.qty)+'×</span>'
+         +   '<span class="pw-inm">'+esc(it.name)+'</span>';
+        if(it.ready){
+          h+='<span class="pw-done-badge">{% trans "готово" as jt %}{{ jt|escapejs }}</span>'
+           + '<button class="pw-btn" data-act="undo">↶</button>';
+        } else {
+          h+='<span class="pw-ist '+iu+'" data-cook data-warn="'+it.warn_seconds+'" data-late="'+it.late_seconds+'">'+mmss(it.cook_seconds)+'</span>'
+           + '<button class="pw-btn ok" data-act="ready">{% trans "Готово" as jt %}{{ jt|escapejs }}</button>';
+        }
+        h+='</div>';
+      });
+      h+='</div></div>';
+    });
+    board.innerHTML=h;
+  }
+
+  function urgencyByElapsed(t){
+    // цвет таймера тикета = худшая срочность среди неготовых
+    return ticketUrgency(t);
+  }
+
+  function renderGroup(group){
+    var map={};
+    state.tickets.forEach(function(t){ t.items.forEach(function(it){ if(it.ready) return; map[it.name]=(map[it.name]||0)+it.qty; }); });
+    var rows=Object.keys(map).map(function(n){return {name:n,qty:map[n]};}).sort(function(a,b){return b.qty-a.qty;});
+    if(!rows.length){ group.innerHTML='<div class="pw-empty">{% trans "Нет позиций в работе." as jt %}{{ jt|escapejs }}</div>'; return; }
+    group.innerHTML=rows.map(function(r){ return '<div class="pw-grow"><span class="pw-grn">'+esc(r.name)+'</span><span class="pw-grc">'+r.qty+'×</span></div>'; }).join('');
+  }
+
+  function applyData(d){ state.tickets = d.tickets||[]; render(); }
+
+  function poll(){
+    post(URLS.board, {screen:state.screen}).then(function(d){ conn(true); applyData(d); }).catch(function(){ conn(false); });
+  }
+
+  // локальный тик таймеров каждую секунду (между опросами)
+  setInterval(function(){
+    state.tickets.forEach(function(t){ t.elapsed++; t.items.forEach(function(it){ if(!it.ready) it.cook_seconds++; }); });
+    // обновляем только числа/цвета, без полной перерисовки, если вкладка тикетов
+    if(state.tab!=='tickets') return;
+    document.querySelectorAll('#pw-board .pw-tk').forEach(function(card){
+      var oid=card.getAttribute('data-order');
+      var t=state.tickets.filter(function(x){return String(x.order_id)===String(oid);})[0]; if(!t) return;
+      var tel=card.querySelector('[data-elapsed]'); if(tel){ tel.textContent=mmss(t.elapsed); tel.className='pw-timer '+ticketUrgency(t); }
+      card.className='pw-tk '+ticketUrgency(t);
+      card.querySelectorAll('.pw-it').forEach(function(row){
+        var id=row.getAttribute('data-id');
+        var it=t.items.filter(function(x){return String(x.id)===String(id);})[0]; if(!it||it.ready) return;
+        var c=row.querySelector('[data-cook]'); if(c){ c.textContent=mmss(it.cook_seconds); c.className='pw-ist '+urgency(it.cook_seconds,it.warn_seconds,it.late_seconds); }
+      });
+    });
+  }, 1000);
+
+  // действия на доске
+  document.getElementById('pw-board').addEventListener('click', function(e){
+    var btn=e.target.closest('button[data-act]'); if(!btn) return;
+    var row=e.target.closest('.pw-it'); if(!row) return;
+    var id=row.getAttribute('data-id');
+    var url = btn.dataset.act==='undo' ? URLS.undo : URLS.ready;
+    post(url, {item_id:id, screen:state.screen}).then(function(d){ conn(true); applyData(d); }).catch(function(e){ toast(e.message,true); });
+  });
+
+  // вкладки
+  document.getElementById('pw-tabs').addEventListener('click', function(e){
+    var b=e.target.closest('.pw-tab'); if(!b) return;
+    this.querySelectorAll('.pw-tab').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active'); state.tab=b.dataset.tab; render();
+  });
+
+  // выбор экрана
+  var sel=document.getElementById('pw-screen');
+  if(state.screen){ sel.value=String(state.screen); }
+  sel.addEventListener('change', function(){ state.screen=parseInt(this.value,10)||0; poll(); });
+
+  // старт
+  poll();
+  setInterval(poll, 5000);
+})();
+</script>
+{% endblock %}

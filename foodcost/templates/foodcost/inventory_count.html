@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Подсчёт — {{ inventory.document_number }}{% endblock %}
+{% block title %}{% trans "Подсчёт" %} — {{ inventory.document_number }}{% endblock %}
 
 {% block content %}
 
@@ -76,26 +77,26 @@
 <div class="fc-scope">
 <div class="fc-page">
 
-    <div class="crumbs"><a href="/c/{{ country.slug }}/inventory/">Инвентаризация</a> › {{ inventory.document_number }}</div>
+    <div class="crumbs"><a href="/c/{{ country.slug }}/inventory/">{% trans "Инвентаризация" %}</a> › {{ inventory.document_number }}</div>
 
     <div class="fc-head">
         <h1>{{ inventory.document_number }}
-            {% if inventory.status == 'confirmed' %}<span class="badge badge-green">Подтверждена</span>
-            {% elif inventory.status == 'rejected' %}<span class="badge badge-red">Отклонена</span>
-            {% elif inventory.status == 'awaiting' %}<span class="badge badge-info">Ожидает проверки</span>
-            {% elif inventory.status == 'in_progress' %}<span class="badge badge-amber">Проводится</span>
-            {% else %}<span class="badge badge-gray">Черновик</span>{% endif %}
+            {% if inventory.status == 'confirmed' %}<span class="badge badge-green">{% trans "Подтверждена" %}</span>
+            {% elif inventory.status == 'rejected' %}<span class="badge badge-red">{% trans "Отклонена" %}</span>
+            {% elif inventory.status == 'awaiting' %}<span class="badge badge-info">{% trans "Ожидает проверки" %}</span>
+            {% elif inventory.status == 'in_progress' %}<span class="badge badge-amber">{% trans "Проводится" %}</span>
+            {% else %}<span class="badge badge-gray">{% trans "Черновик" %}</span>{% endif %}
         </h1>
-        <div class="progress"><span class="muted">Заполнено</span> <strong>{{ filled }} / {{ total_items }}</strong></div>
+        <div class="progress"><span class="muted">{% trans "Заполнено" %}</span> <strong>{{ filled }} / {{ total_items }}</strong></div>
     </div>
-    <p class="sub">Склад: <strong>{{ inventory.warehouse.name }}</strong> · Дата: {{ inventory.inventory_date|date:"d.m.Y" }}</p>
+    <p class="sub">{% trans "Склад:" %} <strong>{{ inventory.warehouse.name }}</strong> · {% trans "Дата:" %} {{ inventory.inventory_date|date:"d.m.Y" }}</p>
 
-    {% if saved_flag %}<div class="banner banner-green">Черновик подсчёта сохранён.</div>{% endif %}
-    {% if added_flag %}<div class="banner banner-green">Позиция добавлена в подсчёт.</div>{% endif %}
-    {% if removed_flag %}<div class="banner banner-info">Позиция убрана из подсчёта.</div>{% endif %}
-    {% if noitem_flag %}<div class="banner banner-info">Позиция не добавлена: выберите продукт или заготовку из выпадающего списка (начните вводить название и нажмите на подсказку).</div>{% endif %}
-    {% if finished_flag %}<div class="banner banner-info">Подсчёт завершён и отправлен на проверку менеджеру.</div>{% endif %}
-    {% if not editable %}<div class="banner banner-info">Подсчёт завершён. Изменение фактических остатков недоступно.</div>{% endif %}
+    {% if saved_flag %}<div class="banner banner-green">{% trans "Черновик подсчёта сохранён." %}</div>{% endif %}
+    {% if added_flag %}<div class="banner banner-green">{% trans "Позиция добавлена в подсчёт." %}</div>{% endif %}
+    {% if removed_flag %}<div class="banner banner-info">{% trans "Позиция убрана из подсчёта." %}</div>{% endif %}
+    {% if noitem_flag %}<div class="banner banner-info">{% trans "Позиция не добавлена: выберите продукт или заготовку из выпадающего списка (начните вводить название и нажмите на подсказку)." %}</div>{% endif %}
+    {% if finished_flag %}<div class="banner banner-info">{% trans "Подсчёт завершён и отправлен на проверку менеджеру." %}</div>{% endif %}
+    {% if not editable %}<div class="banner banner-info">{% trans "Подсчёт завершён. Изменение фактических остатков недоступно." %}</div>{% endif %}
 
     <form method="post">
         {% csrf_token %}
@@ -103,7 +104,7 @@
         <input type="hidden" name="remove_id" value="" id="remove_id">
 
         <div class="fc-card">
-            <h2>Продукты</h2>
+            <h2>{% trans "Продукты" %}</h2>
             <div class="count-list">
                 {% for r in products %}
                 <div class="count-row">
@@ -112,28 +113,28 @@
                     {% if editable %}
                         <div class="fact-cell">
                             <input class="fc-input {% if r.filled %}filled{% endif %}" type="text" inputmode="decimal" name="fact_{{ r.id }}" value="{{ r.fact }}" placeholder="—">
-                            <button type="button" class="rm-btn" data-id="{{ r.id }}" title="Убрать строку">✕</button>
+                            <button type="button" class="rm-btn" data-id="{{ r.id }}" title="{% trans "Убрать строку" %}">✕</button>
                         </div>
                     {% else %}
-                        <div class="fact-val">{% if r.fact %}{{ r.fact }}{% else %}<span class="muted">не посчитано</span>{% endif %}</div>
+                        <div class="fact-val">{% if r.fact %}{{ r.fact }}{% else %}<span class="muted">{% trans "не посчитано" %}</span>{% endif %}</div>
                     {% endif %}
                 </div>
-                {% empty %}<div class="empty">Продуктов на складе нет.</div>{% endfor %}
+                {% empty %}<div class="empty">{% trans "Продуктов на складе нет." %}</div>{% endfor %}
             </div>
             {% if editable %}
             <div class="add-line">
-                <div><label class="fc-label">Добавить продукт из справочника</label>
-                    <input class="fc-input" id="inv_search_product" list="dl_inv_products" placeholder="Начните вводить продукт…" autocomplete="off">
+                <div><label class="fc-label">{% trans "Добавить продукт из справочника" %}</label>
+                    <input class="fc-input" id="inv_search_product" list="dl_inv_products" placeholder="{% trans "Начните вводить продукт…" %}" autocomplete="off">
                     <datalist id="dl_inv_products">{% for p in avail_products %}<option value="{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
                     <input type="hidden" name="product_id" id="add_product_sel">
                 </div>
-                <button type="submit" class="fc-btn fc-btn-secondary" onclick="return invAdd('inv_search_product','dl_inv_products','add_product_sel','add_product');">+ Добавить продукт</button>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="return invAdd('inv_search_product','dl_inv_products','add_product_sel','add_product');">{% trans "+ Добавить продукт" %}</button>
             </div>
             {% endif %}
         </div>
 
         <div class="fc-card">
-            <h2>Заготовки</h2>
+            <h2>{% trans "Заготовки" %}</h2>
             <div class="count-list">
                 {% for r in preparations %}
                 <div class="count-row">
@@ -142,33 +143,33 @@
                     {% if editable %}
                         <div class="fact-cell">
                             <input class="fc-input {% if r.filled %}filled{% endif %}" type="text" inputmode="decimal" name="fact_{{ r.id }}" value="{{ r.fact }}" placeholder="—">
-                            <button type="button" class="rm-btn" data-id="{{ r.id }}" title="Убрать строку">✕</button>
+                            <button type="button" class="rm-btn" data-id="{{ r.id }}" title="{% trans "Убрать строку" %}">✕</button>
                         </div>
                     {% else %}
-                        <div class="fact-val">{% if r.fact %}{{ r.fact }}{% else %}<span class="muted">не посчитано</span>{% endif %}</div>
+                        <div class="fact-val">{% if r.fact %}{{ r.fact }}{% else %}<span class="muted">{% trans "не посчитано" %}</span>{% endif %}</div>
                     {% endif %}
                 </div>
-                {% empty %}<div class="empty">Заготовок на складе нет.</div>{% endfor %}
+                {% empty %}<div class="empty">{% trans "Заготовок на складе нет." %}</div>{% endfor %}
             </div>
             {% if editable %}
             <div class="add-line">
-                <div><label class="fc-label">Добавить заготовку из справочника</label>
-                    <input class="fc-input" id="inv_search_prep" list="dl_inv_preps" placeholder="Начните вводить заготовку…" autocomplete="off">
+                <div><label class="fc-label">{% trans "Добавить заготовку из справочника" %}</label>
+                    <input class="fc-input" id="inv_search_prep" list="dl_inv_preps" placeholder="{% trans "Начните вводить заготовку…" %}" autocomplete="off">
                     <datalist id="dl_inv_preps">{% for p in avail_preparations %}<option value="{{ p.name }}" data-id="{{ p.id }}"></option>{% endfor %}</datalist>
                     <input type="hidden" name="preparation_id" id="add_prep_sel">
                 </div>
-                <button type="submit" class="fc-btn fc-btn-secondary" onclick="return invAdd('inv_search_prep','dl_inv_preps','add_prep_sel','add_preparation');">+ Добавить заготовку</button>
+                <button type="submit" class="fc-btn fc-btn-secondary" onclick="return invAdd('inv_search_prep','dl_inv_preps','add_prep_sel','add_preparation');">{% trans "+ Добавить заготовку" %}</button>
             </div>
             {% endif %}
         </div>
 
         {% if editable %}
         <div class="actions">
-            <button type="submit" class="fc-btn fc-btn-secondary" onclick="document.getElementById('form_action').value='save';">💾 Сохранить</button>
-            <button type="submit" class="fc-btn fc-btn-dark" onclick="document.getElementById('form_action').value='finish'; return confirm('Завершить подсчёт и отправить на проверку? После этого изменить факт будет нельзя.');">✓ Завершить подсчёт</button>
+            <button type="submit" class="fc-btn fc-btn-secondary" onclick="document.getElementById('form_action').value='save';">{% trans "💾 Сохранить" %}</button>
+            <button type="submit" class="fc-btn fc-btn-dark" onclick="document.getElementById('form_action').value='finish'; return confirm('{% trans "Завершить подсчёт и отправить на проверку? После этого изменить факт будет нельзя." as jt %}{{ jt|escapejs }}');">{% trans "✓ Завершить подсчёт" %}</button>
         </div>
         {% else %}
-        <div class="actions"><a href="/c/{{ country.slug }}/inventory/" class="fc-btn fc-btn-secondary">← К журналу</a></div>
+        <div class="actions"><a href="/c/{{ country.slug }}/inventory/" class="fc-btn fc-btn-secondary">{% trans "← К журналу" %}</a></div>
         {% endif %}
     </form>
 
@@ -181,7 +182,7 @@
     // отправляем основную форму (введённый факт при этом сохранится).
     document.querySelectorAll(".rm-btn").forEach(function(btn){
         btn.addEventListener("click", function(){
-            if (!confirm("Убрать эту позицию из подсчёта?")) return;
+            if (!confirm("{% trans "Убрать эту позицию из подсчёта?" as jt %}{{ jt|escapejs }}")) return;
             document.getElementById("remove_id").value = btn.dataset.id;
             document.getElementById("form_action").value = "remove_item";
             btn.closest("form").submit();

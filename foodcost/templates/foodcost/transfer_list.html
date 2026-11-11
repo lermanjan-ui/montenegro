@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Перемещения{% endblock %}
+{% block title %}{% trans "Перемещения" %}{% endblock %}
 
 {% block content %}
 
@@ -77,53 +78,53 @@
 <div class="fc-page">
 
     <div class="fc-page-head">
-        <div><h1>Перемещения</h1><p class="muted">Перемещение товаров и заготовок между складами.</p></div>
+        <div><h1>{% trans "Перемещения" %}</h1><p class="muted">{% trans "Перемещение товаров и заготовок между складами." %}</p></div>
         {% if can_create %}
-        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="create_draft"><button type="submit" class="fc-btn fc-btn-dark">+ Новое перемещение</button></form>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="create_draft"><button type="submit" class="fc-btn fc-btn-dark">{% trans "+ Новое перемещение" %}</button></form>
         {% endif %}
     </div>
 
     {% if is_kitchen %}
     <div class="fc-card">
-        <p class="muted" style="margin:0 0 6px;">Соберите перемещение со своего склада{% if kitchen_location %} «{{ kitchen_location.name }}»{% endif %} на другой склад. Нажмите «+ Новое перемещение», добавьте позиции и подтвердите.</p>
+        <p class="muted" style="margin:0 0 6px;">{% trans "Соберите перемещение со своего склада" %}{% if kitchen_location %} «{{ kitchen_location.name }}»{% endif %} {% trans "на другой склад. Нажмите «+ Новое перемещение», добавьте позиции и подтвердите." %}</p>
     </div>
     <div class="fc-card">
         <div class="fc-table">
             <div class="t-head" style="grid-template-columns:1.2fr 1fr 1.4fr 0.8fr auto;">
-                <div>Черновик</div><div>Дата</div><div>Куда</div><div>Позиций</div><div></div>
+                <div>{% trans "Черновик" %}</div><div>{% trans "Дата" %}</div><div>{% trans "Куда" %}</div><div>{% trans "Позиций" %}</div><div></div>
             </div>
             {% for t in my_drafts %}
             <div class="t-row" style="grid-template-columns:1.2fr 1fr 1.4fr 0.8fr auto;">
-                <div class="docnum"><span class="muted">черновик #{{ t.id }}</span></div>
+                <div class="docnum"><span class="muted">{% trans "черновик" %} #{{ t.id }}</span></div>
                 <div>{{ t.transfer_date|date:"d.m.Y" }}</div>
-                <div class="flow">→ {{ t.to_warehouse.name|default:"— не выбран —" }}</div>
+                <div class="flow">→ {% if t.to_warehouse.name %}{{ t.to_warehouse.name }}{% else %}{% trans "— не выбран —" %}{% endif %}</div>
                 <div class="num">{{ t.items_count }}</div>
-                <div class="row-actions"><a href="/c/{{ country.slug }}/transfers/{{ t.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">Открыть</a></div>
+                <div class="row-actions"><a href="/c/{{ country.slug }}/transfers/{{ t.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">{% trans "Открыть" %}</a></div>
             </div>
             {% empty %}
-                <div class="empty">Нет незавершённых черновиков. Нажмите «+ Новое перемещение».</div>
+                <div class="empty">{% trans "Нет незавершённых черновиков. Нажмите «+ Новое перемещение»." %}</div>
             {% endfor %}
         </div>
     </div>
     {% else %}
 
     <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Всего перемещений</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">документов</div></div>
-        <div class="kpi"><div class="kpi-label">Подтверждено</div><div class="kpi-value">{{ kpi_confirmed }}</div><div class="kpi-sub">проведено</div></div>
-        <div class="kpi"><div class="kpi-label">Черновики</div><div class="kpi-value">{{ kpi_drafts }}</div><div class="kpi-sub">не проведено</div></div>
-        <div class="kpi"><div class="kpi-label">Перемещено позиций</div><div class="kpi-value">{{ kpi_positions }}</div><div class="kpi-sub">в подтверждённых</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Всего перемещений" %}</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">{% trans "документов" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Подтверждено" %}</div><div class="kpi-value">{{ kpi_confirmed }}</div><div class="kpi-sub">{% trans "проведено" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Черновики" %}</div><div class="kpi-value">{{ kpi_drafts }}</div><div class="kpi-sub">{% trans "не проведено" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Перемещено позиций" %}</div><div class="kpi-value">{{ kpi_positions }}</div><div class="kpi-sub">{% trans "в подтверждённых" %}</div></div>
     </div>
 
     <div class="fc-card">
         <form method="get">
             <div class="filters">
-                <div><label class="fc-label">Дата от</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
-                <div><label class="fc-label">Дата до</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
-                <div><label class="fc-label">Откуда</label><select class="fc-select" name="from_warehouse"><option value="">Любой</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if from_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Куда</label><select class="fc-select" name="to_warehouse"><option value="">Любой</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if to_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Статус</label><select class="fc-select" name="status"><option value="">Все</option>{% for v,l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-                <div style="grid-column:span 2;"><label class="fc-label">Поиск</label><input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="Номер или комментарий"></div>
-                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/transfers/" class="fc-btn fc-btn-secondary">Сбросить</a></div>
+                <div><label class="fc-label">{% trans "Дата от" %}</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
+                <div><label class="fc-label">{% trans "Дата до" %}</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
+                <div><label class="fc-label">{% trans "Откуда" %}</label><select class="fc-select" name="from_warehouse"><option value="">{% trans "Любой" %}</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if from_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Куда" %}</label><select class="fc-select" name="to_warehouse"><option value="">{% trans "Любой" %}</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if to_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Статус" %}</label><select class="fc-select" name="status"><option value="">{% trans "Все" %}</option>{% for v,l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div style="grid-column:span 2;"><label class="fc-label">{% trans "Поиск" %}</label><input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="{% trans "Номер или комментарий" %}"></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">{% trans "Применить" %}</button><a href="/c/{{ country.slug }}/transfers/" class="fc-btn fc-btn-secondary">{% trans "Сбросить" %}</a></div>
             </div>
         </form>
     </div>
@@ -131,34 +132,34 @@
     <div class="fc-card">
         <div class="fc-table">
             <div class="t-head">
-                <div>№ документа</div><div>Дата</div><div>Откуда</div><div>Куда</div><div>Позиций</div><div>Статус</div><div>Создал</div><div></div>
+                <div>{% trans "№ документа" %}</div><div>{% trans "Дата" %}</div><div>{% trans "Откуда" %}</div><div>{% trans "Куда" %}</div><div>{% trans "Позиций" %}</div><div>{% trans "Статус" %}</div><div>{% trans "Создал" %}</div><div></div>
             </div>
             {% for t in page_obj %}
             <div class="t-row">
-                <div class="docnum">{% if t.document_number %}{{ t.document_number }}{% else %}<span class="muted">черновик #{{ t.id }}</span>{% endif %}</div>
+                <div class="docnum">{% if t.document_number %}{{ t.document_number }}{% else %}<span class="muted">{% trans "черновик" %} #{{ t.id }}</span>{% endif %}</div>
                 <div>{{ t.transfer_date|date:"d.m.Y" }}</div>
                 <div>{{ t.from_warehouse.name|default:"—" }}</div>
                 <div class="flow">→ {{ t.to_warehouse.name|default:"—" }}</div>
                 <div class="num">{{ t.items_count }}</div>
-                <div>{% if t.status == 'confirmed' %}<span class="badge badge-green">Подтверждён</span>{% elif t.status == 'cancelled' %}<span class="badge badge-red">Отменён</span>{% else %}<span class="badge badge-amber">Черновик</span>{% endif %}</div>
+                <div>{% if t.status == 'confirmed' %}<span class="badge badge-green">{% trans "Подтверждён" %}</span>{% elif t.status == 'cancelled' %}<span class="badge badge-red">{% trans "Отменён" %}</span>{% else %}<span class="badge badge-amber">{% trans "Черновик" %}</span>{% endif %}</div>
                 <div class="muted">{{ t.created_by.username|default:"—" }}</div>
                 <div class="row-actions">
-                    <a href="/c/{{ country.slug }}/transfers/{{ t.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">Открыть</a>
+                    <a href="/c/{{ country.slug }}/transfers/{{ t.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">{% trans "Открыть" %}</a>
                     {% if can_edit %}
-                        <form method="post" action="/c/{{ country.slug }}/transfers/{{ t.id }}/">{% csrf_token %}<input type="hidden" name="action" value="copy"><button type="submit" class="fc-btn fc-btn-secondary fc-btn-sm" title="Копировать">⧉</button></form>
+                        <form method="post" action="/c/{{ country.slug }}/transfers/{{ t.id }}/">{% csrf_token %}<input type="hidden" name="action" value="copy"><button type="submit" class="fc-btn fc-btn-secondary fc-btn-sm" title="{% trans "Копировать" %}">⧉</button></form>
                         {% if t.status == 'draft' %}
-                        <form method="post" action="/c/{{ country.slug }}/transfers/{{ t.id }}/" onsubmit="return confirm('Удалить черновик перемещения?');">{% csrf_token %}<input type="hidden" name="action" value="delete"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="Удалить">✕</button></form>
+                        <form method="post" action="/c/{{ country.slug }}/transfers/{{ t.id }}/" onsubmit="return confirm('{% trans "Удалить черновик перемещения?" as jt %}{{ jt|escapejs }}');">{% csrf_token %}<input type="hidden" name="action" value="delete"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="{% trans "Удалить" %}">✕</button></form>
                         {% endif %}
                     {% endif %}
                 </div>
             </div>
             {% empty %}
-                <div class="empty">Перемещений пока нет.{% if can_edit %} Нажмите «+ Новое перемещение».{% endif %}</div>
+                <div class="empty">{% trans "Перемещений пока нет." %}{% if can_edit %} {% trans "Нажмите «+ Новое перемещение»." %}{% endif %}</div>
             {% endfor %}
         </div>
 
         <div class="t-foot">
-            <div class="muted">{% if total_count %}Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}{% else %}Ничего не найдено{% endif %}</div>
+            <div class="muted">{% if total_count %}{% blocktrans with s=page_obj.start_index e=page_obj.end_index tot=total_count %}Показано {{ s }}–{{ e }} из {{ tot }}{% endblocktrans %}{% else %}{% trans "Ничего не найдено" %}{% endif %}</div>
             {% if page_obj.paginator.num_pages > 1 %}
             <div class="pager">
                 {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{{ base_qs }}">‹</a>{% else %}<span class="disabled">‹</span>{% endif %}

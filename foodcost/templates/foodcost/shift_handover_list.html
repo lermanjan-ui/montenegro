@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Передача смены{% endblock %}
+{% block title %}{% trans "Передача смены" %}{% endblock %}
 
 {% block content %}
 
@@ -572,13 +573,13 @@
 <div class="page">
 
     <div class="page-title">
-        <h1>Передача смены</h1>
-        <div class="muted">Что нужно закупить, приготовить и что находится на стопе</div>
+        <h1>{% trans "Передача смены" %}</h1>
+        <div class="muted">{% trans "Что нужно закупить, приготовить и что находится на стопе" %}</div>
     </div>
 
     <div class="edit-notice" id="edit-notice">
-        <span id="edit-notice-text">Редактируется передача смены</span>
-        <button type="button" class="cancel-edit-btn" onclick="cancelEdit()">Отменить редактирование</button>
+        <span id="edit-notice-text">{% trans "Редактируется передача смены" %}</span>
+        <button type="button" class="cancel-edit-btn" onclick="cancelEdit()">{% trans "Отменить редактирование" %}</button>
     </div>
 
     <form method="post" id="handover-form">
@@ -588,117 +589,117 @@
         <div class="panel">
             <div class="handover-head">
                 <div>
-                    <label>Дата смены</label>
+                    <label>{% trans "Дата смены" %}</label>
                     <input type="date" name="shift_date" value="{{ today|date:'Y-m-d' }}">
                 </div>
 
                 <div>
-                    <label>Ответственный</label>
+                    <label>{% trans "Ответственный" %}</label>
                     <input type="text" value="{{ request.user.username }}" disabled>
                 </div>
 
                 <div>
-                    <label>Комментарий</label>
-                    <textarea name="comment" placeholder="Что важно передать следующей смене"></textarea>
+                    <label>{% trans "Комментарий" %}</label>
+                    <textarea name="comment" placeholder="{% trans "Что важно передать следующей смене" %}"></textarea>
                 </div>
             </div>
         </div>
 
         <div class="panel">
-            <div class="section-title">Что нужно докупить</div>
+            <div class="section-title">{% trans "Что нужно докупить" %}</div>
 
             <div class="add-grid">
                 <div>
-                    <label>Продукт</label>
-                    <input id="product-search" list="products-options" placeholder="Начните вводить продукт...">
+                    <label>{% trans "Продукт" %}</label>
+                    <input id="product-search" list="products-options" placeholder="{% trans "Начните вводить продукт..." %}">
                 </div>
 
                 <div>
-                    <label>Кол-во</label>
-                    <input id="product-quantity" type="number" step="0.001" placeholder="Напр. 5">
+                    <label>{% trans "Кол-во" %}</label>
+                    <input id="product-quantity" type="number" step="0.001" placeholder="{% trans "Напр. 5" %}">
                 </div>
 
                 <div>
-                    <label>Комментарий</label>
-                    <input id="product-comment" type="text" placeholder="Например: срочно">
+                    <label>{% trans "Комментарий" %}</label>
+                    <input id="product-comment" type="text" placeholder="{% trans "Например: срочно" %}">
                 </div>
 
-                <button type="button" class="add-btn" onclick="addProductNeed()">Добавить</button>
+                <button type="button" class="add-btn" onclick="addProductNeed()">{% trans "Добавить" %}</button>
             </div>
 
             <div class="added-list" id="product-list"></div>
         </div>
 
         <div class="panel">
-            <div class="section-title">Какие заготовки приготовить</div>
+            <div class="section-title">{% trans "Какие заготовки приготовить" %}</div>
 
             <div class="add-grid">
                 <div>
-                    <label>Заготовка</label>
-                    <input id="preparation-search" list="preparations-options" placeholder="Начните вводить заготовку...">
+                    <label>{% trans "Заготовка" %}</label>
+                    <input id="preparation-search" list="preparations-options" placeholder="{% trans "Начните вводить заготовку..." %}">
                 </div>
 
                 <div>
-                    <label>Кол-во</label>
-                    <input id="preparation-quantity" type="number" step="0.001" placeholder="Напр. 2">
+                    <label>{% trans "Кол-во" %}</label>
+                    <input id="preparation-quantity" type="number" step="0.001" placeholder="{% trans "Напр. 2" %}">
                 </div>
 
                 <div>
-                    <label>Комментарий</label>
-                    <input id="preparation-comment" type="text" placeholder="Например: к обеду">
+                    <label>{% trans "Комментарий" %}</label>
+                    <input id="preparation-comment" type="text" placeholder="{% trans "Например: к обеду" %}">
                 </div>
 
-                <button type="button" class="add-btn" onclick="addPreparationNeed()">Добавить</button>
+                <button type="button" class="add-btn" onclick="addPreparationNeed()">{% trans "Добавить" %}</button>
             </div>
 
             <div class="added-list" id="preparation-list"></div>
         </div>
 
         <div class="panel">
-            <div class="section-title">Что на стопе</div>
+            <div class="section-title">{% trans "Что на стопе" %}</div>
 
             <div class="add-grid">
                 <div>
-                    <label>Блюдо</label>
-                    <input id="dish-search" list="dishes-options" placeholder="Начните вводить блюдо...">
+                    <label>{% trans "Блюдо" %}</label>
+                    <input id="dish-search" list="dishes-options" placeholder="{% trans "Начните вводить блюдо..." %}">
                 </div>
 
                 <div></div>
 
                 <div>
-                    <label>Причина / комментарий</label>
-                    <input id="dish-comment" type="text" placeholder="Например: нет ингредиента">
+                    <label>{% trans "Причина / комментарий" %}</label>
+                    <input id="dish-comment" type="text" placeholder="{% trans "Например: нет ингредиента" %}">
                 </div>
 
-                <button type="button" class="add-btn" onclick="addStopItem()">Добавить</button>
+                <button type="button" class="add-btn" onclick="addStopItem()">{% trans "Добавить" %}</button>
             </div>
 
             <div class="added-list" id="dish-list"></div>
         </div>
 
         <div class="panel">
-            <div class="section-title">Задачи для следующей смены</div>
+            <div class="section-title">{% trans "Задачи для следующей смены" %}</div>
 
             <div class="add-grid">
                 <div style="grid-column: 1 / 3;">
-                    <label>Задача</label>
-                    <input id="task-text" type="text" placeholder="Например: разморозить мясо к открытию">
+                    <label>{% trans "Задача" %}</label>
+                    <input id="task-text" type="text" placeholder="{% trans "Например: разморозить мясо к открытию" %}">
                 </div>
 
                 <div></div>
 
-                <button type="button" class="add-btn" onclick="addTask()">Добавить</button>
+                <button type="button" class="add-btn" onclick="addTask()">{% trans "Добавить" %}</button>
             </div>
 
             <div class="added-list" id="task-list"></div>
 
             <div class="submit-row">
-                <button type="submit" class="submit-btn" id="submit-btn">Передать смену</button>
+                <button type="submit" class="submit-btn" id="submit-btn">{% trans "Передать смену" %}</button>
             </div>
         </div>
     </form>
 
-    <div class="history-title">История передач смены</div>
+    <div class="history-title">{% trans "История передач смены" %}</div>
 
     <div class="history-list desktop-history">
         {% for handover in handovers %}
@@ -722,19 +723,19 @@
 					</div>
 
 					{% if handover.from_employee %}
-					<div class="muted" style="margin-top:6px;">От: {{ handover.from_employee.name }}</div>
+					<div class="muted" style="margin-top:6px;">{% trans "От:" %} {{ handover.from_employee.name }}</div>
 					{% endif %}
 
 					<div style="margin-top:8px;">
-					    {% if handover.status == 'viewed' %}<span class="tag" style="background:#dcfce7;color:#166534;">Просмотрена</span>
-					    {% elif handover.status == 'expired' %}<span class="tag" style="background:#f3f4f6;color:#6b7280;">Истекла</span>
-					    {% elif handover.status == 'archived' %}<span class="tag" style="background:#f3f4f6;color:#6b7280;">В архиве</span>
-					    {% else %}<span class="tag" style="background:#dbeafe;color:#1e40af;">Создана</span>{% endif %}
+					    {% if handover.status == 'viewed' %}<span class="tag" style="background:#dcfce7;color:#166534;">{% trans "Просмотрена" %}</span>
+					    {% elif handover.status == 'expired' %}<span class="tag" style="background:#f3f4f6;color:#6b7280;">{% trans "Истекла" %}</span>
+					    {% elif handover.status == 'archived' %}<span class="tag" style="background:#f3f4f6;color:#6b7280;">{% trans "В архиве" %}</span>
+					    {% else %}<span class="tag" style="background:#dbeafe;color:#1e40af;">{% trans "Создана" %}</span>{% endif %}
 					</div>
 
 					{% if handover.tasks.all %}
 					<div style="margin-top:10px;">
-					    <div class="history-label" style="margin-bottom:6px;">Задачи</div>
+					    <div class="history-label" style="margin-bottom:6px;">{% trans "Задачи" %}</div>
 					    <div class="tag-list">
 					        {% for t in handover.tasks.all %}<div class="tag">{{ t.text }}</div>{% endfor %}
 					    </div>
@@ -743,9 +744,9 @@
                 </div>
 
                 <div class="history-labels">
-                    <div class="history-label">Нужно докупить</div>
-                    <div class="history-label">Заготовки</div>
-                    <div class="history-label">Стоп</div>
+                    <div class="history-label">{% trans "Нужно докупить" %}</div>
+                    <div class="history-label">{% trans "Заготовки" %}</div>
+                    <div class="history-label">{% trans "Стоп" %}</div>
                     <div class="history-label"></div>
                 </div>
 
@@ -814,12 +815,12 @@
                                 class="add-btn"
                                 onclick="openEdit({{ handover.id }})"
                             >
-                                Редактировать
+                                {% trans "Редактировать" %}
                             </button>
                         {% endif %}
 						<form
 						    method="post"
-						    onsubmit="return confirm('Удалить передачу смены?')"
+						    onsubmit="return confirm('{% trans "Удалить передачу смены?" as jt %}{{ jt|escapejs }}')"
 						    style="display:inline-flex;"
 						>
 						    {% csrf_token %}
@@ -832,7 +833,7 @@
 						        class="add-btn"
 						        style="color:#b91c1c;border-color:#fecaca;"
 						    >
-						        Удалить
+						        {% trans "Удалить" %}
 						    </button>
 						</form>
                     </div>
@@ -846,7 +847,7 @@
             </div>
         {% empty %}
             <div class="panel">
-                <div class="muted">Передач смены пока нет</div>
+                <div class="muted">{% trans "Передач смены пока нет" %}</div>
             </div>
         {% endfor %}
     </div>
@@ -875,7 +876,7 @@
         <div class="mobile-history-section">
 
             <div class="mobile-history-label">
-                Нужно докупить
+                {% trans "Нужно докупить" %}
             </div>
 
             <div class="tag-list">
@@ -896,7 +897,7 @@
         <div class="mobile-history-section">
 
             <div class="mobile-history-label">
-                Заготовки
+                {% trans "Заготовки" %}
             </div>
 
             <div class="tag-list">
@@ -917,7 +918,7 @@
         <div class="mobile-history-section">
 
             <div class="mobile-history-label">
-                Стоп
+                {% trans "Стоп" %}
             </div>
 
             <div class="tag-list">
@@ -946,13 +947,13 @@
                 class="add-btn"
                 onclick="openEdit({{ handover.id }})"
             >
-                Редактировать
+                {% trans "Редактировать" %}
             </button>
             {% endif %}
 
             <form
                 method="post"
-                onsubmit="return confirm('Удалить передачу смены?')"
+                onsubmit="return confirm('{% trans "Удалить передачу смены?" as jt %}{{ jt|escapejs }}')"
             >
                 {% csrf_token %}
 
@@ -963,7 +964,7 @@
                     type="submit"
                     class="mobile-delete-btn"
                 >
-                    Удалить передачу смены
+                    {% trans "Удалить передачу смены" %}
                 </button>
 
             </form>
@@ -1006,7 +1007,7 @@ function getIdFromDatalist(inputId, datalistId) {
 
 function addRow(listId, hiddenName, id, name, quantity, comment, extraHiddenNames = {}) {
     if (!id || !name) {
-        alert("Выберите позицию из списка");
+        alert("{% trans "Выберите позицию из списка" as jt %}{{ jt|escapejs }}");
         return;
     }
 
@@ -1078,7 +1079,7 @@ function addStopItem() {
 function addTask() {
     const text = document.getElementById("task-text").value.trim();
     if (!text) {
-        alert("Введите текст задачи");
+        alert("{% trans "Введите текст задачи" as jt %}{{ jt|escapejs }}");
         return;
     }
     const list = document.getElementById("task-list");
@@ -1148,8 +1149,8 @@ function openEdit(id) {
     });
 
     document.getElementById("edit-notice").classList.add("active");
-    document.getElementById("edit-notice-text").textContent = `Редактируется передача смены от ${card.dataset.displayDate}`;
-    document.getElementById("submit-btn").textContent = "Сохранить изменения";
+    document.getElementById("edit-notice-text").textContent = "{% trans "Редактируется передача смены от" as jt %}{{ jt|escapejs }} " + card.dataset.displayDate;
+    document.getElementById("submit-btn").textContent = "{% trans "Сохранить изменения" as jt %}{{ jt|escapejs }}";
 
     form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -1169,7 +1170,7 @@ function cancelEdit() {
     clearFormLists();
 
     document.getElementById("edit-notice").classList.remove("active");
-    document.getElementById("submit-btn").textContent = "Передать смену";
+    document.getElementById("submit-btn").textContent = "{% trans "Передать смену" as jt %}{{ jt|escapejs }}";
 }
 </script>
 

@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Списания{% endblock %}
+{% block title %}{% trans "Списания" %}{% endblock %}
 
 {% block content %}
 
@@ -354,13 +355,13 @@
 
 <div class="topbar">
     <div>
-        <h1>Списания</h1>
-        <div class="muted">Последние {{ days }} дней</div>
+        <h1>{% trans "Списания" %}</h1>
+        <div class="muted">{% blocktrans with d=days %}Последние {{ d }} дней{% endblocktrans %}</div>
     </div>
 </div>
 
 <div class="card">
-    <div class="card-title">Добавить списание</div>
+    <div class="card-title">{% trans "Добавить списание" %}</div>
 
     <form method="post">
         {% csrf_token %}
@@ -368,15 +369,15 @@
 
         <div class="form-grid">
             <div>
-                <label>Дата</label>
+                <label>{% trans "Дата" %}</label>
                 <input type="date" name="writeoff_date" value="{{ today|date:'Y-m-d' }}">
             </div>
 
             {% if not is_kitchen %}
             <div>
-                <label>Склад</label>
+                <label>{% trans "Склад" %}</label>
                 <select name="location_id">
-                    <option value="">— выберите склад —</option>
+                    <option value="">{% trans "— выберите склад —" %}</option>
                     {% for loc in locations %}
                         <option value="{{ loc.id }}" {% if profile_location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>
                     {% endfor %}
@@ -385,17 +386,17 @@
             {% endif %}
 
             <div>
-                <label>Тип</label>
+                <label>{% trans "Тип" %}</label>
                 <select name="item_type" id="item-type-select">
-                    <option value="product">Продукт</option>
-                    <option value="preparation">Заготовка</option>
+                    <option value="product">{% trans "Продукт" %}</option>
+                    <option value="preparation">{% trans "Заготовка" %}</option>
                 </select>
             </div>
 
             <div id="product-field">
-                <label>Продукт</label>
+                <label>{% trans "Продукт" %}</label>
                 <select name="product_id">
-                    <option value="">Выберите продукт</option>
+                    <option value="">{% trans "Выберите продукт" %}</option>
                     {% for product in products %}
                         <option value="{{ product.id }}">{{ product.name }}</option>
                     {% endfor %}
@@ -403,9 +404,9 @@
             </div>
 
             <div id="preparation-field" class="hidden-field">
-                <label>Заготовка</label>
+                <label>{% trans "Заготовка" %}</label>
                 <select name="preparation_id">
-                    <option value="">Выберите заготовку</option>
+                    <option value="">{% trans "Выберите заготовку" %}</option>
                     {% for preparation in preparations %}
                         <option value="{{ preparation.id }}">{{ preparation.name }}</option>
                     {% endfor %}
@@ -413,12 +414,12 @@
             </div>
 
             <div>
-                <label>Кол-во (кг)</label>
+                <label>{% trans "Кол-во (кг)" %}</label>
                 <input type="number" step="0.001" name="quantity" placeholder="0.000">
             </div>
 
             <div>
-                <label>Причина</label>
+                <label>{% trans "Причина" %}</label>
                 <select name="reason">
                     {% for value, label in reasons %}
                         <option value="{{ value }}">{{ label }}</option>
@@ -427,11 +428,11 @@
             </div>
 
             <div>
-                <label>Комментарий</label>
-                <input type="text" name="comment" placeholder="Комментарий">
+                <label>{% trans "Комментарий" %}</label>
+                <input type="text" name="comment" placeholder="{% trans "Комментарий" %}">
             </div>
 
-            <button type="submit" class="primary-btn">Добавить</button>
+            <button type="submit" class="primary-btn">{% trans "Добавить" %}</button>
         </div>
     </form>
 </div>
@@ -442,17 +443,17 @@
         <div class="writeoff-card">
             <div class="writeoff-view">
                 <div>
-                    <div class="muted">Дата</div>
+                    <div class="muted">{% trans "Дата" %}</div>
                     <strong>{{ item.writeoff_date }}</strong>
                 </div>
 
                 <div>
-                    <div class="muted">Тип</div>
+                    <div class="muted">{% trans "Тип" %}</div>
                     <span class="item-type">{{ item.get_item_type_display }}</span>
                 </div>
 
                 <div>
-                    <div class="muted">Позиция</div>
+                    <div class="muted">{% trans "Позиция" %}</div>
                     <div class="item-name">
                         {% if item.product %}
                             {{ item.product.name }}
@@ -465,27 +466,27 @@
                 </div>
 
                 <div>
-                    <div class="muted">Кол-во (кг)</div>
+                    <div class="muted">{% trans "Кол-во (кг)" %}</div>
                     <strong>{{ item.quantity }}</strong>
                 </div>
 
                 <div>
-                    <div class="muted">Причина</div>
+                    <div class="muted">{% trans "Причина" %}</div>
                     <span class="reason">{{ item.get_reason_display }}</span>
                 </div>
 
                 <div>
-                    <div class="muted">Комментарий</div>
+                    <div class="muted">{% trans "Комментарий" %}</div>
                     {{ item.comment|default:"—" }}
                 </div>
 
                 <div>
-                    <div class="muted">Стоимость</div>
+                    <div class="muted">{% trans "Стоимость" %}</div>
                     <div class="cost">{{ item.cost|floatformat:0 }}</div>
                 </div>
 
                 <button type="button" class="secondary-btn edit-btn">
-                    Редактировать
+                    {% trans "Редактировать" %}
                 </button>
             </div>
 
@@ -497,12 +498,12 @@
 
                     <div class="edit-grid">
                         <div>
-                            <label>Дата</label>
+                            <label>{% trans "Дата" %}</label>
                             <input type="date" name="writeoff_date" value="{{ item.writeoff_date|date:'Y-m-d' }}">
                         </div>
 
                         <div>
-                            <label>Причина</label>
+                            <label>{% trans "Причина" %}</label>
                             <select name="reason">
                                 {% for value, label in reasons %}
                                     <option value="{{ value }}" {% if item.reason == value %}selected{% endif %}>
@@ -513,12 +514,12 @@
                         </div>
 
                         <div>
-                            <label>Комментарий</label>
+                            <label>{% trans "Комментарий" %}</label>
                             <input type="text" name="comment" value="{{ item.comment }}">
                         </div>
 
                         <div>
-                            <label>Кол-во (кг)</label>
+                            <label>{% trans "Кол-во (кг)" %}</label>
                             <input type="number" step="0.001" name="quantity" value="{{ item.quantity }}">
                         </div>
 
@@ -529,13 +530,13 @@
 						        name="action"
 						        value="delete"
 						        class="danger"
-						        onclick="return confirm('Удалить списание?')"
+						        onclick="return confirm('{% trans "Удалить списание?" as jt %}{{ jt|escapejs }}')"
 						    >
-						        Удалить
+						        {% trans "Удалить" %}
 						    </button>
 
 							<button type="submit" class="primary-btn">
-							    Сохранить
+							    {% trans "Сохранить" %}
 							</button>
 
 						</div>
@@ -544,7 +545,7 @@
             </div>
         </div>
         {% empty %}
-            <div class="muted">Списаний пока нет</div>
+            <div class="muted">{% trans "Списаний пока нет" %}</div>
         {% endfor %}
     </div>
 </div>
@@ -579,22 +580,22 @@
         <div class="mobile-grid">
 
             <div>
-                <div class="muted">Дата</div>
+                <div class="muted">{% trans "Дата" %}</div>
                 <strong>{{ item.writeoff_date }}</strong>
             </div>
 
             <div>
-                <div class="muted">Кол-во</div>
+                <div class="muted">{% trans "Кол-во" %}</div>
                 <strong>{{ item.quantity }}</strong>
             </div>
 
             <div>
-                <div class="muted">Причина</div>
+                <div class="muted">{% trans "Причина" %}</div>
                 <span class="reason">{{ item.get_reason_display }}</span>
             </div>
 
             <div>
-                <div class="muted">Комментарий</div>
+                <div class="muted">{% trans "Комментарий" %}</div>
                 {{ item.comment|default:"—" }}
             </div>
 
@@ -605,7 +606,7 @@
             class="secondary-btn mobile-edit-btn"
             onclick="this.closest('.mobile-writeoff-card').classList.toggle('editing')"
         >
-            Редактировать
+            {% trans "Редактировать" %}
         </button>
 
         <div class="mobile-edit-panel">
@@ -619,7 +620,7 @@
                 <div class="mobile-edit-grid">
 
                     <div>
-                        <label>Дата</label>
+                        <label>{% trans "Дата" %}</label>
 
                         <input
                             type="date"
@@ -629,7 +630,7 @@
                     </div>
 
                     <div>
-                        <label>Причина</label>
+                        <label>{% trans "Причина" %}</label>
 
                         <select name="reason">
                             {% for value, label in reasons %}
@@ -644,7 +645,7 @@
                     </div>
 
                     <div>
-                        <label>Комментарий</label>
+                        <label>{% trans "Комментарий" %}</label>
 
                         <input
                             type="text"
@@ -654,7 +655,7 @@
                     </div>
 
                     <div>
-                        <label>Кол-во</label>
+                        <label>{% trans "Кол-во" %}</label>
 
                         <input
                             type="number"
@@ -673,13 +674,13 @@
                         name="action"
                         value="delete"
                         class="danger"
-                        onclick="return confirm('Удалить списание?')"
+                        onclick="return confirm('{% trans "Удалить списание?" as jt %}{{ jt|escapejs }}')"
                     >
-                        Удалить
+                        {% trans "Удалить" %}
                     </button>
 
                     <button type="submit">
-                        Сохранить
+                        {% trans "Сохранить" %}
                     </button>
 
                 </div>

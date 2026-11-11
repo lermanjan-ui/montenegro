@@ -1,0 +1,6821 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: foodcost\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "%(a)s из %(tot)s"
+msgstr "%(a)s of %(tot)s"
+
+msgid ""
+"%(c)s: оставлена запись id=%(k)s, перенесено %(mo)s заказ(ов) и %(ms)s "
+"источник(ов), удалены id: %(ids)s."
+msgstr ""
+"%(c)s: record id=%(k)s kept, %(mo)s order(s) and %(ms)s source(s) moved, "
+"deleted ids: %(ids)s."
+
+msgid "%(d)s дней бесплатно · без карты · с любого устройства"
+msgstr "%(d)s days free · no card · from any device"
+
+msgid "%(d)s дней полного доступа. Заведите компанию прямо сейчас."
+msgstr "%(d)s days of full access. Create your company right now."
+
+msgid "%(m)s модулей"
+msgstr "%(m)s modules"
+
+msgid "(до 100, \\n для переноса строки)"
+msgstr "(up to 100, \\n for a line break)"
+
+msgid "(до 100, \\n для переноса)"
+msgstr "(up to 100, \\n for a line break)"
+
+msgid "(до 120)"
+msgstr "(up to 120)"
+
+msgid "(до 20)"
+msgstr "(up to 20)"
+
+msgid "(до 30)"
+msgstr "(up to 30)"
+
+msgid "(до 60 символов)"
+msgstr "(up to 60 characters)"
+
+msgid "(комбо), а не общая по заказу."
+msgstr "(combo), not the order total."
+
+msgid "(опционально)"
+msgstr "(optional)"
+
+msgid "(отключён)"
+msgstr "(disabled)"
+
+msgid "(по фильтру)"
+msgstr "(by filter)"
+
+msgid "(приоритет над файлом)"
+msgstr "(takes priority over the file)"
+
+msgid "(скрыта на сайте)"
+msgstr "(hidden on site)"
+
+msgid "(только доступные по тарифу)"
+msgstr "(only available by plan)"
+
+msgid "+ В сет"
+msgstr "+ To set"
+
+msgid "+ Добавить"
+msgstr "+ Add"
+
+msgid "+ Добавить заготовку"
+msgstr "+ Add semi-finished product"
+
+msgid "+ Добавить начисление"
+msgstr "+ Add accrual"
+
+msgid "+ Добавить продукт"
+msgstr "+ Add product"
+
+msgid "+ Добавить размер"
+msgstr "+ Add size"
+
+msgid "+ Добавить смену"
+msgstr "+ Add shift"
+
+msgid "+ Добавить сотрудника"
+msgstr "+ Add employee"
+
+msgid "+ Новое перемещение"
+msgstr "+ New transfer"
+
+msgid "+ Новый клиент"
+msgstr "+ New client"
+
+msgid "+ Новый поставщик"
+msgstr "+ New supplier"
+
+msgid "+ Новый приход"
+msgstr "+ New receipt"
+
+msgid "+ Создать"
+msgstr "+ Create"
+
+msgid "+ Создать зону доставки"
+msgstr "+ Create delivery zone"
+
+msgid "+ Создать инвентаризацию"
+msgstr "+ Create inventory count"
+
+msgid "+ Создать новый филиал"
+msgstr "+ Create new branch"
+
+msgid "+ Создать пользователя"
+msgstr "+ Create user"
+
+msgid "+ Создать приход"
+msgstr "+ Create receipt"
+
+msgid ". Заказ всё равно создастся, сумма правильная."
+msgstr ". The order will still be created, the amount is correct."
+
+msgid ""
+". Импорт идемпотентен — повторный запуск пропустит уже импортированные."
+msgstr ". The import is idempotent — a re-run skips already imported ones."
+
+msgid ". Оставьте пустым, чтобы не менять."
+msgstr ". Leave empty to keep unchanged."
+
+msgid "0 — без ограничения. Выше суммы наличными — только картой."
+msgstr "0 — no limit. Above the cash amount — card only."
+
+msgid "120 г"
+msgstr "120 g"
+
+msgid "15 000 до 150 000 на сайте"
+msgstr "15,000 to 150,000 on the site"
+
+msgid "20 цифр"
+msgstr "20 digits"
+
+msgid "30 дней"
+msgstr "30 days"
+
+msgid "35–45 мин"
+msgstr "35–45 min"
+
+msgid "5 цифр"
+msgstr "5 digits"
+
+msgid "5+ (постоянные)"
+msgstr "5+ (regular)"
+
+msgid "7 дней"
+msgstr "7 days"
+
+msgid "9 цифр"
+msgstr "9 digits"
+
+msgid "9 цифр — реквизит юрлица"
+msgstr "9 digits — legal entity detail"
+
+msgid ""
+": можно запускать сколько угодно раз — прежние движения-продажи за эту дату "
+"заменяются новыми. Отменённые заказы при пересчёте не списываются."
+msgstr ""
+": can be run any number of times — previous sale movements for this date are"
+" replaced with new ones. Cancelled orders are not written off during "
+"recalculation."
+
+msgid "Alt-текст"
+msgstr "Alt text"
+
+msgid "Alt-текст (необязательно)"
+msgstr "Alt text (optional)"
+
+msgid "CRM и аналитика"
+msgstr "CRM and analytics"
+
+msgid "CSV файл от Tilda"
+msgstr "CSV file from Tilda"
+
+msgid "Callback-URL для кабинета Click:"
+msgstr "Callback URL for the Click dashboard:"
+
+msgid "Callback-URL для кабинета Payme (вставьте в настройках мерчанта):"
+msgstr "Callback URL for the Payme dashboard (paste it in merchant settings):"
+
+msgid "Combo-баннеров пока нет"
+msgstr "No combo banners yet"
+
+msgid "Combo-баннеры"
+msgstr "Combo banners"
+
+msgid "Crop-данные (JSON, опц.)"
+msgstr "Crop data (JSON, opt.)"
+
+msgid "E-mail или телефон"
+msgstr "Email or phone"
+
+msgid "E-mail, телефон или логин"
+msgstr "Email, phone or login"
+
+msgid "E-mail, телефон или логин и пароль."
+msgstr "Email, phone or login and password."
+
+msgid "ERP для ресторанного бизнеса · Узбекистан"
+msgstr "ERP for restaurant business · Uzbekistan"
+
+msgid ""
+"Hero-баннеры на главной странице сайта. Порядок задаётся перетаскиванием — "
+"изменения сохраняются автоматически."
+msgstr ""
+"Hero banners on the site's homepage. The order is set by dragging — changes "
+"are saved automatically."
+
+msgid ""
+"ID этого блюда, который мы отправляем в Uzum (composition id, vendorCode и "
+"barcode). Числовой, не UUID."
+msgstr ""
+"This dish's ID that we send to Uzum (composition id, vendorCode and "
+"barcode). Numeric, not a UUID."
+
+msgid ""
+"JPG, PNG или WebP. Используется, только если выше не указана внешняя ссылка."
+msgstr "JPG, PNG or WebP. Used only if no external link is set above."
+
+msgid "JPG, PNG или WebP. Рекомендуемый размер — 1200×800 px."
+msgstr "JPG, PNG or WebP. Recommended size — 1200×800 px."
+
+msgid "KPI за смену"
+msgstr "KPI per shift"
+
+msgid "N по цене M"
+msgstr "N for the price of M"
+
+msgid "Raccoon · Яшнобод"
+msgstr "Raccoon · Yashnobod"
+
+msgid "SMS отправляется общим сервисом платформы и настраивается отдельно."
+msgstr ""
+"SMS is sent via the platform's shared service and configured separately."
+
+msgid "Slug (адрес кабинета, /c/&lt;slug&gt;/)"
+msgstr "Slug (cabinet address, /c/&lt;slug&gt;/)"
+
+msgid "Slug (адрес страницы) *"
+msgstr "Slug (page address) *"
+
+msgid "Slug (адрес)"
+msgstr "Slug (address)"
+
+msgid "URL картинки"
+msgstr "Image URL"
+
+msgid "URL картинки (десктоп)"
+msgstr "Image URL (desktop)"
+
+msgid "URL картинки (мобильный)"
+msgstr "Image URL (mobile)"
+
+msgid "UZS/мес"
+msgstr "UZS/mo"
+
+msgid "Uzum (подключён)"
+msgstr "Uzum (connected)"
+
+msgid "Uzum: получим"
+msgstr "Uzum: we get"
+
+msgid "VIP (5+ заказов)"
+msgstr "VIP (5+ orders)"
+
+msgid "free от %(v)s"
+msgstr "free from %(v)s"
+
+msgid "navruz — можно оставить пустым, сгенерируется из названия"
+msgstr "navruz — can be left empty, generated from the name"
+
+msgid "slug категории / товара / промокод / URL"
+msgstr "category / product slug / promo code / URL"
+
+msgid "slug категории / товара или URL"
+msgstr "category / product slug or URL"
+
+msgid "you@mail.uz или +998.."
+msgstr "you@mail.uz or +998.."
+
+msgid "you@mail.uz, +998.. или логин"
+msgstr "you@mail.uz, +998.. or login"
+
+msgid "© ЧекМейт — ERP для ресторанов."
+msgstr "© ЧекМейт — ERP for restaurants."
+
+msgid "«Анализ»"
+msgstr "\"Analysis\""
+
+msgid "«Импорт»"
+msgstr "\"Import\""
+
+msgid ""
+"«По отдельности» = сумма цен позиций (поле «отд.цена» в строках). «Выгода» ="
+" по отдельности − цена комплекса."
+msgstr ""
+"«Separately» = sum of item prices (the «sep. price» field in rows). "
+"«Benefit» = separately − combo price."
+
+msgid "«Только выбранные» и «Все, кроме» используют список блюд ниже."
+msgstr "\"Only selected\" and \"All except\" use the dish list below."
+
+msgid ""
+"«Ушло в заготовки» — сколько этого продукта вошло в посчитанные заготовки по"
+" техкарте (рекурсивно). Недостача = Система − Факт − Ушло в заготовки."
+msgstr ""
+"«Used in semi-finished» — how much of this product went into the counted "
+"semi-finished products per the tech card (recursively). Shortage = System − "
+"Actual − Used in semi-finished."
+
+msgid "· Ссылка:"
+msgstr "· Link:"
+
+msgid "· Товар:"
+msgstr "· Product:"
+
+msgid "· админ"
+msgstr "· admin"
+
+msgid "· необязательно для агрегатора"
+msgstr "· optional for aggregator"
+
+msgid "· по умолчанию"
+msgstr "· default"
+
+msgid "· скрыт на сайте"
+msgstr "· hidden on site"
+
+msgid "· стоп-лист"
+msgstr "· stop-list"
+
+msgid "Авансы"
+msgstr "Advances"
+
+msgid "Авто (как раньше)"
+msgstr "Auto (as before)"
+
+msgid "Авто не выбирать"
+msgstr "Don't auto-select"
+
+msgid "Автор"
+msgstr "Author"
+
+msgid "Автосервис"
+msgstr "Car service"
+
+msgid "Автосписание продаж"
+msgstr "Auto write-off of sales"
+
+msgid "Админ компании"
+msgstr "Company admin"
+
+msgid "Админка"
+msgstr "Admin"
+
+msgid "Адрес"
+msgstr "Address"
+
+msgid "Адрес доставки"
+msgstr "Delivery address"
+
+msgid "Адреса"
+msgstr "Addresses"
+
+msgid "Адреса доставки"
+msgstr "Delivery addresses"
+
+msgid "Адресов"
+msgstr "Addresses"
+
+msgid "Адресов будет перепривязано"
+msgstr "Addresses to be reattached"
+
+msgid "Адресов нет"
+msgstr "No addresses"
+
+msgid "Адресов перепривязано"
+msgstr "Addresses reattached"
+
+msgid "Аккаунт для входа (необязательно)"
+msgstr "Login account (optional)"
+
+msgid "Активен"
+msgstr "Active"
+
+msgid "Активен (показывать)"
+msgstr "Active (show)"
+
+msgid "Активна"
+msgstr "Active"
+
+msgid "Активно"
+msgstr "Active"
+
+msgid "Активно (показывать на сайте)"
+msgstr "Active (show on site)"
+
+msgid "Активность по часам"
+msgstr "Activity by hour"
+
+msgid "Активные"
+msgstr "Active"
+
+msgid "Активный"
+msgstr "Active"
+
+msgid "Активных поставщиков"
+msgstr "Active suppliers"
+
+msgid "Активных сотрудников нет."
+msgstr "No active employees."
+
+msgid ""
+"Активов пока нет. Отметьте товары категорией с типом «Основное средство»."
+msgstr "No assets yet. Mark products with a category of type «Fixed asset»."
+
+msgid "Активы"
+msgstr "Assets"
+
+msgid "Активы (основные средства)"
+msgstr "Assets (fixed assets)"
+
+msgid "Акции"
+msgstr "Promotions"
+
+msgid "Акций пока нет. Создайте первую выше."
+msgstr "No promotions yet. Create the first one above."
+
+msgid "Акция включена"
+msgstr "Promotion enabled"
+
+msgid "Аналитика"
+msgstr "Analytics"
+
+msgid "Аналитика заказов"
+msgstr "Order analytics"
+
+msgid "Аналитика по блюдам"
+msgstr "Dish analytics"
+
+msgid "Аналитика списаний"
+msgstr "Write-off analytics"
+
+msgid "Аннулирован"
+msgstr "Cancelled"
+
+msgid "Аннулировать"
+msgstr "Annul"
+
+msgid "Апсейл на странице обедов"
+msgstr "Upsell on the lunches page"
+
+msgid "Апсейл обедов"
+msgstr "Lunch upsell"
+
+msgid "Аптека"
+msgstr "Pharmacy"
+
+msgid "Аренда"
+msgstr "Rent"
+
+msgid "Арендатор:"
+msgstr "Tenant:"
+
+msgid "Арендаторы платформы, их тарифы и активность."
+msgstr "Platform tenants, their plans and activity."
+
+msgid "Артикул:"
+msgstr "SKU:"
+
+msgid "Архив"
+msgstr "Archive"
+
+msgid "Архив блюд"
+msgstr "Dish archive"
+
+msgid "Архивировать поставщика"
+msgstr "Archive the supplier"
+
+msgid ""
+"База клиентов: заказы с сайта и импорт из Tilda. Сводка, фильтры и история "
+"по каждому клиенту."
+msgstr ""
+"Client base: orders from the site and import from Tilda. Summary, filters "
+"and history per client."
+
+msgid ""
+"Базовые параметры блюда: название, категория, выход, цена и время "
+"приготовления."
+msgstr ""
+"The dish's basic parameters: name, category, yield, price and cooking time."
+
+msgid "Банк"
+msgstr "Bank"
+
+msgid "Банковские реквизиты"
+msgstr "Bank details"
+
+msgid "Баннеров пока нет"
+msgstr "No banners yet"
+
+msgid "Баннеры главной"
+msgstr "Homepage banners"
+
+msgid "Без FK (snapshot)"
+msgstr "Without FK (snapshot)"
+
+msgid "Без Uzum"
+msgstr "Without Uzum"
+
+msgid "Без доставки"
+msgstr "No delivery"
+
+msgid "Без заголовка"
+msgstr "No heading"
+
+msgid "Без заказов"
+msgstr "No orders"
+
+msgid "Без записи"
+msgstr "No record"
+
+msgid "Без имени"
+msgstr "No name"
+
+msgid "Без категории"
+msgstr "No category"
+
+msgid "Без матча"
+msgstr "No match"
+
+msgid "Без названия"
+msgstr "No name"
+
+msgid "Без подписки"
+msgstr "No subscription"
+
+msgid "Без причины"
+msgstr "No reason"
+
+msgid "Без промокода"
+msgstr "Without promo code"
+
+msgid "Без самовывоза"
+msgstr "No pickup"
+
+msgid "Без флага"
+msgstr "No flag"
+
+msgid "Безнал"
+msgstr "Cashless"
+
+msgid "Безналичная"
+msgstr "Cashless"
+
+msgid "Бейдж"
+msgstr "Badge"
+
+msgid "Бейдж (метка)"
+msgstr "Badge (label)"
+
+msgid "Бейдж на фото"
+msgstr "Photo badge"
+
+msgid "Бесплатно от"
+msgstr "Free from"
+
+msgid "Ближайшие смены"
+msgstr "Upcoming shifts"
+
+msgid "Блок 1"
+msgstr "Block 1"
+
+msgid "Блок 1 (основной)"
+msgstr "Block 1 (main)"
+
+msgid "Блок 2"
+msgstr "Block 2"
+
+msgid "Блок 2 (новый)"
+msgstr "Block 2 (new)"
+
+msgid "Блок «Наши рестораны». Можно вместо ссылки загрузить файл ниже."
+msgstr ""
+"“Our restaurants” block. Instead of a link you can upload a file below."
+
+msgid "Блоки на %(p)s"
+msgstr "Blocks on %(p)s"
+
+msgid "Блоков на %(p)s пока нет"
+msgstr "No blocks on %(p)s yet"
+
+msgid "Блоков пока нет"
+msgstr "No blocks yet"
+
+msgid "Блюд в CSV (уник.)"
+msgstr "Dishes in CSV (unique)"
+
+msgid "Блюд в ERP каталоге"
+msgstr "Dishes in ERP catalog"
+
+msgid "Блюд по выбранному фильтру пока нет"
+msgstr "No dishes match the selected filter"
+
+msgid "Блюд пока нет."
+msgstr "No dishes yet."
+
+msgid "Блюда"
+msgstr "Dishes"
+
+msgid "Блюда для скидки (пусто — на весь заказ)"
+msgstr "Dishes for the discount (empty — whole order)"
+
+msgid "Блюда из заказа"
+msgstr "Dishes in the order"
+
+msgid "Блюда не добавлены — себестоимость 0 (или ручная)."
+msgstr "No dishes added — cost is 0 (or manual)."
+
+msgid ""
+"Блюда с пометкой «Хит» появляются на главной в подборке «Хиты продаж». "
+"Порядок задаётся перетаскиванием. Скрытые с сайта или стоп-листовые блюда "
+"здесь отмечены, но публичный API их прячет автоматически."
+msgstr ""
+"Dishes marked «Hit» appear on the homepage in the «Bestsellers» selection. "
+"The order is set by dragging. Dishes hidden from the site or on the stop-"
+"list are marked here, but the public API hides them automatically."
+
+msgid "Блюда →"
+msgstr "Dishes →"
+
+msgid ""
+"Блюда, выведенные из меню. Они скрыты с сайта и из новых заказов, но "
+"остаются в истории старых заказов и отчётах."
+msgstr ""
+"Dishes removed from the menu. They are hidden from the site and new orders, "
+"but remain in past order history and reports."
+
+msgid "Блюда, заготовки, упаковка и точная себестоимость каждой позиции."
+msgstr "Dishes, prep items, packaging and the exact cost of each item."
+
+msgid "Блюдо"
+msgstr "Dish"
+
+msgid ""
+"Блюдо «%(n)s» убрано из меню: скрыто с сайта и из новых заказов, но "
+"сохранено в истории старых заказов и отчётах. Его можно вернуть."
+msgstr ""
+"The dish “%(n)s” has been removed from the menu: hidden from the site and "
+"new orders, but kept in past order history and reports. It can be restored."
+
+msgid "Блюдо «%(n)s» уйдёт в архив: пропадёт с сайта и из новых заказов, но"
+msgstr ""
+"The dish “%(n)s” will go to the archive: it will disappear from the site and"
+" new orders, but"
+
+msgid "Блюдо в архиве"
+msgstr "Dish is archived"
+
+msgid "Блюдо в глобальном стоп-листе. На сайте будет скрыто на всех филиалах."
+msgstr ""
+"The dish is in the global stop-list. It will be hidden on the site across "
+"all branches."
+
+msgid "Блюдо из системы"
+msgstr "Dish from the system"
+
+msgid ""
+"Блюдо может быть прикреплено к нескольким категориям на сайте. Если ничего "
+"не выбрано — используется основная категория блюда."
+msgstr ""
+"A dish can be attached to several site categories. If nothing is selected — "
+"the dish's main category is used."
+
+msgid "Блюдо-дополнение"
+msgstr "Add-on dish"
+
+msgid "Блюдо:"
+msgstr "Dish:"
+
+msgid "Большой"
+msgstr "Large"
+
+msgid "Бонусы:"
+msgstr "Bonuses:"
+
+msgid "Брутто"
+msgstr "Gross"
+
+msgid "Брутто / кол-во"
+msgstr "Gross / qty"
+
+msgid "Брутто, кг"
+msgstr "Gross, kg"
+
+msgid "Будут вставлены"
+msgstr "Will be inserted"
+
+msgid "Будущие расходы"
+msgstr "Future expenses"
+
+msgid "Было"
+msgstr "Was"
+
+msgid "Быстро добавить нового поставщика"
+msgstr "Quickly add a new supplier"
+
+msgid "В ERP"
+msgstr "In ERP"
+
+msgid "В Комбо"
+msgstr "In combo"
+
+msgid "В апсейле сейчас"
+msgstr "Currently in upsell"
+
+msgid "В архиве"
+msgstr "Archived"
+
+msgid "В архиве пока нет блюд"
+msgstr "No dishes in the archive yet"
+
+msgid "В работе"
+msgstr "In progress"
+
+msgid "В списке корпоративных"
+msgstr "In the corporate list"
+
+msgid "В стоп-листе"
+msgstr "In stop-list"
+
+msgid "В тарифе"
+msgstr "In the plan"
+
+msgid "В хитах пока ничего нет"
+msgstr "Nothing in bestsellers yet"
+
+msgid "В этой стране нет активных филиалов."
+msgstr "There are no active branches in this country."
+
+msgid "В этом блоке пока нет товаров. Добавьте через форму ниже."
+msgstr "No products in this block yet. Add them via the form below."
+
+msgid "В этом месяце смен нет."
+msgstr "No shifts this month."
+
+msgid "Валовая выручка"
+msgstr "Gross revenue"
+
+msgid ""
+"Ваш аккаунт пока не привязан к карточке сотрудника. Обратитесь к менеджеру, "
+"чтобы он связал ваш профиль с сотрудником — после этого здесь появятся ваши "
+"смены и начисления."
+msgstr ""
+"Your account isn't linked to an employee card yet. Ask a manager to link "
+"your profile to an employee — after that your shifts and accruals will "
+"appear here."
+
+msgid "Введите код"
+msgstr "Enter the code"
+
+msgid "Введите логин"
+msgstr "Enter the login"
+
+msgid "Введите пароль"
+msgstr "Enter the password"
+
+msgid "Введите текст задачи"
+msgstr "Enter the task text"
+
+msgid "Вводит кассир"
+msgstr "Entered by cashier"
+
+msgid "Вегетарианское"
+msgstr "Vegetarian"
+
+msgid "Вернувшиеся"
+msgstr "Returning"
+
+msgid "Вернуть"
+msgstr "Restore"
+
+msgid "Вернуть из архива"
+msgstr "Restore from archive"
+
+msgid "Вес"
+msgstr "Weight"
+
+msgid ""
+"Вес и время приготовления берутся из основных данных блюда (%(w)s кг, %(m)s "
+"мин) — задавать отдельно не нужно."
+msgstr ""
+"Weight and cooking time are taken from the dish's main data (%(w)s kg, %(m)s"
+" min) — no need to set them separately."
+
+msgid "Весь учёт ресторана"
+msgstr "Full restaurant accounting"
+
+msgid "Видимость"
+msgstr "Visibility"
+
+msgid "Видимость на сайте"
+msgstr "Visibility on the site"
+
+msgid "Включить"
+msgstr "Enable"
+
+msgid "Включён"
+msgstr "Enabled"
+
+msgid "Вне тарифа"
+msgstr "Outside the plan"
+
+msgid "Вода"
+msgstr "Water"
+
+msgid "Войти"
+msgstr "Log in"
+
+msgid "Восстановление пароля"
+msgstr "Password recovery"
+
+msgid "Восстановление пароля · ЧекМейт"
+msgstr "Password recovery · ЧекМейт"
+
+msgid "Вперёд →"
+msgstr "Next →"
+
+msgid ""
+"Временный инструмент (только суперадмин). Объединяет несколько записей "
+"платёжного метода «Payme» в одну. Заказы и источники перепривязываются к "
+"оставляемой записи, дубликаты удаляются. Оставляемая запись всегда получает "
+"имя ровно"
+msgstr ""
+"Temporary tool (superadmin only). Merges several «Payme» payment-method "
+"records into one. Orders and sources are reattached to the kept record, "
+"duplicates are deleted. The kept record always gets exactly the name"
+
+msgid "Время"
+msgstr "Time"
+
+msgid "Время блюда, мин"
+msgstr "Dish time, min"
+
+msgid "Время доставки"
+msgstr "Delivery time"
+
+msgid "Время начала"
+msgstr "Start time"
+
+msgid ""
+"Время начала будет записано автоматически (сейчас). Завершите смену кнопкой "
+"«Завершить» — часы посчитаются сами."
+msgstr ""
+"The start time will be recorded automatically (now). End the shift with the "
+"«Finish» button — hours are calculated automatically."
+
+msgid "Время окончания"
+msgstr "End time"
+
+msgid "Время, мин"
+msgstr "Time, min"
+
+msgid "Все"
+msgstr "All"
+
+msgid "Все блюда"
+msgstr "All dishes"
+
+msgid "Все время"
+msgstr "All time"
+
+msgid "Все должности"
+msgstr "All positions"
+
+msgid "Все доступные блюда уже в хитах."
+msgstr "All available dishes are already in bestsellers."
+
+msgid ""
+"Все доступные категории уже прикреплены. Создайте новую в основных данных "
+"блюда, чтобы привязать её к сайту."
+msgstr ""
+"All available categories are already attached. Create a new one in the "
+"dish's main data to link it to the site."
+
+msgid "Все заказы"
+msgstr "All orders"
+
+msgid "Все категории"
+msgstr "All categories"
+
+msgid "Все локации"
+msgstr "All locations"
+
+msgid "Все разделы"
+msgstr "All sections"
+
+msgid "Все склады"
+msgstr "All warehouses"
+
+msgid "Все статусы"
+msgstr "All statuses"
+
+msgid "Все страны"
+msgstr "All countries"
+
+msgid "Все типы"
+msgstr "All types"
+
+msgid "Все типы операций"
+msgstr "All operation types"
+
+msgid "Все филиалы"
+msgstr "All branches"
+
+msgid "Все филиалы и все передачи смен"
+msgstr "All branches and all shift handovers"
+
+msgid "Все, кроме выбранных"
+msgstr "All except selected"
+
+msgid "Всего"
+msgstr "Total"
+
+msgid "Всего выплачено:"
+msgstr "Paid in total:"
+
+msgid "Всего движений"
+msgstr "Total movements"
+
+msgid "Всего заказов"
+msgstr "Total orders"
+
+msgid "Всего клиентов"
+msgstr "Total clients"
+
+msgid "Всего на складах"
+msgstr "Total in warehouses"
+
+msgid "Всего перемещений"
+msgstr "Total transfers"
+
+msgid "Всего поставщиков"
+msgstr "Total suppliers"
+
+msgid "Всего потрачено на доставку"
+msgstr "Total spent on delivery"
+
+msgid "Всего приходов"
+msgstr "Total receipts"
+
+msgid "Всего сотрудников"
+msgstr "Total employees"
+
+msgid "Вход"
+msgstr "Log in"
+
+msgid "Вход · ЧекМейт"
+msgstr "Log in · ЧекМейт"
+
+msgid "Вход · код · ЧекМейт"
+msgstr "Log in · code · ЧекМейт"
+
+msgid "Вход в ЧекМейт"
+msgstr "Log in to ЧекМейт"
+
+msgid "Вход по паролю"
+msgstr "Password login"
+
+msgid "Вход по паролю (для персонала)"
+msgstr "Password login (for staff)"
+
+msgid "Вход со двора, рядом аптека"
+msgstr "Entrance from the yard, pharmacy nearby"
+
+msgid "Вчера"
+msgstr "Yesterday"
+
+msgid "Выбери категорию, если она уже есть."
+msgstr "Pick a category if it already exists."
+
+msgid "Выберите блюдо"
+msgstr "Select a dish"
+
+msgid "Выберите блюдо…"
+msgstr "Select a dish…"
+
+msgid "Выберите заготовку"
+msgstr "Select a semi-finished product"
+
+msgid "Выберите категорию"
+msgstr "Select a category"
+
+msgid "Выберите позицию из списка"
+msgstr "Select an item from the list"
+
+msgid "Выберите продукт"
+msgstr "Select a product"
+
+msgid "Выберите склад-отправитель."
+msgstr "Select the source warehouse."
+
+msgid "Выберите склад-получатель."
+msgstr "Select the destination warehouse."
+
+msgid "Выберите тип, чтобы продолжить"
+msgstr "Select a type to continue"
+
+msgid ""
+"Выбор подставит имя и телефон ниже. Список — только корпоративные клиенты "
+"(отметить можно внизу страницы)."
+msgstr ""
+"Selecting fills in the name and phone below. The list shows only corporate "
+"clients (you can mark them at the bottom of the page)."
+
+msgid "Выбрать"
+msgstr "Choose"
+
+msgid "Выбрать адрес"
+msgstr "Select address"
+
+msgid "Выгода"
+msgstr "Benefit"
+
+msgid "Выкл"
+msgstr "Off"
+
+msgid "Выключен"
+msgstr "Disabled"
+
+msgid "Выключено"
+msgstr "Disabled"
+
+msgid "Выключить"
+msgstr "Disable"
+
+msgid "Выплат пока нет."
+msgstr "No payments yet."
+
+msgid "Выплаты"
+msgstr "Payments"
+
+msgid "Выплачено"
+msgstr "Paid"
+
+msgid "Выручка"
+msgstr "Revenue"
+
+msgid "Выручка по обедам"
+msgstr "Lunch revenue"
+
+msgid "Выручка после комиссий"
+msgstr "Revenue after commissions"
+
+msgid "Выставить счёт"
+msgstr "Issue invoice"
+
+msgid "Выход"
+msgstr "Log out"
+
+msgid "Выход (кг)"
+msgstr "Yield (kg)"
+
+msgid "Выход, кг"
+msgstr "Yield, kg"
+
+msgid "Выход:"
+msgstr "Yield:"
+
+msgid "Галерея изображений"
+msgstr "Image gallery"
+
+msgid "Галерея фото (по одной ссылке в строке)"
+msgstr "Photo gallery (one link per line)"
+
+msgid "Где показывать блок"
+msgstr "Where to show the block"
+
+msgid "Главная"
+msgstr "Home"
+
+msgid "Главная сайта"
+msgstr "Site home"
+
+msgid "Главное фото"
+msgstr "Main photo"
+
+msgid "Главный"
+msgstr "Main"
+
+msgid "Главный админ"
+msgstr "Super admin"
+
+msgid "Глобальный"
+msgstr "Global"
+
+msgid "Год"
+msgstr "Year"
+
+msgid ""
+"Горизонтальная лента с быстрым добавлением в корзину. Один и тот же тип "
+"блока используется и на главной, и в корзине — переключитесь между ними "
+"ниже."
+msgstr ""
+"A horizontal strip with quick add-to-cart. The same block type is used both "
+"on the homepage and in the cart — switch between them below."
+
+msgid "Готов"
+msgstr "Ready"
+
+msgid "Готовится"
+msgstr "Preparing"
+
+msgid "Готово."
+msgstr "Done."
+
+msgid ""
+"Готовые блюда, входящие в это комбо. Себестоимость каждого берётся целиком "
+"(полная себестоимость блюда) и умножается на количество."
+msgstr ""
+"Finished dishes included in this combo. Each one's cost is taken in full "
+"(the dish's full cost) and multiplied by quantity."
+
+msgid "Грамм."
+msgstr "Grams."
+
+msgid "Граммовка"
+msgstr "Grammage"
+
+msgid "Граммовка итого (г)"
+msgstr "Total grammage (g)"
+
+msgid "График и смены"
+msgstr "Schedule and shifts"
+
+msgid "График по месяцам"
+msgstr "Chart by month"
+
+msgid "График смен"
+msgstr "Shift schedule"
+
+msgid "Групп с дубликатами"
+msgstr "Groups with duplicates"
+
+msgid "Групп слито"
+msgstr "Groups merged"
+
+msgid "Группа (подпись на сайте)"
+msgstr "Group (site caption)"
+
+msgid "Да"
+msgstr "Yes"
+
+msgid "Да, в архив"
+msgstr "Yes, archive"
+
+msgid "Да, удалить"
+msgstr "Yes, delete"
+
+msgid "Данные для документов, счетов и договоров."
+msgstr "Data for documents, invoices and contracts."
+
+msgid "Данные по заказу"
+msgstr "Order details"
+
+msgid "Данные товара"
+msgstr "Product data"
+
+msgid "Дата"
+msgstr "Date"
+
+msgid "Дата *"
+msgstr "Date *"
+
+msgid "Дата / время"
+msgstr "Date / time"
+
+msgid "Дата до"
+msgstr "Date to"
+
+msgid "Дата заказа"
+msgstr "Order date"
+
+msgid "Дата оплаты"
+msgstr "Payment date"
+
+msgid "Дата от"
+msgstr "Date from"
+
+msgid "Дата поставки"
+msgstr "Delivery date"
+
+msgid "Дата поставки *"
+msgstr "Delivery date *"
+
+msgid "Дата приёма"
+msgstr "Hire date"
+
+msgid "Дата смены"
+msgstr "Shift date"
+
+msgid "Дата цены"
+msgstr "Price date"
+
+msgid "Дата:"
+msgstr "Date:"
+
+msgid ""
+"Два узких CTA-баннера в секции «Комбо и акции». Показывается максимум 2 "
+"активных одновременно; если активен только один — фронт растягивает его на "
+"всю ширину секции. Порядок задаётся перетаскиванием."
+msgstr ""
+"Two narrow CTA banners in the «Combo and promotions» section. At most 2 "
+"active are shown at once; if only one is active — the front stretches it to "
+"the full section width. The order is set by dragging."
+
+msgid "Движений нет."
+msgstr "No movements."
+
+msgid "Движений по выбранным условиям нет."
+msgstr "No movements for the selected conditions."
+
+msgid "Движений по этому товару пока нет."
+msgstr "No movements for this product yet."
+
+msgid "Движений создано"
+msgstr "Movements created"
+
+msgid "Движения склада"
+msgstr "Stock movements"
+
+msgid "Дедлайн заказа (напр. 11:00)"
+msgstr "Order deadline (e.g. 11:00)"
+
+msgid "Действие"
+msgstr "Action"
+
+msgid "Действие кнопки"
+msgstr "Button action"
+
+msgid "Действие при клике"
+msgstr "Action on click"
+
+msgid "Действия"
+msgstr "Actions"
+
+msgid "Действует на основании"
+msgstr "Acting on the basis of"
+
+msgid "Действует по"
+msgstr "Valid until"
+
+msgid "Действует с"
+msgstr "Valid from"
+
+msgid "Динамика выручки"
+msgstr "Revenue dynamics"
+
+msgid ""
+"Для каждого неотменённого заказа за дату система берёт состав блюд "
+"(техкарту) и списывает со склада заказа продукты и заготовки: количество = "
+"валовый расход (gross) × количество блюда. Заготовки списываются как единицы"
+" (без разворота их техкарты). Результат виден в «Остатках» и «Движениях "
+"склада» (тип «Списание по заказу»)."
+msgstr ""
+"For each non-cancelled order on the date, the system takes the dishes' "
+"composition (tech card) and writes off products and semi-finished products "
+"from the order's warehouse: quantity = gross consumption × dish count. Semi-"
+"finished products are written off as units (without expanding their tech "
+"card). The result is visible in «Stock» and «Stock movements» (type «Write-"
+"off by order»)."
+
+msgid ""
+"Для клиентов, которые заказывают не через сайт (по телефону, самовывоз, "
+"юрлица и т.п.)."
+msgstr ""
+"For clients who order not through the site (by phone, pickup, legal "
+"entities, etc.)."
+
+msgid "Для незапущенных позиций: блюдо вообще не попадёт в каталог Uzum."
+msgstr ""
+"For unlaunched items: the dish won't get into the Uzum catalog at all."
+
+msgid "Для сравнения нужно минимум две цены в истории продукта."
+msgstr ""
+"At least two prices in the product's history are needed for comparison."
+
+msgid "Для этого блюда техкарта пока не заполнена."
+msgstr "The tech card for this dish is not filled in yet."
+
+msgid "Для этой заготовки состав пока не заполнен."
+msgstr "The composition for this semi-finished product is not filled in yet."
+
+msgid "Добавить"
+msgstr "Add"
+
+msgid "Добавить блюдо"
+msgstr "Add dish"
+
+msgid "Добавить блюдо в хиты"
+msgstr "Add dish to bestsellers"
+
+msgid "Добавить в блок"
+msgstr "Add to block"
+
+msgid "Добавить в комбо"
+msgstr "Add to combo"
+
+msgid "Добавить в хиты"
+msgstr "Add to bestsellers"
+
+msgid "Добавить заготовку"
+msgstr "Add a semi-finished product"
+
+msgid "Добавить заготовку из справочника"
+msgstr "Add a semi-finished product from the reference"
+
+msgid "Добавить запись"
+msgstr "Add record"
+
+msgid "Добавить запись вручную"
+msgstr "Add record manually"
+
+msgid "Добавить изображения"
+msgstr "Add images"
+
+msgid "Добавить категорию"
+msgstr "Add category"
+
+msgid "Добавить месяц"
+msgstr "Add month"
+
+msgid "Добавить начисление"
+msgstr "Add accrual"
+
+msgid "Добавить порог"
+msgstr "Add threshold"
+
+msgid "Добавить поступление"
+msgstr "Add income"
+
+msgid "Добавить продукт"
+msgstr "Add a product"
+
+msgid "Добавить продукт из справочника"
+msgstr "Add a product from the reference"
+
+msgid "Добавить промокод"
+msgstr "Add promo code"
+
+msgid "Добавить расход"
+msgstr "Add expense"
+
+msgid "Добавить смену"
+msgstr "Add shift"
+
+msgid "Добавить сотрудника"
+msgstr "Add employee"
+
+msgid "Добавить списание"
+msgstr "Add write-off"
+
+msgid "Добавить товар в апсейл"
+msgstr "Add a product to upsell"
+
+msgid "Добавить товар поставщику"
+msgstr "Add a product to the supplier"
+
+msgid "Добавить упаковку"
+msgstr "Add packaging"
+
+msgid "Добавление продуктов, закупочных цен и просмотр актуальной стоимости."
+msgstr "Adding products, purchase prices and viewing current cost."
+
+msgid "Добавление упаковки и стоимости одной единицы."
+msgstr "Adding packaging and the cost of a single unit."
+
+msgid ""
+"Добавьте первое блюдо — оно появится на главной сайта в подборке «Хиты "
+"продаж»."
+msgstr ""
+"Add the first dish — it will appear on the site's homepage in the "
+"«Bestsellers» selection."
+
+msgid "Добавьте хотя бы один товар перед подтверждением."
+msgstr "Add at least one product before confirming."
+
+msgid "Добавьте хотя бы одну позицию."
+msgstr "Add at least one item."
+
+msgid "Документ"
+msgstr "Document"
+
+msgid ""
+"Документ подтверждён и доступен только для просмотра. Редактирование "
+"запрещено."
+msgstr "The document is confirmed and read-only. Editing is forbidden."
+
+msgid "Документ подтверждён, остатки склада обновлены по факту."
+msgstr "The document is confirmed, warehouse stock updated to actuals."
+
+msgid ""
+"Документ подтверждён. Чтобы исправить — нажмите «Исправить»: склад откатится"
+" и документ вернётся в черновик."
+msgstr ""
+"The document is confirmed. To fix it — click «Fix»: the warehouse rolls back"
+" and the document returns to draft."
+
+msgid "Документ уже не в статусе черновика."
+msgstr "The document is no longer in draft status."
+
+msgid "Долг"
+msgstr "Debt"
+
+msgid "Долги"
+msgstr "Debts"
+
+msgid "Долгота"
+msgstr "Longitude"
+
+msgid "Долгота центра"
+msgstr "Center longitude"
+
+msgid "Должников пока нет"
+msgstr "No debtors yet"
+
+msgid "Должность"
+msgstr "Position"
+
+msgid "Доп"
+msgstr "Add-on"
+
+msgid "Доп расходы"
+msgstr "Extra costs"
+
+msgid "Доп. грамм."
+msgstr "Extra grams."
+
+msgid "Доп.порция, цена"
+msgstr "Extra portion, price"
+
+msgid "Дополнений пока нет. Прикрепите первое сверху."
+msgstr "No add-ons yet. Attach the first one above."
+
+msgid "Дополнения"
+msgstr "Add-ons"
+
+msgid ""
+"Дополнения — это другие блюда из ЕРП, цена и себестоимость берутся из своей "
+"карточки этого блюда; стоимость и доступность работают так же, как у "
+"обычного блюда. Сгруппируйте дополнения по папкам (например, «Соусы», "
+"«Добавки к пицце») — если оставить пустым, будет «Дополнительно»."
+msgstr ""
+"Add-ons are other dishes from the ERP; their price and cost come from their "
+"own card; value and availability work like a regular dish. Group add-ons "
+"into folders (e.g. «Sauces», «Pizza toppings») — if left empty, it will be "
+"«Additional»."
+
+msgid "Дополнительные фото блюда."
+msgstr "Additional photos of the dish."
+
+msgid "Допродажи «Добавить к обеду»"
+msgstr "«Add to lunch» upsells"
+
+msgid "Допродажи не добавлены."
+msgstr "No upsells added."
+
+msgid "Доставка"
+msgstr "Delivery"
+
+msgid "Доставка всего"
+msgstr "Delivery total"
+
+msgid "Доставка клиента"
+msgstr "Customer's delivery"
+
+msgid "Доставка с (напр. 11:00)"
+msgstr "Delivery from (e.g. 11:00)"
+
+msgid "Доступ к разделам"
+msgstr "Access to sections"
+
+msgid "Доступен"
+msgstr "Available"
+
+msgid "Доступен для выбора в журнале «Учёт обедов»."
+msgstr "Available for selection in the «Lunch accounting» log."
+
+msgid "Доступен к заказу"
+msgstr "Available to order"
+
+msgid "Доступно"
+msgstr "Available"
+
+msgid "Доступность по филиалам"
+msgstr "Availability by branch"
+
+msgid "Доступные модули"
+msgstr "Available modules"
+
+msgid "Доступные разделы"
+msgstr "Available sections"
+
+msgid "Доступных блюд нет."
+msgstr "No available dishes."
+
+msgid "Доступы кассы"
+msgstr "POS access"
+
+msgid "Доходы, расходы, коммуналка и прибыль по периодам."
+msgstr "Income, expenses, utilities and profit by period."
+
+msgid "Дублей «Payme» не найдено — склеивать нечего. Всё чисто."
+msgstr "No «Payme» duplicates found — nothing to merge. All clean."
+
+msgid "Дубликатов"
+msgstr "Duplicates"
+
+msgid "Дубликатов всего"
+msgstr "Total duplicates"
+
+msgid "Дубликатов удалено"
+msgstr "Duplicates deleted"
+
+msgid "Ед."
+msgstr "Unit"
+
+msgid "Ед.:"
+msgstr "Unit:"
+
+msgid "Еда + доставка клиента"
+msgstr "Food + customer delivery"
+
+msgid "Единица"
+msgstr "Unit"
+
+msgid ""
+"Единый список товаров-апсейла на всю страницу обедов (не на каждый обед). "
+"Эти позиции отдаются фронту и добавляются в заказ как обычные товары."
+msgstr ""
+"A single upsell product list for the whole lunches page (not per lunch). "
+"These items are served to the frontend and added to the order as regular "
+"products."
+
+msgid ""
+"Если включено — блюдо сразу появится в публичном каталоге сайта. Можно "
+"изменить позже на вкладке «Сайт» в карточке блюда."
+msgstr ""
+"If enabled — the dish appears in the site's public catalog right away. You "
+"can change it later on the «Site» tab of the dish card."
+
+msgid ""
+"Если включено — ниже появится блок «Состав комбо». Себестоимость комбо = "
+"сумма себестоимостей блюд-компонентов плюс собственные ингредиенты/упаковка,"
+" если заданы."
+msgstr ""
+"If enabled — the «Combo contents» block appears below. Combo cost = the sum "
+"of the component dishes' costs plus own ingredients/packaging, if set."
+
+msgid "Если выключено — рендерится только картинка"
+msgstr "If off — only the image is rendered"
+
+msgid "Если выключить — рендерится только картинка без наложенного текста"
+msgstr "If turned off — only the image is rendered without overlaid text"
+
+msgid "Если заполнить это поле, будет создана новая категория."
+msgstr "If you fill this field, a new category will be created."
+
+msgid ""
+"Если клиент с таким телефоном уже есть — он просто станет корпоративным (без"
+" дубля)."
+msgstr ""
+"If a client with this phone already exists — they simply become corporate "
+"(no duplicate)."
+
+msgid ""
+"Если клиент с таким телефоном уже есть — откроется его карточка (без дубля)."
+msgstr ""
+"If a client with this phone already exists — their card opens (no "
+"duplicate)."
+
+msgid "Если меню на эту дату уже есть — откроется существующее."
+msgstr "If a menu for this date already exists — the existing one opens."
+
+msgid "Если нужно"
+msgstr "If needed"
+
+msgid "Если пусто — берётся «Цена для Uzum», иначе «Цена продажи»."
+msgstr "If empty — «Price for Uzum» is used, otherwise «Selling price»."
+
+msgid "Если пусто — берётся обычное"
+msgstr "If empty — the default is used"
+
+msgid "Если пусто — в Uzum уходит обычная «Цена продажи»."
+msgstr "If empty — the regular «Selling price» goes to Uzum."
+
+msgid "Если пусто — используется обычное название бренда."
+msgstr "If empty — the regular brand name is used."
+
+msgid ""
+"Если указана — используется на сайте вместо загруженного файла. Можно "
+"вставить ссылку с CDN, Telegram, любого хостинга. Если поле пустое, сайт "
+"будет использовать загруженное «Главное фото» ниже."
+msgstr ""
+"If provided — used on the site instead of the uploaded file. You can paste a"
+" link from a CDN, Telegram, any hosting. If the field is empty, the site "
+"will use the uploaded «Main photo» below."
+
+msgid "Если хотите выбрать из списка выше — оставьте поле пустым."
+msgstr "If you want to pick from the list above — leave the field empty."
+
+msgid "Есть задолженность"
+msgstr "Has debt"
+
+msgid "Ещё раз"
+msgstr "Again"
+
+msgid "Журнал передач смен"
+msgstr "Shift handover log"
+
+msgid ""
+"Журнал продаж обедов: записи с сайта падают сюда автоматически, плюс можно "
+"добавлять вручную. Фильтр по клиенту + период даёт выборку, что он "
+"заказывал."
+msgstr ""
+"Lunch sales log: records from the site land here automatically, and you can "
+"add them manually. Filtering by client + period shows what they ordered."
+
+msgid "Журнал смен"
+msgstr "Shift log"
+
+msgid "Жёсткий стоп: этому клиенту доставку не оформляем."
+msgstr "Hard stop: we don't arrange delivery for this client."
+
+msgid "За выбранный период продаж нет."
+msgstr "No sales for the selected period."
+
+msgid "За смену"
+msgstr "Per shift"
+
+msgid "Забыли пароль?"
+msgstr "Forgot your password?"
+
+msgid "Завершен"
+msgstr "Completed"
+
+msgid ""
+"Завершить подсчёт и отправить на проверку? После этого изменить факт будет "
+"нельзя."
+msgstr ""
+"Finish the count and send it for review? After this the actual values can't "
+"be changed."
+
+msgid "Завершён"
+msgstr "Completed"
+
+msgid "Зависит от типа действия выше"
+msgstr "Depends on the action type above"
+
+msgid "Заголовок"
+msgstr "Title"
+
+msgid "Заголовок выводится на сайте над лентой товаров"
+msgstr "The heading is shown on the site above the product strip"
+
+msgid "Заготовка"
+msgstr "Semi-finished product"
+
+msgid "Заготовка:"
+msgstr "Semi-finished product:"
+
+msgid "Заготовки"
+msgstr "Semi-finished products"
+
+msgid "Заготовки в составе"
+msgstr "Semi-finished in composition"
+
+msgid "Заготовки не используются."
+msgstr "No semi-finished products are used."
+
+msgid "Заготовок на складе нет."
+msgstr "No semi-finished products in the warehouse."
+
+msgid "Заготовок нет."
+msgstr "No semi-finished products."
+
+msgid "Заготовок пока нет"
+msgstr "No semi-finished products yet"
+
+msgid "Заготовок пока нет."
+msgstr "No semi-finished products yet."
+
+msgid "Загруженное фото"
+msgstr "Uploaded photo"
+
+msgid "Загрузить галерею"
+msgstr "Upload gallery"
+
+msgid "Загрузить и импортировать"
+msgstr "Upload and import"
+
+msgid "Загрузить фото"
+msgstr "Upload photo"
+
+msgid "Задать пароль"
+msgstr "Set password"
+
+msgid "Задача"
+msgstr "Task"
+
+msgid "Задачи"
+msgstr "Tasks"
+
+msgid "Задачи для следующей смены"
+msgstr "Tasks for the next shift"
+
+msgid "Задолженность"
+msgstr "Debt"
+
+msgid "Заказ"
+msgstr "Order"
+
+msgid "Заказ #%(id)s"
+msgstr "Order #%(id)s"
+
+msgid "Заказ отменен"
+msgstr "Order cancelled"
+
+msgid "Заказ отменён"
+msgstr "Order cancelled"
+
+msgid "Заказов"
+msgstr "Orders"
+
+msgid "Заказов (30д / всего)"
+msgstr "Orders (30d / total)"
+
+msgid "Заказов будет перепривязано"
+msgstr "Orders to be reattached"
+
+msgid "Заказов всего"
+msgstr "Total orders"
+
+msgid "Заказов за 30 дней"
+msgstr "Orders in 30 days"
+
+msgid "Заказов обработано"
+msgstr "Orders processed"
+
+msgid "Заказов перенесём"
+msgstr "Orders to move"
+
+msgid "Заказов перепривязано"
+msgstr "Orders reattached"
+
+msgid "Заказов пока нет"
+msgstr "No orders yet"
+
+msgid "Заказов с обедами"
+msgstr "Orders with lunches"
+
+msgid "Заказов с обедами не найдено за выбранный период."
+msgstr "No orders with lunches found for the selected period."
+
+msgid "Заказов создано"
+msgstr "Orders created"
+
+msgid "Заказов:"
+msgstr "Orders:"
+
+msgid "Заказы"
+msgstr "Orders"
+
+msgid "Заказы и касса"
+msgstr "Orders and POS"
+
+msgid "Заказы не найдены"
+msgstr "No orders found"
+
+msgid ""
+"Заказы, себестоимость блюд, склад, финансы и аналитика — для кафе, "
+"ресторанов и сетей. Подключайтесь за 5 минут."
+msgstr ""
+"Orders, dish cost, inventory, finance and analytics — for cafes, restaurants"
+" and chains. Get connected in 5 minutes."
+
+msgid "Заказы, содержащие комплексные обеды («Обед дня»). Выручка показана"
+msgstr "Orders containing set lunches («Lunch of the day»). Revenue is shown"
+
+msgid "Заказывал обеды"
+msgstr "Ordered lunches"
+
+msgid "Закупки"
+msgstr "Purchases"
+
+msgid "Закупок"
+msgstr "Purchases"
+
+msgid "Закупок пока нет."
+msgstr "No purchases yet."
+
+msgid "Зал и столы, кухня (KDS), техкарты и FoodCost, доставка и агрегаторы."
+msgstr ""
+"Hall and tables, kitchen (KDS), tech cards and FoodCost, delivery and "
+"aggregators."
+
+msgid "Заменить"
+msgstr "Replace"
+
+msgid "Заменить заготовку в блюде"
+msgstr "Replace the semi-finished in the dish"
+
+msgid "Заменить заготовку в составе"
+msgstr "Replace the semi-finished in the composition"
+
+msgid "Заменить на…"
+msgstr "Replace with…"
+
+msgid "Заменить продукт в блюде"
+msgstr "Replace the product in the dish"
+
+msgid "Заменить продукт в заготовке"
+msgstr "Replace the product in the semi-finished product"
+
+msgid "Заменить…"
+msgstr "Replace…"
+
+msgid "Заметки о клиенте"
+msgstr "Notes about the client"
+
+msgid "Записей"
+msgstr "Records"
+
+msgid "Записей нет. Добавьте вручную выше или они появятся с сайта."
+msgstr ""
+"No records. Add them manually above or they will appear from the site."
+
+msgid "Записи"
+msgstr "Records"
+
+msgid "Запись и календарь, мастера и расписание, абонементы и комиссии."
+msgstr ""
+"Booking and calendar, specialists and schedule, memberships and commissions."
+
+msgid "Запланирована"
+msgstr "Planned"
+
+msgid "Запланирована на сегодня"
+msgstr "Planned for today"
+
+msgid "Запланированных смен нет."
+msgstr "No planned shifts."
+
+msgid "Заполнено"
+msgstr "Filled in"
+
+msgid ""
+"Заполните данные, которые будут отображаться на вашем сайте и в поисковых "
+"системах."
+msgstr ""
+"Fill in the data that will be shown on your site and in search engines."
+
+msgid "Заполните поля и нажмите «Создать combo-баннер»"
+msgstr "Fill in the fields and click «Create combo banner»"
+
+msgid "Заполните поля и нажмите «Создать баннер»"
+msgstr "Fill in the fields and click «Create banner»"
+
+msgid "Заполняется, если плательщик НДС"
+msgstr "Filled in if a VAT payer"
+
+msgid "Заработано:"
+msgstr "Earned:"
+
+msgid "Зарезервировано для будущего UI обрезки. Текущее значение:"
+msgstr "Reserved for a future crop UI. Current value:"
+
+msgid "Зарплаты"
+msgstr "Salaries"
+
+msgid "Заём от (профинансировал)"
+msgstr "Loan from (financed by)"
+
+msgid "Заём от (профинансировал) — можно несколько"
+msgstr "Loan from (financed by) — multiple allowed"
+
+msgid "Зелёный"
+msgstr "Green"
+
+msgid ""
+"Зелёный — модуль доступен клиенту. Можно выключить модуль тарифа или "
+"докупить отдельный."
+msgstr ""
+"Green — the module is available to the client. You can disable a plan module"
+" or buy a separate one."
+
+msgid "Значение действия"
+msgstr "Action value"
+
+msgid "Зон доставки пока нет. Сайт будет использовать правило по умолчанию."
+msgstr "No delivery zones yet. The site will use the default rule."
+
+msgid "Зоны доставки"
+msgstr "Delivery zones"
+
+msgid "ИКПУ (mxik)"
+msgstr "IKPU (mxik)"
+
+msgid "ИНН (СТИР)"
+msgstr "TIN (STIR)"
+
+msgid "Иван Петров"
+msgstr "John Smith"
+
+msgid "Идёт"
+msgstr "In progress"
+
+msgid ""
+"Из чего складывается себестоимость одной порции. Цифры пересчитываются "
+"автоматически по техкарте."
+msgstr ""
+"What one portion's cost consists of. The figures are recalculated "
+"automatically from the tech card."
+
+msgid "Излишки"
+msgstr "Surplus"
+
+msgid "Изм. %"
+msgstr "Chg. %"
+
+msgid "Изменение"
+msgstr "Change"
+
+msgid "Изменения применяются сразу на сайте, если меню активно."
+msgstr "Changes apply on the site immediately if the menu is active."
+
+msgid "Изменения применяются сразу после сохранения."
+msgstr "Changes apply immediately after saving."
+
+msgid "Измените фильтры или сбросьте их."
+msgstr "Change the filters or reset them."
+
+msgid "Изменить"
+msgstr "Edit"
+
+msgid "Изменить сортировку"
+msgstr "Change ordering"
+
+msgid "Изображений в галерее пока нет."
+msgstr "No images in the gallery yet."
+
+msgid "Или впишите название"
+msgstr "Or type a name"
+
+msgid "Или загрузите файл (JPG/PNG/WEBP)"
+msgstr "Or upload a file (JPG/PNG/WEBP)"
+
+msgid "Или укажите URL ниже (имеет приоритет над файлом)"
+msgstr "Or specify a URL below (takes priority over the file)"
+
+msgid "Импорт Tilda CSV"
+msgstr "Tilda CSV import"
+
+msgid "Импорт из CSV"
+msgstr "Import from CSV"
+
+msgid "Импортировано записей: %(n)s"
+msgstr "Records imported: %(n)s"
+
+msgid "Имя"
+msgstr "Name"
+
+msgid "Имя / название *"
+msgstr "Name / title *"
+
+msgid "Имя или ООО «…»"
+msgstr "Name or «…» LLC"
+
+msgid "Имя или телефон"
+msgstr "Name or phone"
+
+msgid "Имя клиента"
+msgstr "Customer name"
+
+msgid "Имя, телефон, ID заказа"
+msgstr "Name, phone, order ID"
+
+msgid "Инвентаризаций пока нет. Создайте первую выше."
+msgstr "No inventory counts yet. Create the first one above."
+
+msgid "Инвентаризация"
+msgstr "Inventory count"
+
+msgid "Инвентаризация отклонена."
+msgstr "The inventory count was rejected."
+
+msgid "Инвентаризация подтверждена. Остатки склада приведены к факту."
+msgstr ""
+"The inventory count is confirmed. Warehouse stock adjusted to actuals."
+
+msgid "Ингредиент"
+msgstr "Ingredient"
+
+msgid "Ингредиентов пока нет."
+msgstr "No ingredients yet."
+
+msgid "Ингредиенты"
+msgstr "Ingredients"
+
+msgid "Интеграции"
+msgstr "Integrations"
+
+msgid "Информация для сайта"
+msgstr "Site information"
+
+msgid "Используется в"
+msgstr "Used in"
+
+msgid "Используется в заготовках"
+msgstr "Used in semi-finished products"
+
+msgid "Используется на сайте вместо загруженного файла."
+msgstr "Used on the site instead of the uploaded file."
+
+msgid "Используется, только если выше не указана внешняя ссылка."
+msgstr "Used only if no external link is set above."
+
+msgid "Истекла"
+msgstr "Expired"
+
+msgid "История"
+msgstr "History"
+
+msgid "История заказов"
+msgstr "Order history"
+
+msgid "История заказов и фильтрация"
+msgstr "Order history and filtering"
+
+msgid "История закупочных цен"
+msgstr "Purchase price history"
+
+msgid "История изменений"
+msgstr "Change history"
+
+msgid "История клиента"
+msgstr "Customer history"
+
+msgid "История передач смены"
+msgstr "Shift handover history"
+
+msgid "История расходов"
+msgstr "Expense history"
+
+msgid "История цен"
+msgstr "Price history"
+
+msgid "История цен появится после подтверждённых приходов."
+msgstr "Price history will appear after confirmed receipts."
+
+msgid "Источник"
+msgstr "Source"
+
+msgid "Источник Uzum:"
+msgstr "Uzum source:"
+
+msgid "Источник заказа"
+msgstr "Order source"
+
+msgid "Источники заказов"
+msgstr "Order sources"
+
+msgid "Источников"
+msgstr "Sources"
+
+msgid "Итог"
+msgstr "Total"
+
+msgid "Итог (недостача − излишки)"
+msgstr "Total (shortage − surplus)"
+
+msgid "Итог заказа"
+msgstr "Order total"
+
+msgid "Итоги заказа"
+msgstr "Order totals"
+
+msgid "Итого"
+msgstr "Total"
+
+msgid "Итого брутто"
+msgstr "Total gross"
+
+msgid "Итого к начислению"
+msgstr "Total to accrue"
+
+msgid "Итого к оплате"
+msgstr "Total due"
+
+msgid "Итого нетто"
+msgstr "Total net"
+
+msgid "Итого по еде"
+msgstr "Food total"
+
+msgid "Итого поступлений"
+msgstr "Total income"
+
+msgid "Итого часов"
+msgstr "Total hours"
+
+msgid "К активным блюдам"
+msgstr "To active dishes"
+
+msgid "К выплате"
+msgstr "To be paid"
+
+msgid "К списку блюд"
+msgstr "To dish list"
+
+msgid "Как готовить заготовку…"
+msgstr "How to prepare the semi-finished product…"
+
+msgid "Как это работает"
+msgstr "How it works"
+
+msgid "Какие заготовки приготовить"
+msgstr "Which semi-finished products to prepare"
+
+msgid "Какой у вас бизнес?"
+msgstr "What's your business?"
+
+msgid "Картинка фона"
+msgstr "Background image"
+
+msgid "Карточка"
+msgstr "Card"
+
+msgid "Карточка «ресторана»"
+msgstr "“Restaurant” card"
+
+msgid "Карточка заготовки появится позже"
+msgstr "The semi-finished product card will appear later"
+
+msgid "Карточка продукта, история закупочных цен и влияние на блюда."
+msgstr "Product card, purchase price history and impact on dishes."
+
+msgid "Карточка товара"
+msgstr "Product card"
+
+msgid "Каскадное влияние на блюда"
+msgstr "Cascading impact on dishes"
+
+msgid "Касса"
+msgstr "POS"
+
+msgid "Категории"
+msgstr "Categories"
+
+msgid "Категории блюд"
+msgstr "Dish categories"
+
+msgid ""
+"Категории для сайта не выбраны. На сайте используется основная категория "
+"блюда"
+msgstr "No site categories selected. The site uses the dish's main category"
+
+msgid ""
+"Категории меню и их карточки на сайте: видимость, блоки главной, фото и "
+"оформление."
+msgstr ""
+"Menu categories and their site cards: visibility, home blocks, photos and "
+"styling."
+
+msgid "Категории на сайте"
+msgstr "Site categories"
+
+msgid "Категории товаров"
+msgstr "Product categories"
+
+msgid "Категорий пока нет."
+msgstr "No categories yet."
+
+msgid "Категория"
+msgstr "Category"
+
+msgid "Категория товара"
+msgstr "Product category"
+
+msgid "Категория:"
+msgstr "Category:"
+
+msgid "Кафе"
+msgstr "Cafe"
+
+msgid "Кафе / ресторан"
+msgstr "Cafe / restaurant"
+
+msgid "Квартал"
+msgstr "Quarter"
+
+msgid "Клиент"
+msgstr "Client"
+
+msgid "Клиент (имя или телефон)"
+msgstr "Client (name or phone)"
+
+msgid "Клиент (имя)"
+msgstr "Client (name)"
+
+msgid ""
+"Клиент для заказов не через сайт (по телефону, самовывоз и т.п.). Если "
+"клиент с таким телефоном уже есть — откроется его карточка, без дубля."
+msgstr ""
+"A client for orders not through the site (by phone, pickup, etc.). If a "
+"client with this phone already exists — their card opens, no duplicate."
+
+msgid "Клиент не оплачивает доставку"
+msgstr "Customer does not pay for delivery"
+
+msgid "Клиентов пока нет."
+msgstr "No customers yet."
+
+msgid "Клиенты"
+msgstr "Customers"
+
+msgid "Клиенты · Платформа"
+msgstr "Clients · Platform"
+
+msgid "Клиенты не найдены"
+msgstr "No clients found"
+
+msgid "Клиенты, продаваемость блюд, аналитика заказов и списаний."
+msgstr "Customers, dish sales, order and write-off analytics."
+
+msgid ""
+"Кнопка выше меняет статус и сразу сохраняет заказ. Для заказов Uzum новый "
+"статус передаётся автоматически при их следующем опросе (~1 мин)."
+msgstr ""
+"The button above changes the status and saves the order right away. For Uzum"
+" orders, the new status is sent automatically on their next poll (~1 min)."
+
+msgid "Код"
+msgstr "Code"
+
+msgid "Код (режим разработки):"
+msgstr "Code (dev mode):"
+
+msgid "Код вида деятельности"
+msgstr "Activity type code"
+
+msgid "Код из сообщения"
+msgstr "Code from the message"
+
+msgid "Код отправлен на"
+msgstr "Code sent to"
+
+msgid "Код упаковки"
+msgstr "Packaging code"
+
+msgid "Кол-во"
+msgstr "Qty"
+
+msgid "Кол-во (кг)"
+msgstr "Qty (kg)"
+
+msgid "Кол-во заказов"
+msgstr "Order count"
+
+msgid "Кол-во закупок"
+msgstr "Number of purchases"
+
+msgid "Кол-во подарков"
+msgstr "Number of gifts"
+
+msgid "Кол-во сетов"
+msgstr "Number of sets"
+
+msgid "Количество"
+msgstr "Quantity"
+
+msgid "Количество закупок"
+msgstr "Number of purchases"
+
+msgid "Количество сохранится, себестоимость пересчитается."
+msgstr "The quantity is kept, the cost is recalculated."
+
+msgid "Количество списаний"
+msgstr "Number of write-offs"
+
+msgid "Колонки: expense_date, expense_type, name, amount, source, comment"
+msgstr "Columns: expense_date, expense_type, name, amount, source, comment"
+
+msgid "Команда"
+msgstr "Team"
+
+msgid "Команда · Платформа"
+msgstr "Team · Platform"
+
+msgid "Команда платформы"
+msgstr "Platform team"
+
+msgid "Комбо на главной"
+msgstr "Combos on home"
+
+msgid "Комиссии"
+msgstr "Commissions"
+
+msgid "Комиссии агрегаторов"
+msgstr "Aggregator commissions"
+
+msgid "Комиссия %"
+msgstr "Commission %"
+
+msgid "Комиссия Uzum:"
+msgstr "Uzum commission:"
+
+msgid "Комиссия:"
+msgstr "Commission:"
+
+msgid "Комментарий"
+msgstr "Comment"
+
+msgid "Комментарий (опц.)"
+msgstr "Comment (opt.)"
+
+msgid "Комментарий (опционально)"
+msgstr "Comment (optional)"
+
+msgid "Комментарий к заказу"
+msgstr "Order comment"
+
+msgid "Комментарий клиента"
+msgstr "Customer comment"
+
+msgid "Комментарий курьеру"
+msgstr "Comment to the courier"
+
+msgid "Комментария нет"
+msgstr "No comment"
+
+msgid "Коммуналка"
+msgstr "Utilities"
+
+msgid "Коммунальные"
+msgstr "Utilities"
+
+msgid "Коммунальные расходы"
+msgstr "Utility expenses"
+
+msgid "Компактный блок допродаж"
+msgstr "Compact upsell block"
+
+msgid "Компания"
+msgstr "Company"
+
+msgid "Компания:"
+msgstr "Company:"
+
+msgid "Компания: %(n)s"
+msgstr "Company: %(n)s"
+
+msgid ""
+"Комплексные обеды по датам: несколько обедов на день, размеры со своей ценой"
+" и составом, расчёт себестоимости и маржи."
+msgstr ""
+"Set lunches by date: several lunches per day, sizes with their own price and"
+" composition, cost and margin calculation."
+
+msgid ""
+"Комплексные обеды по датам: состав, цены, допродажи и корпоративные скидки."
+msgstr ""
+"Set lunches by date: composition, prices, upsells and corporate discounts."
+
+msgid "Комплект"
+msgstr "Set"
+
+msgid "Конец"
+msgstr "End"
+
+msgid "Конструктор обеда"
+msgstr "Lunch builder"
+
+msgid "Конструктор обедов"
+msgstr "Lunch builder"
+
+msgid "Контактное лицо"
+msgstr "Contact person"
+
+msgid "Контакты и логотип"
+msgstr "Contacts and logo"
+
+msgid "Копировать"
+msgstr "Copy"
+
+msgid "Корзина"
+msgstr "Cart"
+
+msgid "Корп."
+msgstr "Corp."
+
+msgid "Корпоративные клиенты"
+msgstr "Corporate clients"
+
+msgid "Корпоративные скидки"
+msgstr "Corporate discounts"
+
+msgid "Корпоративный"
+msgstr "Corporate"
+
+msgid "Корпоративный (юрлицо)"
+msgstr "Corporate (legal entity)"
+
+msgid "Корпоративный клиент (из списка)"
+msgstr "Corporate client (from the list)"
+
+msgid "Корпоративный клиент (юрлицо) — будет доступен в журнале «Учёт обедов»"
+msgstr ""
+"Corporate client (legal entity) — will be available in the «Lunch "
+"accounting» log"
+
+msgid "Корректировки"
+msgstr "Adjustments"
+
+msgid "Красный"
+msgstr "Red"
+
+msgid "Краткое наименование"
+msgstr "Short name"
+
+msgid "Краткое описание"
+msgstr "Short description"
+
+msgid "Краткое описание для SEO"
+msgstr "Short description for SEO"
+
+msgid ""
+"Круглые зоны (центр + радиус) для автоматического выбора филиала, который "
+"повезёт заказ. Если у клиента есть координаты — ERP сам подберёт ближайшую "
+"активную зону. Если зон нет, сайт использует правило по умолчанию: 15 000 "
+"при сумме до 150 000, бесплатно от 150 000."
+msgstr ""
+"Circular zones (center + radius) for automatically picking the branch that "
+"will deliver the order. If the customer has coordinates — ERP picks the "
+"nearest active zone itself. If there are no zones, the site uses the default"
+" rule: 15,000 for amounts up to 150,000, free from 150,000."
+
+msgid "Куда"
+msgstr "To"
+
+msgid "Куда (склад) *"
+msgstr "To (warehouse) *"
+
+msgid "Куда прислать код подтверждения"
+msgstr "Where to send the confirmation code"
+
+msgid "Купить (N)"
+msgstr "Buy (N)"
+
+msgid "Куриная котлета"
+msgstr "Chicken cutlet"
+
+msgid "Курьеру"
+msgstr "To the courier"
+
+msgid "Кухня (операции)"
+msgstr "Kitchen (operations)"
+
+msgid "Лимит строк (опционально, для теста)"
+msgstr "Row limit (optional, for testing)"
+
+msgid "Лимиты заказа"
+msgstr "Order limits"
+
+msgid "Личный кабинет"
+msgstr "Personal account"
+
+msgid "Логин"
+msgstr "Login"
+
+msgid "Логин для входа"
+msgstr "Login for sign-in"
+
+msgid "Логин нужен для входа по паролю (помимо входа по коду)."
+msgstr "A login is needed for password sign-in (in addition to code sign-in)."
+
+msgid "Логин сохранён."
+msgstr "Login saved."
+
+msgid "Логин:"
+msgstr "Login:"
+
+msgid "Логотип"
+msgstr "Logo"
+
+msgid "Логотип бренда — ссылка"
+msgstr "Brand logo — link"
+
+msgid "Локации"
+msgstr "Locations"
+
+msgid "Локации (Uzum и пр.)"
+msgstr "Locations (Uzum, etc.)"
+
+msgid "Локация"
+msgstr "Location"
+
+msgid "Лояльность и баллы"
+msgstr "Loyalty and points"
+
+msgid "Лояльный клиент, заказывает регулярно."
+msgstr "A loyal client, orders regularly."
+
+msgid "Любое"
+msgstr "Any"
+
+msgid "Любой"
+msgstr "Any"
+
+msgid "МФО банка"
+msgstr "Bank MFO"
+
+msgid "Магазин"
+msgstr "Shop"
+
+msgid "Макс."
+msgstr "Max."
+
+msgid "Максимум для оплаты наличными (UZS)"
+msgstr "Maximum for cash payment (UZS)"
+
+msgid "Маржа"
+msgstr "Margin"
+
+msgid "Маржа %"
+msgstr "Margin %"
+
+msgid "Маржа Uzum"
+msgstr "Uzum margin"
+
+msgid "Маржа Яндекс"
+msgstr "Yandex margin"
+
+msgid "Маржа: больше → меньше"
+msgstr "Margin: high → low"
+
+msgid ""
+"Маркетинговые акции: скидки, «N по цене M» и подарки. Промокоды "
+"настраиваются отдельно на странице настроек."
+msgstr ""
+"Marketing promotions: discounts, «N for the price of M» and gifts. Promo "
+"codes are configured separately on the settings page."
+
+msgid "Масса готового блюда"
+msgstr "Finished dish weight"
+
+msgid "Менеджер"
+msgstr "Manager"
+
+msgid "Меньше = выше"
+msgstr "Smaller = higher"
+
+msgid ""
+"Меньше число — выше в подборке. Обычно проще тащить за «⋮⋮», но можно "
+"вписать вручную."
+msgstr ""
+"The smaller the number — the higher in the selection. Usually it's easier to"
+" drag by «⋮⋮», but you can enter it manually."
+
+msgid "Меньше число — выше позиция."
+msgstr "Lower number — higher position."
+
+msgid "Меню"
+msgstr "Menu"
+
+msgid "Меню и техкарты"
+msgstr "Menu and tech cards"
+
+msgid "Меню по датам"
+msgstr "Menu by date"
+
+msgid "Меню пока не созданы. Создайте меню на дату выше."
+msgstr "No menus created yet. Create a menu for a date above."
+
+msgid "Месяц"
+msgstr "Month"
+
+msgid "Мин. остаток"
+msgstr "Min. stock"
+
+msgid "Мин. остаток:"
+msgstr "Min. stock:"
+
+msgid "Минимальная сумма заказа (UZS)"
+msgstr "Minimum order amount (UZS)"
+
+msgid "Минусовой"
+msgstr "Negative"
+
+msgid "Минуты"
+msgstr "Minutes"
+
+msgid "Мирабад зона 1"
+msgstr "Mirobod zone 1"
+
+msgid "Модулей"
+msgstr "Modules"
+
+msgid "Модули"
+msgstr "Modules"
+
+msgid "Модули под каждую задачу — подключаете только нужное."
+msgstr "Modules for every task — connect only what you need."
+
+msgid "Модуль"
+msgstr "Module"
+
+msgid "Можно удалять этот инструмент."
+msgstr "This tool can be deleted."
+
+msgid "Мои смены и зарплата"
+msgstr "My shifts and salary"
+
+msgid "Мой кабинет"
+msgstr "My account"
+
+msgid "Мой профиль"
+msgstr "My profile"
+
+msgid "Моя подписка"
+msgstr "My subscription"
+
+msgid "Моя смена сегодня"
+msgstr "My shift today"
+
+msgid "Мы настроим кассу под ваш профиль. Это можно изменить позже."
+msgstr "We'll set up the POS for your profile. You can change this later."
+
+msgid "Мы отправили код подтверждения на"
+msgstr "We sent a confirmation code to"
+
+msgid "На e-mail"
+msgstr "To email"
+
+msgid "На весь заказ"
+msgstr "On the whole order"
+
+msgid "На заметке: жалобы, возвраты, сложности."
+msgstr "Flagged: complaints, returns, difficulties."
+
+msgid "На каждый слот: выберите блюдо из системы"
+msgstr "For each slot: select a dish from the system"
+
+msgid "На какие блюда"
+msgstr "On which dishes"
+
+msgid "На кого оформлено"
+msgstr "Registered to"
+
+msgid "На сайте"
+msgstr "On the site"
+
+msgid "На сегодня смен в графике нет."
+msgstr "No shifts scheduled for today."
+
+msgid "На странице"
+msgstr "Per page"
+
+msgid "Нажмите «+ Новое перемещение»."
+msgstr "Click «+ New transfer»."
+
+msgid "Нажмите «+ Новый приход»."
+msgstr "Click «+ New receipt»."
+
+msgid "Название"
+msgstr "Name"
+
+msgid "Название (для админки)"
+msgstr "Name (for admin)"
+
+msgid "Название (напр. Сытный)"
+msgstr "Name (e.g. Hearty)"
+
+msgid "Название (текст)"
+msgstr "Name (text)"
+
+msgid "Название *"
+msgstr "Name *"
+
+msgid "Название блока"
+msgstr "Block name"
+
+msgid "Название блюда"
+msgstr "Dish name"
+
+msgid "Название для выдачи (по умолч.: %(n)s)"
+msgstr "Name for serving (default: %(n)s)"
+
+msgid "Название для сайта"
+msgstr "Name for the site"
+
+msgid "Название зоны *"
+msgstr "Zone name *"
+
+msgid "Название или артикул"
+msgstr "Name or SKU"
+
+msgid "Название компании"
+msgstr "Company name"
+
+msgid "Название на сайте"
+msgstr "Name on site"
+
+msgid "Название первого филиала"
+msgstr "First branch name"
+
+msgid "Название поставщика"
+msgstr "Supplier name"
+
+msgid "Название продукта"
+msgstr "Product name"
+
+msgid "Название размера"
+msgstr "Size name"
+
+msgid "Название сета"
+msgstr "Set name"
+
+msgid "Название упаковки"
+msgstr "Packaging name"
+
+msgid "Название филиала *"
+msgstr "Branch name *"
+
+msgid "Название, контакт или телефон..."
+msgstr "Name, contact or phone..."
+
+msgid "Наименование"
+msgstr "Name"
+
+msgid "Найти"
+msgstr "Find"
+
+msgid "Найти клиента (имя/телефон), чтобы отметить"
+msgstr "Find a client (name/phone) to mark"
+
+msgid "Нал."
+msgstr "Cash"
+
+msgid "Наличные"
+msgstr "Cash"
+
+msgid "Наличные в кассе"
+msgstr "Cash in register"
+
+msgid "Налоги"
+msgstr "Taxes"
+
+msgid "Налоговые реквизиты"
+msgstr "Tax details"
+
+msgid "Напр. 2"
+msgstr "E.g. 2"
+
+msgid "Напр. 5"
+msgstr "E.g. 5"
+
+msgid "Напр. Аренда за июнь"
+msgstr "E.g. Rent for June"
+
+msgid "Напр. Выручка за смену / Взнос учредителя"
+msgstr "E.g. Shift revenue / Founder's contribution"
+
+msgid "Напр. Римская пинца"
+msgstr "E.g. Roman pinsa"
+
+msgid "Напр. Сытный"
+msgstr "E.g. Hearty"
+
+msgid "Например"
+msgstr "E.g."
+
+msgid "Например 10 для теста; пусто — все строки"
+msgstr "E.g. 10 for testing; empty — all rows"
+
+msgid "Например:"
+msgstr "E.g.:"
+
+msgid "Например: 0.250"
+msgstr "E.g.: 0.250"
+
+msgid "Например: 10"
+msgstr "E.g.: 10"
+
+msgid "Например: 18.00"
+msgstr "E.g.: 18.00"
+
+msgid "Например: 2"
+msgstr "E.g.: 2"
+
+msgid "Например: 2 по цене 1"
+msgstr "E.g.: 2 for the price of 1"
+
+msgid "Например: Asia Foods"
+msgstr "E.g. Asia Foods"
+
+msgid "Например: F94"
+msgstr "E.g.: F94"
+
+msgid "Например: manager_uz"
+msgstr "E.g. manager_uz"
+
+msgid "Например: pizza-pepperoni"
+msgstr "E.g. pizza-pepperoni"
+
+msgid "Например: Бытовая химия"
+msgstr "E.g. Household chemicals"
+
+msgid "Например: Вкусно, быстро и выгодно"
+msgstr "E.g.: Tasty, fast and worthwhile"
+
+msgid "Например: Выгодно для большой компании"
+msgstr "E.g.: Great value for a big group"
+
+msgid "Например: Горячие блюда"
+msgstr "E.g. Hot dishes"
+
+msgid "Например: Клиент передумал"
+msgstr "E.g. Client changed their mind"
+
+msgid "Например: Наличные"
+msgstr "E.g. Cash"
+
+msgid "Например: Паста за 49 000 сум!"
+msgstr "E.g.: Pasta for 49,000 so'm!"
+
+msgid "Например: Пельмени говядина"
+msgstr "E.g.: Beef dumplings"
+
+msgid "Например: Пицца"
+msgstr "E.g. Pizza"
+
+msgid "Например: Семейное кафе у парка"
+msgstr "E.g. Family cafe by the park"
+
+msgid "Например: Семейные комбо"
+msgstr "E.g.: Family combos"
+
+msgid "Например: Соусы"
+msgstr "E.g. Sauces"
+
+msgid "Например: Хит, Новинка…"
+msgstr "E.g. Hit, New…"
+
+msgid "Например: Чайхана Navruz"
+msgstr "E.g.: Chaikhana Navruz"
+
+msgid "Например: Яндекс"
+msgstr "E.g. Yandex"
+
+msgid "Например: Яшнобод"
+msgstr "E.g.: Yashnobod"
+
+msgid "Например: к обеду"
+msgstr "E.g. by lunch"
+
+msgid "Например: нет ингредиента"
+msgstr "E.g. ingredient missing"
+
+msgid "Например: разморозить мясо к открытию"
+msgstr "E.g. defrost meat by opening"
+
+msgid "Например: салфетки"
+msgstr "E.g. napkins"
+
+msgid "Например: систематические ложные заказы"
+msgstr "E.g. systematic fake orders"
+
+msgid "Например: соус цезарь"
+msgstr "E.g. caesar sauce"
+
+msgid "Например: срочно"
+msgstr "E.g. urgent"
+
+msgid "Настроить (срок, UTM, блюда)"
+msgstr "Configure (period, UTM, dishes)"
+
+msgid "Настройка"
+msgstr "Setup"
+
+msgid "Настройка кассы"
+msgstr "POS setup"
+
+msgid "Настройки"
+msgstr "Settings"
+
+msgid "Начало"
+msgstr "Start"
+
+msgid "Начало в"
+msgstr "Started at"
+
+msgid "Начать смену"
+msgstr "Start shift"
+
+msgid "Начислений нет."
+msgstr "No accruals."
+
+msgid "Начисления"
+msgstr "Accruals"
+
+msgid "Начислено"
+msgstr "Accrued"
+
+msgid "Начните вводить блюдо..."
+msgstr "Start typing a dish..."
+
+msgid "Начните вводить заготовку..."
+msgstr "Start typing a semi-finished product..."
+
+msgid "Начните вводить заготовку…"
+msgstr "Start typing a semi-finished product…"
+
+msgid "Начните вводить название блюда..."
+msgstr "Start typing the dish name..."
+
+msgid "Начните вводить название блюда…"
+msgstr "Start typing the dish name…"
+
+msgid "Начните вводить название товара…"
+msgstr "Start typing the product name…"
+
+msgid ""
+"Начните вводить название — список отфильтруется. Можно выбрать из "
+"выпадающего списка или клавишами ↑↓ Enter."
+msgstr ""
+"Start typing the name — the list will filter. You can pick from the dropdown"
+" or with the ↑↓ Enter keys."
+
+msgid "Начните вводить название..."
+msgstr "Start typing the name..."
+
+msgid "Начните вводить продукт..."
+msgstr "Start typing a product..."
+
+msgid "Начните вводить продукт…"
+msgstr "Start typing a product…"
+
+msgid "Начните вводить сотрудника..."
+msgstr "Start typing an employee..."
+
+msgid "Начните вводить товар…"
+msgstr "Start typing an item…"
+
+msgid "Начните вводить упаковку..."
+msgstr "Start typing packaging..."
+
+msgid "Начните с бесплатного периода, платите только за нужные модули."
+msgstr "Start with a free period, pay only for the modules you need."
+
+msgid "Наша доплата за доставку"
+msgstr "Our surcharge for delivery"
+
+msgid "Наша доставка"
+msgstr "Our delivery"
+
+msgid "Не выбрано"
+msgstr "Not selected"
+
+msgid "Не выбраны"
+msgstr "Not selected"
+
+msgid "Не используется ни в одной заготовке."
+msgstr "Not used in any semi-finished product."
+
+msgid "Не короче 6 символов"
+msgstr "At least 6 characters"
+
+msgid "Не оплачено"
+msgstr "Unpaid"
+
+msgid "Не передавать в Uzum"
+msgstr "Do not send to Uzum"
+
+msgid "Не подключён"
+msgstr "Not connected"
+
+msgid "Не сочетается с акциями"
+msgstr "Not combinable with promotions"
+
+msgid ""
+"Не удалось начать смену: вы вне зоны точки или не разрешён доступ к "
+"геолокации. Начать смену можно, находясь на точке (в радиусе 200 м) и "
+"разрешив доступ к геопозиции в браузере."
+msgstr ""
+"Couldn't start the shift: you're outside the location's area or geolocation "
+"access isn't allowed. You can start a shift while at the location (within "
+"200 m) and after allowing geolocation access in the browser."
+
+msgid "Неактивен"
+msgstr "Inactive"
+
+msgid "Неактивные"
+msgstr "Inactive"
+
+msgid "Неактивный"
+msgstr "Inactive"
+
+msgid "Неделя"
+msgstr "Week"
+
+msgid "Недостача"
+msgstr "Shortage"
+
+msgid "Необязательно"
+msgstr "Optional"
+
+msgid ""
+"Необязательно. Покажет «было/стало»: зачёркнутую старую цену и текущую «Цену"
+" продажи». Списывается «Цена продажи»."
+msgstr ""
+"Optional. Shows «was/now»: the struck-through old price and the current "
+"«Selling price». The «Selling price» is charged."
+
+msgid "Неоплаченные закупки"
+msgstr "Unpaid purchases"
+
+msgid "Неоплаченных приходов нет."
+msgstr "No unpaid receipts."
+
+msgid "Неопределённо"
+msgstr "Undefined"
+
+msgid "Нет"
+msgstr "No"
+
+msgid "Нет аккаунта?"
+msgstr "No account?"
+
+msgid "Нет блюд."
+msgstr "No dishes."
+
+msgid "Нет данных"
+msgstr "No data"
+
+msgid "Нет доставки"
+msgstr "No delivery"
+
+msgid "Нет доступных товаров (все уже в апсейле или нет видимых на сайте)."
+msgstr ""
+"No available products (all already in upsell or none visible on the site)."
+
+msgid "Нет использования в блюдах."
+msgstr "Not used in any dishes."
+
+msgid "Нет незавершённых черновиков. Нажмите «+ Новое перемещение»."
+msgstr "No unfinished drafts. Click «+ New transfer»."
+
+msgid "Нет оплат"
+msgstr "No payments"
+
+msgid "Нет филиалов"
+msgstr "No branches"
+
+msgid "Нетто"
+msgstr "Net"
+
+msgid "Нетто / кол-во"
+msgstr "Net / qty"
+
+msgid "Нетто, кг"
+msgstr "Net, kg"
+
+msgid "Нигде не используется — удаление безопасно."
+msgstr "Not used anywhere — safe to delete."
+
+msgid "Ниже минимума"
+msgstr "Below minimum"
+
+msgid "Ничего не найдено"
+msgstr "Nothing found"
+
+msgid "Ничего не найдено (или все найденные уже корпоративные)."
+msgstr "Nothing found (or all found are already corporate)."
+
+msgid "Ничего не найдено по запросу «%(query)s»."
+msgstr "Nothing found for «%(query)s»."
+
+msgid "Ничего не найдено."
+msgstr "Nothing found."
+
+msgid "Новая акция"
+msgstr "New promotion"
+
+msgid "Новая инвентаризация"
+msgstr "New inventory count"
+
+msgid "Новая категория"
+msgstr "New category"
+
+msgid "Новинка"
+msgstr "New"
+
+msgid "Новое перемещение"
+msgstr "New transfer"
+
+msgid "Новые клиенты"
+msgstr "New customers"
+
+msgid "Новый"
+msgstr "New"
+
+msgid "Новый заказ"
+msgstr "New order"
+
+msgid "Новый клиент"
+msgstr "New client"
+
+msgid "Новый клиент · Платформа"
+msgstr "New client · Platform"
+
+msgid "Новый корпоративный клиент — название *"
+msgstr "New corporate client — name *"
+
+msgid "Новый менеджер"
+msgstr "New manager"
+
+msgid "Новый пароль"
+msgstr "New password"
+
+msgid "Новый пароль (оставь пустым — без изменений)"
+msgstr "New password (leave empty — no change)"
+
+msgid "Новый пароль · ЧекМейт"
+msgstr "New password · ЧекМейт"
+
+msgid "Новый поставщик"
+msgstr "New supplier"
+
+msgid "Новый приход"
+msgstr "New receipt"
+
+msgid "Новый размер"
+msgstr "New size"
+
+msgid "Новый сотрудник"
+msgstr "New employee"
+
+msgid "Новых за 30 дней"
+msgstr "New in 30 days"
+
+msgid "Новых клиентов"
+msgstr "New customers"
+
+msgid "Номер или комментарий"
+msgstr "Number or comment"
+
+msgid "Номер, поставщик, комментарий"
+msgstr "Number, supplier, comment"
+
+msgid "Нормальные"
+msgstr "Normal"
+
+msgid ""
+"Ночной автозапуск пока не настроен (хостинг засыпает). Сейчас пересчёт "
+"запускается вручную здесь. Автоматический ежедневный запуск подключим "
+"отдельно через внешний планировщик."
+msgstr ""
+"Nightly auto-run is not set up yet (the hosting sleeps). For now "
+"recalculation is run manually here. We'll connect automatic daily runs "
+"separately via an external scheduler."
+
+msgid "Нужно докупить"
+msgstr "Need to buy more"
+
+msgid "ОК"
+msgstr "OK"
+
+msgid "ОКПО"
+msgstr "OKPO"
+
+msgid "ОКЭД"
+msgstr "OKED"
+
+msgid "ООО / ЧП / МЧЖ / АО"
+msgstr "LLC / PE / LLC / JSC"
+
+msgid "ООО «Navruz Catering»"
+msgstr "«Navruz Catering» LLC"
+
+msgid "Обед"
+msgstr "Lunch"
+
+msgid "Обед дня"
+msgstr "Lunch of the day"
+
+msgid "Обеденная (Обед дня)"
+msgstr "Lunch (Lunch of the day)"
+
+msgid "Обедов пока нет. Создайте первый выше."
+msgstr "No lunches yet. Create the first one above."
+
+msgid "Обеды"
+msgstr "Lunches"
+
+msgid "Обеды (состав)"
+msgstr "Lunches (composition)"
+
+msgid "Обновлено:"
+msgstr "Updated:"
+
+msgid "Оборот всего, UZS"
+msgstr "Total turnover, UZS"
+
+msgid "Оборот за 30 дней, UZS"
+msgstr "Turnover in 30 days, UZS"
+
+msgid "Обслуживание и чаевые"
+msgstr "Service and tips"
+
+msgid "Общая задолженность"
+msgstr "Total debt"
+
+msgid "Общая сумма"
+msgstr "Total amount"
+
+msgid "Общая сумма закупок"
+msgstr "Total purchase amount"
+
+msgid "Общая сумма списаний"
+msgstr "Total write-off amount"
+
+msgid "Общая техкарта / заметки"
+msgstr "General tech card / notes"
+
+msgid "Общее"
+msgstr "General"
+
+msgid "Общее время приготовления"
+msgstr "Total cooking time"
+
+msgid "Общее количество"
+msgstr "Total quantity"
+
+msgid "Общее описание приготовления, важные заметки, подача..."
+msgstr "General cooking description, important notes, plating..."
+
+msgid "Обычная"
+msgstr "Regular"
+
+msgid "Обычный"
+msgstr "Regular"
+
+msgid "Одежда"
+msgstr "Clothing"
+
+msgid ""
+"Один переключатель на филиал: «Доступно» — блюдо показывается и "
+"заказывается, выключите — блюдо скрыто на сайте этого филиала."
+msgstr ""
+"One toggle per branch: «Available» — the dish is shown and can be ordered; "
+"turn it off — the dish is hidden on that branch's site."
+
+msgid "Одной строкой"
+msgstr "In one line"
+
+msgid ""
+"Одноразовая страница для импорта исторических заказов из Tilda. Алгоритм: "
+"загружаешь CSV → нажимаешь"
+msgstr ""
+"One-time page for importing historical orders from Tilda. Algorithm: upload "
+"CSV → click"
+
+msgid "Ожидает"
+msgstr "Pending"
+
+msgid "Ожидает проверки"
+msgstr "Awaiting review"
+
+msgid "Оклад, сум/мес"
+msgstr "Salary, sum/month"
+
+msgid "Он перестанет быть активным, но история сохранится."
+msgstr "It will no longer be active, but the history is kept."
+
+msgid ""
+"Она используется в блюдах/заготовках выше — после удаления она исчезнет из "
+"их состава, а их себестоимость пересчитается."
+msgstr ""
+"It is used in the dishes/semi-finished above — after deletion it will "
+"disappear from their composition and their cost will be recalculated."
+
+msgid "Опер. расходы"
+msgstr "Oper. expenses"
+
+msgid ""
+"Операция выполняется в одной транзакции — при любой ошибке ничего не "
+"меняется. После склейки эту страницу и маршрут можно удалить."
+msgstr ""
+"The operation runs in a single transaction — on any error nothing changes. "
+"After merging, this page and route can be deleted."
+
+msgid "Описание"
+msgstr "Description"
+
+msgid "Оплата"
+msgstr "Payment"
+
+msgid "Оплатить (M)"
+msgstr "Pay (M)"
+
+msgid "Оплаты"
+msgstr "Payments"
+
+msgid "Оплаты и фискализация"
+msgstr "Payments and fiscalization"
+
+msgid "Оплачен"
+msgstr "Paid"
+
+msgid "Оплачено"
+msgstr "Paid"
+
+msgid "Оплачено всего"
+msgstr "Paid in total"
+
+msgid "Оплачено всего (сумма)"
+msgstr "Paid in total (amount)"
+
+msgid "Оплачено до"
+msgstr "Paid until"
+
+msgid "Оплачено до: %(pd)s"
+msgstr "Paid until: %(pd)s"
+
+msgid "Оплачено за партию"
+msgstr "Paid for the batch"
+
+msgid "Оплачено клиентами за доставку"
+msgstr "Paid by clients for delivery"
+
+msgid "Опоздание"
+msgstr "Late arrival"
+
+msgid "Определяем геопозицию…"
+msgstr "Detecting location…"
+
+msgid "Оранжевый"
+msgstr "Orange"
+
+msgid "Ориентир для курьера"
+msgstr "Landmark for the courier"
+
+msgid "Ориентир:"
+msgstr "Landmark:"
+
+msgid "Ориентир: %(l)s"
+msgstr "Landmark: %(l)s"
+
+msgid "Основная информация"
+msgstr "Main information"
+
+msgid "Основное"
+msgstr "General"
+
+msgid "Основной"
+msgstr "Primary"
+
+msgid "Основной филиал"
+msgstr "Main branch"
+
+msgid "Основные данные"
+msgstr "Main data"
+
+msgid "Оставить у двери"
+msgstr "Leave at the door"
+
+msgid "Оставляемая запись будет переименована в"
+msgstr "The kept record will be renamed to"
+
+msgid "Остатки"
+msgstr "Stock balances"
+
+msgid "Остатки, приходы, перемещения, инвентаризация и поставщики."
+msgstr "Stock, receipts, transfers, inventory and suppliers."
+
+msgid "Остатков по выбранным условиям нет."
+msgstr "No stock for the selected conditions."
+
+msgid "Остаток"
+msgstr "Stock"
+
+msgid "Остаток к выплате"
+msgstr "Balance to be paid"
+
+msgid "Остаток отправителя"
+msgstr "Sender's stock"
+
+msgid "Остаток по складам"
+msgstr "Stock by warehouse"
+
+msgid "Острое"
+msgstr "Spicy"
+
+msgid "Острота"
+msgstr "Spiciness"
+
+msgid "От комплектов"
+msgstr "From sets"
+
+msgid "От скольких комплектов"
+msgstr "From how many sets"
+
+msgid "От:"
+msgstr "From:"
+
+msgid "Ответственный"
+msgstr "Responsible"
+
+msgid "Отд. цена"
+msgstr "Sep. price"
+
+msgid "Отдельно"
+msgstr "Separately"
+
+msgid "Отказ в доставке"
+msgstr "Delivery refused"
+
+msgid "Отказов за выбранный период нет"
+msgstr "No rejections for the selected period"
+
+msgid "Отказов:"
+msgstr "Rejections:"
+
+msgid "Отказы"
+msgstr "Rejections"
+
+msgid "Отклонена"
+msgstr "Rejected"
+
+msgid "Отклонить инвентаризацию?"
+msgstr "Reject the inventory count?"
+
+msgid "Отключена"
+msgstr "Disabled"
+
+msgid "Отключён"
+msgstr "Disabled"
+
+msgid "Открепить"
+msgstr "Detach"
+
+msgid "Открепить дополнение?"
+msgstr "Detach add-on?"
+
+msgid "Открыть"
+msgstr "Open"
+
+msgid "Открыть кабинет клиента"
+msgstr "Open the client cabinet"
+
+msgid "Открыть карточку"
+msgstr "Open card"
+
+msgid "Открыть карточку →"
+msgstr "Open card →"
+
+msgid ""
+"Открыть перемещение на правку? Движения по складу будут откатаны, документ "
+"вернётся в черновик. После исправления нужно снова нажать «Подтвердить»."
+msgstr ""
+"Open the transfer for editing? Warehouse movements will be rolled back and "
+"the document returns to draft. After fixing, you need to click «Confirm» "
+"again."
+
+msgid "Открыть техкарту →"
+msgstr "Open tech card →"
+
+msgid "Открыть →"
+msgstr "Open →"
+
+msgid "Откуда"
+msgstr "From"
+
+msgid "Откуда (склад) *"
+msgstr "From (warehouse) *"
+
+msgid "Отмена"
+msgstr "Cancel"
+
+msgid "Отменен"
+msgstr "Cancelled"
+
+msgid "Отменена"
+msgstr "Cancelled"
+
+msgid "Отмененные"
+msgstr "Cancelled"
+
+msgid "Отменить редактирование"
+msgstr "Cancel editing"
+
+msgid "Отменён"
+msgstr "Cancelled"
+
+msgid "Отменённые"
+msgstr "Cancelled"
+
+msgid ""
+"Отметьте, что используете — покажем только нужные разделы. Всё можно "
+"включить позже."
+msgstr ""
+"Mark what you use — we'll show only the needed sections. You can enable "
+"everything later."
+
+msgid ""
+"Отмеченные блюда показываются на главной сайта в блоке «Комбо с фудкорта» "
+"(как «Хиты»). Сейчас отмечено:"
+msgstr ""
+"Marked dishes are shown on the site home in the «Food court combos» block "
+"(as «Hits»). Currently marked:"
+
+msgid ""
+"Отмеченные здесь клиенты доступны для выбора в записи выше (выпадающий "
+"список «Корпоративный клиент»)."
+msgstr ""
+"Clients marked here are available for selection in the record above (the "
+"«Corporate client» dropdown)."
+
+msgid "Отображается в карточке блюда и в списках."
+msgstr "Shown on the dish card and in lists."
+
+msgid "Отправлено"
+msgstr "Sent"
+
+msgid "Отработана"
+msgstr "Worked"
+
+msgid "Отработанные смены и заработок"
+msgstr "Worked shifts and earnings"
+
+msgid "Отработанных смен пока нет."
+msgstr "No worked shifts yet."
+
+msgid "Отработано часов"
+msgstr "Hours worked"
+
+msgid "Отрицательные остатки"
+msgstr "Negative stock"
+
+msgid "Ошибка:"
+msgstr "Error:"
+
+msgid "Ошибок парсинга: %(n)s"
+msgstr "Parse errors: %(n)s"
+
+msgid "Параметры"
+msgstr "Parameters"
+
+msgid "Пароль"
+msgstr "Password"
+
+msgid "Пароль сохранён."
+msgstr "Password saved."
+
+msgid "Партий:"
+msgstr "Batches:"
+
+msgid "Передать смену"
+msgstr "Hand over the shift"
+
+msgid "Передач смен пока нет"
+msgstr "No shift handovers yet"
+
+msgid "Передач смены пока нет"
+msgstr "No shift handovers yet"
+
+msgid "Передача смены"
+msgstr "Shift handover"
+
+msgid "Передача смены →"
+msgstr "Shift handover →"
+
+msgid "Передачи смен"
+msgstr "Shift handovers"
+
+msgid "Передачи смен — админ"
+msgstr "Shift handovers — admin"
+
+msgid "Переедет на оставляемую запись:"
+msgstr "Will move to the kept record:"
+
+msgid "Перейти к начислениям →"
+msgstr "Go to accruals →"
+
+msgid "Перейти к сменам →"
+msgstr "Go to shifts →"
+
+msgid "Перемещение"
+msgstr "Transfer"
+
+msgid "Перемещение (черновик)"
+msgstr "Transfer (draft)"
+
+msgid ""
+"Перемещение открыто на правку: движения по складу откатаны. Исправьте "
+"позиции и снова нажмите «Подтвердить»."
+msgstr ""
+"The transfer is open for editing: warehouse movements have been rolled back."
+" Fix the items and click «Confirm» again."
+
+msgid "Перемещение подтверждено. Остатки обновлены на обоих складах."
+msgstr "The transfer is confirmed. Stock updated in both warehouses."
+
+msgid "Перемещение товаров и заготовок между складами."
+msgstr "Transferring products and semi-finished products between warehouses."
+
+msgid "Перемещений пока нет."
+msgstr "No transfers yet."
+
+msgid "Перемещения"
+msgstr "Transfers"
+
+msgid "Перемещено позиций"
+msgstr "Items transferred"
+
+msgid "Перерыв, мин"
+msgstr "Break, min"
+
+msgid "Пересчитать"
+msgstr "Recalculate"
+
+msgid ""
+"Пересчитать автосписание за выбранную дату? Прежние списания продаж за эту "
+"дату будут заменены."
+msgstr ""
+"Recalculate auto write-off for the selected date? Previous sales write-offs "
+"for this date will be replaced."
+
+msgid "Пересчитать за дату"
+msgstr "Recalculate for the date"
+
+msgid "Пересчёт"
+msgstr "Recalculation"
+
+msgid "Пересчёт за"
+msgstr "Recalculation for"
+
+msgid "Перетаскивайте товары чтобы изменить порядок внутри блока."
+msgstr "Drag products to change the order within the block."
+
+msgid "Перетаскивайте товары чтобы изменить порядок внутри этого блока."
+msgstr "Drag products to change the order within this block."
+
+msgid "Перетащите чтобы изменить порядок"
+msgstr "Drag to change the order"
+
+msgid "Период"
+msgstr "Period"
+
+msgid "Период:"
+msgstr "Period:"
+
+msgid "Персонал"
+msgstr "Staff"
+
+msgid "Персонал и филиалы"
+msgstr "Staff and branches"
+
+msgid "План часов (полная смена)"
+msgstr "Planned hours (full shift)"
+
+msgid "Планирование и управление графиком работы сотрудников"
+msgstr "Planning and managing the employee work schedule"
+
+msgid "Планируется"
+msgstr "Planned"
+
+msgid "Плательщик НДС"
+msgstr "VAT payer"
+
+msgid "Платформа"
+msgstr "Platform"
+
+msgid "Платформа · ЧекМейт"
+msgstr "Platform · ЧекМейт"
+
+msgid "По SMS"
+msgstr "By SMS"
+
+msgid "По e-mail или номеру телефона — пришлём код подтверждения."
+msgstr "By email or phone number — we'll send a confirmation code."
+
+msgid "По вопросам оплаты и смены тарифа свяжитесь с поддержкой платформы."
+msgstr "For payment and plan changes, contact platform support."
+
+msgid "По дату"
+msgstr "To date"
+
+msgid "По названию"
+msgstr "By name"
+
+msgid "По отдельности"
+msgstr "Separately"
+
+msgid "По себестоимости"
+msgstr "By cost price"
+
+msgid "По сумме"
+msgstr "By amount"
+
+msgid "По умолчанию"
+msgstr "Default"
+
+msgid "По филиалам"
+msgstr "By branches"
+
+msgid "Повар"
+msgstr "Cook"
+
+msgid "Повторите новый пароль"
+msgstr "Repeat the new password"
+
+msgid "Повторите пароль"
+msgstr "Repeat the password"
+
+msgid "Под-заготовки"
+msgstr "Sub-preparations"
+
+msgid "Подарок"
+msgstr "Gift"
+
+msgid "Подарок при наличии блюд (набор)"
+msgstr "Gift when dishes are present (set)"
+
+msgid "Подарок при сумме от (UZS)"
+msgstr "Gift from amount (UZS)"
+
+msgid ""
+"Подборки товаров на главной — каждый блок выводится отдельной лентой. Внутри"
+" блока — свои товары с собственной сортировкой и переключателями. Порядок "
+"блоков и порядок товаров внутри задаются перетаскиванием."
+msgstr ""
+"Product selections on the homepage — each block is shown as a separate "
+"strip. Inside a block — its own products with their own ordering and "
+"toggles. The block order and the product order within are set by dragging."
+
+msgid "Подзаголовок"
+msgstr "Subheading"
+
+msgid "Подзаголовок (тип кухни)"
+msgstr "Subtitle (cuisine type)"
+
+msgid "Подключить доп"
+msgstr "Connect add-on"
+
+msgid "Подписка"
+msgstr "Subscription"
+
+msgid "Подписки ещё нет — назначь тариф, и она создастся автоматически."
+msgstr ""
+"No subscription yet — assign a plan and it will be created automatically."
+
+msgid "Подробное описание для карточки блюда"
+msgstr "Detailed description for the dish card"
+
+msgid "Подсчёт"
+msgstr "Count"
+
+msgid "Подсчёт ещё не завершён поваром. Цифры предварительные."
+msgstr ""
+"The count hasn't been finished by the cook yet. The figures are preliminary."
+
+msgid "Подсчёт завершён и отправлен на проверку менеджеру."
+msgstr "The count is finished and sent to the manager for review."
+
+msgid "Подсчёт завершён. Изменение фактических остатков недоступно."
+msgstr "The count is finished. Changing the actual values is unavailable."
+
+msgid "Подтвердить и создать аккаунт"
+msgstr "Confirm and create account"
+
+msgid ""
+"Подтвердить инвентаризацию? Остатки склада будут приведены к фактическим "
+"значениям."
+msgstr ""
+"Confirm the inventory count? Warehouse stock will be adjusted to actual "
+"values."
+
+msgid ""
+"Подтвердить перемещение? Остатки спишутся с отправителя и поступят "
+"получателю."
+msgstr ""
+"Confirm the transfer? Stock will be written off from the sender and added to"
+" the receiver."
+
+msgid ""
+"Подтвердить приход? После подтверждения редактирование будет запрещено, на "
+"складе появятся остатки."
+msgstr ""
+"Confirm the receipt? After confirmation editing will be forbidden and stock "
+"will appear in the warehouse."
+
+msgid "Подтверждена"
+msgstr "Confirmed"
+
+msgid "Подтверждение · ЧекМейт"
+msgstr "Confirmation · ЧекМейт"
+
+msgid "Подтверждено"
+msgstr "Confirmed"
+
+msgid "Подтверждён"
+msgstr "Confirmed"
+
+msgid "Позвоните заранее, не звоните в домофон и т.д."
+msgstr "Call in advance, don't ring the intercom, etc."
+
+msgid "Позвоните заранее…"
+msgstr "Call in advance…"
+
+msgid "Позиции"
+msgstr "Items"
+
+msgid "Позиции заказа"
+msgstr "Order items"
+
+msgid "Позиции не добавлены."
+msgstr "No items added."
+
+msgid "Позиций"
+msgstr "Items"
+
+msgid "Позиций с остатком ≠ 0"
+msgstr "Items with stock ≠ 0"
+
+msgid "Позиций создано"
+msgstr "Items created"
+
+msgid "Позиция"
+msgstr "Item"
+
+msgid "Позиция добавлена в подсчёт."
+msgstr "The item was added to the count."
+
+msgid ""
+"Позиция не добавлена: выберите продукт или заготовку из выпадающего списка "
+"(начните вводить название и нажмите на подсказку)."
+msgstr ""
+"The item wasn't added: select a product or semi-finished product from the "
+"dropdown (start typing the name and click the suggestion)."
+
+msgid "Позиция убрана из подсчёта."
+msgstr "The item was removed from the count."
+
+msgid "Поиск"
+msgstr "Search"
+
+msgid "Поиск (телефон/имя/№)"
+msgstr "Search (phone/name/№)"
+
+msgid "Поиск блюда по названию…"
+msgstr "Search a dish by name…"
+
+msgid "Поиск по названию блюда…"
+msgstr "Search by dish name…"
+
+msgid "Поиск позиции"
+msgstr "Search item"
+
+msgid "Поиск пользователя..."
+msgstr "Search a user..."
+
+msgid "Поиск товара"
+msgstr "Search product"
+
+msgid "Пока нет источников заказов"
+msgstr "No order sources yet"
+
+msgid "Пока нет категорий. Добавьте первую категорию выше."
+msgstr "No categories yet. Add the first one above."
+
+msgid "Пока нет компонентов. Добавьте готовые блюда ниже."
+msgstr "No components yet. Add finished dishes below."
+
+msgid "Пока нет причин отказа"
+msgstr "No rejection reasons yet"
+
+msgid "Пока нет промокодов"
+msgstr "No promo codes yet"
+
+msgid "Пока нет служб доставки"
+msgstr "No delivery services yet"
+
+msgid "Пока нет способов оплаты"
+msgstr "No payment methods yet"
+
+msgid "Пока нет техкарт."
+msgstr "No tech cards yet."
+
+msgid "Пока нет филиалов"
+msgstr "No branches yet"
+
+msgid "Пока никого. Найдите клиента выше и отметьте."
+msgstr "No one yet. Find a client above and mark them."
+
+msgid "Пока пусто — добавьте товары выше."
+msgstr "Empty for now — add products above."
+
+msgid "Показано %(n)s из %(tot)s сотрудников"
+msgstr "Showing %(n)s of %(tot)s employees"
+
+msgid "Показано %(s)s–%(e)s из %(tot)s"
+msgstr "Showing %(s)s–%(e)s of %(tot)s"
+
+msgid "Показано 1–%(n)s из %(n)s пользователей"
+msgstr "Showing 1–%(n)s of %(n)s users"
+
+msgid "Показать"
+msgstr "Show"
+
+msgid "Показать пароль"
+msgstr "Show password"
+
+msgid "Показывается на сайте"
+msgstr "Shown on site"
+
+msgid "Показывать"
+msgstr "Show"
+
+msgid "Показывать блюдо на сайте"
+msgstr "Show dish on the site"
+
+msgid "Показывать на сайте"
+msgstr "Show on the site"
+
+msgid "Показывать текст на баннере"
+msgstr "Show text on the banner"
+
+msgid "Полное наименование"
+msgstr "Full name"
+
+msgid "Полное описание"
+msgstr "Full description"
+
+msgid ""
+"Полный журнал всех движений остатков: приходы, продажи, списания, "
+"перемещения, инвентаризация."
+msgstr ""
+"Full log of all stock movements: receipts, sales, write-offs, transfers, "
+"inventory counts."
+
+msgid ""
+"Получит доступ к консоли (клиенты, тарифы, модули), но не сможет заводить "
+"других менеджеров."
+msgstr ""
+"Will get access to the console (clients, plans, modules), but won't be able "
+"to create other managers."
+
+msgid "Получить код"
+msgstr "Get the code"
+
+msgid "Пользователей"
+msgstr "Users"
+
+msgid "Пользователей пока нет."
+msgstr "No users yet."
+
+msgid "Пользователи"
+msgstr "Users"
+
+msgid "Пользователь"
+msgstr "User"
+
+msgid "Помесячно"
+msgstr "By month"
+
+msgid "Попробовать бесплатно"
+msgstr "Try for free"
+
+msgid "Попробуйте ЧекМейт бесплатно"
+msgstr "Try ЧекМейт for free"
+
+msgid "Пороги не заданы."
+msgstr "No thresholds set."
+
+msgid "Порций:"
+msgstr "Portions:"
+
+msgid "Порядок"
+msgstr "Order"
+
+msgid "Порядок (блок 2)"
+msgstr "Order (block 2)"
+
+msgid "Порядок на сайте"
+msgstr "Order on the site"
+
+msgid "Порядок сортировки"
+msgstr "Sort order"
+
+msgid "После комиссий"
+msgstr "After commissions"
+
+msgid "После скидки"
+msgstr "After discount"
+
+msgid ""
+"После создания откройте «Изменить» у записи, чтобы собрать сет из блюд — "
+"тогда себестоимость посчитается автоматически."
+msgstr ""
+"After creating, open «Edit» on the record to assemble a set from dishes — "
+"then the cost is calculated automatically."
+
+msgid "Последние %(d)s дней"
+msgstr "Last %(d)s days"
+
+msgid "Последние движения"
+msgstr "Latest movements"
+
+msgid "Последние начисления"
+msgstr "Latest accruals"
+
+msgid "Последние смены"
+msgstr "Latest shifts"
+
+msgid "Последний"
+msgstr "Last"
+
+msgid "Последний заказ"
+msgstr "Last order"
+
+msgid "Последняя закуп. цена"
+msgstr "Latest purchase price"
+
+msgid "Последняя закупка"
+msgstr "Last purchase"
+
+msgid "Последняя цена"
+msgstr "Latest price"
+
+msgid "Поставщик"
+msgstr "Supplier"
+
+msgid "Поставщик *"
+msgstr "Supplier *"
+
+msgid "Поставщики"
+msgstr "Suppliers"
+
+msgid "Поставщиков"
+msgstr "Suppliers"
+
+msgid "Поставщиков пока нет."
+msgstr "No suppliers yet."
+
+msgid "Постоянный"
+msgstr "Regular"
+
+msgid "Поступление денег"
+msgstr "Money income"
+
+msgid "Поступлений нет. Добавьте первое поступление выше."
+msgstr "No income. Add the first income above."
+
+msgid "Посчитано позиций"
+msgstr "Items counted"
+
+msgid "Превью"
+msgstr "Preview"
+
+msgid "Предыдущая"
+msgstr "Previous"
+
+msgid "Предыдущая цена"
+msgstr "Previous price"
+
+msgid ""
+"Прежних движений за эту дату удалено: %(d)s (пересчёт заменил их новыми)."
+msgstr ""
+"Previous movements deleted for this date: %(d)s (recalculation replaced them"
+" with new ones)."
+
+msgid "Премии"
+msgstr "Bonuses"
+
+msgid ""
+"При создании система зафиксирует текущие остатки склада (снимок). Затем "
+"откроется форма подсчёта."
+msgstr ""
+"On creation the system records the warehouse's current stock (a snapshot). "
+"Then the count form opens."
+
+msgid "Прибыль"
+msgstr "Profit"
+
+msgid "Прибыль до фикс. расходов"
+msgstr "Profit before fixed expenses"
+
+msgid "Привязка"
+msgstr "Link"
+
+msgid "Привязка (для себест.)"
+msgstr "Link (for cost)"
+
+msgid "Привязок пока нет — на сайте используется автоподбор по категории."
+msgstr "No links yet — the site uses auto-selection by category."
+
+msgid "Приготовление"
+msgstr "Preparation"
+
+msgid "Приготовление (шаги)"
+msgstr "Preparation (steps)"
+
+msgid "Прикреплённые дополнения"
+msgstr "Attached add-ons"
+
+msgid "Применить"
+msgstr "Apply"
+
+msgid "Применить ко всем"
+msgstr "Apply to all"
+
+msgid "Применить скидку ко ВСЕМ блюдам? Пустые поля не меняются."
+msgstr "Apply discount to ALL dishes? Empty fields are left unchanged."
+
+msgid "Применить статус"
+msgstr "Apply status"
+
+msgid "Принят"
+msgstr "Accepted"
+
+msgid "Приоритет"
+msgstr "Priority"
+
+msgid "Приостановлены"
+msgstr "Suspended"
+
+msgid "Приход"
+msgstr "Receipt"
+
+msgid "Приход (черновик)"
+msgstr "Receipt (draft)"
+
+msgid "Приход / расход"
+msgstr "Income / expense"
+
+msgid "Приход / расход по месяцам"
+msgstr "Income / expense by month"
+
+msgid "Приход за"
+msgstr "Income for"
+
+msgid "Приход подтверждён. Остатки на складе обновлены."
+msgstr "The receipt is confirmed. Warehouse stock has been updated."
+
+msgid ""
+"Приход: выручка, инвестиции, займы, возврат долгов и прочее. Эти суммы идут "
+"в график «Приход / расход по месяцам»."
+msgstr ""
+"Income: revenue, investments, loans, debt repayments and more. These amounts"
+" go into the «Income / expense by month» chart."
+
+msgid "Приходов пока нет."
+msgstr "No receipts yet."
+
+msgid "Приходы"
+msgstr "Receipts"
+
+msgid "Причина"
+msgstr "Reason"
+
+msgid "Причина / комментарий"
+msgstr "Reason / comment"
+
+msgid "Причина отказа"
+msgstr "Reason for refusal"
+
+msgid "Причина:"
+msgstr "Reason:"
+
+msgid "Причины отказа"
+msgstr "Rejection reasons"
+
+msgid "Причины отказов"
+msgstr "Rejection reasons"
+
+msgid "Приём и обработка заказов, источники, доставка, онлайн-оплата."
+msgstr "Receiving and processing orders, sources, delivery, online payment."
+
+msgid "Проблемный"
+msgstr "Problematic"
+
+msgid "Проблемных"
+msgstr "Problematic"
+
+msgid "Проведено"
+msgstr "Posted"
+
+msgid "Проверь план ниже и нажми «Склеить»."
+msgstr "Check the plan below and click «Merge»."
+
+msgid "Проводится"
+msgstr "In progress"
+
+msgid "Продаваемость блюд"
+msgstr "Dish sellability"
+
+msgid "Продано"
+msgstr "Sold"
+
+msgid "Продано, шт"
+msgstr "Sold, pcs"
+
+msgid "Продлить"
+msgstr "Extend"
+
+msgid "Продлить триал, дней"
+msgstr "Extend trial, days"
+
+msgid "Продолжить"
+msgstr "Continue"
+
+msgid "Продукт"
+msgstr "Product"
+
+msgid "Продукт:"
+msgstr "Product:"
+
+msgid "Продуктов на складе нет."
+msgstr "No products in the warehouse."
+
+msgid "Продуктов нет."
+msgstr "No products."
+
+msgid "Продуктов пока нет"
+msgstr "No products yet"
+
+msgid "Продукты"
+msgstr "Products"
+
+msgid "Продукты и заготовки"
+msgstr "Products and semi-finished"
+
+msgid "Продукты не добавлены."
+msgstr "No products added."
+
+msgid "Промокод"
+msgstr "Promo code"
+
+msgid "Промокоды"
+msgstr "Promo codes"
+
+msgid "Промокоды и акции"
+msgstr "Promo codes and offers"
+
+msgid "Пропуск"
+msgstr "Absence"
+
+msgid "Пропустить"
+msgstr "Skip"
+
+msgid "Пропущено (дубль)"
+msgstr "Skipped (duplicate)"
+
+msgid "Пропущено заказов без склада: %(sk)s."
+msgstr "Orders skipped without a warehouse: %(sk)s."
+
+msgid "Просмотрел:"
+msgstr "Viewed by:"
+
+msgid "Просмотрена"
+msgstr "Viewed"
+
+msgid "Профиль"
+msgstr "Profile"
+
+msgid "Процент скидки"
+msgstr "Discount percentage"
+
+msgid "Прочие"
+msgstr "Other"
+
+msgid "Публичное название *"
+msgstr "Public name *"
+
+msgid "Пусто = доступ ко всем филиалам."
+msgstr "Empty = access to all branches."
+
+msgid "Пусто — подарок не по сумме, а по набору блюд (ниже)."
+msgstr "Empty — the gift is not by amount but by dish set (below)."
+
+msgid "Рабочие часы"
+msgstr "Working hours"
+
+msgid "Радиус (км)"
+msgstr "Radius (km)"
+
+msgid "Разбор себестоимости"
+msgstr "Cost breakdown"
+
+msgid "Развернуть"
+msgstr "Expand"
+
+msgid "Разделов"
+msgstr "Sections"
+
+msgid "Разделы"
+msgstr "Sections"
+
+msgid "Размер по умолчанию"
+msgstr "Default size"
+
+msgid "Размеров"
+msgstr "Sizes"
+
+msgid "Размеров пока нет — добавьте первый ниже."
+msgstr "No sizes yet — add the first one below."
+
+msgid "Размеры и состав"
+msgstr "Sizes and composition"
+
+msgid "Разница"
+msgstr "Difference"
+
+msgid "Распределять"
+msgstr "Distribute"
+
+msgid "Распределять на себестоимость равномерно"
+msgstr "Distribute evenly across cost"
+
+msgid "Распределять на себестоимость равномерно (для накладных)"
+msgstr "Distribute evenly across cost (for overheads)"
+
+msgid "Расстановка столов"
+msgstr "Table layout"
+
+msgid "Расход"
+msgstr "Expense"
+
+msgid "Расход за"
+msgstr "Expense for"
+
+msgid "Расход на доставку"
+msgstr "Delivery expense"
+
+msgid "Расходов нет. Добавьте первый расход выше или измените фильтры."
+msgstr "No expenses. Add the first expense above or change the filters."
+
+msgid "Расходов пока нет"
+msgstr "No expenses yet"
+
+msgid "Расходы"
+msgstr "Expenses"
+
+msgid "Расхождение"
+msgstr "Discrepancy"
+
+msgid "Расчетный счет / безнал"
+msgstr "Bank account / cashless"
+
+msgid "Расчёт остатка к выплате"
+msgstr "Calculation of the balance to be paid"
+
+msgid "Расчётный счёт (р/с)"
+msgstr "Bank account"
+
+msgid "Реально отправленные вам деньги."
+msgstr "The money actually sent to you."
+
+msgid "Рег. код плательщика НДС"
+msgstr "VAT payer registration code"
+
+msgid "Регистрация · ЧекМейт"
+msgstr "Sign up · ЧекМейт"
+
+msgid "Редактировать"
+msgstr "Edit"
+
+msgid "Редактировать блок и товары"
+msgstr "Edit block and products"
+
+msgid "Редактировать смену"
+msgstr "Edit shift"
+
+msgid "Редактировать сотрудника"
+msgstr "Edit employee"
+
+msgid "Редактируется передача смены"
+msgstr "Editing a shift handover"
+
+msgid "Редактируется передача смены от"
+msgstr "Editing the shift handover of"
+
+msgid "Режим просмотра: добавление заготовок недоступно."
+msgstr "View mode: adding semi-finished products is unavailable."
+
+msgid "Режим просмотра: добавление и редактирование продуктов недоступно."
+msgstr "View mode: adding and editing products is unavailable."
+
+msgid "Режим просмотра: редактирование заготовки недоступно."
+msgstr "View mode: editing the semi-finished product is unavailable."
+
+msgid "Режим просмотра: редактирование недоступно."
+msgstr "View mode: editing is unavailable."
+
+msgid "Режим просмотра: редактирование продукта недоступно."
+msgstr "View mode: editing the product is unavailable."
+
+msgid "Режим скидки"
+msgstr "Discount mode"
+
+msgid "Результат импорта"
+msgstr "Import result"
+
+msgid "Результат слияния"
+msgstr "Merge result"
+
+msgid "Рейтинг"
+msgstr "Rating"
+
+msgid "Реквизиты компании"
+msgstr "Company details"
+
+msgid "Реквизиты сохранены."
+msgstr "Details saved."
+
+msgid "Реклама"
+msgstr "Advertising"
+
+msgid "Рекомендуем"
+msgstr "We recommend"
+
+msgid "Ресторан"
+msgstr "Restaurant"
+
+msgid "Розница и опт: продажа по штрихкоду, весовой товар, склад и партии."
+msgstr ""
+"Retail and wholesale: barcode sales, weighted goods, inventory and batches."
+
+msgid "Роль"
+msgstr "Role"
+
+msgid "Руководство"
+msgstr "Management"
+
+msgid "С FK на Dish"
+msgstr "With FK to Dish"
+
+msgid "С даты"
+msgstr "From date"
+
+msgid "С повторными (2+)"
+msgstr "With repeat (2+)"
+
+msgid "СТИР (ИНН)"
+msgstr "STIR (TIN)"
+
+msgid "Сайт"
+msgstr "Site"
+
+msgid "Сайт / витрина"
+msgstr "Site / storefront"
+
+msgid "Сайт: все"
+msgstr "Site: all"
+
+msgid "Салон"
+msgstr "Salon"
+
+msgid "Самовывоз"
+msgstr "Pickup"
+
+msgid "Сброс"
+msgstr "Reset"
+
+msgid "Сбросить"
+msgstr "Reset"
+
+msgid "Сверка фактических остатков на складе с системными."
+msgstr "Reconciling actual warehouse stock with the system's."
+
+msgid "Свернуть"
+msgstr "Collapse"
+
+msgid "Сводка поступлений и расходов помесячно за выбранный год."
+msgstr "A monthly summary of income and expenses for the selected year."
+
+msgid "Сделать корпоративным"
+msgstr "Make corporate"
+
+msgid "Себест."
+msgstr "Cost"
+
+msgid "Себест. была"
+msgstr "Cost was"
+
+msgid "Себест. вручную"
+msgstr "Cost manually"
+
+msgid "Себест. вручную (необяз.)"
+msgstr "Cost manually (optional)"
+
+msgid "Себест. стала"
+msgstr "Cost became"
+
+msgid "Себест.вручную"
+msgstr "Cost manually"
+
+msgid "Себестоим."
+msgstr "Cost"
+
+msgid "Себестоимость"
+msgstr "Cost price"
+
+msgid "Себестоимость блюд"
+msgstr "Dish cost"
+
+msgid "Себестоимость продаж"
+msgstr "Cost of sales"
+
+msgid "Сегодня"
+msgstr "Today"
+
+msgid "Сейчас вход только по коду. Задайте пароль, чтобы входить и по паролю."
+msgstr ""
+"Currently sign-in is by code only. Set a password to also sign in by "
+"password."
+
+msgid "Сейчас идёт"
+msgstr "In progress now"
+
+msgid "Серый"
+msgstr "Gray"
+
+msgid "Сет / состав"
+msgstr "Set / composition"
+
+msgid "Сетов"
+msgstr "Sets"
+
+msgid "Система"
+msgstr "System"
+
+msgid "Скидка"
+msgstr "Discount"
+
+msgid "Скидка %"
+msgstr "Discount %"
+
+msgid "Скидка %(pct)s"
+msgstr "Discount %(pct)s"
+
+msgid "Скидка Uzum"
+msgstr "Uzum discount"
+
+msgid "Скидка Яндекс"
+msgstr "Yandex discount"
+
+msgid "Скидка всем,"
+msgstr "Discount for all,"
+
+msgid ""
+"Скидка по количеству комплектов в заказе. Применяется автоматически по "
+"наибольшему подходящему порогу."
+msgstr ""
+"Discount by the number of sets in the order. Applied automatically by the "
+"highest matching threshold."
+
+msgid "Скидка сайт"
+msgstr "Site discount"
+
+msgid "Скидка суммой"
+msgstr "Fixed-amount discount"
+
+msgid "Скидка, %"
+msgstr "Discount, %"
+
+msgid "Скидки"
+msgstr "Discounts"
+
+msgid "Склад"
+msgstr "Warehouse"
+
+msgid "Склад (необязательно)"
+msgstr "Warehouse (optional)"
+
+msgid "Склад *"
+msgstr "Warehouse *"
+
+msgid "Склад поступления"
+msgstr "Receiving warehouse"
+
+msgid "Склад поступления *"
+msgstr "Receiving warehouse *"
+
+msgid "Склад-отправитель и склад-получатель должны различаться."
+msgstr "The source and destination warehouses must be different."
+
+msgid "Склад:"
+msgstr "Warehouse:"
+
+msgid "Складов с остатком"
+msgstr "Warehouses with stock"
+
+msgid ""
+"Склеено групп: %(g)s. Перепривязано заказов: %(o)s, источников: %(s)s. "
+"Удалено дубликатов: %(d)s."
+msgstr ""
+"Groups merged: %(g)s. Orders reattached: %(o)s, sources: %(s)s. Duplicates "
+"deleted: %(d)s."
+
+msgid "Склеить"
+msgstr "Merge"
+
+msgid ""
+"Склеить дубли Payme? Действие изменит привязку заказов и удалит дубликаты."
+msgstr ""
+"Merge Payme duplicates? The action will change order attachments and delete "
+"duplicates."
+
+msgid "Склейка дублей Payme"
+msgstr "Merge Payme duplicates"
+
+msgid "Склейка дублей «Payme»"
+msgstr "Merge «Payme» duplicates"
+
+msgid ""
+"Сколько раз продано каждое блюдо за период, его выручка, себестоимость, "
+"прибыль и маржинальность. Учтены заказы без отменённых и неоплаченных."
+msgstr ""
+"How many times each dish was sold in the period, its revenue, cost, profit "
+"and margin. Counts orders excluding cancelled and unpaid."
+
+msgid "Скрыт"
+msgstr "Hidden"
+
+msgid "Скрыта"
+msgstr "Hidden"
+
+msgid "Скрыта на сайте"
+msgstr "Hidden on site"
+
+msgid "Скрыта на сайте — отредактируйте категорию, чтобы включить"
+msgstr "Hidden on site — edit the category to enable"
+
+msgid "Скрыто"
+msgstr "Hidden"
+
+msgid "Скрыто на сайте"
+msgstr "Hidden on site"
+
+msgid ""
+"Сливает Customer-записи у которых одинаковый номер телефона (по digits-only "
+"ключу) в одного. Заказы и адреса дубликатов перепривязываются на «главного»."
+" «Главный» = с наибольшим числом заказов, иначе самый старый по дате "
+"создания. Безопасно запускать повторно — после слияния группа из 1 записи "
+"пропускается."
+msgstr ""
+"Merges Customer records with the same phone number (by digits-only key) into"
+" one. The duplicates' orders and addresses are reattached to the «main» one."
+" «Main» = the one with the most orders, otherwise the oldest by creation "
+"date. Safe to run repeatedly — after merging, a group of 1 record is "
+"skipped."
+
+msgid "Сматчилось"
+msgstr "Matched"
+
+msgid "Смен в выборке"
+msgstr "Shifts in selection"
+
+msgid "Смен нет."
+msgstr "No shifts."
+
+msgid "Смен по выбранным условиям нет."
+msgstr "No shifts for the selected conditions."
+
+msgid "Смен:"
+msgstr "Shifts:"
+
+msgid "Сменить пароль"
+msgstr "Change password"
+
+msgid "Смотреть комбо"
+msgstr "View combos"
+
+msgid "Снять доступ"
+msgstr "Revoke access"
+
+msgid "Снять доступ у менеджера %(u)s?"
+msgstr "Revoke access from manager %(u)s?"
+
+msgid "Соберите перемещение со своего склада"
+msgstr "Assemble a transfer from your warehouse"
+
+msgid ""
+"Создавайте сотрудников и выдавайте доступ к разделам. Доступно разделов по "
+"тарифу:"
+msgstr ""
+"Create employees and grant access to sections. Sections available by plan:"
+
+msgid "Создайте аккаунт компании — %(d)s дней бесплатно."
+msgstr "Create a company account — %(d)s days free."
+
+msgid "Создайте первого ниже."
+msgstr "Create the first one below."
+
+msgid "Создайте первый баннер — он сразу появится на главной сайта."
+msgstr ""
+"Create the first banner — it will appear on the site's homepage right away."
+
+msgid ""
+"Создайте первый блок — он появится на главной сайта как горизонтальная лента"
+" «Часто заказывают вместе»."
+msgstr ""
+"Create the first block — it will appear on the site's homepage as a "
+"«Frequently ordered together» horizontal strip."
+
+msgid ""
+"Создайте первый блок — он появится на сайте как компактная горизонтальная "
+"лента товаров."
+msgstr ""
+"Create the first block — it will appear on the site as a compact horizontal "
+"product strip."
+
+msgid ""
+"Создайте первый — он сразу появится в секции «Комбо и акции» на главной."
+msgstr ""
+"Create the first one — it will appear right away in the «Combo and "
+"promotions» section on the homepage."
+
+msgid "Создайте пустой блок, потом добавьте в него блюда"
+msgstr "Create an empty block, then add dishes to it"
+
+msgid "Создал"
+msgstr "Created by"
+
+msgid "Создан"
+msgstr "Created"
+
+msgid "Создана"
+msgstr "Created"
+
+msgid "Создание заготовок, расчёт себестоимости и цены за кг."
+msgstr "Creating semi-finished products, calculating cost and price per kg."
+
+msgid "Создание заказа кассиром"
+msgstr "Order creation by cashier"
+
+msgid ""
+"Создание, редактирование и отключение филиалов. Поля с пометкой «для сайта» "
+"используются на публичном фронте — если филиал скрыт, он не появится в "
+"каталоге и не примет онлайн-заказы."
+msgstr ""
+"Creating, editing and disabling branches. Fields marked «for the site» are "
+"used on the public front — if a branch is hidden, it won't appear in the "
+"catalog and won't accept online orders."
+
+msgid "Создаст арендатора, первый филиал и админа компании."
+msgstr "Will create a tenant, the first branch and a company admin."
+
+msgid "Создать combo-баннер"
+msgstr "Create combo banner"
+
+msgid "Создать аккаунт"
+msgstr "Create account"
+
+msgid "Создать акцию"
+msgstr "Create promotion"
+
+msgid "Создать баннер"
+msgstr "Create banner"
+
+msgid "Создать блок"
+msgstr "Create block"
+
+msgid "Создать блок на %(p)s"
+msgstr "Create block on %(p)s"
+
+msgid "Создать блюдо"
+msgstr "Create dish"
+
+msgid "Создать зону"
+msgstr "Create zone"
+
+msgid "Создать и открыть"
+msgstr "Create and open"
+
+msgid "Создать и открыть карточку"
+msgstr "Create and open the card"
+
+msgid "Создать и открыть →"
+msgstr "Create and open →"
+
+msgid "Создать и считать"
+msgstr "Create and count"
+
+msgid "Создать клиента"
+msgstr "Create client"
+
+msgid "Создать менеджера"
+msgstr "Create manager"
+
+msgid "Создать меню на дату"
+msgstr "Create a menu for a date"
+
+msgid "Создать новую категорию"
+msgstr "Create a new category"
+
+msgid "Создать новый combo-баннер"
+msgstr "Create new combo banner"
+
+msgid "Создать новый баннер"
+msgstr "Create new banner"
+
+msgid "Создать новый блок"
+msgstr "Create new block"
+
+msgid "Создать обед"
+msgstr "Create a lunch"
+
+msgid "Создать пользователя"
+msgstr "Create user"
+
+msgid "Создать поставщика"
+msgstr "Create supplier"
+
+msgid "Создать сотрудника"
+msgstr "Create employee"
+
+msgid "Создать филиал"
+msgstr "Create branch"
+
+msgid "Сортировать по"
+msgstr "Sort by"
+
+msgid "Сортировка"
+msgstr "Sorting"
+
+msgid "Сортировка: %(s)s"
+msgstr "Sort order: %(s)s"
+
+msgid "Состав"
+msgstr "Composition"
+
+msgid "Состав (для гостя)"
+msgstr "Composition (for the guest)"
+
+msgid ""
+"Состав блюд для кухни: продукты и заготовки с брутто/нетто и описанием "
+"приготовления."
+msgstr ""
+"Dish composition for the kitchen: products and semi-finished with gross/net "
+"and preparation description."
+
+msgid "Состав комбо"
+msgstr "Combo contents"
+
+msgid "Состав пуст — добавьте строки ниже."
+msgstr "Composition is empty — add rows below."
+
+msgid "Состав сета (для себестоимости"
+msgstr "Set composition (for cost"
+
+msgid "Состав, выход, общий вес ингредиентов и себестоимость."
+msgstr "Composition, yield, total ingredient weight and cost."
+
+msgid "Сотрудник"
+msgstr "Employee"
+
+msgid "Сотрудники"
+msgstr "Employees"
+
+msgid "Сотрудники компании"
+msgstr "Company employees"
+
+msgid "Сотрудники, графики, смены и несколько филиалов в одном кабинете."
+msgstr "Staff, schedules, shifts and several branches in one account."
+
+msgid "Сотрудников нет. Нажмите «Добавить сотрудника»."
+msgstr "No employees. Click «Add employee»."
+
+msgid "Сотрудников пока нет."
+msgstr "No employees yet."
+
+msgid "Сохраненные адреса клиента"
+msgstr "Customer's saved addresses"
+
+msgid "Сохранено."
+msgstr "Saved."
+
+msgid "Сохранить"
+msgstr "Save"
+
+msgid "Сохранить блок"
+msgstr "Save block"
+
+msgid "Сохранить заказ"
+msgstr "Save order"
+
+msgid "Сохранить запись"
+msgstr "Save record"
+
+msgid "Сохранить изменения"
+msgstr "Save changes"
+
+msgid "Сохранить информацию для сайта"
+msgstr "Save site information"
+
+msgid "Сохранить логин"
+msgstr "Save login"
+
+msgid "Сохранить обед"
+msgstr "Save lunch"
+
+msgid "Сохранить оплату"
+msgstr "Save payment"
+
+msgid "Сохранить пароль"
+msgstr "Save password"
+
+msgid "Сохранить размер"
+msgstr "Save size"
+
+msgid "Сохранить реквизиты"
+msgstr "Save details"
+
+msgid "Сохранить строку"
+msgstr "Save row"
+
+msgid "Сохранить тариф"
+msgstr "Save plan"
+
+msgid "Сохранить фото"
+msgstr "Save photo"
+
+msgid "Сохранённые адреса клиента"
+msgstr "Customer's saved addresses"
+
+msgid "Сочетается с другими акциями"
+msgstr "Combinable with other promotions"
+
+msgid ""
+"Списание ингредиентов со склада по проданным блюдам (по техкарте) за "
+"выбранную дату."
+msgstr ""
+"Writing off ingredients from the warehouse for sold dishes (per tech card) "
+"for the selected date."
+
+msgid "Списаний по выбранным фильтрам нет"
+msgstr "No write-offs for the selected filters"
+
+msgid "Списаний пока нет"
+msgstr "No write-offs yet"
+
+msgid "Списания"
+msgstr "Write-offs"
+
+msgid "Списания за выбранный период"
+msgstr "Write-offs for the selected period"
+
+msgid "Список блюд, себестоимость, фудкост, маржа и категории."
+msgstr "Dish list, cost price, food cost, margin and categories."
+
+msgid "Список всех пользователей системы и их доступы"
+msgstr "List of all system users and their access"
+
+msgid "Список заготовок"
+msgstr "Semi-finished products list"
+
+msgid "Список заказов"
+msgstr "Order list"
+
+msgid "Список клиентов"
+msgstr "Client list"
+
+msgid "Список обедов"
+msgstr "Lunch list"
+
+msgid "Список поступлений"
+msgstr "Income list"
+
+msgid "Список продуктов"
+msgstr "Products list"
+
+msgid "Список расходов"
+msgstr "Expense list"
+
+msgid "Список сокращается по мере ввода названия."
+msgstr "The list narrows as you type the name."
+
+msgid "Список упаковок"
+msgstr "Packaging list"
+
+msgid "Способы оплаты"
+msgstr "Payment methods"
+
+msgid "Ср. чек"
+msgstr "Avg. check"
+
+msgid "Сравнение между предыдущей ценой"
+msgstr "Comparison between the previous price"
+
+msgid "Сразу укажи основные данные и выбери категорию или создай новую."
+msgstr ""
+"Enter the basic details right away and pick a category or create a new one."
+
+msgid "Средний чек"
+msgstr "Average check"
+
+msgid "Ссылка на главное фото (приоритет)"
+msgstr "Main photo link (priority)"
+
+msgid "Ссылка на фото (приоритет)"
+msgstr "Photo link (priority)"
+
+msgid "Ставка"
+msgstr "Rate"
+
+msgid "Ставка за смену"
+msgstr "Rate per shift"
+
+msgid "Ставка, сум/ч"
+msgstr "Rate, sum/h"
+
+msgid "Стало"
+msgstr "Now"
+
+msgid "Старая цена (зачёркнутая, для сайта)"
+msgstr "Old price (struck-through, for site)"
+
+msgid "Старых клиентов"
+msgstr "Returning customers"
+
+msgid "Статистика"
+msgstr "Statistics"
+
+msgid "Статистика обедов"
+msgstr "Lunch statistics"
+
+msgid "Статистика по обедам"
+msgstr "Lunch statistics"
+
+msgid "Статус"
+msgstr "Status"
+
+msgid "Статус заказа"
+msgstr "Order status"
+
+msgid "Статус клиента"
+msgstr "Client status"
+
+msgid "Статус: %(s)s"
+msgstr "Status: %(s)s"
+
+msgid "Статусы клиента обновлены."
+msgstr "Client statuses updated."
+
+msgid "Статья"
+msgstr "Item"
+
+msgid "Стоимость"
+msgstr "Price"
+
+msgid "Стоимость доставки"
+msgstr "Delivery cost"
+
+msgid "Стоимость остатка"
+msgstr "Stock value"
+
+msgid "Стоимость по отдельности, UZS"
+msgstr "Price separately, UZS"
+
+msgid "Стоимость, UZS"
+msgstr "Cost, UZS"
+
+msgid "Стоп"
+msgstr "Stop"
+
+msgid "Стоп-лист"
+msgstr "Stop-list"
+
+msgid "Страна"
+msgstr "Country"
+
+msgid "Страна: %(n)s"
+msgstr "Country: %(n)s"
+
+msgid "Страница %(cur)s из %(tot)s"
+msgstr "Page %(cur)s of %(tot)s"
+
+msgid "Страны"
+msgstr "Countries"
+
+msgid "Строк распарсено"
+msgstr "Rows parsed"
+
+msgid "Студия"
+msgstr "Studio"
+
+msgid "Сумма"
+msgstr "Amount"
+
+msgid "Сумма *"
+msgstr "Amount *"
+
+msgid ""
+"Сумма берётся из тарифа и докупленных модулей. Оплата активирует подписку и "
+"продлевает период."
+msgstr ""
+"The amount is taken from the plan and purchased modules. Payment activates "
+"the subscription and extends the period."
+
+msgid "Сумма блюд"
+msgstr "Dishes total"
+
+msgid "Сумма заказов"
+msgstr "Order total"
+
+msgid "Сумма закупок"
+msgstr "Purchase amount"
+
+msgid "Сумма остатков"
+msgstr "Total stock value"
+
+msgid "Сумма по текущему фильтру"
+msgstr "Total for the current filter"
+
+msgid "Сумма скидки (UZS)"
+msgstr "Discount amount (UZS)"
+
+msgid "Супер-админ"
+msgstr "Super admin"
+
+msgid ""
+"Супер-админ и платформенные менеджеры. Менеджеры управляют клиентами, но не "
+"могут заводить других менеджеров."
+msgstr ""
+"Super admin and platform managers. Managers manage clients but can't create "
+"other managers."
+
+msgid "Существующая категория"
+msgstr "Existing category"
+
+msgid "Счета"
+msgstr "Invoices"
+
+msgid "Счета по подписке"
+msgstr "Subscription invoices"
+
+msgid "Счетов пока нет."
+msgstr "No invoices yet."
+
+msgid "Считается из цен блюд ниже (сумма). Экономия = отдельно − комплект ="
+msgstr ""
+"Calculated from the dish prices below (sum). Savings = separately − set ="
+
+msgid "Считать"
+msgstr "Count"
+
+msgid "Тариф"
+msgstr "Plan"
+
+msgid "Тариф (можно назначить позже)"
+msgstr "Plan (can be assigned later)"
+
+msgid "Тариф и статус"
+msgstr "Plan and status"
+
+msgid "Тарифы"
+msgstr "Plans"
+
+msgid "Текст для покупателя (бейдж)"
+msgstr "Text for the customer (badge)"
+
+msgid "Текст кнопки"
+msgstr "Button text"
+
+msgid "Текст техкарты не заполнен."
+msgstr "The tech card text is not filled in."
+
+msgid "Текущая цена"
+msgstr "Current price"
+
+msgid ""
+"Текущие остатки товаров по складам, минимальные уровни и предупреждения."
+msgstr "Current product stock by warehouse, minimum levels and warnings."
+
+msgid "Текущий пароль"
+msgstr "Current password"
+
+msgid "Текущий статус:"
+msgstr "Current status:"
+
+msgid "Телефон"
+msgstr "Phone"
+
+msgid ""
+"Телефон и e-mail обязательны оба — код придёт на выбранный. Пароль "
+"понадобится для входа."
+msgstr ""
+"Both phone and email are required — the code comes to the chosen one. The "
+"password is needed for login."
+
+msgid "Телефонов нормализовано"
+msgstr "Phones normalized"
+
+msgid "Телефоны"
+msgstr "Phones"
+
+msgid "Телефоны (по одному в строке)"
+msgstr "Phones (one per line)"
+
+msgid "Техкарта"
+msgstr "Tech card"
+
+msgid "Техкарта заготовки"
+msgstr "Semi-finished tech card"
+
+msgid "Техкарта приготовления"
+msgstr "Preparation tech card"
+
+msgid "Техкарта:"
+msgstr "Tech card:"
+
+msgid "Техкарты"
+msgstr "Tech cards"
+
+msgid "Техкарты пока не найдены."
+msgstr "No tech cards found yet."
+
+msgid "Технологическая карта"
+msgstr "Process card"
+
+msgid "Технология приготовления"
+msgstr "Preparation technology"
+
+msgid "Тип"
+msgstr "Type"
+
+msgid "Тип *"
+msgstr "Type *"
+
+msgid "Тип акции"
+msgstr "Promotion type"
+
+msgid "Тип бизнеса"
+msgstr "Business type"
+
+msgid "Тип движения"
+msgstr "Movement type"
+
+msgid "Тип зоны"
+msgstr "Zone type"
+
+msgid "Тип операции"
+msgstr "Operation type"
+
+msgid "Тип оплаты"
+msgstr "Payment type"
+
+msgid "Тип позиции"
+msgstr "Item type"
+
+msgid "Тип смены"
+msgstr "Shift type"
+
+msgid "Тип сотрудника"
+msgstr "Employee type"
+
+msgid "Тип учёта"
+msgstr "Accounting type"
+
+msgid ""
+"Тип учёта категории определяет, как товар участвует в себестоимости и учёте."
+" Товар без категории считается ингредиентом."
+msgstr ""
+"The category's accounting type determines how the product participates in "
+"cost and accounting. A product without a category is treated as an "
+"ingredient."
+
+msgid "Товар"
+msgstr "Product"
+
+msgid "Товар, артикул, заготовка, комментарий"
+msgstr "Product, SKU, semi-finished, comment"
+
+msgid "Товаров"
+msgstr "Products"
+
+msgid "Товаров на складе"
+msgstr "Products in warehouse"
+
+msgid "Товары"
+msgstr "Products"
+
+msgid "Товары в блоке"
+msgstr "Products in the block"
+
+msgid "Товары и склад"
+msgstr "Products and warehouse"
+
+msgid ""
+"Товары из категорий с типом учёта «Основное средство»: оборудование, мебель "
+"и т.п. На баланс, а не в расход. Стоимость — последняя цена закупки."
+msgstr ""
+"Products from categories of accounting type «Fixed asset»: equipment, "
+"furniture, etc. On the balance sheet, not expensed. Cost — the latest "
+"purchase price."
+
+msgid "Товары не добавлены."
+msgstr "No products added."
+
+msgid ""
+"Товары не привязаны. Они добавятся автоматически при подтверждении приходов,"
+" либо вручную ниже."
+msgstr ""
+"Products are not linked. They will be added automatically when receipts are "
+"confirmed, or manually below."
+
+msgid "Только выбранные"
+msgstr "Only selected"
+
+msgid "Только выбранные блюда"
+msgstr "Only selected dishes"
+
+msgid "Только латиница, цифры и дефисы."
+msgstr "Latin letters, digits and hyphens only."
+
+msgid "Только ниже минимума"
+msgstr "Below minimum only"
+
+msgid "Только отрицательные"
+msgstr "Negative only"
+
+msgid "Только показываемые"
+msgstr "Shown only"
+
+msgid "Только просмотр"
+msgstr "View only"
+
+msgid ""
+"Только реальные блюда из каталога — их кладут в корзину как обычный товар."
+msgstr ""
+"Only real dishes from the catalog — they go into the cart as a regular "
+"product."
+
+msgid "Только скрытые"
+msgstr "Hidden only"
+
+msgid "Томатный соус, пепперони, моцарелла…"
+msgstr "Tomato sauce, pepperoni, mozzarella…"
+
+msgid "Топ блюд"
+msgstr "Top dishes"
+
+msgid "Топ-10 промокодов в CSV (не линкуем к ERP PromoCode):"
+msgstr "Top 10 promo codes in CSV (not linked to ERP PromoCode):"
+
+msgid "Топ-15 непросопоставленных блюд (по упоминаниям):"
+msgstr "Top 15 unmatched dishes (by mentions):"
+
+msgid "Топ-20 групп (по числу заказов которые перенесутся):"
+msgstr "Top 20 groups (by number of orders to be moved):"
+
+msgid "Топ-5 клиентов по числу заказов:"
+msgstr "Top 5 customers by order count:"
+
+msgid "Топ-50 по тратам"
+msgstr "Top 50 by spending"
+
+msgid "Точка"
+msgstr "Location"
+
+msgid "Точка не подключена к Uzum"
+msgstr "Location not connected to Uzum"
+
+msgid ""
+"Точно запустить импорт? Это запишет заказы в БД. Откат через — "
+"Order.objects.filter(is_legacy_import=True).delete()"
+msgstr ""
+"Really start the import? This will write orders to the DB. Rollback via — "
+"Order.objects.filter(is_legacy_import=True).delete()"
+
+msgid ""
+"Точно слить дубликатов? Это перепривяжет заказы и удалит дубликаты Customer."
+" Откат — только через restore БД."
+msgstr ""
+"Really merge duplicates? This will reattach orders and delete Customer "
+"duplicates. Rollback — only via DB restore."
+
+msgid "Точно удалить «%(n)s»? Это действие необратимо."
+msgstr "Really delete «%(n)s»? This action is irreversible."
+
+msgid "Точно удалить заказ? Это действие нельзя отменить."
+msgstr "Really delete the order? This action can't be undone."
+
+msgid "Транзакция откатилась — данные не записаны."
+msgstr "The transaction was rolled back — no data was written."
+
+msgid "Триал"
+msgstr "Trial"
+
+msgid "Триал до"
+msgstr "Trial until"
+
+msgid "Триал до: %(t)s"
+msgstr "Trial until: %(t)s"
+
+msgid "У вас нет прав на изменение реквизитов (только просмотр)."
+msgstr "You don't have rights to change the details (view only)."
+
+msgid "У меня уже есть аккаунт"
+msgstr "I already have an account"
+
+msgid ""
+"У оставляемой записи будет снят флаг «наличные» (Payme — онлайн-оплата)."
+msgstr ""
+"The «cash» flag will be removed from the kept record (Payme — online "
+"payment)."
+
+msgid "Убрать"
+msgstr "Remove"
+
+msgid "Убрать «%(n)s» в архив?"
+msgstr "Archive “%(n)s”?"
+
+msgid "Убрать «%(n)s» из блока «%(b)s»?"
+msgstr "Remove «%(n)s» from block «%(b)s»?"
+
+msgid "Убрать «%(n)s» из хитов? Блюдо останется в каталоге."
+msgstr "Remove «%(n)s» from bestsellers? The dish stays in the catalog."
+
+msgid "Убрать доп"
+msgstr "Remove add-on"
+
+msgid "Убрать из Комбо"
+msgstr "Remove from combo"
+
+msgid "Убрать из апсейла?"
+msgstr "Remove from upsell?"
+
+msgid "Убрать из блока"
+msgstr "Remove from block"
+
+msgid "Убрать из компании"
+msgstr "Remove from company"
+
+msgid "Убрать из корпоративных?"
+msgstr "Remove from corporate?"
+
+msgid "Убрать из меню"
+msgstr "Remove from menu"
+
+msgid "Убрать из меню (в архив)"
+msgstr "Remove from menu (to archive)"
+
+msgid "Убрать из сета?"
+msgstr "Remove from set?"
+
+msgid "Убрать из хитов"
+msgstr "Remove from bestsellers"
+
+msgid "Убрать строку"
+msgstr "Remove row"
+
+msgid "Убрать товар у поставщика? История закупок не удалится."
+msgstr ""
+"Remove the product from the supplier? Purchase history won't be deleted."
+
+msgid "Убрать эту позицию из подсчёта?"
+msgstr "Remove this item from the count?"
+
+msgid "Убыточные"
+msgstr "Loss-making"
+
+msgid "Удаление"
+msgstr "Deletion"
+
+msgid "Удаление заготовки"
+msgstr "Deleting the semi-finished product"
+
+msgid "Удалить"
+msgstr "Delete"
+
+msgid "Удалить акцию?"
+msgstr "Delete promotion?"
+
+msgid "Удалить баннер «%(t)s»?"
+msgstr "Delete banner «%(t)s»?"
+
+msgid "Удалить блок"
+msgstr "Delete block"
+
+msgid ""
+"Удалить блок «%(t)s»? Все товары блока удалятся, сами блюда останутся в "
+"каталоге."
+msgstr ""
+"Delete block «%(t)s»? All the block's products will be deleted, the dishes "
+"themselves stay in the catalog."
+
+msgid "Удалить доставку?"
+msgstr "Delete the delivery service?"
+
+msgid "Удалить заготовку"
+msgstr "Delete the semi-finished product"
+
+msgid "Удалить заготовку «%(n)s» полностью."
+msgstr "Delete the semi-finished product «%(n)s» entirely."
+
+msgid "Удалить заготовку из состава?"
+msgstr "Remove the semi-finished from the composition?"
+
+msgid "Удалить заготовку?"
+msgstr "Delete semi-finished product?"
+
+msgid "Удалить загруженный файл"
+msgstr "Delete uploaded file"
+
+msgid "Удалить заказ"
+msgstr "Delete order"
+
+msgid "Удалить запись?"
+msgstr "Delete record?"
+
+msgid "Удалить зону"
+msgstr "Delete zone"
+
+msgid ""
+"Удалить зону доставки «%(n)s»? Филиал останется, только зона будет удалена."
+msgstr ""
+"Delete delivery zone «%(n)s»? The branch stays, only the zone will be "
+"deleted."
+
+msgid "Удалить изображение из галереи?"
+msgstr "Delete image from gallery?"
+
+msgid "Удалить инвентаризацию? Введённые данные будут потеряны."
+msgstr "Delete the inventory count? The entered data will be lost."
+
+msgid "Удалить ингредиент из заготовки?"
+msgstr "Remove the ingredient from the semi-finished product?"
+
+msgid "Удалить источник?"
+msgstr "Delete the source?"
+
+msgid "Удалить категорию"
+msgstr "Delete category"
+
+msgid "Удалить категорию из блюда (сама категория останется в системе)"
+msgstr ""
+"Remove the category from the dish (the category itself stays in the system)"
+
+msgid "Удалить категорию?"
+msgstr "Delete category?"
+
+msgid "Удалить категорию? Товары останутся без категории."
+msgstr "Delete the category? Products will remain without a category."
+
+msgid "Удалить логотип"
+msgstr "Delete logo"
+
+msgid "Удалить меню"
+msgstr "Delete menu"
+
+msgid "Удалить меню на"
+msgstr "Delete the menu for"
+
+msgid "Удалить обед"
+msgstr "Delete lunch"
+
+msgid "Удалить обед целиком (со всеми размерами)?"
+msgstr "Delete the whole lunch (with all sizes)?"
+
+msgid "Удалить обед целиком?"
+msgstr "Delete the whole lunch?"
+
+msgid "Удалить операцию?"
+msgstr "Delete the operation?"
+
+msgid "Удалить передачу смены"
+msgstr "Delete the shift handover"
+
+msgid "Удалить передачу смены?"
+msgstr "Delete the shift handover?"
+
+msgid "Удалить позицию из прихода?"
+msgstr "Delete the item from the receipt?"
+
+msgid "Удалить порог?"
+msgstr "Delete threshold?"
+
+msgid "Удалить поступление?"
+msgstr "Delete the income?"
+
+msgid "Удалить причину отказа?"
+msgstr "Delete the rejection reason?"
+
+msgid "Удалить продукт?"
+msgstr "Delete product?"
+
+msgid "Удалить промокод?"
+msgstr "Delete promo code?"
+
+msgid "Удалить размер"
+msgstr "Delete size"
+
+msgid "Удалить размер со всем составом?"
+msgstr "Delete the size with all its composition?"
+
+msgid "Удалить расход?"
+msgstr "Delete expense?"
+
+msgid "Удалить смену?"
+msgstr "Delete the shift?"
+
+msgid "Удалить сотрудника?"
+msgstr "Delete employee?"
+
+msgid "Удалить списание?"
+msgstr "Delete the write-off?"
+
+msgid "Удалить способ оплаты?"
+msgstr "Delete the payment method?"
+
+msgid "Удалить строку?"
+msgstr "Delete row?"
+
+msgid "Удалить текущее фото"
+msgstr "Delete current photo"
+
+msgid "Удалить текущий логотип"
+msgstr "Delete the current logo"
+
+msgid "Удалить текущую"
+msgstr "Delete current"
+
+msgid "Удалить товар"
+msgstr "Delete product"
+
+msgid "Удалить упаковку?"
+msgstr "Delete packaging?"
+
+msgid "Удалить филиал"
+msgstr "Delete branch"
+
+msgid "Удалить филиал «%(n)s»? Это действие необратимо."
+msgstr "Delete branch «%(n)s»? This action is irreversible."
+
+msgid "Удалить черновик"
+msgstr "Delete draft"
+
+msgid "Удалить черновик перемещения?"
+msgstr "Delete the transfer draft?"
+
+msgid "Удалить черновик прихода?"
+msgstr "Delete the receipt draft?"
+
+msgid "Удалить черновик?"
+msgstr "Delete the draft?"
+
+msgid ""
+"Удаляет меню на эту дату. Оформленные заказы не меняются (состав в них "
+"зафиксирован)."
+msgstr ""
+"Deletes the menu for this date. Placed orders don't change (their "
+"composition is fixed)."
+
+msgid "Удерживайте Ctrl/Cmd для выбора нескольких. Пусто — не по набору."
+msgstr "Hold Ctrl/Cmd to select several. Empty — not by set."
+
+msgid "Уже есть аккаунт?"
+msgstr "Already have an account?"
+
+msgid "Уже есть в ERP"
+msgstr "Already in ERP"
+
+msgid "Уже импортировано"
+msgstr "Already imported"
+
+msgid "Укажите e-mail или телефон — пришлём код для смены пароля."
+msgstr ""
+"Enter your e-mail or phone — we'll send a code to change the password."
+
+msgid "Укажите дату поставки перед подтверждением."
+msgstr "Specify the delivery date before confirming."
+
+msgid "Укажите поставщика перед подтверждением."
+msgstr "Specify the supplier before confirming."
+
+msgid "Укажите склад поступления перед подтверждением."
+msgstr "Specify the receiving warehouse before confirming."
+
+msgid "Уникальных клиентов"
+msgstr "Unique customers"
+
+msgid "Упаковка"
+msgstr "Packaging"
+
+msgid "Упаковки пока нет"
+msgstr "No packaging yet"
+
+msgid "Управление"
+msgstr "Manage"
+
+msgid "Управление заказами"
+msgstr "Order management"
+
+msgid ""
+"Управление контентом главной страницы публичного сайта. Все изменения сразу "
+"отображаются в публичном API."
+msgstr ""
+"Managing the content of the public site's homepage. All changes are "
+"immediately reflected in the public API."
+
+msgid "Управление поставщиками и контроль закупок."
+msgstr "Managing suppliers and controlling purchases."
+
+msgid "Управление сотрудниками кухни и учёт рабочего времени"
+msgstr "Managing kitchen staff and tracking working time"
+
+msgid "Управление справочниками заказов"
+msgstr "Managing order reference lists"
+
+msgid "Управляется на карточке блюда."
+msgstr "Managed on the dish card."
+
+msgid "Услуги"
+msgstr "Services"
+
+msgid "Устава"
+msgstr "the Charter"
+
+msgid "Уточнения по заказу, пожелания клиента и т.д."
+msgstr "Clarifications about the order, customer wishes, etc."
+
+msgid "Уточнения по заказу, пожелания клиента…"
+msgstr "Order clarifications, customer wishes…"
+
+msgid ""
+"Учёт воды, электричества, аренды и рабочих часов для расчёта стоимости "
+"минуты."
+msgstr ""
+"Tracking water, electricity, rent and working hours to calculate the cost "
+"per minute."
+
+msgid "Учёт обедов"
+msgstr "Lunch accounting"
+
+msgid "Учёт поступления товаров от поставщиков на склады."
+msgstr "Accounting for goods received from suppliers into warehouses."
+
+msgid ""
+"Учёт расходов: аренда, зарплата, маркетинг, закупки и прочее. Закупки "
+"попадают сюда автоматически из приходов."
+msgstr ""
+"Expense tracking: rent, salary, marketing, purchases and more. Purchases "
+"land here automatically from receipts."
+
+msgid ""
+"Учёт, себестоимость, склад, заказы и аналитика для ресторанного бизнеса. "
+"Попробуйте бесплатно."
+msgstr ""
+"Accounting, cost, inventory, orders and analytics for restaurant business. "
+"Try it for free."
+
+msgid "Учётная запись"
+msgstr "Account"
+
+msgid "Ушло в заготовки"
+msgstr "Used in semi-finished"
+
+msgid "ФИО"
+msgstr "Full name"
+
+msgid "ФИО *"
+msgstr "Full name *"
+
+msgid "ФИО главного бухгалтера"
+msgstr "Chief accountant's full name"
+
+msgid "ФИО директора"
+msgstr "Director's full name"
+
+msgid "ФИО или телефон"
+msgstr "Full name or phone"
+
+msgid "ФОТ"
+msgstr "Payroll"
+
+msgid "Факт"
+msgstr "Actual"
+
+msgid "Факт часов (отработано)"
+msgstr "Actual hours (worked)"
+
+msgid "Фактический адрес"
+msgstr "Actual address"
+
+msgid "Фактический учёт рабочего времени — начать и завершить смену"
+msgstr "Actual working time tracking — start and finish a shift"
+
+msgid "Филиал"
+msgstr "Branch"
+
+msgid "Филиал *"
+msgstr "Branch *"
+
+msgid "Филиал: %(n)s"
+msgstr "Branch: %(n)s"
+
+msgid "Филиалов"
+msgstr "Branches"
+
+msgid "Филиалов пока нет"
+msgstr "No branches yet"
+
+msgid "Филиалы"
+msgstr "Branches"
+
+msgid ""
+"Филиалы, их видимость, отдача в Uzum и зоны доставки. Доступ пользователей —"
+" на странице «Пользователи»."
+msgstr ""
+"Branches, their visibility, Uzum feed and delivery zones. User access — on "
+"the «Users» page."
+
+msgid "Фильтр"
+msgstr "Filter"
+
+msgid "Фильтры"
+msgstr "Filters"
+
+msgid "Фильтры пересчитывают показатели и таблицу ниже."
+msgstr "The filters recalculate the metrics and the table below."
+
+msgid "Финансовая информация скрыта."
+msgstr "Financial information is hidden."
+
+msgid "Финансовая раскладка"
+msgstr "Financial breakdown"
+
+msgid "Финансы"
+msgstr "Finance"
+
+msgid "Фиолетовый"
+msgstr "Purple"
+
+msgid ""
+"Фискальный код блюда. Используется в фискализации и при необходимости в "
+"Uzum."
+msgstr ""
+"The dish's fiscal code. Used in fiscalization and, if needed, in Uzum."
+
+msgid "Фискальный код упаковки (необязательно)."
+msgstr "Packaging fiscal code (optional)."
+
+msgid "Форма собственности"
+msgstr "Ownership type"
+
+msgid "Фото"
+msgstr "Photo"
+
+msgid "Фото (URL)"
+msgstr "Photo (URL)"
+
+msgid "Фото (резерв)"
+msgstr "Photo (backup)"
+
+msgid "Фото и галерея"
+msgstr "Photo and gallery"
+
+msgid "Фото не выбрано"
+msgstr "No photo selected"
+
+msgid "Фото не загружено"
+msgstr "No photo uploaded"
+
+msgid "Фудкост"
+msgstr "Food cost"
+
+msgid "Фудкост был"
+msgstr "Food cost was"
+
+msgid "Фудкост стал"
+msgstr "Food cost became"
+
+msgid "Фудкост: больше → меньше"
+msgstr "Food cost: high → low"
+
+msgid "Хит"
+msgstr "Hit"
+
+msgid "Хиты продаж"
+msgstr "Bestsellers"
+
+msgid "Цвет бейджа"
+msgstr "Badge color"
+
+msgid "Цвет текста"
+msgstr "Text color"
+
+msgid "Цвет фона (HEX)"
+msgstr "Background color (HEX)"
+
+msgid "Цен пока нет."
+msgstr "No prices yet."
+
+msgid "Цена"
+msgstr "Price"
+
+msgid "Цена (UZS)"
+msgstr "Price (UZS)"
+
+msgid "Цена (деф.)"
+msgstr "Price (def.)"
+
+msgid "Цена Uzum"
+msgstr "Uzum price"
+
+msgid "Цена Яндекс"
+msgstr "Yandex price"
+
+msgid "Цена для Uzum"
+msgstr "Price for Uzum"
+
+msgid "Цена для Яндекса"
+msgstr "Price for Yandex"
+
+msgid "Цена за кг"
+msgstr "Price per kg"
+
+msgid "Цена закупки"
+msgstr "Purchase price"
+
+msgid "Цена комплекта, UZS"
+msgstr "Set price, UZS"
+
+msgid "Цена отдельно"
+msgstr "Price separately"
+
+msgid "Цена продажи"
+msgstr "Selling price"
+
+msgid "Цена сета"
+msgstr "Set price"
+
+msgid "Цена сета (UZS) *"
+msgstr "Set price (UZS) *"
+
+msgid "Цена со ск."
+msgstr "Discounted price"
+
+msgid "Цена: больше → меньше"
+msgstr "Price: high → low"
+
+msgid "Цена: меньше → больше"
+msgstr "Price: low → high"
+
+msgid "Цены и доступность"
+msgstr "Prices and availability"
+
+msgid "Цены и стоп-лист"
+msgstr "Prices and stop-list"
+
+msgid ""
+"Цены, маржа и доступность блюд по точкам и в Uzum, расчёт выручки с учётом "
+"комиссий."
+msgstr ""
+"Dish prices, margin and availability by location and on Uzum, revenue "
+"calculated with commissions."
+
+msgid "Часов / мес"
+msgstr "Hours / month"
+
+msgid "Часов в смене"
+msgstr "Hours per shift"
+
+msgid "Часов:"
+msgstr "Hours:"
+
+msgid "Часто заказывают вместе"
+msgstr "Often ordered together"
+
+msgid "Часы"
+msgstr "Hours"
+
+msgid "Часы по"
+msgstr "Hours until"
+
+msgid "Часы работы"
+msgstr "Working hours"
+
+msgid "Часы с (счастливые часы)"
+msgstr "Hours from (happy hours)"
+
+msgid "ЧекМейт — ERP для ресторанов и кафе"
+msgstr "ЧекМейт — ERP for restaurants and cafes"
+
+msgid "Чем больше, тем раньше применяется при конфликте."
+msgstr "The higher it is, the earlier it applies on conflict."
+
+msgid "Чем меньше — тем выше"
+msgstr "The smaller — the higher"
+
+msgid "Черновик"
+msgstr "Draft"
+
+msgid "Черновик подсчёта сохранён."
+msgstr "The count draft was saved."
+
+msgid "Черновики"
+msgstr "Drafts"
+
+msgid "Что важно передать следующей смене"
+msgstr "What's important to pass to the next shift"
+
+msgid "Что вам нужно для работы?"
+msgstr "What do you need for work?"
+
+msgid "Что внутри"
+msgstr "What's inside"
+
+msgid "Что дарим"
+msgstr "What we gift"
+
+msgid "Что на стопе"
+msgstr "What's on stop"
+
+msgid "Что нужно докупить"
+msgstr "What to buy more of"
+
+msgid "Что нужно закупить, приготовить и что находится на стопе"
+msgstr "What to buy, prepare and what's on stop"
+
+msgid ""
+"Что предлагать клиенту на странице этого блюда. Если ничего не задано — сайт"
+" сам подберёт товары из той же категории. Привязки к архивным и скрытым "
+"блюдам автоматически скрываются от клиента."
+msgstr ""
+"What to offer the customer on this dish's page. If nothing is set — the site"
+" picks products from the same category itself. Links to archived and hidden "
+"dishes are automatically hidden from the customer."
+
+msgid "Широта"
+msgstr "Latitude"
+
+msgid "Широта центра"
+msgstr "Center latitude"
+
+msgid "Штрафов и бонусов нет."
+msgstr "No penalties or bonuses."
+
+msgid "Штрафы"
+msgstr "Penalties"
+
+msgid "Штрафы и бонусы"
+msgstr "Penalties and bonuses"
+
+msgid "Штрафы:"
+msgstr "Penalties:"
+
+msgid "Экономия"
+msgstr "Savings"
+
+msgid "Экраны и пороги кухни"
+msgstr "Kitchen screens and thresholds"
+
+msgid "Электричество"
+msgstr "Electricity"
+
+msgid ""
+"Эта заготовка пока нигде не используется — её можно удалить без последствий."
+msgstr ""
+"This semi-finished product isn't used anywhere yet — it can be deleted "
+"without consequences."
+
+msgid ""
+"Эти блюда не нашлись по точному имени в каталоге ERP — позиции сохранятся с"
+msgstr ""
+"These dishes weren't found by exact name in the ERP catalog — the items will"
+" be saved with"
+
+msgid "Это комбо (собирается из готовых блюд)"
+msgstr "This is a combo (assembled from finished dishes)"
+
+msgid ""
+"Это комбо-позиция — она собирается из готовых блюд, отдельная техкарта не "
+"предусмотрена."
+msgstr ""
+"This is a combo item — it is assembled from finished dishes, no separate "
+"tech card is provided."
+
+msgid "Это наличная оплата"
+msgstr "This is a cash payment"
+
+msgid "Этому клиенту отказано в доставке."
+msgstr "Delivery is refused for this client."
+
+msgid "Этот месяц"
+msgstr "This month"
+
+msgid "Этот пользователь будет управлять своей компанией (не платформой)."
+msgstr "This user will manage their own company (not the platform)."
+
+msgid "Юридический адрес"
+msgstr "Legal address"
+
+msgid "Юрлицо"
+msgstr "Legal entity"
+
+msgid "Язык"
+msgstr "Language"
+
+msgid "Яндекс"
+msgstr "Yandex"
+
+msgid "Яндекс итог"
+msgstr "Yandex total"
+
+msgid "архив"
+msgstr "archived"
+
+msgid "без лимита"
+msgstr "no limit"
+
+msgid "больше"
+msgstr "more"
+
+msgid "в"
+msgstr "at"
+
+msgid "в закупках"
+msgstr "in purchases"
+
+msgid "в одной системе"
+msgstr "in one system"
+
+msgid "в подтверждённых"
+msgstr "in confirmed"
+
+msgid "вернувшиеся:"
+msgstr "returning:"
+
+msgid "включена"
+msgstr "enabled"
+
+msgid "включён"
+msgstr "enabled"
+
+msgid "влияние на склад"
+msgstr "impact on stock"
+
+msgid "впишите название текстом. Если выбрано блюдо — берётся его имя и фото."
+msgstr ""
+"type the name as text. If a dish is selected — its name and photo are used."
+
+msgid "всего"
+msgstr "total"
+
+msgid "выключен"
+msgstr "disabled"
+
+msgid "выключена"
+msgstr "disabled"
+
+msgid "выполнен."
+msgstr "done."
+
+msgid "выход"
+msgstr "yield"
+
+msgid "г"
+msgstr "g"
+
+msgid "да"
+msgstr "yes"
+
+msgid "дата"
+msgstr "date"
+
+msgid "для ресторанов"
+msgstr "for restaurants"
+
+msgid "до"
+msgstr "to"
+
+msgid "документов"
+msgstr "documents"
+
+msgid "долг"
+msgstr "debt"
+
+msgid "доступно"
+msgstr "available"
+
+msgid "дубликаты: %(p)s"
+msgstr "duplicates: %(p)s"
+
+msgid "еда + доставка клиента"
+msgstr "food + customer's delivery"
+
+msgid "еда, доставка, списания"
+msgstr "food, delivery, write-offs"
+
+msgid "за месяц"
+msgstr "per month"
+
+msgid "за сегодня"
+msgstr "today"
+
+msgid "завершён подсчёт"
+msgstr "count finished"
+
+msgid "заготовка"
+msgstr "semi-finished"
+
+msgid "задано — пусто = не менять"
+msgstr "set — empty = keep"
+
+msgid "задолженность"
+msgstr "debt"
+
+msgid "заказ(ов),"
+msgstr "order(s),"
+
+msgid "записей"
+msgstr "records"
+
+msgid "и в отчётах. Действие обратимо — блюдо можно вернуть из архива."
+msgstr ""
+"and in reports. The action is reversible — the dish can be restored from the"
+" archive."
+
+msgid "и текстом в"
+msgstr "and the text in"
+
+msgid "и текущей ценой"
+msgstr "and the current price"
+
+msgid "идемпотентен"
+msgstr "idempotent"
+
+msgid "из блока «Часто заказывают вместе»?"
+msgstr "from the «Often ordered together» block?"
+
+msgid "из комбо?"
+msgstr "from the combo?"
+
+msgid "из компании?"
+msgstr "from the company?"
+
+msgid "из прихода"
+msgstr "from receipt"
+
+msgid "или"
+msgstr "or"
+
+msgid "или текстом"
+msgstr "or as text"
+
+msgid "иначе из блюд"
+msgstr "otherwise from dishes"
+
+msgid "инвентаризация"
+msgstr "inventory count"
+
+msgid "источник(ов)."
+msgstr "source(s)."
+
+msgid "как сайт"
+msgstr "same as site"
+
+msgid "касса"
+msgstr "POS"
+
+msgid "кг"
+msgstr "kg"
+
+msgid "кол-во"
+msgstr "qty"
+
+msgid "конструктор обеда: размеры, состав, себестоимость и маржа."
+msgstr "lunch builder: sizes, composition, cost and margin."
+
+msgid "л"
+msgstr "l"
+
+msgid "логотип"
+msgstr "logo"
+
+msgid "меньше"
+msgstr "less"
+
+msgid "мин"
+msgstr "min"
+
+msgid "минус комиссии агрегаторов"
+msgstr "minus aggregator commissions"
+
+msgid "мл"
+msgstr "ml"
+
+msgid "на"
+msgstr "as of"
+
+msgid "на %(d)s"
+msgstr "for %(d)s"
+
+msgid "на %(n)s блюд"
+msgstr "on %(n)s dishes"
+
+msgid "на весь заказ"
+msgstr "on the whole order"
+
+msgid ""
+"на другой склад. Нажмите «+ Новое перемещение», добавьте позиции и "
+"подтвердите."
+msgstr "to another warehouse. Click «+ New transfer», add items and confirm."
+
+msgid "на сайте"
+msgstr "on site"
+
+msgid "название"
+msgstr "name"
+
+msgid "напр."
+msgstr "e.g."
+
+msgid "напр. 15–25 мин"
+msgstr "e.g. 15–25 min"
+
+msgid "напр. 4.9"
+msgstr "e.g. 4.9"
+
+msgid "напр. 90… или имя"
+msgstr "e.g. 90… or name"
+
+msgid "напр. Куриный суп"
+msgstr "e.g. Chicken soup"
+
+msgid "напр. Май 2026"
+msgstr "e.g. May 2026"
+
+msgid "напр. ООО «Ромашка»"
+msgstr "e.g. «Romashka» LLC"
+
+msgid "напр. ООО… или 90…"
+msgstr "e.g. LLC… or 90…"
+
+msgid "не задан"
+msgstr "not set"
+
+msgid "не задано"
+msgstr "not set"
+
+msgid "не посчитано"
+msgstr "not counted"
+
+msgid "не проведено"
+msgstr "not posted"
+
+msgid "необязательно"
+msgstr "optional"
+
+msgid "нет"
+msgstr "no"
+
+msgid "нет доступов"
+msgstr "no access"
+
+msgid "нет фото"
+msgstr "no photo"
+
+msgid "оставляем"
+msgstr "keeping"
+
+msgid "останется в истории %(c)s позиц. заказов"
+msgstr "will remain in the history of %(c)s order items"
+
+msgid "остаток"
+msgstr "stock"
+
+msgid "от"
+msgstr "from"
+
+msgid "отказ в доставке"
+msgstr "delivery refused"
+
+msgid "отказов:"
+msgstr "rejections:"
+
+msgid "план:"
+msgstr "plan:"
+
+msgid "по"
+msgstr "to"
+
+msgid "по активным заказам"
+msgstr "for active orders"
+
+msgid "по дате регистрации"
+msgstr "by registration date"
+
+msgid "по обедам"
+msgstr "for lunches"
+
+msgid "по фильтру"
+msgstr "by filter"
+
+msgid "под-заготовка"
+msgstr "sub-preparation"
+
+msgid "подтверждённых"
+msgstr "confirmed"
+
+msgid "пока без будущих расходов"
+msgstr "no future expenses yet"
+
+msgid "поступления + входящие"
+msgstr "receipts + incoming"
+
+msgid "потерянная выручка"
+msgstr "lost revenue"
+
+msgid "приоритет %(p)s"
+msgstr "priority %(p)s"
+
+msgid "приходов"
+msgstr "receipts"
+
+msgid "проведено"
+msgstr "posted"
+
+msgid "продажи/списания/выход"
+msgstr "sales/write-offs/outgoing"
+
+msgid "работают"
+msgstr "working"
+
+msgid "радиус %(r)s км"
+msgstr "radius %(r)s km"
+
+msgid "разделов"
+msgstr "sections"
+
+msgid "раскладка на 1 партию ×"
+msgstr "breakdown per 1 batch ×"
+
+msgid "раскладка на 1 порцию ×"
+msgstr "breakdown per 1 portion ×"
+
+msgid "сайт"
+msgstr "site"
+
+msgid "себест."
+msgstr "cost"
+
+msgid "сет"
+msgstr "set"
+
+msgid "склеить → удалить"
+msgstr "merge → delete"
+
+msgid "скрыто"
+msgstr "hidden"
+
+msgid "скрыто на сайте"
+msgstr "hidden on site"
+
+msgid "скрыто с сайта"
+msgstr "hidden from the site"
+
+msgid "сохранится в системе"
+msgstr "will be kept in the system"
+
+msgid "стоимость"
+msgstr "cost"
+
+msgid "стоп Uzum"
+msgstr "Uzum stop"
+
+msgid "стоп-лист"
+msgstr "stop-list"
+
+msgid "сум"
+msgstr "sum"
+
+msgid "сумма"
+msgstr "amount"
+
+msgid "только просмотр"
+msgstr "view only"
+
+msgid "ул. Шахрисабз, 14"
+msgstr "14 Shahrisabz St."
+
+msgid "факт введён"
+msgstr "actuals entered"
+
+msgid "центр %(la)s, %(lo)s"
+msgstr "center %(la)s, %(lo)s"
+
+msgid "ч"
+msgstr "h"
+
+msgid "час"
+msgstr "hour"
+
+msgid "черновик"
+msgstr "draft"
+
+msgid "черновик/проводится"
+msgstr "draft/in progress"
+
+msgid "шт"
+msgstr "pcs"
+
+msgid "— без аккаунта —"
+msgstr "— no account —"
+
+msgid "— без категории (ингредиент) —"
+msgstr "— no category (ingredient) —"
+
+msgid "— без привязки (текст) —"
+msgstr "— no link (text) —"
+
+msgid "— без тарифа —"
+msgstr "— no plan —"
+
+msgid "— выбери филиал —"
+msgstr "— select a branch —"
+
+msgid "— выберите блюдо —"
+msgstr "— select a dish —"
+
+msgid "— выберите склад —"
+msgstr "— select a warehouse —"
+
+msgid "— выберите страну —"
+msgstr "— select a country —"
+
+msgid "— выберите —"
+msgstr "— select —"
+
+msgid "— выбрать блюдо —"
+msgstr "— select a dish —"
+
+msgid "— выбрать из корпоративных —"
+msgstr "— choose from corporate —"
+
+msgid "— выбрать товар —"
+msgstr "— select a product —"
+
+msgid "— выбрать —"
+msgstr "— select —"
+
+msgid "— именно его использует сайт при онлайн-оплате."
+msgstr "— it is exactly what the site uses for online payment."
+
+msgid "— не выбран —"
+msgstr "— not selected —"
+
+msgid "— не выбрана —"
+msgstr "— not selected —"
+
+msgid "— не выбрано —"
+msgstr "— not selected —"
+
+msgid "— не задан —"
+msgstr "— not set —"
+
+msgid "— не менять —"
+msgstr "— keep unchanged —"
+
+msgid "— не указан —"
+msgstr "— not specified —"
+
+msgid "— нет —"
+msgstr "— none —"
+
+msgid "— по умолчанию —"
+msgstr "— default —"
+
+msgid "… или URL картинки"
+msgstr "… or image URL"
+
+msgid "№ документа"
+msgstr "Document №"
+
+msgid "← Вернуться ко входу"
+msgstr "← Back to sign-in"
+
+msgid "← Все обеды"
+msgstr "← All lunches"
+
+msgid "← Другой e-mail или телефон"
+msgstr "← Different email or phone"
+
+msgid "← Запросить код заново"
+msgstr "← Request the code again"
+
+msgid "← Изменить данные"
+msgstr "← Change details"
+
+msgid "← К блюду"
+msgstr "← To dish"
+
+msgid "← К журналу"
+msgstr "← To log"
+
+msgid "← К списку клиентов"
+msgstr "← To client list"
+
+msgid "← К списку техкарт"
+msgstr "← To tech card list"
+
+msgid "← Клиенты"
+msgstr "← Clients"
+
+msgid "← Назад"
+msgstr "← Back"
+
+msgid "← Назад к блюдам"
+msgstr "← Back to dishes"
+
+msgid "← Назад к заготовкам"
+msgstr "← Back to semi-finished"
+
+msgid "← Назад к заказам"
+msgstr "← Back to orders"
+
+msgid "← Назад к продуктам"
+msgstr "← Back to products"
+
+msgid "→ смотришь отчёт → если всё ок, нажимаешь"
+msgstr "→ check the report → if all is OK, click"
+
+msgid "↩ Вернуть на пересчёт"
+msgstr "↩ Return for recount"
+
+msgid "↩ На пересчёт"
+msgstr "↩ For recount"
+
+msgid "■ Завершить"
+msgstr "■ Finish"
+
+msgid "■ Завершить смену"
+msgstr "■ Finish shift"
+
+msgid "▶ Начать"
+msgstr "▶ Start"
+
+msgid "▶ Начать смену"
+msgstr "▶ Start shift"
+
+msgid "▶ Начать смену сейчас"
+msgstr "▶ Start shift now"
+
+msgid "● Активен"
+msgstr "● Active"
+
+msgid "● Идёт"
+msgstr "● In progress"
+
+msgid "● На сайте"
+msgstr "● On site"
+
+msgid "● Смена идёт"
+msgstr "● Shift in progress"
+
+msgid "⚠ Отказ"
+msgstr "⚠ Refused"
+
+msgid "⚠ Отказ в доставке"
+msgstr "⚠ Delivery refused"
+
+msgid "⚠ Отказ в доставке (алярм)"
+msgstr "⚠ Delivery refused (alarm)"
+
+msgid "⚠ Отказ в доставке."
+msgstr "⚠ Delivery refused."
+
+msgid ""
+"⚠️ Режим правки суперадмина. Приход уже подтверждён — при изменении строк "
+"остатки на складе и история закупочных цен будут автоматически пересобраны. "
+"Если по этим остаткам уже были списания или перемещения, проверьте текущие "
+"остатки после правки."
+msgstr ""
+"⚠️ Super-admin edit mode. The receipt is already confirmed — if you change "
+"rows, warehouse stock and purchase price history will be rebuilt "
+"automatically. If write-offs or transfers were already made against this "
+"stock, check current stock after editing."
+
+msgid "✎ Исправить"
+msgstr "✎ Fix"
+
+msgid "✎ К списку / редактировать"
+msgstr "✎ To list / edit"
+
+msgid "✎ Редактировать"
+msgstr "✎ Edit"
+
+msgid "✓ Завершить подсчёт"
+msgstr "✓ Finish count"
+
+msgid "✓ Импорт успешно завершён. Транзакция закоммичена."
+msgstr "✓ Import completed successfully. Transaction committed."
+
+msgid "✓ Нечего сливать — все клиенты уже уникальны по digits-only телефону."
+msgstr ""
+"✓ Nothing to merge — all customers are already unique by digits-only phone."
+
+msgid "✓ Подтвердить"
+msgstr "✓ Confirm"
+
+msgid "✓ Подтвердить приход"
+msgstr "✓ Confirm receipt"
+
+msgid "✓ Принят"
+msgstr "✓ Accepted"
+
+msgid "✓ Слияние завершено. Транзакция закоммичена."
+msgstr "✓ Merge completed. Transaction committed."
+
+msgid "✓ Сохранено"
+msgstr "✓ Saved"
+
+msgid "✕ Отклонить"
+msgstr "✕ Reject"
+
+msgid "✕ удалить строку"
+msgstr "✕ delete row"
+
+msgid "✗ Импорт упал с ошибкой:"
+msgstr "✗ Import failed with an error:"
+
+msgid "⧉ Копировать"
+msgstr "⧉ Copy"
+
+msgid "🌶 Не острая / Острая"
+msgstr "🌶 Not spicy / Spicy"
+
+msgid "🍱 Заказывал обеды"
+msgstr "🍱 Ordered lunches"
+
+msgid "🍳 Кухня (KDS)"
+msgstr "🍳 Kitchen (KDS)"
+
+msgid "🍽 Обеденная"
+msgstr "🍽 Lunch"
+
+msgid "💾 Сохранить"
+msgstr "💾 Save"
+
+msgid "💾 Сохранить черновик"
+msgstr "💾 Save draft"
+
+msgid "📊 Анализ"
+msgstr "📊 Analysis"
+
+msgid "📊 Анализ (без записи)"
+msgstr "📊 Analysis (no write)"
+
+msgid "📊 Анализ дубликатов (без записи)"
+msgstr "📊 Duplicate analysis (no write)"
+
+msgid "📊 План слияния"
+msgstr "📊 Merge plan"
+
+msgid "📥 Импорт CSV"
+msgstr "📥 Import CSV"
+
+msgid "🔔 Кликните в любом месте, чтобы включить звук уведомлений"
+msgstr "🔔 Click anywhere to enable notification sound"
+
+msgid "🔗 Дедуп клиентов по телефону"
+msgstr "🔗 Dedup customers by phone"
+
+msgid ""
+"🔗 Сейчас на сайте используется внешняя ссылка из поля «Ссылка на главное "
+"фото» (выше). Загруженное ниже фото — резервное, оно будет показано, только "
+"если очистить ссылку."
+msgstr ""
+"🔗 The site currently uses the external link from the «Main photo link» field"
+" (above). The photo uploaded below is a backup, shown only if the link is "
+"cleared."
+
+msgid "🔴 Новый заказ!"
+msgstr "🔴 New order!"
+
+msgid "🖨 Печать / Сохранить в PDF"
+msgstr "🖨 Print / Save as PDF"
+
+msgid "🖨 Печать техкарты"
+msgstr "🖨 Print tech card"
+
+msgid "🖨 Техкарта для повара"
+msgstr "🖨 Tech card for the cook"
+
+msgid "🚨 Импорт (запись в БД)"
+msgstr "🚨 Import (write to DB)"
+
+msgid "🚨 Слить дубликаты"
+msgstr "🚨 Merge duplicates"
+
+msgid "🚪 Оставить у двери"
+msgstr "🚪 Leave at the door"
+
+msgid "🧾 Касса (зал)"
+msgstr "🧾 POS (hall)"

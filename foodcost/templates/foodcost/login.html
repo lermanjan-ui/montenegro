@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Вход{% endblock %}
+{% block title %}{% trans "Вход" %}{% endblock %}
 
 {% block content %}
 
@@ -50,7 +51,7 @@
 </style>
 
 <div class="card login-card">
-    <h1>Вход в FoodCost</h1>
+    <h1>{% trans "Вход в ЧекМейт" %}</h1>
 
     {% if error %}
         <div class="error">{{ error }}</div>
@@ -59,13 +60,13 @@
     <form method="post">
         {% csrf_token %}
 
-        <label>Логин</label>
-        <input name="username" placeholder="Введите логин">
+        <label>{% trans "Логин" %}</label>
+        <input name="username" placeholder="{% trans "Введите логин" %}">
 
-        <label>Пароль</label>
-        <input name="password" type="password" placeholder="Введите пароль">
+        <label>{% trans "Пароль" %}</label>
+        <input name="password" type="password" placeholder="{% trans "Введите пароль" %}">
 
-        <button type="submit">Войти</button>
+        <button type="submit">{% trans "Войти" %}</button>
     </form>
 </div>
 

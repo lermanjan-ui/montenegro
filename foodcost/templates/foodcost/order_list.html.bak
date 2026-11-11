@@ -1,0 +1,1045 @@
+{% extends "foodcost/base.html" %}
+
+{% load humanize %}
+
+{% block title %}Заказы{% endblock %}
+
+{% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===== FoodCost Design System 1.1 — Управление заказами ===== */
+:root{
+    --deep-blue:#123B7A; --deep-blue-dark:#0D2D5F;
+    --black:#111827; --white:#FFFFFF; --bg:#F7F8FA;
+    --border:#E5E7EB; --muted:#667085;
+    --success:#1E9E52; --success-soft:#E7F6ED;
+    --danger:#E23B3B;  --danger-soft:#FDECEC;
+    --warning:#E08A00; --warning-soft:#FBF0DC;
+    --purple:#7A5AF8;  --purple-soft:#EFEAFE;
+    --blue-soft:#E7EDF7;
+    --r-btn:8px; --r-card:10px;
+}
+
+.page{
+    max-width:1450px;
+    margin:0 auto;
+    font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    color:var(--black);
+}
+.page *{box-sizing:border-box;}
+
+/* HEADER */
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+}
+
+h1{
+    margin:0;
+    font-size:28px;
+    line-height:34px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--black);
+}
+
+.create-btn{
+    background:var(--deep-blue);
+    color:#fff;
+    text-decoration:none;
+    border:1px solid var(--deep-blue);
+    border-radius:var(--r-btn);
+    height:40px;
+    padding:0 16px;
+    font-size:14px;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    transition:.15s;
+}
+
+.create-btn:hover{
+    background:var(--deep-blue-dark);
+    border-color:var(--deep-blue-dark);
+}
+
+/* STATS */
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.stat-card{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
+    padding:16px;
+    min-height:96px;
+
+    display:grid;
+    grid-template-columns:44px 1fr auto;
+    grid-template-rows:auto auto auto;
+    column-gap:14px;
+    align-items:center;
+}
+
+.stat-icon{
+    grid-row:1 / 4;
+    width:44px;
+    height:44px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.stat-icon svg{
+    width:22px;
+    height:22px;
+    stroke-width:2;
+}
+
+.stat-main{
+    display:contents;
+}
+
+.stat-label{
+    grid-column:2;
+    grid-row:1;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:600;
+    line-height:16px;
+    white-space:nowrap;
+}
+
+.stat-value{
+    grid-column:2;
+    grid-row:2;
+    font-size:26px;
+    font-weight:700;
+    color:var(--black);
+    line-height:32px;
+    letter-spacing:-0.02em;
+}
+
+.stat-sub{
+    grid-column:2;
+    grid-row:3;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
+    line-height:16px;
+    white-space:nowrap;
+}
+
+.stat-trend{
+    grid-column:3;
+    grid-row:1;
+    align-self:start;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    white-space:nowrap;
+}
+
+.stat-blue   .stat-icon{background:var(--blue-soft);   color:var(--deep-blue);}
+.stat-green  .stat-icon{background:var(--success-soft);color:var(--success);}
+.stat-purple .stat-icon{background:var(--purple-soft); color:var(--purple);}
+.stat-orange .stat-icon{background:var(--warning-soft);color:var(--warning);}
+.stat-red    .stat-icon{background:var(--danger-soft); color:var(--danger);}
+
+.stat-blue   .stat-trend{background:var(--blue-soft);   color:var(--deep-blue);}
+.stat-green  .stat-trend{background:var(--success-soft);color:var(--success);}
+.stat-purple .stat-trend{background:var(--purple-soft); color:var(--purple);}
+.stat-orange .stat-trend{background:var(--warning-soft);color:var(--warning);}
+.stat-red    .stat-trend{background:var(--danger-soft); color:var(--danger);}
+
+/* LAYOUT */
+.orders-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 300px;
+    gap:16px;
+    align-items:start;
+}
+
+.main-column{
+    min-width:0;
+}
+
+.sidebar-column{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.card,
+.summary-card{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
+}
+
+.orders-card{
+    padding:0;
+    overflow:hidden;
+}
+
+.orders-header{
+    padding:16px 18px;
+    border-bottom:1px solid var(--border);
+}
+
+.orders-title{
+    font-size:18px;
+    line-height:24px;
+    font-weight:600;
+    color:var(--black);
+}
+
+.orders-table{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:14px;
+}
+
+.order-row{
+    display:grid;
+    grid-template-columns:64px minmax(160px,1fr) 115px 115px 68px 96px;
+    gap:10px;
+    align-items:center;
+    border:1px solid var(--border);
+    border-radius:var(--r-card);
+    padding:12px;
+    background:var(--white);
+    transition:.15s;
+}
+
+.order-row:hover{
+    border-color:#D7DBE2;
+    background:#FCFCFD;
+}
+
+.order-id{
+    font-size:18px;
+    font-weight:700;
+    color:var(--black);
+}
+
+.client-name{
+    font-size:14px;
+    font-weight:600;
+    color:var(--black);
+    margin-bottom:3px;
+}
+
+.client-phone{
+    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
+}
+
+.payment-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--blue-soft);
+    color:var(--deep-blue);
+    border-radius:999px;
+    padding:5px 10px;
+    font-size:12px;
+    font-weight:600;
+    width:max-content;
+}
+
+.order-sum{
+    font-size:16px;
+    font-weight:700;
+    color:var(--black);
+}
+
+.cancel-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:4px 9px;
+    border-radius:999px;
+    background:var(--danger-soft);
+    color:var(--danger);
+    font-size:12px;
+    font-weight:600;
+    margin-top:6px;
+}
+
+/* Compact indicator on order-row for leave_at_door=True. */
+.door-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:4px 9px;
+    border-radius:999px;
+    background:var(--warning-soft);
+    color:var(--warning);
+    font-size:11.5px;
+    font-weight:600;
+    line-height:1;
+    margin-top:6px;
+    white-space:nowrap;
+}
+
+/* Tiny landmark line under client name. */
+.client-landmark{
+    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
+    margin-top:4px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:100%;
+}
+
+.order-time{
+    color:var(--muted);
+    font-size:13px;
+    font-weight:500;
+}
+
+/* SIDEBAR */
+.summary-card{
+    padding:18px;
+}
+
+.summary-title{
+    font-size:14px;
+    font-weight:600;
+    color:var(--black);
+    margin-bottom:14px;
+}
+
+.summary-block{
+    padding-bottom:14px;
+    margin-bottom:14px;
+    border-bottom:1px solid var(--border);
+}
+
+.summary-block:last-child{
+    border-bottom:0;
+    margin-bottom:0;
+    padding-bottom:0;
+}
+
+.summary-label{
+    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
+    margin-bottom:6px;
+}
+
+.summary-value{
+    font-size:22px;
+    font-weight:700;
+    color:var(--black);
+}
+
+.cash-box{
+    background:var(--warning-soft);
+    border:1px solid #F3DFB8;
+}
+
+.cash-box .summary-title{
+    color:var(--black);
+}
+
+.cash-box .summary-value{
+    color:var(--warning);
+}
+
+.empty{
+    padding:60px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+}
+
+.cancelled-row{
+    background:var(--danger-soft) !important;
+    border-color:#F5C6C6 !important;
+}
+
+.cancelled-row .order-id,
+.cancelled-row .client-name,
+.cancelled-row .order-sum{
+    color:var(--danger);
+}
+
+/* TABLET */
+@media (max-width:1200px){
+    .orders-layout{
+        grid-template-columns:1fr;
+    }
+
+    .sidebar-column{
+        order:-1;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+    }
+
+    .order-row{
+        grid-template-columns:64px minmax(180px,1fr) 120px 120px;
+        grid-template-areas:
+            "id client pay sum"
+            "id client time open";
+    }
+
+    .order-row > div:nth-child(1){ grid-area:id; }
+    .order-row > div:nth-child(2){ grid-area:client; }
+    .order-row > div:nth-child(3){ grid-area:pay; }
+    .order-row > div:nth-child(4){ grid-area:sum; }
+    .order-row > div:nth-child(5){ grid-area:time; }
+    .order-row > div:nth-child(6){ grid-area:open; }
+}
+
+/* MOBILE */
+@media (max-width:900px){
+    .page{
+        padding:0 10px;
+    }
+
+    .topbar{
+        flex-direction:column;
+        align-items:stretch;
+        gap:12px;
+    }
+
+    h1{
+        font-size:24px;
+        line-height:30px;
+    }
+
+    .create-btn{
+        width:100%;
+        box-sizing:border-box;
+    }
+
+    .stats-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .stat-card{
+        min-height:88px;
+        padding:12px;
+        grid-template-columns:38px 1fr;
+        grid-template-rows:auto auto auto;
+        column-gap:10px;
+    }
+
+    .stat-icon{
+        width:36px;
+        height:36px;
+        border-radius:10px;
+    }
+
+    .stat-icon svg{
+        width:19px;
+        height:19px;
+    }
+
+    .stat-label{
+        font-size:12px;
+    }
+
+    .stat-value{
+        font-size:22px;
+        line-height:28px;
+    }
+
+    .stat-sub{
+        font-size:11px;
+    }
+
+    .stat-trend{
+        display:none;
+    }
+
+    .sidebar-column{
+        order:0;
+        display:flex;
+        flex-direction:column;
+    }
+
+    .order-row{
+        grid-template-columns:1fr auto;
+        grid-template-areas:
+            "id time"
+            "client client"
+            "pay sum"
+            "open open";
+        gap:10px 12px;
+    }
+
+    .order-row > div:nth-child(1){ grid-area:id; }
+    .order-row > div:nth-child(2){ grid-area:client; }
+    .order-row > div:nth-child(3){ grid-area:pay; }
+    .order-row > div:nth-child(4){ grid-area:sum; }
+    .order-row > div:nth-child(5){ grid-area:time; }
+    .order-row > div:nth-child(6){ grid-area:open; }
+
+    .order-row .create-btn{
+        width:100%;
+    }
+}
+
+/* ===== Подсветка только что пришедшего заказа (подставлен без перезагрузки) ===== */
+.order-row-new{
+    border-color:var(--warning) !important;
+    background:var(--warning-soft) !important;
+    animation:fcRowPulse 1.1s ease-in-out 3;
+}
+
+@keyframes fcRowPulse{
+    0%,100%{ box-shadow:0 0 0 3px rgba(224,138,0,0.10); }
+    50%{ box-shadow:0 0 0 6px rgba(224,138,0,0.22); }
+}
+
+.row-new-badge{
+    display:inline-block;
+    margin-top:6px;
+    padding:3px 9px;
+    border-radius:999px;
+    background:var(--warning);
+    color:#fff;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.02em;
+}
+
+</style>
+
+<div class="page">
+
+    <div class="topbar">
+
+        <div>
+            <h1>Заказы</h1>
+        </div>
+
+        <a
+            href="/c/{{ country.slug }}/orders/create/"
+            class="create-btn"
+        >
+            Новый заказ
+        </a>
+		<a class="create-btn" href="/c/{{ country.slug }}/orders/all/">
+		    Все заказы
+		</a>
+
+        <div id="sound-hint"
+            style="display:none;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#667085;white-space:nowrap;">
+            🔔 Кликните в любом месте, чтобы включить звук уведомлений
+        </div>
+
+    </div>
+
+  <div class="stats-grid">
+
+      <div class="stat-card stat-blue">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M6 8h12l-1 12H7L6 8Z"/>
+                  <path d="M9 8a3 3 0 0 1 6 0"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Заказов</div>
+              <div class="stat-value">{{ total_orders }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↑ 0%</div>
+      </div>
+
+      <div class="stat-card stat-green">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M4 19V5"/>
+                  <path d="M4 19h16"/>
+                  <path d="M7 15l4-4 3 3 5-7"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Выручка</div>
+              <div class="stat-value">{{ total_revenue|floatformat:0|intcomma }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↑ +12%</div>
+      </div>
+
+      <div class="stat-card stat-purple">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M3 7h11v10H3V7Z"/>
+                  <path d="M14 11h4l3 3v3h-7v-6Z"/>
+                  <circle cx="7" cy="18" r="1.5"/>
+                  <circle cx="18" cy="18" r="1.5"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Доставка</div>
+              <div class="stat-value">{{ total_delivery|floatformat:0|intcomma }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↑ +5%</div>
+      </div>
+
+      <div class="stat-card stat-orange">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M4 7h16v12H4V7Z"/>
+                  <path d="M16 12h4v4h-4a2 2 0 0 1 0-4Z"/>
+                  <path d="M6 7V5h12v2"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Наличные</div>
+              <div class="stat-value">{{ total_cash|floatformat:0|intcomma }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">↓ -3%</div>
+      </div>
+
+      <div class="stat-card stat-red">
+          <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M18 6L6 18"/>
+                  <path d="M6 6l12 12"/>
+              </svg>
+          </div>
+
+          <div class="stat-main">
+              <div class="stat-label">Отказы</div>
+              <div class="stat-value">{{ cancelled_orders_count }}</div>
+              <div class="stat-sub">за сегодня</div>
+          </div>
+
+          <div class="stat-trend">—</div>
+      </div>
+
+  </div>
+    <div class="orders-layout">
+
+        <div class="main-column">
+
+            <div class="card orders-card">
+
+                <div class="orders-header">
+
+                    <div class="orders-title">
+                        Список заказов
+                    </div>
+
+                </div>
+
+                {% if orders %}
+
+                    <div class="orders-table">
+
+                        {% for order in orders %}
+
+                        <div class="order-row {% if order.is_cancelled %}cancelled-row{% endif %}">
+
+                            <div>
+                                <div class="order-id">
+                                    #{{ order.id }}
+                                </div>
+                            </div>
+
+                            <div>
+
+                                <div class="client-name">
+                                    {{ order.customer_name }}
+                                </div>
+
+                                <div class="client-phone">
+                                    {{ order.customer_phone }}
+                                </div>
+
+                                {% if order.delivery_landmark %}
+                                    <div class="client-landmark"
+                                         title="{{ order.delivery_landmark }}">
+                                        Ориентир: {{ order.delivery_landmark }}
+                                    </div>
+                                {% endif %}
+
+                                {% if order.leave_at_door %}
+                                    <div class="door-badge">
+                                        🚪 Оставить у двери
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+                            <div>
+
+								<div class="payment-badge">
+								    {% if order.payment_method %}
+								        {{ order.payment_method.name }}
+								    {% else %}
+								        —
+								    {% endif %}
+								</div>
+
+                            </div>
+
+                            <div>
+
+								<div class="order-sum">
+
+								    {{ order.total_amount|floatformat:0|intcomma }}
+
+								    {% if order.is_cancelled %}
+								        <div class="cancel-badge">
+								            Отменен
+								        </div>
+								    {% endif %}
+
+								</div>
+
+                            </div>
+
+                            <div>
+
+								<div class="order-time">
+								    {% if order.location %}
+								        {{ order.location.name }}
+								    {% else %}
+								        —
+								    {% endif %}
+								</div>
+
+                            </div>
+
+                            <div>
+
+                                <a
+                                    href="/c/{{ country.slug }}/orders/{{ order.id }}/"
+                                    class="create-btn"
+                                    style="
+                                        padding:0 14px;
+                                        font-size:14px;
+                                    "
+                                >
+                                    Открыть
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty">
+                        Заказов пока нет
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="sidebar-column">
+
+            <div class="summary-card">
+
+				<div class="summary-title">
+				    По филиалам
+				</div>
+
+				{% for item in locations_summary %}
+
+				    <div class="summary-block">
+
+				        <div class="summary-label">
+				            {{ item.name }}
+				        </div>
+
+				        <div class="summary-value">
+				            {{ item.revenue|floatformat:0|intcomma }}
+				        </div>
+
+				        <div class="summary-label">
+				            Заказов: {{ item.orders_count }}
+				        </div>
+
+				    </div>
+
+				{% empty %}
+
+				    <div class="summary-label">
+				        Филиалов пока нет
+				    </div>
+
+				{% endfor %}
+
+            </div>
+
+            <div class="summary-card cash-box">
+
+                <div class="summary-title">
+                    Наличные в кассе
+                </div>
+
+				<div class="summary-value">
+				    {{ total_cash|floatformat:0|intcomma }}
+				</div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+(function () {
+    var COUNTRY_SLUG = "{{ country.slug }}";
+    var POLL_MS = 5000;          // опрос новых заказов раз в 5 секунд
+    var ALARM_MS = 5000;         // повтор сирены раз в 5 секунд
+
+    var lastSeenId = null;       // последний известный max id заказа
+    var audioCtx = null;
+    var soundUnlocked = false;   // станет true после первого клика по странице
+    var alarmActive = false;     // сирена активна, пока не открыт заказ
+
+    var hint = document.getElementById("sound-hint");
+
+    // --- Мигание заголовка вкладки при новом заказе ---
+    var originalTitle = document.title;
+    var blinkTimer = null;
+    var blinkOn = false;
+
+    function startBlink() {
+        if (blinkTimer) return;
+        blinkTimer = setInterval(function () {
+            blinkOn = !blinkOn;
+            document.title = blinkOn ? "🔴 Новый заказ!" : originalTitle;
+        }, 700);
+    }
+
+    function stopBlink() {
+        if (blinkTimer) { clearInterval(blinkTimer); blinkTimer = null; }
+        document.title = originalTitle;
+    }
+
+    window.addEventListener("focus", stopBlink);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) { stopBlink(); }
+    });
+
+    // --- Аудио ---
+    function ensureCtx() {
+        if (!audioCtx) {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch (e) { audioCtx = null; }
+        }
+        return audioCtx;
+    }
+
+    // Разблокировка звука по первому любому клику (браузер запрещает
+    // автоплей звука до взаимодействия со страницей).
+    function unlockSound() {
+        if (soundUnlocked) return;
+        try {
+            ensureCtx();
+            if (audioCtx && audioCtx.state === "suspended") { audioCtx.resume(); }
+            soundUnlocked = true;
+            if (hint) { hint.style.display = "none"; }
+            if (alarmActive) { playAlarm(); }   // если заказ уже ждёт — сразу сигнал
+        } catch (e) { /* не критично */ }
+    }
+
+    document.addEventListener("click", function () { unlockSound(); });
+
+    if (hint) {
+        setTimeout(function () {
+            if (!soundUnlocked) { hint.style.display = "inline-flex"; }
+        }, 2000);
+    }
+
+    // Громкая длинная сирена (~1.1 сек): чередование тонов с плавными
+    // нарастаниями, чтобы не было щелчков. Заметно громче прежних пиков.
+    function playAlarm() {
+        if (!ensureCtx()) return;
+        try {
+            if (audioCtx.state === "suspended") { audioCtx.resume(); }
+            var now = audioCtx.currentTime;
+            var pattern = [
+                { f: 988,  t: 0.00, d: 0.20 },
+                { f: 784,  t: 0.24, d: 0.20 },
+                { f: 988,  t: 0.48, d: 0.20 },
+                { f: 784,  t: 0.72, d: 0.20 },
+                { f: 1047, t: 0.96, d: 0.34 }
+            ];
+            for (var i = 0; i < pattern.length; i++) {
+                var p = pattern[i];
+                var osc = audioCtx.createOscillator();
+                var gain = audioCtx.createGain();
+                osc.type = "triangle";
+                osc.frequency.value = p.f;
+                var s = now + p.t;
+                var e = s + p.d;
+                gain.gain.setValueAtTime(0.0001, s);
+                gain.gain.exponentialRampToValueAtTime(0.6, s + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, e);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(s);
+                osc.stop(e + 0.03);
+            }
+        } catch (e) { /* звук не критичен */ }
+    }
+
+    function startAlarm() {
+        alarmActive = true;
+        startBlink();
+        if (soundUnlocked) { playAlarm(); }
+    }
+
+    function stopAlarm() {
+        alarmActive = false;
+        stopBlink();
+    }
+
+    // Повтор сирены раз в 5 секунд, пока заказ не открыт.
+    setInterval(function () {
+        if (alarmActive && soundUnlocked) { playAlarm(); }
+    }, ALARM_MS);
+
+    // Открытие любого заказа (ссылка вида /orders/123/) гасит сирену.
+    document.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest("a") : null;
+        if (a) {
+            var href = a.getAttribute("href") || "";
+            if (/\/orders\/\d+\/?$/.test(href)) { stopAlarm(); }
+        }
+    });
+
+    // --- Подстановка нового заказа в список без перезагрузки ---
+    function esc(v) {
+        var d = document.createElement("div");
+        d.textContent = (v == null) ? "" : String(v);
+        return d.innerHTML;
+    }
+
+    function buildRow(o) {
+        var row = document.createElement("div");
+        row.className = "order-row order-row-new" + (o.is_cancelled ? " cancelled-row" : "");
+        row.setAttribute("data-order-id", o.id);
+
+        var c1 = document.createElement("div");
+        c1.innerHTML = '<div class="order-id">#' + esc(o.id) + '</div>';
+
+        var c2 = document.createElement("div");
+        var h2 = '<div class="client-name">' + esc(o.customer_name) + '</div>'
+               + '<div class="client-phone">' + esc(o.customer_phone) + '</div>';
+        if (o.delivery_landmark) {
+            h2 += '<div class="client-landmark" title="' + esc(o.delivery_landmark) + '">Ориентир: ' + esc(o.delivery_landmark) + '</div>';
+        }
+        if (o.leave_at_door) {
+            h2 += '<div class="door-badge">🚪 Оставить у двери</div>';
+        }
+        h2 += '<span class="row-new-badge">Новый</span>';
+        c2.innerHTML = h2;
+
+        var c3 = document.createElement("div");
+        c3.innerHTML = '<div class="payment-badge">' + (o.payment_method ? esc(o.payment_method) : "—") + '</div>';
+
+        var c4 = document.createElement("div");
+        var h4 = '<div class="order-sum">' + esc(o.total_display);
+        if (o.is_cancelled) { h4 += '<div class="cancel-badge">Отменен</div>'; }
+        h4 += '</div>';
+        c4.innerHTML = h4;
+
+        var c5 = document.createElement("div");
+        c5.innerHTML = '<div class="order-time">' + (o.location ? esc(o.location) : "—") + '</div>';
+
+        var c6 = document.createElement("div");
+        c6.innerHTML = '<a href="' + esc(o.url) + '" class="create-btn" style="padding:0 14px;font-size:14px;">Открыть</a>';
+
+        row.appendChild(c1); row.appendChild(c2); row.appendChild(c3);
+        row.appendChild(c4); row.appendChild(c5); row.appendChild(c6);
+        return row;
+    }
+
+    function injectOrders(list) {
+        if (!list || !list.length) return;
+        var card = document.querySelector(".orders-card");
+        if (!card) return;
+        var table = card.querySelector(".orders-table");
+        if (!table) {
+            var empty = card.querySelector(".empty");
+            if (empty && empty.parentNode) { empty.parentNode.removeChild(empty); }
+            table = document.createElement("div");
+            table.className = "orders-table";
+            card.appendChild(table);
+        }
+        for (var i = 0; i < list.length; i++) {
+            var o = list[i];
+            if (table.querySelector('[data-order-id="' + o.id + '"]')) continue;
+            table.insertBefore(buildRow(o), table.firstChild);  // новейший сверху
+        }
+    }
+
+    function poll() {
+        var url = "/c/" + COUNTRY_SLUG + "/orders/count/";
+        if (lastSeenId !== null) { url += "?after=" + lastSeenId; }
+        fetch(url, {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            credentials: "same-origin"
+        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data) return;
+            var latest = data.latest_id || 0;
+            if (lastSeenId === null) { lastSeenId = latest; return; }  // первый замер
+            if (data.orders && data.orders.length) {
+                injectOrders(data.orders);
+                startAlarm();
+            }
+            if (latest > lastSeenId) { lastSeenId = latest; }
+        })
+        .catch(function () { /* сеть моргнула — игнор */ });
+    }
+
+    setInterval(poll, POLL_MS);
+    poll();
+})();
+</script>
+
+{% endblock %}

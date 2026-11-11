@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Заготовки{% endblock %}
+{% block title %}{% trans "Заготовки" %}{% endblock %}
 
 {% block content %}
 
@@ -173,53 +174,53 @@
 <div class="page">
 
     <div class="card">
-        <h1>Заготовки</h1>
-        <p class="muted">Создание заготовок, расчёт себестоимости и цены за кг.</p>
+        <h1>{% trans "Заготовки" %}</h1>
+        <p class="muted">{% trans "Создание заготовок, расчёт себестоимости и цены за кг." %}</p>
 
         {% if not can_edit %}
-            <div class="readonly-note">Режим просмотра: добавление заготовок недоступно.</div>
+            <div class="readonly-note">{% trans "Режим просмотра: добавление заготовок недоступно." %}</div>
         {% endif %}
     </div>
 
     {% if can_edit %}
     <div class="card">
-        <h2>Добавить заготовку</h2>
+        <h2>{% trans "Добавить заготовку" %}</h2>
 
         <form method="post">
             {% csrf_token %}
 
             <div class="create-grid">
                 <div>
-                    <label>Название</label>
-                    <input name="name" placeholder="Например: соус цезарь">
+                    <label>{% trans "Название" %}</label>
+                    <input name="name" placeholder="{% trans "Например: соус цезарь" %}">
                 </div>
 
                 <div>
-                    <label>Выход, кг</label>
+                    <label>{% trans "Выход, кг" %}</label>
                     <input type="number" step="0.001" name="final_weight" placeholder="1.000">
                 </div>
 
                 <div>
-                    <label>Время, мин</label>
+                    <label>{% trans "Время, мин" %}</label>
                     <input type="number" step="0.1" name="cooking_minutes" placeholder="30">
                 </div>
 
-                <button type="submit">Добавить</button>
+                <button type="submit">{% trans "Добавить" %}</button>
             </div>
         </form>
     </div>
     {% endif %}
 
     <div class="card">
-        <h2>Список заготовок</h2>
+        <h2>{% trans "Список заготовок" %}</h2>
 
         <div class="prep-list">
             <div class="prep-head">
-                <div>Название</div>
-                <div>Выход (кг)</div>
-                <div>Себестоимость</div>
-                <div>Цена за кг</div>
-                <div>Открыть</div>
+                <div>{% trans "Название" %}</div>
+                <div>{% trans "Выход (кг)" %}</div>
+                <div>{% trans "Себестоимость" %}</div>
+                <div>{% trans "Цена за кг" %}</div>
+                <div>{% trans "Открыть" %}</div>
             </div>
 
             {% for prep in preparations %}
@@ -234,11 +235,11 @@
 				    {{ prep.cached_cost_per_kg|floatformat:0 }}
 				</div>
                 <div>
-                    <a class="open" href="/c/{{ country.slug }}/preparations/{{ prep.id }}/">Открыть →</a>
+                    <a class="open" href="/c/{{ country.slug }}/preparations/{{ prep.id }}/">{% trans "Открыть →" %}</a>
                 </div>
             </div>
             {% empty %}
-                <div class="empty">Заготовок пока нет</div>
+                <div class="empty">{% trans "Заготовок пока нет" %}</div>
             {% endfor %}
         </div>
     </div>

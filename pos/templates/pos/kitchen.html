@@ -1,0 +1,156 @@
+{% extends "foodcost/base.html" %}
+{% load i18n %}
+
+{% block title %}Экраны и пороги кухни{% endblock %}
+
+{% block content %}
+<style>
+.poswrap{--pw-ink:#111827;--pw-muted:#667085;--pw-subtle:#98a2b3;--pw-border:#e5e7eb;--pw-bstrong:#d1d5db;--pw-surface:#fff;--pw-sunken:#eef1f5;--pw-primary:#123b7a;--pw-primary-soft:#e7edf7;--pw-success:#157347;--pw-success-soft:#e6f4ec;--pw-warning:#9a6700;--pw-warning-soft:#fff4d6;--pw-danger:#d92d20;
+  max-width:1000px;margin:0 auto;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--pw-ink);}
+.poswrap .pw-back{display:inline-block;color:var(--pw-muted);text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px;}
+.poswrap .pw-h1{font-weight:700;font-size:24px;letter-spacing:-.02em;margin:0 0 16px;}
+.poswrap .pw-card{border:1px solid var(--pw-border);border-radius:12px;background:var(--pw-surface);box-shadow:0 1px 2px rgba(16,24,40,.06);margin-bottom:16px;}
+.poswrap .pw-ch{font-weight:700;font-size:15px;padding:14px 16px;border-bottom:1px solid var(--pw-border);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.poswrap .pw-ch .pw-cd{font-size:12px;color:var(--pw-muted);font-weight:500;}
+.poswrap .pw-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:13px 16px;border-top:1px solid var(--pw-border);}
+.poswrap .pw-row:first-of-type{border-top:0;}
+.poswrap .pw-grow{flex:1 1 220px;min-width:0;}
+.poswrap .pw-name{font-weight:600;font-size:14px;}
+.poswrap .pw-meta{font-size:12px;color:var(--pw-muted);margin-top:2px;}
+.poswrap .pw-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+.poswrap .pw-pill.ok{background:var(--pw-success-soft);color:var(--pw-success);}
+.poswrap .pw-pill.wait{background:var(--pw-warning-soft);color:var(--pw-warning);}
+.poswrap .pw-code{font-weight:700;letter-spacing:2px;background:var(--pw-sunken);border:1px dashed var(--pw-bstrong);border-radius:8px;padding:4px 10px;font-size:14px;}
+.poswrap input.pw-in,.poswrap select.pw-in{height:38px;padding:0 10px;border:1px solid var(--pw-bstrong);border-radius:8px;background:var(--pw-surface);font-family:inherit;font-size:13px;color:var(--pw-ink);outline:none;}
+.poswrap input.pw-in:focus,.poswrap select.pw-in:focus{border-color:var(--pw-primary);box-shadow:0 0 0 3px var(--pw-primary-soft);}
+.poswrap input.pw-mins{width:60px;text-align:center;font-weight:700;}
+.poswrap select.pw-multi{min-height:90px;min-width:180px;}
+.poswrap .pw-btn{height:38px;padding:0 14px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid var(--pw-bstrong);background:var(--pw-surface);color:var(--pw-ink);}
+.poswrap .pw-btn.prim{border:0;background:var(--pw-primary);color:#fff;}
+.poswrap .pw-btn.danger{border-color:var(--pw-danger);color:var(--pw-danger);background:var(--pw-surface);}
+.poswrap .pw-btn.link{border:0;background:none;color:var(--pw-primary);padding:0 4px;height:auto;}
+.poswrap form.pw-inline{display:inline-flex;align-items:center;gap:8px;margin:0;}
+.poswrap .pw-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.poswrap .pw-dot.y{background:var(--pw-warning);}.poswrap .pw-dot.r{background:var(--pw-danger);}
+.poswrap .pw-lbl{font-size:12px;color:var(--pw-muted);font-weight:600;}
+.poswrap .pw-add{border-top:1px solid var(--pw-border);padding:14px 16px;background:var(--pw-sunken);border-radius:0 0 12px 12px;}
+.poswrap .pw-add .pw-at{font-size:12px;font-weight:700;color:var(--pw-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:10px;}
+.poswrap .pw-add .pw-fields{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.poswrap .pw-fld{display:flex;flex-direction:column;gap:5px;}
+.poswrap .pw-empty{padding:16px;color:var(--pw-subtle);font-size:13px;}
+</style>
+
+<div class="poswrap">
+  <a class="pw-back" href="/c/{{ country.slug }}/pos/">{% trans "← Настройка кассы" %}</a>
+  <div class="pw-h1">{% trans "Экраны и пороги кухни" %}</div>
+
+  <!-- ЭКРАНЫ КУХНИ -->
+  <div class="pw-card">
+    <div class="pw-ch"><span>{% trans "Экраны кухни" %}</span><span class="pw-cd">{% trans "какие категории на каком экране KDS" %}</span></div>
+
+    {% for s in screens %}
+      <div class="pw-row">
+        <div class="pw-grow">
+          <div class="pw-name">{{ s.name }}</div>
+          <div class="pw-meta">
+            {% if s.location %}{{ s.location.name }}{% else %}все точки{% endif %}
+            · показывает:
+            {% for c in s.categories.all %}{{ c.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+          </div>
+        </div>
+        {% if s.is_connected %}
+          <span class="pw-pill ok">{% trans "Подключён" %}</span>
+        {% else %}
+          <span class="pw-pill wait">{% trans "Ожидает" %}</span>
+          <span class="pw-code">{{ s.pairing_code }}</span>
+          <form class="pw-inline" method="post">{% csrf_token %}
+            <input type="hidden" name="action" value="new_code">
+            <input type="hidden" name="screen_id" value="{{ s.id }}">
+            <button class="pw-btn link" type="submit">{% trans "новый код" %}</button>
+          </form>
+        {% endif %}
+        <form class="pw-inline" method="post" onsubmit="return confirm('Удалить экран «{{ s.name }}»?');">{% csrf_token %}
+          <input type="hidden" name="action" value="delete_screen">
+          <input type="hidden" name="screen_id" value="{{ s.id }}">
+          <button class="pw-btn danger" type="submit">{% trans "Удалить" %}</button>
+        </form>
+      </div>
+    {% empty %}
+      <div class="pw-empty">{% trans "Экранов пока нет. Добавьте первый ниже." %}</div>
+    {% endfor %}
+
+    <div class="pw-add">
+      <div class="pw-at">{% trans "Добавить экран" %}</div>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="add_screen">
+        <div class="pw-fields">
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Название" %}</span>
+            <input class="pw-in" name="name" placeholder="{% trans "Напр.: Горячий цех" %}" required></div>
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Точка" %}</span>
+            <select class="pw-in" name="location">
+              <option value="">{% trans "Все точки" %}</option>
+              {% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
+            </select></div>
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Категории (можно несколько)" %}</span>
+            <select class="pw-in pw-multi" name="categories" multiple>
+              {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+            </select></div>
+          <button class="pw-btn prim" type="submit">{% trans "Добавить экран" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ПОРОГИ ВРЕМЕНИ -->
+  <div class="pw-card">
+    <div class="pw-ch"><span>{% trans "Пороги времени (таймеры KDS)" %}</span><span class="pw-cd">{% trans "когда тикет желтеет и краснеет" %}</span></div>
+
+    {% for t in thresholds %}
+      <div class="pw-row">
+        <div class="pw-grow">
+          <div class="pw-name">
+            {% if t.dish %}Блюдо «{{ t.dish.name }}»{% elif t.category %}Категория «{{ t.category.name }}»{% elif t.screen %}Экран «{{ t.screen.name }}»{% else %}Общий порог{% endif %}
+          </div>
+          <div class="pw-meta">{% if t.screen %}KDS: {{ t.screen.name }}{% else %}все KDS{% endif %}</div>
+        </div>
+        <form class="pw-inline" method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="save_threshold">
+          <input type="hidden" name="threshold_id" value="{{ t.id }}">
+          <span class="pw-dot y"></span><input class="pw-in pw-mins" name="warn" value="{{ t.warn_minutes }}"><span class="pw-lbl">{% trans "жёлтый" %}</span>
+          <span class="pw-dot r"></span><input class="pw-in pw-mins" name="late" value="{{ t.late_minutes }}"><span class="pw-lbl">{% trans "красный" %}</span>
+          <button class="pw-btn" type="submit">{% trans "Сохранить" %}</button>
+        </form>
+        <form class="pw-inline" method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="delete_threshold">
+          <input type="hidden" name="threshold_id" value="{{ t.id }}">
+          <button class="pw-btn danger" type="submit">✕</button>
+        </form>
+      </div>
+    {% empty %}
+      <div class="pw-empty">{% trans "Порогов нет. Общий порог и переопределения добавьте ниже." %}</div>
+    {% endfor %}
+
+    <div class="pw-add">
+      <div class="pw-at">{% trans "Добавить порог" %}</div>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="add_threshold">
+        <div class="pw-fields">
+          <div class="pw-fld"><span class="pw-lbl">{% trans "KDS (пусто — все)" %}</span>
+            <select class="pw-in" name="screen">
+              <option value="">{% trans "Все KDS" %}</option>
+              {% for s in screens %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+            </select></div>
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Категория (пусто — все блюда)" %}</span>
+            <select class="pw-in" name="category">
+              <option value="">{% trans "Все блюда" %}</option>
+              {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+            </select></div>
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Жёлтый, мин" %}</span><input class="pw-in pw-mins" name="warn" value="8"></div>
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Красный, мин" %}</span><input class="pw-in pw-mins" name="late" value="15"></div>
+          <button class="pw-btn prim" type="submit">{% trans "Добавить порог" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

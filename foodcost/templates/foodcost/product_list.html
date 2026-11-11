@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Продукты{% endblock %}
+{% block title %}{% trans "Продукты" %}{% endblock %}
 
 {% block content %}
 
@@ -215,20 +216,20 @@
 
     <div class="card page-head">
         <div>
-            <h1>Продукты</h1>
-            <p class="muted">Добавление продуктов, закупочных цен и просмотр актуальной стоимости.</p>
+            <h1>{% trans "Продукты" %}</h1>
+            <p class="muted">{% trans "Добавление продуктов, закупочных цен и просмотр актуальной стоимости." %}</p>
 
             {% if not can_edit %}
-                <div class="readonly-note">Режим просмотра: добавление и редактирование продуктов недоступно.</div>
+                <div class="readonly-note">{% trans "Режим просмотра: добавление и редактирование продуктов недоступно." %}</div>
             {% endif %}
         </div>
 
-        <a class="button" href="/c/{{ country.slug }}/">Блюда →</a>
+        <a class="button" href="/c/{{ country.slug }}/">{% trans "Блюда →" %}</a>
     </div>
 
     {% if can_edit %}
     <div class="card">
-        <h2>Добавить продукт</h2>
+        <h2>{% trans "Добавить продукт" %}</h2>
 
         <form method="post">
             {% csrf_token %}
@@ -236,41 +237,41 @@
 
             <div class="create-grid">
                 <p class="field">
-                    <label>Название продукта</label>
+                    <label>{% trans "Название продукта" %}</label>
                     {{ create_form.name }}
                 </p>
 
                 <p class="field">
-                    <label>Единица</label>
+                    <label>{% trans "Единица" %}</label>
                     {{ create_form.unit }}
                 </p>
 
                 <p class="field">
-                    <label>Цена закупки</label>
+                    <label>{% trans "Цена закупки" %}</label>
                     {{ create_form.price }}
                 </p>
 
                 <p class="field">
-                    <label>Дата цены</label>
+                    <label>{% trans "Дата цены" %}</label>
                     {{ create_form.date }}
                 </p>
 
-                <button type="submit">Сохранить</button>
+                <button type="submit">{% trans "Сохранить" %}</button>
             </div>
         </form>
     </div>
     {% endif %}
 
     <div class="card">
-        <h2>Список продуктов</h2>
+        <h2>{% trans "Список продуктов" %}</h2>
 
         <div class="product-grid">
             <div class="product-head">
-                <div>Название</div>
-                <div>Единица</div>
-                <div>Последняя цена</div>
-                <div>Дата цены</div>
-                <div>Карточка</div>
+                <div>{% trans "Название" %}</div>
+                <div>{% trans "Единица" %}</div>
+                <div>{% trans "Последняя цена" %}</div>
+                <div>{% trans "Дата цены" %}</div>
+                <div>{% trans "Карточка" %}</div>
             </div>
 
             {% for product in products %}
@@ -300,12 +301,12 @@
                 </div>
 
                 <div>
-                    <a class="open" href="/c/{{ country.slug }}/products/{{ product.id }}/">Открыть →</a>
+                    <a class="open" href="/c/{{ country.slug }}/products/{{ product.id }}/">{% trans "Открыть →" %}</a>
                 </div>
             </div>
             {% endwith %}
             {% empty %}
-                <div class="empty">Продуктов пока нет</div>
+                <div class="empty">{% trans "Продуктов пока нет" %}</div>
             {% endfor %}
         </div>
     </div>

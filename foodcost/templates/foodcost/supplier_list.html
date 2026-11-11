@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Поставщики{% endblock %}
+{% block title %}{% trans "Поставщики" %}{% endblock %}
 
 {% block content %}
 
@@ -107,11 +108,11 @@
 
     <div class="fc-page-head">
         <div>
-            <h1>Поставщики</h1>
-            <p class="muted">Управление поставщиками и контроль закупок.</p>
+            <h1>{% trans "Поставщики" %}</h1>
+            <p class="muted">{% trans "Управление поставщиками и контроль закупок." %}</p>
         </div>
         {% if can_edit %}
-            <a href="#create-supplier" class="fc-btn fc-btn-dark">+ Новый поставщик</a>
+            <a href="#create-supplier" class="fc-btn fc-btn-dark">{% trans "+ Новый поставщик" %}</a>
         {% endif %}
     </div>
 
@@ -119,27 +120,27 @@
     <div class="kpi-grid">
         <div class="kpi">
             <div class="kpi-ico ico-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg></div>
-            <div class="kpi-label">Всего поставщиков</div>
+            <div class="kpi-label">{% trans "Всего поставщиков" %}</div>
             <div class="kpi-value">{{ kpi_total }}</div>
-            <div class="kpi-sub">всего</div>
+            <div class="kpi-sub">{% trans "всего" %}</div>
         </div>
         <div class="kpi">
             <div class="kpi-ico ico-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></div>
-            <div class="kpi-label">Активных поставщиков</div>
+            <div class="kpi-label">{% trans "Активных поставщиков" %}</div>
             <div class="kpi-value">{{ kpi_active }}</div>
             <div class="kpi-sub">is_active</div>
         </div>
         <div class="kpi">
             <div class="kpi-ico ico-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
-            <div class="kpi-label">Неоплаченные закупки</div>
+            <div class="kpi-label">{% trans "Неоплаченные закупки" %}</div>
             <div class="kpi-value">{{ kpi_unpaid_count }}</div>
-            <div class="kpi-sub">приходов</div>
+            <div class="kpi-sub">{% trans "приходов" %}</div>
         </div>
         <div class="kpi">
             <div class="kpi-ico ico-danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M14.5 9a2.5 2 0 0 0-5 0c0 1.4 1 2 2.5 2.5s2.5 1.1 2.5 2.5a2.5 2 0 0 1-5 0"/><path d="M12 7v10"/></svg></div>
-            <div class="kpi-label">Задолженность</div>
+            <div class="kpi-label">{% trans "Задолженность" %}</div>
             <div class="kpi-value num">{{ kpi_debt_display }}</div>
-            <div class="kpi-sub">сумма</div>
+            <div class="kpi-sub">{% trans "сумма" %}</div>
         </div>
     </div>
 
@@ -148,28 +149,28 @@
         <form method="get">
             <div class="filters">
                 <div>
-                    <label class="fc-label">Поиск</label>
-                    <input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="Название, контакт или телефон...">
+                    <label class="fc-label">{% trans "Поиск" %}</label>
+                    <input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="{% trans "Название, контакт или телефон..." %}">
                 </div>
                 <div>
-                    <label class="fc-label">Статус</label>
+                    <label class="fc-label">{% trans "Статус" %}</label>
                     <select class="fc-select" name="status">
-                        <option value="">Все статусы</option>
-                        <option value="active" {% if status == "active" %}selected{% endif %}>Активные</option>
-                        <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Неактивные</option>
+                        <option value="">{% trans "Все статусы" %}</option>
+                        <option value="active" {% if status == "active" %}selected{% endif %}>{% trans "Активные" %}</option>
+                        <option value="inactive" {% if status == "inactive" %}selected{% endif %}>{% trans "Неактивные" %}</option>
                     </select>
                 </div>
                 <div>
-                    <label class="fc-label">Есть задолженность</label>
+                    <label class="fc-label">{% trans "Есть задолженность" %}</label>
                     <select class="fc-select" name="has_debt">
-                        <option value="">Все</option>
-                        <option value="yes" {% if has_debt == "yes" %}selected{% endif %}>Да</option>
-                        <option value="no" {% if has_debt == "no" %}selected{% endif %}>Нет</option>
+                        <option value="">{% trans "Все" %}</option>
+                        <option value="yes" {% if has_debt == "yes" %}selected{% endif %}>{% trans "Да" %}</option>
+                        <option value="no" {% if has_debt == "no" %}selected{% endif %}>{% trans "Нет" %}</option>
                     </select>
                 </div>
                 <div class="filter-actions">
-                    <button type="submit" class="fc-btn fc-btn-primary">Применить</button>
-                    <a href="/c/{{ country.slug }}/suppliers/" class="fc-btn fc-btn-secondary">Сбросить</a>
+                    <button type="submit" class="fc-btn fc-btn-primary">{% trans "Применить" %}</button>
+                    <a href="/c/{{ country.slug }}/suppliers/" class="fc-btn fc-btn-secondary">{% trans "Сбросить" %}</a>
                 </div>
             </div>
         </form>
@@ -179,14 +180,14 @@
     <div class="fc-card">
         <div class="fc-table">
             <div class="t-head">
-                <div>Название</div>
-                <div>Контактное лицо</div>
-                <div>Телефон</div>
-                <div>Товаров</div>
-                <div>Закупок</div>
-                <div>Последняя закупка</div>
-                <div>Задолженность</div>
-                <div>Статус</div>
+                <div>{% trans "Название" %}</div>
+                <div>{% trans "Контактное лицо" %}</div>
+                <div>{% trans "Телефон" %}</div>
+                <div>{% trans "Товаров" %}</div>
+                <div>{% trans "Закупок" %}</div>
+                <div>{% trans "Последняя закупка" %}</div>
+                <div>{% trans "Задолженность" %}</div>
+                <div>{% trans "Статус" %}</div>
                 <div></div>
             </div>
 
@@ -201,25 +202,25 @@
                     <div>{% if r.last_purchase %}{{ r.last_purchase|date:"d.m.Y" }}{% else %}<span class="muted">—</span>{% endif %}</div>
                     <div class="num {% if r.debt > 0 %}debt-red{% endif %}">{{ r.debt_display }}</div>
                     <div>
-                        {% if r.is_active %}<span class="badge badge-green">Активный</span>{% else %}<span class="badge badge-gray">Неактивный</span>{% endif %}
+                        {% if r.is_active %}<span class="badge badge-green">{% trans "Активный" %}</span>{% else %}<span class="badge badge-gray">{% trans "Неактивный" %}</span>{% endif %}
                     </div>
                     <div class="row-actions">
-                        <a href="/c/{{ country.slug }}/suppliers/{{ r.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">Открыть</a>
+                        <a href="/c/{{ country.slug }}/suppliers/{{ r.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">{% trans "Открыть" %}</a>
                         {% if can_edit %}
                             <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm edit-btn">✎</button>
                             {% if r.is_active %}
-                            <form method="post" onsubmit="return confirm('Архивировать поставщика «{{ r.name|escapejs }}»? Он перестанет быть активным, но история сохранится.');">
+                            <form method="post" onsubmit="return confirm('{% trans "Архивировать поставщика" as j1 %}{{ j1|escapejs }} «{{ r.name|escapejs }}»? {% trans "Он перестанет быть активным, но история сохранится." as j2 %}{{ j2|escapejs }}');">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="archive_supplier">
                                 <input type="hidden" name="supplier_id" value="{{ r.id }}">
-                                <button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">Архив</button>
+                                <button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">{% trans "Архив" %}</button>
                             </form>
                             {% else %}
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="unarchive_supplier">
                                 <input type="hidden" name="supplier_id" value="{{ r.id }}">
-                                <button type="submit" class="fc-btn fc-btn-secondary fc-btn-sm">Вернуть</button>
+                                <button type="submit" class="fc-btn fc-btn-secondary fc-btn-sm">{% trans "Вернуть" %}</button>
                             </form>
                             {% endif %}
                         {% else %}
@@ -235,30 +236,30 @@
                         <input type="hidden" name="action" value="update_supplier">
                         <input type="hidden" name="supplier_id" value="{{ r.id }}">
                         <div class="form-grid">
-                            <div><label class="fc-label">Название *</label><input class="fc-input" name="name" value="{{ r.name }}" required></div>
-                            <div><label class="fc-label">Контактное лицо</label><input class="fc-input" name="contact_person" value="{{ r.contact_person }}"></div>
+                            <div><label class="fc-label">{% trans "Название *" %}</label><input class="fc-input" name="name" value="{{ r.name }}" required></div>
+                            <div><label class="fc-label">{% trans "Контактное лицо" %}</label><input class="fc-input" name="contact_person" value="{{ r.contact_person }}"></div>
                             <div><label class="fc-label">Telegram</label><input class="fc-input" name="telegram" value="{{ r.telegram }}"></div>
                             <div><label class="fc-label">Email</label><input class="fc-input" name="email" value="{{ r.email }}"></div>
-                            <div style="grid-column:span 2;"><label class="fc-label">Телефоны (по одному в строке)</label><textarea class="fc-textarea" name="phone">{{ r.phone }}</textarea></div>
-                            <div style="grid-column:span 3;"><label class="fc-label">Комментарий</label><textarea class="fc-textarea" name="comment">{{ r.comment }}</textarea></div>
-                            <div><label class="fc-label">&nbsp;</label><label style="display:flex;align-items:center;gap:8px;height:40px;"><input type="checkbox" name="is_active" {% if r.is_active %}checked{% endif %} style="width:17px;height:17px;accent-color:var(--fc-green);"> Активен</label></div>
+                            <div style="grid-column:span 2;"><label class="fc-label">{% trans "Телефоны (по одному в строке)" %}</label><textarea class="fc-textarea" name="phone">{{ r.phone }}</textarea></div>
+                            <div style="grid-column:span 3;"><label class="fc-label">{% trans "Комментарий" %}</label><textarea class="fc-textarea" name="comment">{{ r.comment }}</textarea></div>
+                            <div><label class="fc-label">&nbsp;</label><label style="display:flex;align-items:center;gap:8px;height:40px;"><input type="checkbox" name="is_active" {% if r.is_active %}checked{% endif %} style="width:17px;height:17px;accent-color:var(--fc-green);"> {% trans "Активен" %}</label></div>
                         </div>
                         <div class="edit-actions">
-                            <button type="button" class="fc-btn fc-btn-secondary cancel-edit-btn">Отмена</button>
-                            <button type="submit" class="fc-btn fc-btn-primary">Сохранить</button>
+                            <button type="button" class="fc-btn fc-btn-secondary cancel-edit-btn">{% trans "Отмена" %}</button>
+                            <button type="submit" class="fc-btn fc-btn-primary">{% trans "Сохранить" %}</button>
                         </div>
                     </form>
                 </div>
                 {% endif %}
             </div>
             {% empty %}
-                <div class="empty">Поставщиков пока нет.{% if can_edit %} Создайте первого ниже.{% endif %}</div>
+                <div class="empty">{% trans "Поставщиков пока нет." %}{% if can_edit %} {% trans "Создайте первого ниже." %}{% endif %}</div>
             {% endfor %}
         </div>
 
         <div class="t-foot">
             <div class="muted">
-                {% if total_count %}Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}{% else %}Ничего не найдено{% endif %}
+                {% if total_count %}{% blocktrans with s=page_obj.start_index e=page_obj.end_index tot=total_count %}Показано {{ s }}–{{ e }} из {{ tot }}{% endblocktrans %}{% else %}{% trans "Ничего не найдено" %}{% endif %}
             </div>
             {% if page_obj.paginator.num_pages > 1 %}
             <div class="pager">
@@ -274,7 +275,7 @@
                 {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
                 {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
                 {% if has_debt %}<input type="hidden" name="has_debt" value="{{ has_debt }}">{% endif %}
-                <span class="muted">На странице</span>
+                <span class="muted">{% trans "На странице" %}</span>
                 <select class="fc-select" name="per_page" onchange="this.form.submit()" style="width:auto;height:36px;">
                     <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
                     <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
@@ -287,21 +288,21 @@
     <!-- Создать поставщика -->
     {% if can_edit %}
     <div class="fc-card" id="create-supplier">
-        <h2>Новый поставщик</h2>
+        <h2>{% trans "Новый поставщик" %}</h2>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="create_supplier">
             <div class="form-grid">
-                <div><label class="fc-label">Название *</label><input class="fc-input" name="name" placeholder="Например: Asia Foods" required></div>
-                <div><label class="fc-label">Контактное лицо</label><input class="fc-input" name="contact_person" placeholder="Иван Петров"></div>
+                <div><label class="fc-label">{% trans "Название *" %}</label><input class="fc-input" name="name" placeholder="{% trans "Например: Asia Foods" %}" required></div>
+                <div><label class="fc-label">{% trans "Контактное лицо" %}</label><input class="fc-input" name="contact_person" placeholder="{% trans "Иван Петров" %}"></div>
                 <div><label class="fc-label">Telegram</label><input class="fc-input" name="telegram" placeholder="@asia_foods"></div>
                 <div><label class="fc-label">Email</label><input class="fc-input" name="email" placeholder="info@asiafoods.uz"></div>
-                <div style="grid-column:span 2;"><label class="fc-label">Телефоны (по одному в строке)</label><textarea class="fc-textarea" name="phone" placeholder="+998 90 123 45 67&#10;+998 99 123 45 67"></textarea></div>
-                <div style="grid-column:span 3;"><label class="fc-label">Комментарий</label><textarea class="fc-textarea" name="comment" placeholder="Необязательно"></textarea></div>
-                <div><label class="fc-label">&nbsp;</label><label style="display:flex;align-items:center;gap:8px;height:40px;"><input type="checkbox" name="is_active" checked style="width:17px;height:17px;accent-color:var(--fc-green);"> Активен</label></div>
+                <div style="grid-column:span 2;"><label class="fc-label">{% trans "Телефоны (по одному в строке)" %}</label><textarea class="fc-textarea" name="phone" placeholder="+998 90 123 45 67&#10;+998 99 123 45 67"></textarea></div>
+                <div style="grid-column:span 3;"><label class="fc-label">{% trans "Комментарий" %}</label><textarea class="fc-textarea" name="comment" placeholder="{% trans "Необязательно" %}"></textarea></div>
+                <div><label class="fc-label">&nbsp;</label><label style="display:flex;align-items:center;gap:8px;height:40px;"><input type="checkbox" name="is_active" checked style="width:17px;height:17px;accent-color:var(--fc-green);"> {% trans "Активен" %}</label></div>
             </div>
             <div class="edit-actions">
-                <button type="submit" class="fc-btn fc-btn-primary">Создать поставщика</button>
+                <button type="submit" class="fc-btn fc-btn-primary">{% trans "Создать поставщика" %}</button>
             </div>
         </form>
     </div>

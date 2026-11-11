@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Коммунальные расходы{% endblock %}
+{% block title %}{% trans "Коммунальные расходы" %}{% endblock %}
 
 {% block content %}
 
@@ -105,58 +106,58 @@
 <div class="page">
 
     <div class="card">
-        <h1>Коммунальные расходы</h1>
-        <p class="muted">Учёт воды, электричества, аренды и рабочих часов для расчёта стоимости минуты.</p>
+        <h1>{% trans "Коммунальные расходы" %}</h1>
+        <p class="muted">{% trans "Учёт воды, электричества, аренды и рабочих часов для расчёта стоимости минуты." %}</p>
     </div>
 
     <div class="card">
-        <h2>Добавить месяц</h2>
+        <h2>{% trans "Добавить месяц" %}</h2>
 
         <form method="post">
             {% csrf_token %}
 
             <div class="create-grid">
                 <div>
-                    <label>Месяц</label>
+                    <label>{% trans "Месяц" %}</label>
                     <input type="date" name="month">
                 </div>
 
                 <div>
-                    <label>Вода</label>
+                    <label>{% trans "Вода" %}</label>
                     <input type="number" step="0.01" name="water" placeholder="0.00">
                 </div>
 
                 <div>
-                    <label>Электричество</label>
+                    <label>{% trans "Электричество" %}</label>
                     <input type="number" step="0.01" name="electricity" placeholder="0.00">
                 </div>
 
                 <div>
-                    <label>Аренда</label>
+                    <label>{% trans "Аренда" %}</label>
                     <input type="number" step="0.01" name="rent" placeholder="0.00">
                 </div>
 
                 <div>
-                    <label>Рабочие часы</label>
+                    <label>{% trans "Рабочие часы" %}</label>
                     <input type="number" step="0.01" name="working_hours" placeholder="160">
                 </div>
 
-                <button type="submit">Добавить</button>
+                <button type="submit">{% trans "Добавить" %}</button>
             </div>
         </form>
     </div>
 
     <div class="card">
-        <h2>История расходов</h2>
+        <h2>{% trans "История расходов" %}</h2>
 
         <div class="utilities-table">
             <div class="utilities-head">
-                <div>Месяц</div>
-                <div>Вода</div>
-                <div>Электричество</div>
-                <div>Аренда</div>
-                <div>Рабочие часы</div>
-                <div>Итого</div>
+                <div>{% trans "Месяц" %}</div>
+                <div>{% trans "Вода" %}</div>
+                <div>{% trans "Электричество" %}</div>
+                <div>{% trans "Аренда" %}</div>
+                <div>{% trans "Рабочие часы" %}</div>
+                <div>{% trans "Итого" %}</div>
             </div>
 
             {% for u in utilities %}
@@ -170,7 +171,7 @@
             </div>
             {% empty %}
                 <div class="utilities-row">
-                    <div class="muted">Расходов пока нет</div>
+                    <div class="muted">{% trans "Расходов пока нет" %}</div>
                 </div>
             {% endfor %}
         </div>

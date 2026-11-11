@@ -1,0 +1,765 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-27 18:16+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Касса / зал"
+msgstr "POS / hall"
+
+msgid "Кухня (KDS)"
+msgstr "Kitchen (KDS)"
+
+msgid "Настройки кассы"
+msgstr "POS settings"
+
+msgid "Официант"
+msgstr "Waiter"
+
+msgid "Повар/кухня"
+msgstr "Cook/kitchen"
+
+msgid "Менеджер"
+msgstr "Manager"
+
+msgid "Позиция уже отправлена на кухню — изменить нельзя."
+msgstr "Item already sent to kitchen — can't change."
+
+msgid "Позиция уже отправлена на кухню — снять нельзя."
+msgstr "Item already sent to kitchen — can't remove."
+
+msgid "Официант заказа"
+msgstr "Order waiter"
+
+msgid "Общий фонд"
+msgstr "Shared pool"
+
+msgid "Круглый"
+msgstr "Round"
+
+msgid "Квадратный"
+msgstr "Square"
+
+msgid "Длинный"
+msgstr "Long"
+
+msgid "Активна"
+msgstr "Active"
+
+msgid "Гость сел"
+msgstr "Guest seated"
+
+msgid "Отменена"
+msgstr "Cancelled"
+
+msgid "Не пришёл"
+msgstr "No-show"
+
+msgid "Тест"
+msgstr "Test"
+
+msgid "Боевой"
+msgstr "Live"
+
+msgid "12% — в том числе"
+msgstr "12% — included"
+
+msgid "0% — без НДС"
+msgstr "0% — no VAT"
+
+msgid "Не плательщик НДС"
+msgstr "Not a VAT payer"
+
+msgid "Касса сама"
+msgstr "POS itself"
+
+msgid "Платёжная система"
+msgstr "Payment system"
+
+msgid "Не фискализировать"
+msgstr "Don't fiscalize"
+
+msgid "Без деления"
+msgstr "No split"
+
+msgid "По позициям"
+msgstr "By items"
+
+msgid "Поровну"
+msgstr "Evenly"
+
+msgid "Принято"
+msgstr "Accepted"
+
+msgid "Готовится"
+msgstr "Cooking"
+
+msgid "Готово"
+msgstr "Ready"
+
+msgid "Отменено"
+msgstr "Cancelled"
+
+msgid "Ожидает"
+msgstr "Pending"
+
+msgid "Фискализирован"
+msgstr "Fiscalized"
+
+msgid "Без фискализации"
+msgstr "No fiscalization"
+
+msgid "Баллы нельзя совмещать со скидкой"
+msgstr "Points can't be combined with a discount"
+
+msgid "Списание ограничено {}% счёта"
+msgstr "Redeem limited to {}% of the bill"
+
+msgid "Укажите телефон гостя."
+msgstr "Enter the guest's phone."
+
+msgid "Программа лояльности выключена."
+msgstr "Loyalty program is off."
+
+msgid "Счёт пуст."
+msgstr "The bill is empty."
+
+msgid "Не выбран способ оплаты."
+msgstr "No payment method selected."
+
+#, python-format
+msgid "Сумма оплат (%(paid)s) ≠ итогу (%(total)s)."
+msgstr "Payments sum (%(paid)s) ≠ total (%(total)s)."
+
+msgid "Часть под-счетов уже оплачена — делить заново нельзя."
+msgstr "Some sub-bills are paid — can't re-split."
+
+msgid "Гость {}"
+msgstr "Guest {}"
+
+msgid "Счёт {}"
+msgstr "Bill {}"
+
+msgid "Неизвестный режим деления."
+msgstr "Unknown split mode."
+
+msgid "Есть оплаченные под-счета — отменить деление нельзя."
+msgstr "Paid sub-bills exist — can't cancel the split."
+
+msgid "Под-счёт уже оплачен."
+msgstr "Sub-bill already paid."
+
+msgid "Распределите все позиции по под-счетам."
+msgstr "Assign all items to sub-bills."
+
+#, python-format
+msgid "Сумма оплат (%(paid)s) ≠ под-счёту (%(bill)s)."
+msgstr "Payments sum (%(paid)s) ≠ sub-bill (%(bill)s)."
+
+msgid "Доступы кассы"
+msgstr "POS access"
+
+msgid ""
+"Кто что видит в кассе. Официант — только касса/зал, повар — только кухня "
+"(KDS), менеджер — всё. Админы видят всё по умолчанию."
+msgstr ""
+"Who sees what in POS. Waiter — POS/hall only, cook — kitchen (KDS) only, "
+"manager — all. Admins see everything by default."
+
+msgid "Полный доступ (админ)"
+msgstr "Full access (admin)"
+
+msgid "Повар"
+msgstr "Cook"
+
+msgid ""
+"Роль администратора — доступ ко всем разделам кассы. POS-роли здесь не "
+"нужны."
+msgstr ""
+"Administrator role — access to all POS sections. POS roles not needed here."
+
+msgid "Сохранить"
+msgstr "Save"
+
+msgid ""
+"У этой точки нет сотрудников с доступом. Добавьте их в «Роли и доступы»."
+msgstr "This location has no staff with access. Add them in \"Roles & access\"."
+
+msgid ""
+"POS-роли дополняют существующие «Роли и доступы»: пока POS-роль не "
+"назначена, доступ определяется прежними секциями («Заказы» → касса, роль "
+"«кухня» → KDS)."
+msgstr ""
+"POS roles complement existing \"Roles & access\": until a POS role is "
+"assigned, access follows the old sections (\"Orders\" → POS, \"kitchen\" "
+"role → KDS)."
+
+msgid "Касса — заказ"
+msgstr "POS — order"
+
+msgid "Стол"
+msgstr "Table"
+
+msgid "— выберите —"
+msgstr "— select —"
+
+msgid "Все"
+msgstr "All"
+
+msgid "Поиск блюда…"
+msgstr "Search dish…"
+
+msgid "Блюд нет — заведите их в разделе «Блюда»."
+msgstr "No dishes — add them in the \"Dishes\" section."
+
+msgid "Чек"
+msgstr "Bill"
+
+msgid "Гостей"
+msgstr "Guests"
+
+msgid "Выберите стол, чтобы открыть заказ."
+msgstr "Select a table to open an order."
+
+msgid "Заказ пуст. Выберите стол и добавьте блюда."
+msgstr "Order is empty. Select a table and add dishes."
+
+msgid "Итого"
+msgstr "Total"
+
+msgid "Отправить на кухню"
+msgstr "Send to kitchen"
+
+msgid "К оплате"
+msgstr "To payment"
+
+msgid "Оплата счёта"
+msgstr "Bill payment"
+
+msgid "⑂ Разделить счёт"
+msgstr "⑂ Split the bill"
+
+msgid "Скидка"
+msgstr "Discount"
+
+msgid "Нет"
+msgstr "None"
+
+msgid "Сумма…"
+msgstr "Amount…"
+
+msgid "Сумма скидки"
+msgstr "Discount amount"
+
+msgid "Баллы гостя"
+msgstr "Guest points"
+
+msgid "Телефон гостя (+998…)"
+msgstr "Guest phone (+998…)"
+
+msgid "Найти"
+msgstr "Find"
+
+msgid "0 баллов"
+msgstr "0 points"
+
+msgid "Списать баллов"
+msgstr "Redeem points"
+
+msgid "Требуется SMS-подтверждение (в этой сборке — заглушка)."
+msgstr "SMS confirmation required (stub in this build)."
+
+msgid "Сервис и чаевые"
+msgstr "Service & tips"
+
+msgid "Сервисный сбор"
+msgstr "Service charge"
+
+msgid "Своя сумма чаевых"
+msgstr "Custom tip amount"
+
+msgid "Способы оплаты"
+msgstr "Payment methods"
+
+msgid "＋ Оплата несколькими способами"
+msgstr "＋ Pay with several methods"
+
+msgid "Разделить"
+msgstr "Split"
+
+msgid "Позиции по счетам"
+msgstr "Items by bills"
+
+msgid "＋ Ещё счёт"
+msgstr "＋ Another bill"
+
+msgid "Под-счета"
+msgstr "Sub-bills"
+
+msgid "↩ Вернуть к общей оплате"
+msgstr "↩ Back to single payment"
+
+msgid "Оплатить"
+msgstr "Pay"
+
+msgid "Ошибка сервера"
+msgstr "Server error"
+
+msgid "Чек · стол"
+msgstr "Bill · table"
+
+msgid "Заказ пуст. Нажмите на блюдо слева."
+msgstr "Order is empty. Tap a dish on the left."
+
+msgid "на кухне"
+msgstr "in kitchen"
+
+msgid "Сначала выберите стол"
+msgstr "Select a table first"
+
+msgid "Отправлено на кухню:"
+msgstr "Sent to kitchen:"
+
+msgid "Подытог"
+msgstr "Subtotal"
+
+msgid "Баллы"
+msgstr "Points"
+
+msgid "Сервис"
+msgstr "Service"
+
+msgid "Чаевые"
+msgstr "Tips"
+
+msgid "Итого к оплате"
+msgstr "Total due"
+
+msgid "Без чаевых"
+msgstr "No tip"
+
+msgid "Своя…"
+msgstr "Custom…"
+
+msgid "— способ —"
+msgstr "— method —"
+
+msgid "Осталось внести:"
+msgstr "Remaining:"
+
+msgid "Перебор:"
+msgstr "Overpaid:"
+
+msgid "Сумма сходится"
+msgstr "Amount matches"
+
+msgid "Введите телефон"
+msgstr "Enter the phone"
+
+msgid "Гость не найден"
+msgstr "Guest not found"
+
+msgid "баллов"
+msgstr "points"
+
+msgid "Списать до"
+msgstr "Redeem up to"
+
+msgid "Счёт оплачен:"
+msgstr "Bill paid:"
+
+msgid "— счёт —"
+msgstr "— bill —"
+
+msgid "Счёт"
+msgstr "Bill"
+
+msgid "Укажите число гостей (от 2)"
+msgstr "Enter number of guests (from 2)"
+
+msgid "Под-счетов пока нет."
+msgstr "No sub-bills yet."
+
+msgid "✓ Оплачено"
+msgstr "✓ Paid"
+
+msgid "Осталось распределить:"
+msgstr "Left to assign:"
+
+msgid "Выберите способ оплаты"
+msgstr "Select a payment method"
+
+msgid "Счёт полностью оплачен"
+msgstr "Bill fully paid"
+
+msgid "Под-счёт оплачен"
+msgstr "Sub-bill paid"
+
+msgid "Расстановка столов"
+msgstr "Table layout"
+
+msgid ""
+"Перетаскивай столы на плане — позиции сохраняются сразу. Ниже — "
+"добавление/правка зон и столов."
+msgstr ""
+"Drag tables on the plan — positions save instantly. Below — add/edit zones "
+"and tables."
+
+msgid "Точка"
+msgstr "Location"
+
+msgid "Все точки"
+msgstr "All locations"
+
+msgid "Удалить зону"
+msgstr "Delete zone"
+
+msgid ""
+"Добавьте столы ниже — они появятся здесь, и их можно будет перетаскивать."
+msgstr "Add tables below — they'll appear here and can be dragged."
+
+msgid "Перетаскивание мышью или пальцем · позиция сохраняется автоматически."
+msgstr "Drag with mouse or finger · position saves automatically."
+
+msgid "Открыть заказ"
+msgstr "Open order"
+
+msgid "Столов в этой зоне нет."
+msgstr "No tables in this zone."
+
+msgid "Добавить стол"
+msgstr "Add table"
+
+msgid "Номер"
+msgstr "Number"
+
+msgid "Мест"
+msgstr "Seats"
+
+msgid "Форма"
+msgstr "Shape"
+
+msgid "Зон пока нет. Добавьте первую ниже."
+msgstr "No zones yet. Add the first one below."
+
+msgid "Добавить зону"
+msgstr "Add zone"
+
+msgid "Название"
+msgstr "Name"
+
+msgid "Напр.: Основной зал"
+msgstr "E.g.: Main hall"
+
+msgid "Кухня — KDS"
+msgstr "Kitchen — KDS"
+
+msgid "подключено"
+msgstr "connected"
+
+msgid "Тикеты"
+msgstr "Tickets"
+
+msgid "Группировка"
+msgstr "Grouping"
+
+msgid "Экран"
+msgstr "Screen"
+
+msgid "Все экраны"
+msgstr "All screens"
+
+msgid "нет связи"
+msgstr "no connection"
+
+msgid "Активных заказов нет."
+msgstr "No active orders."
+
+msgid "Заказ #"
+msgstr "Order #"
+
+msgid "гост."
+msgstr "guests"
+
+msgid "готово"
+msgstr "ready"
+
+msgid "Нет позиций в работе."
+msgstr "No items in progress."
+
+msgid "← Настройка кассы"
+msgstr "← POS settings"
+
+msgid "Экраны и пороги кухни"
+msgstr "Kitchen screens & timers"
+
+msgid "Экраны кухни"
+msgstr "Kitchen screens"
+
+msgid "какие категории на каком экране KDS"
+msgstr "which categories on which KDS screen"
+
+msgid "Подключён"
+msgstr "Connected"
+
+msgid "новый код"
+msgstr "new code"
+
+msgid "Удалить"
+msgstr "Delete"
+
+msgid "Экранов пока нет. Добавьте первый ниже."
+msgstr "No screens yet. Add the first one below."
+
+msgid "Добавить экран"
+msgstr "Add screen"
+
+msgid "Напр.: Горячий цех"
+msgstr "E.g.: Hot station"
+
+msgid "Категории (можно несколько)"
+msgstr "Categories (multiple allowed)"
+
+msgid "Пороги времени (таймеры KDS)"
+msgstr "Time thresholds (KDS timers)"
+
+msgid "когда тикет желтеет и краснеет"
+msgstr "when a ticket turns yellow and red"
+
+msgid "жёлтый"
+msgstr "yellow"
+
+msgid "красный"
+msgstr "red"
+
+msgid "Порогов нет. Общий порог и переопределения добавьте ниже."
+msgstr "No thresholds. Add a general threshold and overrides below."
+
+msgid "Добавить порог"
+msgstr "Add threshold"
+
+msgid "KDS (пусто — все)"
+msgstr "KDS (empty — all)"
+
+msgid "Все KDS"
+msgstr "All KDS"
+
+msgid "Категория (пусто — все блюда)"
+msgstr "Category (empty — all dishes)"
+
+msgid "Все блюда"
+msgstr "All dishes"
+
+msgid "Жёлтый, мин"
+msgstr "Yellow, min"
+
+msgid "Красный, мин"
+msgstr "Red, min"
+
+msgid "Лояльность и баллы"
+msgstr "Loyalty & points"
+
+msgid "Программа"
+msgstr "Program"
+
+msgid "Программа лояльности включена"
+msgstr "Loyalty program enabled"
+
+msgid "Идентификация по номеру телефона"
+msgstr "Identify by phone number"
+
+msgid "Идентификация по QR-коду гостя"
+msgstr "Identify by guest QR code"
+
+msgid "Подтверждение по SMS при списании баллов"
+msgstr "SMS confirmation when redeeming points"
+
+msgid "Начисление баллов"
+msgstr "Earning points"
+
+msgid "Начислять с заказа"
+msgstr "Earn from the order"
+
+msgid "процент от суммы уходит в баллы (1 балл = 1 сум)"
+msgstr "a percent of the amount becomes points (1 point = 1 UZS)"
+
+msgid "Не начислять на позиции со скидкой"
+msgstr "Don't earn on discounted items"
+
+msgid "Списание баллов"
+msgstr "Redeeming points"
+
+msgid "Оплачивать баллами до"
+msgstr "Pay with points up to"
+
+msgid "макс. доля счёта"
+msgstr "max share of the bill"
+
+#, python-format
+msgid "%% счёта"
+msgstr "%% of bill"
+
+msgid "Можно совмещать со скидками"
+msgstr "Can combine with discounts"
+
+msgid "Срок действия баллов"
+msgstr "Points expiry"
+
+msgid "Не сгорают"
+msgstr "Never expire"
+
+msgid "6 месяцев"
+msgstr "6 months"
+
+msgid "12 месяцев"
+msgstr "12 months"
+
+msgid "24 месяца"
+msgstr "24 months"
+
+msgid "Включить уровни гостей"
+msgstr "Enable guest tiers"
+
+msgid "Сохранить программу"
+msgstr "Save program"
+
+msgid "Уровни гостей (опционально)"
+msgstr "Guest tiers (optional)"
+
+msgid "оборот от"
+msgstr "turnover from"
+
+msgid "начисление"
+msgstr "earn"
+
+msgid ""
+"Уровней нет. Добавьте, если нужны (например Бронза / Серебро / Золото)."
+msgstr "No tiers. Add them if needed (e.g. Bronze / Silver / Gold)."
+
+msgid "Добавить уровень"
+msgstr "Add tier"
+
+msgid "Напр.: Серебро"
+msgstr "E.g.: Silver"
+
+msgid "Оборот от"
+msgstr "Turnover from"
+
+#, python-format
+msgid "Начисление, %%"
+msgstr "Earn, %%"
+
+msgid "Добавить"
+msgstr "Add"
+
+msgid "Оплаты и фискализация"
+msgstr "Payments & fiscalization"
+
+msgid ""
+"Применяется ко всем точкам. Реквизиты юр.лица/ИНН берутся из «Настройки»."
+msgstr ""
+"Applies to all locations. Legal entity/TIN details come from \"Settings\"."
+
+msgid "Фискализация"
+msgstr "Fiscalization"
+
+msgid "Подключено"
+msgstr "Connected"
+
+msgid "Режим работы"
+msgstr "Operating mode"
+
+msgid "в тесте чеки не уходят в налоговую"
+msgstr "in test mode receipts don't go to tax office"
+
+msgid "НДС в чеке"
+msgstr "VAT on receipt"
+
+msgid "показывается только в фискальном чеке, на кассе не виден"
+msgstr "shown only on the fiscal receipt, not in POS"
+
+msgid "создаются в «Настройки»"
+msgstr "created in \"Settings\""
+
+msgid "показывать на кассе"
+msgstr "show in POS"
+
+msgid "Фискализация:"
+msgstr "Fiscalization:"
+
+msgid "Способов оплаты пока нет — создайте их в разделе «Настройки»."
+msgstr "No payment methods yet — create them in \"Settings\"."
+
+msgid "Обслуживание и чаевые"
+msgstr "Service & tips"
+
+msgid "Применяется ко всем точкам. (Переопределение по точкам добавим позже.)"
+msgstr "Applies to all locations. (Per-location overrides later.)"
+
+msgid "Сервисный сбор (обслуживание)"
+msgstr "Service charge"
+
+msgid "Включён"
+msgstr "Enabled"
+
+msgid "Процент"
+msgstr "Percent"
+
+msgid "добавляется к счёту"
+msgstr "added to the bill"
+
+msgid "Начислять на"
+msgstr "Apply to"
+
+msgid "Зал"
+msgstr "Hall"
+
+msgid "Доставка"
+msgstr "Delivery"
+
+msgid "Самовывоз"
+msgstr "Pickup"
+
+msgid "Добавлять автоматически (иначе кнопкой кассира)"
+msgstr "Add automatically (otherwise by cashier button)"
+
+msgid "Разрешить снимать на кассе"
+msgstr "Allow removing in POS"
+
+msgid "Включены"
+msgstr "Enabled"
+
+msgid "Быстрые проценты"
+msgstr "Quick percentages"
+
+msgid "через запятую, напр.: 5, 10, 15"
+msgstr "comma-separated, e.g.: 5, 10, 15"
+
+msgid "Разрешить свою сумму"
+msgstr "Allow custom amount"
+
+msgid "Чаевые получает"
+msgstr "Tips go to"
+
+msgid "в разработке"
+msgstr "in development"
+
+msgid "Этот раздел «Настройки кассы» скоро появится."
+msgstr "This \"POS settings\" section is coming soon."
+
+msgid "Некорректные координаты."
+msgstr "Invalid coordinates."

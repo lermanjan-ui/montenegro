@@ -1,0 +1,774 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-27 18:16+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: uz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Касса / зал"
+msgstr "Kassa / zal"
+
+msgid "Кухня (KDS)"
+msgstr "Oshxona (KDS)"
+
+msgid "Настройки кассы"
+msgstr "Kassa sozlamalari"
+
+msgid "Официант"
+msgstr "Ofitsiant"
+
+msgid "Повар/кухня"
+msgstr "Oshpaz/oshxona"
+
+msgid "Менеджер"
+msgstr "Menejer"
+
+msgid "Позиция уже отправлена на кухню — изменить нельзя."
+msgstr "Pozitsiya oshxonaga yuborilgan — o'zgartirib bo'lmaydi."
+
+msgid "Позиция уже отправлена на кухню — снять нельзя."
+msgstr "Pozitsiya oshxonaga yuborilgan — olib tashlab bo'lmaydi."
+
+msgid "Официант заказа"
+msgstr "Buyurtma ofitsianti"
+
+msgid "Общий фонд"
+msgstr "Umumiy jamg'arma"
+
+msgid "Круглый"
+msgstr "Dumaloq"
+
+msgid "Квадратный"
+msgstr "Kvadrat"
+
+msgid "Длинный"
+msgstr "Uzun"
+
+msgid "Активна"
+msgstr "Faol"
+
+msgid "Гость сел"
+msgstr "Mehmon o'tirdi"
+
+msgid "Отменена"
+msgstr "Bekor qilindi"
+
+msgid "Не пришёл"
+msgstr "Kelmadi"
+
+msgid "Тест"
+msgstr "Test"
+
+msgid "Боевой"
+msgstr "Jangovar"
+
+msgid "12% — в том числе"
+msgstr "12% — shu jumladan"
+
+msgid "0% — без НДС"
+msgstr "0% — QQSsiz"
+
+msgid "Не плательщик НДС"
+msgstr "QQS to'lovchisi emas"
+
+msgid "Касса сама"
+msgstr "Kassaning o'zi"
+
+msgid "Платёжная система"
+msgstr "To'lov tizimi"
+
+msgid "Не фискализировать"
+msgstr "Fiskallashtirilmasin"
+
+msgid "Без деления"
+msgstr "Bo'linishsiz"
+
+msgid "По позициям"
+msgstr "Pozitsiyalar bo'yicha"
+
+msgid "Поровну"
+msgstr "Teng"
+
+msgid "Принято"
+msgstr "Qabul qilindi"
+
+msgid "Готовится"
+msgstr "Tayyorlanmoqda"
+
+msgid "Готово"
+msgstr "Tayyor"
+
+msgid "Отменено"
+msgstr "Bekor qilindi"
+
+msgid "Ожидает"
+msgstr "Kutmoqda"
+
+msgid "Фискализирован"
+msgstr "Fiskallashtirildi"
+
+msgid "Без фискализации"
+msgstr "Fiskalizatsiyasiz"
+
+msgid "Баллы нельзя совмещать со скидкой"
+msgstr "Ballarni chegirma bilan birlashtirib bo'lmaydi"
+
+msgid "Списание ограничено {}% счёта"
+msgstr "Yechish hisobning {}% bilan cheklangan"
+
+msgid "Укажите телефон гостя."
+msgstr "Mehmon telefonini kiriting."
+
+msgid "Программа лояльности выключена."
+msgstr "Sodiqlik dasturi o'chirilgan."
+
+msgid "Счёт пуст."
+msgstr "Hisob bo'sh."
+
+msgid "Не выбран способ оплаты."
+msgstr "To'lov usuli tanlanmagan."
+
+#, python-format
+msgid "Сумма оплат (%(paid)s) ≠ итогу (%(total)s)."
+msgstr "To'lov summasi (%(paid)s) ≠ jamiga (%(total)s)."
+
+msgid "Часть под-счетов уже оплачена — делить заново нельзя."
+msgstr "Ba'zi hisoblar to'langan — qayta bo'lib bo'lmaydi."
+
+msgid "Гость {}"
+msgstr "Mehmon {}"
+
+msgid "Счёт {}"
+msgstr "Hisob {}"
+
+msgid "Неизвестный режим деления."
+msgstr "Noma'lum bo'lish rejimi."
+
+msgid "Есть оплаченные под-счета — отменить деление нельзя."
+msgstr "To'langan hisoblar bor — bo'linishni bekor qilib bo'lmaydi."
+
+msgid "Под-счёт уже оплачен."
+msgstr "Hisob allaqachon to'langan."
+
+msgid "Распределите все позиции по под-счетам."
+msgstr "Barcha pozitsiyalarni hisoblar bo'yicha taqsimlang."
+
+#, python-format
+msgid "Сумма оплат (%(paid)s) ≠ под-счёту (%(bill)s)."
+msgstr "To'lov summasi (%(paid)s) ≠ hisobga (%(bill)s)."
+
+msgid "Доступы кассы"
+msgstr "Kassa ruxsatlari"
+
+msgid ""
+"Кто что видит в кассе. Официант — только касса/зал, повар — только кухня "
+"(KDS), менеджер — всё. Админы видят всё по умолчанию."
+msgstr ""
+"Kassada kim nimani ko'radi. Ofitsiant — faqat kassa/zal, oshpaz — faqat "
+"oshxona (KDS), menejer — hammasi. Adminlar hammasini ko'radi."
+
+msgid "Полный доступ (админ)"
+msgstr "To'liq ruxsat (admin)"
+
+msgid "Повар"
+msgstr "Oshpaz"
+
+msgid ""
+"Роль администратора — доступ ко всем разделам кассы. POS-роли здесь не "
+"нужны."
+msgstr ""
+"Administrator roli — kassaning barcha bo'limlariga ruxsat. POS-rollar bu "
+"yerda shart emas."
+
+msgid "Сохранить"
+msgstr "Saqlash"
+
+msgid ""
+"У этой точки нет сотрудников с доступом. Добавьте их в «Роли и доступы»."
+msgstr ""
+"Bu nuqtada ruxsatli xodimlar yo'q. Ularni «Rollar va ruxsatlar»ga qo'shing."
+
+msgid ""
+"POS-роли дополняют существующие «Роли и доступы»: пока POS-роль не "
+"назначена, доступ определяется прежними секциями («Заказы» → касса, роль "
+"«кухня» → KDS)."
+msgstr ""
+"POS-rollar mavjud «Rollar va ruxsatlar»ni to'ldiradi: POS-rol "
+"tayinlanmaguncha, ruxsat avvalgi bo'limlar bilan belgilanadi («Buyurtmalar» "
+"→ kassa, «oshxona» roli → KDS)."
+
+msgid "Касса — заказ"
+msgstr "Kassa — buyurtma"
+
+msgid "Стол"
+msgstr "Stol"
+
+msgid "— выберите —"
+msgstr "— tanlang —"
+
+msgid "Все"
+msgstr "Hammasi"
+
+msgid "Поиск блюда…"
+msgstr "Taom qidirish…"
+
+msgid "Блюд нет — заведите их в разделе «Блюда»."
+msgstr "Taomlar yo'q — ularni «Taomlar» bo'limida qo'shing."
+
+msgid "Чек"
+msgstr "Chek"
+
+msgid "Гостей"
+msgstr "Mehmonlar"
+
+msgid "Выберите стол, чтобы открыть заказ."
+msgstr "Buyurtma ochish uchun stolni tanlang."
+
+msgid "Заказ пуст. Выберите стол и добавьте блюда."
+msgstr "Buyurtma bo'sh. Stolni tanlang va taom qo'shing."
+
+msgid "Итого"
+msgstr "Jami"
+
+msgid "Отправить на кухню"
+msgstr "Oshxonaga yuborish"
+
+msgid "К оплате"
+msgstr "To'lovga"
+
+msgid "Оплата счёта"
+msgstr "Hisobni to'lash"
+
+msgid "⑂ Разделить счёт"
+msgstr "⑂ Hisobni bo'lish"
+
+msgid "Скидка"
+msgstr "Chegirma"
+
+msgid "Нет"
+msgstr "Yo'q"
+
+msgid "Сумма…"
+msgstr "Summa…"
+
+msgid "Сумма скидки"
+msgstr "Chegirma summasi"
+
+msgid "Баллы гостя"
+msgstr "Mehmon ballari"
+
+msgid "Телефон гостя (+998…)"
+msgstr "Mehmon telefoni (+998…)"
+
+msgid "Найти"
+msgstr "Topish"
+
+msgid "0 баллов"
+msgstr "0 ball"
+
+msgid "Списать баллов"
+msgstr "Ball yechish"
+
+msgid "Требуется SMS-подтверждение (в этой сборке — заглушка)."
+msgstr "SMS tasdiqlash kerak (bu yig'ilishda — zaglushka)."
+
+msgid "Сервис и чаевые"
+msgstr "Xizmat va choychaqa"
+
+msgid "Сервисный сбор"
+msgstr "Xizmat haqi"
+
+msgid "Своя сумма чаевых"
+msgstr "O'z choychaqa summangiz"
+
+msgid "Способы оплаты"
+msgstr "To'lov usullari"
+
+msgid "＋ Оплата несколькими способами"
+msgstr "＋ Bir nechta usulda to'lash"
+
+msgid "Разделить"
+msgstr "Bo'lish"
+
+msgid "Позиции по счетам"
+msgstr "Pozitsiyalar hisoblar bo'yicha"
+
+msgid "＋ Ещё счёт"
+msgstr "＋ Yana hisob"
+
+msgid "Под-счета"
+msgstr "Hisoblar"
+
+msgid "↩ Вернуть к общей оплате"
+msgstr "↩ Umumiy to'lovga qaytarish"
+
+msgid "Оплатить"
+msgstr "To'lash"
+
+msgid "Ошибка сервера"
+msgstr "Server xatosi"
+
+msgid "Чек · стол"
+msgstr "Chek · stol"
+
+msgid "Заказ пуст. Нажмите на блюдо слева."
+msgstr "Buyurtma bo'sh. Chapdagi taomni bosing."
+
+msgid "на кухне"
+msgstr "oshxonada"
+
+msgid "Сначала выберите стол"
+msgstr "Avval stolni tanlang"
+
+msgid "Отправлено на кухню:"
+msgstr "Oshxonaga yuborildi:"
+
+msgid "Подытог"
+msgstr "Oraliq jami"
+
+msgid "Баллы"
+msgstr "Ballar"
+
+msgid "Сервис"
+msgstr "Xizmat"
+
+msgid "Чаевые"
+msgstr "Choychaqa"
+
+msgid "Итого к оплате"
+msgstr "To'lovga jami"
+
+msgid "Без чаевых"
+msgstr "Choychaqasiz"
+
+msgid "Своя…"
+msgstr "O'z…"
+
+msgid "— способ —"
+msgstr "— usul —"
+
+msgid "Осталось внести:"
+msgstr "Qoldi kiritish:"
+
+msgid "Перебор:"
+msgstr "Ortiqcha:"
+
+msgid "Сумма сходится"
+msgstr "Summa to'g'ri"
+
+msgid "Введите телефон"
+msgstr "Telefonni kiriting"
+
+msgid "Гость не найден"
+msgstr "Mehmon topilmadi"
+
+msgid "баллов"
+msgstr "ball"
+
+msgid "Списать до"
+msgstr "Yechish mumkin"
+
+msgid "Счёт оплачен:"
+msgstr "Hisob to'landi:"
+
+msgid "— счёт —"
+msgstr "— hisob —"
+
+msgid "Счёт"
+msgstr "Hisob"
+
+msgid "Укажите число гостей (от 2)"
+msgstr "Mehmonlar sonini kiriting (2 dan)"
+
+msgid "Под-счетов пока нет."
+msgstr "Hali hisoblar yo'q."
+
+msgid "✓ Оплачено"
+msgstr "✓ To'landi"
+
+msgid "Осталось распределить:"
+msgstr "Taqsimlash qoldi:"
+
+msgid "Выберите способ оплаты"
+msgstr "To'lov usulini tanlang"
+
+msgid "Счёт полностью оплачен"
+msgstr "Hisob to'liq to'landi"
+
+msgid "Под-счёт оплачен"
+msgstr "Hisob to'landi"
+
+msgid "Расстановка столов"
+msgstr "Stollar joylashuvi"
+
+msgid ""
+"Перетаскивай столы на плане — позиции сохраняются сразу. Ниже — "
+"добавление/правка зон и столов."
+msgstr ""
+"Stollarni rejada suring — joylashuv darhol saqlanadi. Pastda — zona va "
+"stollarni qo'shish/tahrirlash."
+
+msgid "Точка"
+msgstr "Nuqta"
+
+msgid "Все точки"
+msgstr "Barcha nuqtalar"
+
+msgid "Удалить зону"
+msgstr "Zonani o'chirish"
+
+msgid ""
+"Добавьте столы ниже — они появятся здесь, и их можно будет перетаскивать."
+msgstr ""
+"Pastda stollar qo'shing — ular shu yerda paydo bo'ladi va ularni surish "
+"mumkin."
+
+msgid "Перетаскивание мышью или пальцем · позиция сохраняется автоматически."
+msgstr "Sichqoncha yoki barmoq bilan surish · joylashuv avtomatik saqlanadi."
+
+msgid "Открыть заказ"
+msgstr "Buyurtma ochish"
+
+msgid "Столов в этой зоне нет."
+msgstr "Bu zonada stollar yo'q."
+
+msgid "Добавить стол"
+msgstr "Stol qo'shish"
+
+msgid "Номер"
+msgstr "Raqam"
+
+msgid "Мест"
+msgstr "Joy"
+
+msgid "Форма"
+msgstr "Shakl"
+
+msgid "Зон пока нет. Добавьте первую ниже."
+msgstr "Hali zona yo'q. Pastda birinchisini qo'shing."
+
+msgid "Добавить зону"
+msgstr "Zona qo'shish"
+
+msgid "Название"
+msgstr "Nomi"
+
+msgid "Напр.: Основной зал"
+msgstr "Mas.: Asosiy zal"
+
+msgid "Кухня — KDS"
+msgstr "Oshxona — KDS"
+
+msgid "подключено"
+msgstr "ulangan"
+
+msgid "Тикеты"
+msgstr "Tiketlar"
+
+msgid "Группировка"
+msgstr "Guruhlash"
+
+msgid "Экран"
+msgstr "Ekran"
+
+msgid "Все экраны"
+msgstr "Barcha ekranlar"
+
+msgid "нет связи"
+msgstr "aloqa yo'q"
+
+msgid "Активных заказов нет."
+msgstr "Faol buyurtmalar yo'q."
+
+msgid "Заказ #"
+msgstr "Buyurtma #"
+
+msgid "гост."
+msgstr "mehm."
+
+msgid "готово"
+msgstr "tayyor"
+
+msgid "Нет позиций в работе."
+msgstr "Ishdagi pozitsiyalar yo'q."
+
+msgid "← Настройка кассы"
+msgstr "← Kassa sozlamalari"
+
+msgid "Экраны и пороги кухни"
+msgstr "Oshxona ekranlari va chegaralari"
+
+msgid "Экраны кухни"
+msgstr "Oshxona ekranlari"
+
+msgid "какие категории на каком экране KDS"
+msgstr "qaysi turkum qaysi KDS ekranida"
+
+msgid "Подключён"
+msgstr "Ulangan"
+
+msgid "новый код"
+msgstr "yangi kod"
+
+msgid "Удалить"
+msgstr "O'chirish"
+
+msgid "Экранов пока нет. Добавьте первый ниже."
+msgstr "Hali ekran yo'q. Pastda birinchisini qo'shing."
+
+msgid "Добавить экран"
+msgstr "Ekran qo'shish"
+
+msgid "Напр.: Горячий цех"
+msgstr "Mas.: Issiq sex"
+
+msgid "Категории (можно несколько)"
+msgstr "Turkumlar (bir nechta mumkin)"
+
+msgid "Пороги времени (таймеры KDS)"
+msgstr "Vaqt chegaralari (KDS taymerlari)"
+
+msgid "когда тикет желтеет и краснеет"
+msgstr "tiket qachon sarg'ayadi va qizaradi"
+
+msgid "жёлтый"
+msgstr "sariq"
+
+msgid "красный"
+msgstr "qizil"
+
+msgid "Порогов нет. Общий порог и переопределения добавьте ниже."
+msgstr ""
+"Chegaralar yo'q. Umumiy chegara va qayta belgilashlarni pastda qo'shing."
+
+msgid "Добавить порог"
+msgstr "Chegara qo'shish"
+
+msgid "KDS (пусто — все)"
+msgstr "KDS (bo'sh — hammasi)"
+
+msgid "Все KDS"
+msgstr "Barcha KDS"
+
+msgid "Категория (пусто — все блюда)"
+msgstr "Turkum (bo'sh — barcha taomlar)"
+
+msgid "Все блюда"
+msgstr "Barcha taomlar"
+
+msgid "Жёлтый, мин"
+msgstr "Sariq, daq"
+
+msgid "Красный, мин"
+msgstr "Qizil, daq"
+
+msgid "Лояльность и баллы"
+msgstr "Sodiqlik va ballar"
+
+msgid "Программа"
+msgstr "Dastur"
+
+msgid "Программа лояльности включена"
+msgstr "Sodiqlik dasturi yoqilgan"
+
+msgid "Идентификация по номеру телефона"
+msgstr "Telefon raqami bo'yicha aniqlash"
+
+msgid "Идентификация по QR-коду гостя"
+msgstr "Mehmon QR-kodi bo'yicha aniqlash"
+
+msgid "Подтверждение по SMS при списании баллов"
+msgstr "Ball yechishda SMS tasdiqlash"
+
+msgid "Начисление баллов"
+msgstr "Ball hisoblash"
+
+msgid "Начислять с заказа"
+msgstr "Buyurtmadan hisoblash"
+
+msgid "процент от суммы уходит в баллы (1 балл = 1 сум)"
+msgstr "summaning foizi ballga o'tadi (1 ball = 1 so'm)"
+
+msgid "Не начислять на позиции со скидкой"
+msgstr "Chegirmali pozitsiyalarga hisoblamaslik"
+
+msgid "Списание баллов"
+msgstr "Ball yechish"
+
+msgid "Оплачивать баллами до"
+msgstr "Ballar bilan to'lash chegarasi"
+
+msgid "макс. доля счёта"
+msgstr "hisobning maks. ulushi"
+
+#, python-format
+msgid "%% счёта"
+msgstr "%% hisob"
+
+msgid "Можно совмещать со скидками"
+msgstr "Chegirmalar bilan birlashtirish mumkin"
+
+msgid "Срок действия баллов"
+msgstr "Ballar amal qilish muddati"
+
+msgid "Не сгорают"
+msgstr "Yonib ketmaydi"
+
+msgid "6 месяцев"
+msgstr "6 oy"
+
+msgid "12 месяцев"
+msgstr "12 oy"
+
+msgid "24 месяца"
+msgstr "24 oy"
+
+msgid "Включить уровни гостей"
+msgstr "Mehmon darajalarini yoqish"
+
+msgid "Сохранить программу"
+msgstr "Dasturni saqlash"
+
+msgid "Уровни гостей (опционально)"
+msgstr "Mehmon darajalari (ixtiyoriy)"
+
+msgid "оборот от"
+msgstr "aylanma"
+
+msgid "начисление"
+msgstr "hisoblash"
+
+msgid ""
+"Уровней нет. Добавьте, если нужны (например Бронза / Серебро / Золото)."
+msgstr ""
+"Darajalar yo'q. Kerak bo'lsa qo'shing (masalan Bronza / Kumush / Oltin)."
+
+msgid "Добавить уровень"
+msgstr "Daraja qo'shish"
+
+msgid "Напр.: Серебро"
+msgstr "Mas.: Kumush"
+
+msgid "Оборот от"
+msgstr "Aylanma"
+
+#, python-format
+msgid "Начисление, %%"
+msgstr "Hisoblash, %%"
+
+msgid "Добавить"
+msgstr "Qo'shish"
+
+msgid "Оплаты и фискализация"
+msgstr "To'lovlar va fiskalizatsiya"
+
+msgid ""
+"Применяется ко всем точкам. Реквизиты юр.лица/ИНН берутся из «Настройки»."
+msgstr ""
+"Barcha nuqtalarga qo'llanadi. Yuridik shaxs/STIR rekvizitlari "
+"«Sozlamalar»dan olinadi."
+
+msgid "Фискализация"
+msgstr "Fiskalizatsiya"
+
+msgid "Подключено"
+msgstr "Ulangan"
+
+msgid "Режим работы"
+msgstr "Ish rejimi"
+
+msgid "в тесте чеки не уходят в налоговую"
+msgstr "testda cheklar soliqqa ketmaydi"
+
+msgid "НДС в чеке"
+msgstr "Chekda QQS"
+
+msgid "показывается только в фискальном чеке, на кассе не виден"
+msgstr "faqat fiskal chekda ko'rinadi, kassada ko'rinmaydi"
+
+msgid "создаются в «Настройки»"
+msgstr "«Sozlamalar»da yaratiladi"
+
+msgid "показывать на кассе"
+msgstr "kassada ko'rsatish"
+
+msgid "Фискализация:"
+msgstr "Fiskalizatsiya:"
+
+msgid "Способов оплаты пока нет — создайте их в разделе «Настройки»."
+msgstr "Hali to'lov usullari yo'q — ularni «Sozlamalar» bo'limida yarating."
+
+msgid "Обслуживание и чаевые"
+msgstr "Xizmat va choychaqa"
+
+msgid "Применяется ко всем точкам. (Переопределение по точкам добавим позже.)"
+msgstr ""
+"Barcha nuqtalarga qo'llanadi. (Nuqta bo'yicha qayta belgilash keyinroq "
+"qo'shiladi.)"
+
+msgid "Сервисный сбор (обслуживание)"
+msgstr "Xizmat haqi (servis)"
+
+msgid "Включён"
+msgstr "Yoqilgan"
+
+msgid "Процент"
+msgstr "Foiz"
+
+msgid "добавляется к счёту"
+msgstr "hisobga qo'shiladi"
+
+msgid "Начислять на"
+msgstr "Hisoblash"
+
+msgid "Зал"
+msgstr "Zal"
+
+msgid "Доставка"
+msgstr "Yetkazib berish"
+
+msgid "Самовывоз"
+msgstr "Olib ketish"
+
+msgid "Добавлять автоматически (иначе кнопкой кассира)"
+msgstr "Avtomatik qo'shish (aks holda kassir tugmasi bilan)"
+
+msgid "Разрешить снимать на кассе"
+msgstr "Kassada olib tashlashga ruxsat"
+
+msgid "Включены"
+msgstr "Yoqilgan"
+
+msgid "Быстрые проценты"
+msgstr "Tez foizlar"
+
+msgid "через запятую, напр.: 5, 10, 15"
+msgstr "vergul bilan, mas.: 5, 10, 15"
+
+msgid "Разрешить свою сумму"
+msgstr "O'z summasiga ruxsat"
+
+msgid "Чаевые получает"
+msgstr "Choychaqani oladi"
+
+msgid "в разработке"
+msgstr "ishlab chiqilmoqda"
+
+msgid "Этот раздел «Настройки кассы» скоро появится."
+msgstr "«Kassa sozlamalari»ning bu bo'limi tez orada paydo bo'ladi."
+
+msgid "Некорректные координаты."
+msgstr "Noto'g'ri koordinatalar."

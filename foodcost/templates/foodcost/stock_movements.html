@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Движения склада{% endblock %}
+{% block title %}{% trans "Движения склада" %}{% endblock %}
 
 {% block content %}
 
@@ -71,25 +72,25 @@
 <div class="fc-scope">
 <div class="fc-page">
 
-    <div class="fc-page-head"><h1>Движения склада</h1><p class="muted">Полный журнал всех движений остатков: приходы, продажи, списания, перемещения, инвентаризация.</p></div>
+    <div class="fc-page-head"><h1>{% trans "Движения склада" %}</h1><p class="muted">{% trans "Полный журнал всех движений остатков: приходы, продажи, списания, перемещения, инвентаризация." %}</p></div>
 
     <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Всего движений</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">по фильтру</div></div>
-        <div class="kpi"><div class="kpi-label">Приходы</div><div class="kpi-value" style="color:var(--fc-green-text);">{{ kpi_income }}</div><div class="kpi-sub">поступления + входящие</div></div>
-        <div class="kpi"><div class="kpi-label">Расходы</div><div class="kpi-value" style="color:var(--fc-danger-text);">{{ kpi_outcome }}</div><div class="kpi-sub">продажи/списания/выход</div></div>
-        <div class="kpi"><div class="kpi-label">Корректировки</div><div class="kpi-value">{{ kpi_adjust }}</div><div class="kpi-sub">инвентаризация</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Всего движений" %}</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">{% trans "по фильтру" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Приходы" %}</div><div class="kpi-value" style="color:var(--fc-green-text);">{{ kpi_income }}</div><div class="kpi-sub">{% trans "поступления + входящие" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Расходы" %}</div><div class="kpi-value" style="color:var(--fc-danger-text);">{{ kpi_outcome }}</div><div class="kpi-sub">{% trans "продажи/списания/выход" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Корректировки" %}</div><div class="kpi-value">{{ kpi_adjust }}</div><div class="kpi-sub">{% trans "инвентаризация" %}</div></div>
     </div>
 
     <div class="fc-card">
         <form method="get">
             <div class="filters">
-                <div><label class="fc-label">Дата от</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
-                <div><label class="fc-label">Дата до</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
-                <div><label class="fc-label">Склад</label><select class="fc-select" name="warehouse"><option value="">Все</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Тип движения</label><select class="fc-select" name="type"><option value="">Все</option>{% for v,l in movement_types %}<option value="{{ v }}" {% if type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Источник</label><select class="fc-select" name="source"><option value="">Все</option>{% for v,l in source_types %}<option value="{{ v }}" {% if source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-                <div style="grid-column:span 2;"><label class="fc-label">Поиск позиции</label><input class="fc-input" name="search" value="{{ search }}" placeholder="Товар, артикул, заготовка, комментарий"></div>
-                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/stock/movements/" class="fc-btn fc-btn-secondary">Сбросить</a></div>
+                <div><label class="fc-label">{% trans "Дата от" %}</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
+                <div><label class="fc-label">{% trans "Дата до" %}</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
+                <div><label class="fc-label">{% trans "Склад" %}</label><select class="fc-select" name="warehouse"><option value="">{% trans "Все" %}</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Тип движения" %}</label><select class="fc-select" name="type"><option value="">{% trans "Все" %}</option>{% for v,l in movement_types %}<option value="{{ v }}" {% if type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Источник" %}</label><select class="fc-select" name="source"><option value="">{% trans "Все" %}</option>{% for v,l in source_types %}<option value="{{ v }}" {% if source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div style="grid-column:span 2;"><label class="fc-label">{% trans "Поиск позиции" %}</label><input class="fc-input" name="search" value="{{ search }}" placeholder="{% trans "Товар, артикул, заготовка, комментарий" %}"></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">{% trans "Применить" %}</button><a href="/c/{{ country.slug }}/stock/movements/" class="fc-btn fc-btn-secondary">{% trans "Сбросить" %}</a></div>
             </div>
         </form>
     </div>
@@ -97,9 +98,9 @@
     <div class="fc-card">
         <div class="fc-table">
             <div class="t-head {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
-                <div>Дата / время</div><div>Склад</div><div>Тип</div><div>Позиция</div><div class="r">Кол-во</div>
-                {% if show_money %}<div class="r">Себестоим.</div><div class="r">Сумма</div>{% endif %}
-                <div>Источник</div><div>Автор</div>
+                <div>{% trans "Дата / время" %}</div><div>{% trans "Склад" %}</div><div>{% trans "Тип" %}</div><div>{% trans "Позиция" %}</div><div class="r">{% trans "Кол-во" %}</div>
+                {% if show_money %}<div class="r">{% trans "Себестоим." %}</div><div class="r">{% trans "Сумма" %}</div>{% endif %}
+                <div>{% trans "Источник" %}</div><div>{% trans "Автор" %}</div>
             </div>
             {% for r in rows %}
             <div class="t-row {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
@@ -113,12 +114,12 @@
                 <div class="muted">{{ r.obj.created_by.username|default:"—" }}</div>
             </div>
             {% empty %}
-                <div class="empty">Движений по выбранным условиям нет.</div>
+                <div class="empty">{% trans "Движений по выбранным условиям нет." %}</div>
             {% endfor %}
         </div>
 
         <div class="t-foot">
-            <div class="muted">{% if total_count %}Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}{% else %}Ничего не найдено{% endif %}</div>
+            <div class="muted">{% if total_count %}{% blocktrans with s=page_obj.start_index e=page_obj.end_index tot=total_count %}Показано {{ s }}–{{ e }} из {{ tot }}{% endblocktrans %}{% else %}{% trans "Ничего не найдено" %}{% endif %}</div>
             {% if page_obj.paginator.num_pages > 1 %}
             <div class="pager">
                 {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{{ base_qs }}">‹</a>{% else %}<span class="disabled">‹</span>{% endif %}
@@ -133,7 +134,7 @@
                 {% if type %}<input type="hidden" name="type" value="{{ type }}">{% endif %}
                 {% if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
                 {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
-                <span class="muted">На странице</span>
+                <span class="muted">{% trans "На странице" %}</span>
                 <select class="fc-select" name="per_page" onchange="this.form.submit()" style="width:auto;height:36px;">
                     <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
                     <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>

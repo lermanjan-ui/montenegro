@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Вход · FoodCost</title>
+  <title>{% trans "Вход · ЧекМейт" %}</title>
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 :root{--bg:#F7F8FA;--text:#111827;--muted:#667085;--border:#E5E7EB;--primary:#123B7A;--primary-dark:#0D2D5F;--primary-soft:#E7EDF7;--danger:#E23B3B;--danger-soft:#FDECEC;}
@@ -28,20 +29,20 @@ input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--
 </head>
 <body>
   <div class="wrap">
-    <div class="brand">FoodCost</div>
+    <div class="brand">ЧекМейт</div>
     <div class="card">
-      <h1>Вход</h1>
-      <p class="sub">По e-mail или номеру телефона — пришлём код подтверждения.</p>
+      <h1>{% trans "Вход" %}</h1>
+      <p class="sub">{% trans "По e-mail или номеру телефона — пришлём код подтверждения." %}</p>
       {% if error %}<div class="err">{{ error }}</div>{% endif %}
       <form method="post">
         {% csrf_token %}
-        <label>E-mail или телефон</label>
-        <input type="text" name="identifier" value="{{ form.identifier }}" required autofocus placeholder="you@mail.uz или +998..">
-        <button class="btn" type="submit">Получить код</button>
+        <label>{% trans "E-mail или телефон" %}</label>
+        <input type="text" name="identifier" value="{{ form.identifier }}" required autofocus placeholder="{% trans "you@mail.uz или +998.." %}">
+        <button class="btn" type="submit">{% trans "Получить код" %}</button>
       </form>
-      <div class="alt"><a href="/login/password/">Вход по паролю (для персонала)</a></div>
+      <div class="alt"><a href="/login/password/">{% trans "Вход по паролю (для персонала)" %}</a></div>
     </div>
-    <div class="foot">Нет аккаунта? <a href="/signup/">Создать аккаунт</a></div>
+    <div class="foot">{% trans "Нет аккаунта?" %} <a href="/signup/">{% trans "Создать аккаунт" %}</a></div>
   </div>
 </body>
 </html>

@@ -1,0 +1,85 @@
+{% extends "foodcost/base.html" %}
+{% load i18n %}
+{% load pos_access %}
+
+{% block title %}Доступы кассы{% endblock %}
+
+{% block content %}
+<style>
+.poswrap{--pw-ink:#111827;--pw-muted:#667085;--pw-subtle:#98a2b3;--pw-border:#e5e7eb;--pw-bstrong:#d1d5db;--pw-surface:#fff;--pw-sunken:#eef1f5;--pw-primary:#123b7a;--pw-primary-soft:#e7edf7;--pw-success:#157347;
+  max-width:820px;margin:0 auto;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--pw-ink);}
+.poswrap .pw-h1{font-weight:700;font-size:24px;letter-spacing:-.02em;margin:0 0 4px;}
+.poswrap .pw-scope{font-size:13px;color:var(--pw-muted);margin-bottom:16px;}
+.poswrap .pw-card{border:1px solid var(--pw-border);border-radius:12px;background:var(--pw-surface);box-shadow:0 1px 2px rgba(16,24,40,.06);margin-bottom:12px;padding:14px 16px;}
+.poswrap .pw-uh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.poswrap .pw-un{font-weight:700;font-size:15px;}
+.poswrap .pw-ue{font-size:12px;color:var(--pw-muted);}
+.poswrap .pw-admin{font-size:11px;font-weight:700;color:var(--pw-success);background:#e6f4ec;padding:3px 10px;border-radius:999px;}
+.poswrap .pw-presets{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+.poswrap .pw-preset{border:1px solid var(--pw-bstrong);background:var(--pw-surface);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--pw-ink);}
+.poswrap .pw-caps{display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.poswrap .pw-chk{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;cursor:pointer;}
+.poswrap .pw-chk input{width:18px;height:18px;accent-color:var(--pw-primary);cursor:pointer;}
+.poswrap .pw-save{height:38px;padding:0 16px;border:0;border-radius:8px;background:var(--pw-primary);color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;margin-left:auto;}
+.poswrap .pw-empty{padding:16px;color:var(--pw-subtle);font-size:13px;}
+.poswrap .pw-note{font-size:12px;color:var(--pw-muted);margin-top:10px;}
+</style>
+
+<div class="poswrap">
+  <div class="pw-h1">{% trans "Доступы кассы" %}</div>
+  <div class="pw-scope">{% trans "Кто что видит в кассе. Официант — только касса/зал, повар — только кухня (KDS), менеджер — всё. Админы видят всё по умолчанию." %}</div>
+
+  {% for row in rows %}
+    <div class="pw-card">
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="user_id" value="{{ row.user.id }}">
+        <div class="pw-uh">
+          <span class="pw-un">{{ row.user.get_full_name|default:row.user.username }}</span>
+          <span class="pw-ue">{{ row.user.username }}</span>
+          {% if row.is_admin %}<span class="pw-admin">{% trans "Полный доступ (админ)" %}</span>{% endif %}
+          {% if not row.is_admin %}
+            <div class="pw-presets">
+              <button class="pw-preset" type="button" data-preset="cashier">{% trans "Официант" %}</button>
+              <button class="pw-preset" type="button" data-preset="kds">{% trans "Повар" %}</button>
+              <button class="pw-preset" type="button" data-preset="all">{% trans "Менеджер" %}</button>
+            </div>
+          {% endif %}
+        </div>
+        {% if row.is_admin %}
+          <div class="pw-note">{% trans "Роль администратора — доступ ко всем разделам кассы. POS-роли здесь не нужны." %}</div>
+        {% else %}
+          <div class="pw-caps">
+            {% for cap, label in caps %}
+              <label class="pw-chk">
+                <input type="checkbox" name="caps" value="{{ cap }}" data-cap="{{ cap }}"
+                       {% if row.effective|get:cap %}checked{% endif %}>
+                {{ label }}
+              </label>
+            {% endfor %}
+            <button class="pw-save" type="submit">{% trans "Сохранить" %}</button>
+          </div>
+        {% endif %}
+      </form>
+    </div>
+  {% empty %}
+    <div class="pw-card"><div class="pw-empty">{% trans "У этой точки нет сотрудников с доступом. Добавьте их в «Роли и доступы»." %}</div></div>
+  {% endfor %}
+
+  <div class="pw-note">{% trans "POS-роли дополняют существующие «Роли и доступы»: пока POS-роль не назначена, доступ определяется прежними секциями («Заказы» → касса, роль «кухня» → KDS)." %}</div>
+</div>
+
+<script>
+(function(){
+  var root = document.querySelector('.poswrap'); if(!root) return;
+  root.addEventListener('click', function(e){
+    var b = e.target.closest('.pw-preset'); if(!b) return;
+    var form = b.closest('form');
+    var want = {cashier:['pos_cashier'], kds:['pos_kds'], all:['pos_cashier','pos_kds','pos_settings']}[b.dataset.preset] || [];
+    form.querySelectorAll('input[type=checkbox][data-cap]').forEach(function(c){
+      c.checked = want.indexOf(c.dataset.cap) !== -1;
+    });
+  });
+})();
+</script>
+{% endblock %}

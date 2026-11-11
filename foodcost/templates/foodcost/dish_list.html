@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Блюда{% endblock %}
+{% block title %}{% trans "Блюда" %}{% endblock %}
 
 {% block content %}
 
@@ -400,28 +401,25 @@
     <div class="card page-head">
         <div>
             {% if show_archived %}
-                <h1>Архив блюд</h1>
-                <p class="muted">
-                    Блюда, выведенные из меню. Они скрыты с сайта и из новых
-                    заказов, но остаются в истории старых заказов и отчётах.
-                </p>
+                <h1>{% trans "Архив блюд" %}</h1>
+                <p class="muted">{% trans "Блюда, выведенные из меню. Они скрыты с сайта и из новых заказов, но остаются в истории старых заказов и отчётах." %}</p>
             {% else %}
-                <h1>Блюда</h1>
-                <p class="muted">Список блюд, себестоимость, фудкост, маржа и категории.</p>
+                <h1>{% trans "Блюда" %}</h1>
+                <p class="muted">{% trans "Список блюд, себестоимость, фудкост, маржа и категории." %}</p>
             {% endif %}
         </div>
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
             {% if show_archived %}
-                <a class="secondary-button" href="/c/{{ country.slug }}/">← К активным блюдам</a>
+                <a class="secondary-button" href="/c/{{ country.slug }}/">← {% trans "К активным блюдам" %}</a>
             {% else %}
                 {% if archived_count %}
                     <a class="secondary-button" href="/c/{{ country.slug }}/?show_archived=1">
-                        Архив ({{ archived_count }})
+                        {% trans "Архив" %} ({{ archived_count }})
                     </a>
                 {% endif %}
                 {% if can_edit %}
-                    <a class="button" href="/c/{{ country.slug }}/dish/create/">+ Добавить блюдо</a>
+                    <a class="button" href="/c/{{ country.slug }}/dish/create/">+ {% trans "Добавить блюдо" %}</a>
                 {% endif %}
             {% endif %}
         </div>
@@ -436,42 +434,42 @@
                     type="text"
                     name="q"
                     value="{{ q }}"
-                    placeholder="Поиск по названию блюда…"
+                    placeholder="{% trans "Поиск по названию блюда…" %}"
                     class="search-input"
                     autocomplete="off"
                 >
 
                 <select name="sort">
-                    <option value="name" {% if sort_type == "name" %}selected{% endif %}>По названию</option>
-                    <option value="margin" {% if sort_type == "margin" %}selected{% endif %}>Маржа: больше → меньше</option>
-                    <option value="foodcost" {% if sort_type == "foodcost" %}selected{% endif %}>Фудкост: больше → меньше</option>
-                    <option value="price_desc" {% if sort_type == "price_desc" %}selected{% endif %}>Цена: больше → меньше</option>
-                    <option value="price_asc" {% if sort_type == "price_asc" %}selected{% endif %}>Цена: меньше → больше</option>
-                    <option value="cost" {% if sort_type == "cost" %}selected{% endif %}>По себестоимости</option>
+                    <option value="name" {% if sort_type == "name" %}selected{% endif %}>{% trans "По названию" %}</option>
+                    <option value="margin" {% if sort_type == "margin" %}selected{% endif %}>{% trans "Маржа: больше → меньше" %}</option>
+                    <option value="foodcost" {% if sort_type == "foodcost" %}selected{% endif %}>{% trans "Фудкост: больше → меньше" %}</option>
+                    <option value="price_desc" {% if sort_type == "price_desc" %}selected{% endif %}>{% trans "Цена: больше → меньше" %}</option>
+                    <option value="price_asc" {% if sort_type == "price_asc" %}selected{% endif %}>{% trans "Цена: меньше → больше" %}</option>
+                    <option value="cost" {% if sort_type == "cost" %}selected{% endif %}>{% trans "По себестоимости" %}</option>
                 </select>
 
                 <select name="filter">
-                    <option value="all" {% if filter_type == "all" %}selected{% endif %}>Все блюда</option>
-                    <option value="loss" {% if filter_type == "loss" %}selected{% endif %}>Убыточные</option>
-                    <option value="high_foodcost" {% if filter_type == "high_foodcost" %}selected{% endif %}>Фудкост &gt; 40%</option>
-                    <option value="normal" {% if filter_type == "normal" %}selected{% endif %}>Нормальные</option>
+                    <option value="all" {% if filter_type == "all" %}selected{% endif %}>{% trans "Все блюда" %}</option>
+                    <option value="loss" {% if filter_type == "loss" %}selected{% endif %}>{% trans "Убыточные" %}</option>
+                    <option value="high_foodcost" {% if filter_type == "high_foodcost" %}selected{% endif %}>{% trans "Фудкост" %} &gt; 40%</option>
+                    <option value="normal" {% if filter_type == "normal" %}selected{% endif %}>{% trans "Нормальные" %}</option>
                 </select>
 
                 <select name="site">
-                    <option value="all" {% if site_filter == "all" %}selected{% endif %}>Сайт: все</option>
-                    <option value="visible" {% if site_filter == "visible" %}selected{% endif %}>Только показываемые</option>
-                    <option value="hidden" {% if site_filter == "hidden" %}selected{% endif %}>Только скрытые</option>
+                    <option value="all" {% if site_filter == "all" %}selected{% endif %}>{% trans "Сайт: все" %}</option>
+                    <option value="visible" {% if site_filter == "visible" %}selected{% endif %}>{% trans "Только показываемые" %}</option>
+                    <option value="hidden" {% if site_filter == "hidden" %}selected{% endif %}>{% trans "Только скрытые" %}</option>
                 </select>
 
-                <button type="submit">Применить</button>
-                <a class="secondary-button" href="/c/{{ country.slug }}/{% if show_archived %}?show_archived=1{% endif %}">Сбросить</a>
+                <button type="submit">{% trans "Применить" %}</button>
+                <a class="secondary-button" href="/c/{{ country.slug }}/{% if show_archived %}?show_archived=1{% endif %}">{% trans "Сбросить" %}</a>
             </div>
 
             <div class="category-list">
                 <label class="category-chip {% if 'none' in selected_category_ids %}active{% endif %}">
                     <input type="checkbox" name="categories" value="none"
                         {% if 'none' in selected_category_ids %}checked{% endif %} style="display:none;">
-                    Без категории
+                    {% trans "Без категории" %}
                 </label>
                 {% for category in categories %}
                     <label class="category-chip {% if category.id|stringformat:'s' in selected_category_ids %}active{% endif %}">
@@ -480,7 +478,7 @@
                         {{ category.name }}
                     </label>
                 {% empty %}
-                    <span class="muted">Категорий пока нет.</span>
+                    <span class="muted">{% trans "Категорий пока нет." %}</span>
                 {% endfor %}
             </div>
         </form>
@@ -489,12 +487,12 @@
     <div class="card">
         <div class="dish-table">
             <div class="dish-table-head">
-                <div>Блюдо</div>
-                <div>Себестоимость</div>
-                <div>Цена</div>
-                <div>Фудкост</div>
-                <div>Маржа</div>
-                <div>На сайте</div>
+                <div>{% trans "Блюдо" %}</div>
+                <div>{% trans "Себестоимость" %}</div>
+                <div>{% trans "Цена" %}</div>
+                <div>{% trans "Фудкост" %}</div>
+                <div>{% trans "Маржа" %}</div>
+                <div>{% trans "На сайте" %}</div>
                 <div></div>
             </div>
 
@@ -503,13 +501,13 @@
                     <div>
                         <div class="dish-name">
                             {{ dish.name }}
-                            {% if dish.is_archived %}<span class="archive-badge">архив</span>{% endif %}
+                            {% if dish.is_archived %}<span class="archive-badge">{% trans "архив" %}</span>{% endif %}
                         </div>
                         <div class="dish-meta">
                             {% if dish.category %}
                                 <span class="dish-category">{{ dish.category.name }}</span> ·
                             {% endif %}
-                            Выход: {{ dish.final_weight }} кг
+                            {% trans "Выход:" %} {{ dish.final_weight }} {% trans "кг" %}
                         </div>
                     </div>
 
@@ -536,8 +534,8 @@
                     </div>
 
                     <div class="vis-cell">
-                        <span class="vis-caption">На сайте</span>
-                        <label class="vis-switch{% if not can_edit or dish.is_archived %} vis-switch-disabled{% endif %}" title="Показывать блюдо на сайте">
+                        <span class="vis-caption">{% trans "На сайте" %}</span>
+                        <label class="vis-switch{% if not can_edit or dish.is_archived %} vis-switch-disabled{% endif %}" title="{% trans "Показывать блюдо на сайте" %}">
                             <input type="checkbox" class="vis-toggle"
                                    data-url="/c/{{ country.slug }}/dish/{{ dish.id }}/toggle-visibility/"
                                    {% if dish.is_visible_on_site %}checked{% endif %}
@@ -546,13 +544,13 @@
                         </label>
                     </div>
 
-                    <a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">Открыть →</a>
+                    <a class="open" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">{% trans "Открыть" %} →</a>
                 </div>
             {% empty %}
                 {% if show_archived %}
-                    <div class="empty">В архиве пока нет блюд</div>
+                    <div class="empty">{% trans "В архиве пока нет блюд" %}</div>
                 {% else %}
-                    <div class="empty">Блюд по выбранному фильтру пока нет</div>
+                    <div class="empty">{% trans "Блюд по выбранному фильтру пока нет" %}</div>
                 {% endif %}
             {% endfor %}
         </div>

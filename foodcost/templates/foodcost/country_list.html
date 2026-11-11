@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Страны{% endblock %}
+{% block title %}{% trans "Страны" %}{% endblock %}
 
 {% block content %}
 
@@ -44,14 +45,14 @@
 </style>
 
 <div class="card page-title">
-    <h1>Страны</h1>
+    <h1>{% trans "Страны" %}</h1>
 </div>
 
 <div class="country-grid">
     {% for country in countries %}
         <a class="country-card" href="/c/{{ country.slug }}/">
             <div class="country-name">{{ country.name }}</div>
-            <div class="country-link">Открыть →</div>
+            <div class="country-link">{% trans "Открыть →" %}</div>
         </a>
     {% endfor %}
 </div>

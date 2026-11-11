@@ -1,0 +1,173 @@
+{% extends "foodcost/base.html" %}
+{% load i18n %}
+
+{% block title %}Расстановка столов{% endblock %}
+
+{% block content %}
+<style>
+.poswrap{--pw-ink:#111827;--pw-muted:#667085;--pw-subtle:#98a2b3;--pw-border:#e5e7eb;--pw-bstrong:#d1d5db;--pw-surface:#fff;--pw-sunken:#eef1f5;--pw-primary:#123b7a;--pw-primary-soft:#e7edf7;--pw-danger:#d92d20;
+  max-width:860px;margin:0 auto;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--pw-ink);}
+.poswrap .pw-h1{font-weight:700;font-size:24px;letter-spacing:-.02em;margin:0 0 4px;}
+.poswrap .pw-scope{font-size:13px;color:var(--pw-muted);margin-bottom:16px;}
+.poswrap .pw-card{border:1px solid var(--pw-border);border-radius:12px;background:var(--pw-surface);box-shadow:0 1px 2px rgba(16,24,40,.06);margin-bottom:16px;}
+.poswrap .pw-zh{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 16px;border-bottom:1px solid var(--pw-border);}
+.poswrap input.pw-in,.poswrap select.pw-in{height:36px;padding:0 10px;border:1px solid var(--pw-bstrong);border-radius:8px;background:var(--pw-surface);font-family:inherit;font-size:13px;color:var(--pw-ink);outline:none;}
+.poswrap input.pw-in:focus,.poswrap select.pw-in:focus{border-color:var(--pw-primary);box-shadow:0 0 0 3px var(--pw-primary-soft);}
+.poswrap input.pw-zname{font-weight:700;min-width:160px;}
+.poswrap input.pw-num{width:70px;text-align:center;font-weight:700;}
+.poswrap input.pw-seats{width:60px;text-align:center;}
+.poswrap .pw-grow{flex:1 1 0;}
+.poswrap .pw-lbl{font-size:12px;color:var(--pw-muted);font-weight:600;}
+.poswrap form.pw-inline{display:inline-flex;align-items:center;gap:8px;margin:0;flex-wrap:wrap;}
+.poswrap .pw-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:10px 16px;border-top:1px solid var(--pw-border);}
+.poswrap .pw-tname{font-weight:600;font-size:14px;min-width:90px;}
+.poswrap .pw-tmeta{font-size:12px;color:var(--pw-muted);flex:1 1 0;}
+.poswrap .pw-btn{height:36px;padding:0 13px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid var(--pw-bstrong);background:var(--pw-surface);color:var(--pw-ink);display:inline-flex;align-items:center;justify-content:center;text-decoration:none;}
+.poswrap .pw-btn.prim{border:0;background:var(--pw-primary);color:#fff;}
+.poswrap .pw-btn.danger{border-color:var(--pw-danger);color:var(--pw-danger);}
+.poswrap .pw-add{border-top:1px solid var(--pw-border);padding:12px 16px;background:var(--pw-sunken);}
+.poswrap .pw-add .pw-at{font-size:12px;font-weight:700;color:var(--pw-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:9px;}
+.poswrap .pw-fields{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.poswrap .pw-fld{display:flex;flex-direction:column;gap:5px;}
+.poswrap .pw-empty{padding:14px 16px;color:var(--pw-subtle);font-size:13px;}
+.poswrap .pw-addzone{border:1px dashed var(--pw-bstrong);border-radius:12px;background:var(--pw-surface);padding:14px 16px;}
+/* визуальный план */
+.poswrap .pw-plan{position:relative;height:340px;margin:0 16px 12px;border:1px solid var(--pw-border);border-radius:12px;
+  background:var(--pw-sunken);background-image:linear-gradient(var(--pw-border) 1px,transparent 1px),linear-gradient(90deg,var(--pw-border) 1px,transparent 1px);background-size:32px 32px;overflow:hidden;touch-action:none;}
+.poswrap .pw-ptable{position:absolute;transform:translate(-50%,-50%);min-width:56px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  background:var(--pw-surface);border:2px solid var(--pw-primary);color:var(--pw-ink);cursor:grab;user-select:none;box-shadow:0 2px 6px rgba(16,24,40,.12);padding:4px 8px;}
+.poswrap .pw-ptable:active{cursor:grabbing;}
+.poswrap .pw-ptable.dragging{z-index:5;box-shadow:0 6px 18px rgba(18,59,122,.3);border-color:var(--pw-primary);}
+.poswrap .pw-ptable.sh-round{border-radius:50%;width:60px;height:60px;}
+.poswrap .pw-ptable.sh-square{border-radius:10px;}
+.poswrap .pw-ptable.sh-rect{border-radius:10px;min-width:90px;}
+.poswrap .pw-ptable .num{font-weight:800;font-size:15px;line-height:1;}
+.poswrap .pw-ptable .st{font-size:11px;color:var(--pw-muted);font-weight:600;}
+.poswrap .pw-planhint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--pw-subtle);font-size:13px;text-align:center;padding:16px;}
+.poswrap .pw-plancap{font-size:12px;color:var(--pw-muted);padding:0 16px 10px;}
+</style>
+
+<div class="poswrap" data-move-url="/c/{{ country.slug }}/pos/floor/api/move/">
+  {% csrf_token %}
+  <div class="pw-h1">{% trans "Расстановка столов" %}</div>
+  <div class="pw-scope">{% trans "Перетаскивай столы на плане — позиции сохраняются сразу. Ниже — добавление/правка зон и столов." %}</div>
+
+  {% for zone in zones %}
+    <div class="pw-card">
+      <div class="pw-zh">
+        <form class="pw-inline pw-grow" method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="save_zone">
+          <input type="hidden" name="zone_id" value="{{ zone.id }}">
+          <input class="pw-in pw-zname" name="name" value="{{ zone.name }}">
+          <span class="pw-lbl">{% trans "Точка" %}</span>
+          <select class="pw-in" name="location">
+            <option value="">{% trans "Все точки" %}</option>
+            {% for l in locations %}<option value="{{ l.id }}" {% if zone.location_id == l.id %}selected{% endif %}>{{ l.name }}</option>{% endfor %}
+          </select>
+          <button class="pw-btn" type="submit">{% trans "Сохранить" %}</button>
+        </form>
+        <form class="pw-inline" method="post" onsubmit="return confirm('Удалить зону «{{ zone.name }}» со всеми столами?');">{% csrf_token %}
+          <input type="hidden" name="action" value="delete_zone">
+          <input type="hidden" name="zone_id" value="{{ zone.id }}">
+          <button class="pw-btn danger" type="submit">{% trans "Удалить зону" %}</button>
+        </form>
+      </div>
+
+      <div class="pw-plan" data-zone="{{ zone.id }}">
+        {% for t in zone.tables.all %}
+          <div class="pw-ptable sh-{{ t.shape }}" data-table="{{ t.id }}" style="left:{{ t.pos_x }}%;top:{{ t.pos_y }}%;">
+            <span class="num">{{ t.number }}</span><span class="st">{{ t.seats }} мест</span>
+          </div>
+        {% empty %}
+          <div class="pw-planhint">{% trans "Добавьте столы ниже — они появятся здесь, и их можно будет перетаскивать." %}</div>
+        {% endfor %}
+      </div>
+      <div class="pw-plancap">{% trans "Перетаскивание мышью или пальцем · позиция сохраняется автоматически." %}</div>
+
+      {% for t in zone.tables.all %}
+        <div class="pw-row">
+          <span class="pw-tname">Стол {{ t.number }}</span>
+          <span class="pw-tmeta">{{ t.seats }} мест · {{ t.get_shape_display }}</span>
+          <a class="pw-btn prim" href="/c/{{ country.slug }}/pos/order/?table={{ t.id }}">{% trans "Открыть заказ" %}</a>
+          <form class="pw-inline" method="post">{% csrf_token %}
+            <input type="hidden" name="action" value="delete_table">
+            <input type="hidden" name="table_id" value="{{ t.id }}">
+            <button class="pw-btn danger" type="submit">✕</button>
+          </form>
+        </div>
+      {% empty %}
+        <div class="pw-empty">{% trans "Столов в этой зоне нет." %}</div>
+      {% endfor %}
+
+      <div class="pw-add">
+        <div class="pw-at">{% trans "Добавить стол" %}</div>
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="add_table">
+          <input type="hidden" name="zone_id" value="{{ zone.id }}">
+          <div class="pw-fields">
+            <div class="pw-fld"><span class="pw-lbl">{% trans "Номер" %}</span><input class="pw-in pw-num" name="number" required></div>
+            <div class="pw-fld"><span class="pw-lbl">{% trans "Мест" %}</span><input class="pw-in pw-seats" name="seats" value="2"></div>
+            <div class="pw-fld"><span class="pw-lbl">{% trans "Форма" %}</span>
+              <select class="pw-in" name="shape">
+                {% for value, label in shape_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              </select></div>
+            <button class="pw-btn prim" type="submit">{% trans "Добавить стол" %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <div class="pw-card"><div class="pw-empty">{% trans "Зон пока нет. Добавьте первую ниже." %}</div></div>
+  {% endfor %}
+
+  <div class="pw-addzone">
+    <div class="pw-at" style="font-size:12px;font-weight:700;color:var(--pw-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:9px;">{% trans "Добавить зону" %}</div>
+    <form method="post">{% csrf_token %}
+      <input type="hidden" name="action" value="add_zone">
+      <div class="pw-fields">
+        <div class="pw-fld"><span class="pw-lbl">{% trans "Название" %}</span><input class="pw-in" name="name" placeholder="{% trans "Напр.: Основной зал" %}" required></div>
+        <div class="pw-fld"><span class="pw-lbl">{% trans "Точка" %}</span>
+          <select class="pw-in" name="location">
+            <option value="">{% trans "Все точки" %}</option>
+            {% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
+          </select></div>
+        <button class="pw-btn prim" type="submit">{% trans "Добавить зону" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var root = document.querySelector('.poswrap'); if(!root) return;
+  var moveUrl = root.dataset.moveUrl;
+  var csrf = (root.querySelector('[name=csrfmiddlewaretoken]')||{}).value || '';
+  var drag = null;
+
+  root.addEventListener('pointerdown', function(e){
+    var el = e.target.closest('.pw-ptable'); if(!el) return;
+    var plan = el.closest('.pw-plan'); if(!plan) return;
+    e.preventDefault();
+    drag = {el:el, plan:plan, x:null, y:null};
+    el.classList.add('dragging');
+  });
+  window.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    var r = drag.plan.getBoundingClientRect();
+    var x = Math.max(4, Math.min(96, (e.clientX - r.left)/r.width*100));
+    var y = Math.max(6, Math.min(94, (e.clientY - r.top)/r.height*100));
+    drag.x = x; drag.y = y;
+    drag.el.style.left = x+'%'; drag.el.style.top = y+'%';
+  });
+  window.addEventListener('pointerup', function(){
+    if(!drag) return;
+    drag.el.classList.remove('dragging');
+    if(drag.x != null){
+      var body = new URLSearchParams({table_id:drag.el.dataset.table, x:drag.x.toFixed(2), y:drag.y.toFixed(2)});
+      fetch(moveUrl, {method:'POST', headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'}, body:body.toString()}).catch(function(){});
+    }
+    drag = null;
+  });
+})();
+</script>
+{% endblock %}

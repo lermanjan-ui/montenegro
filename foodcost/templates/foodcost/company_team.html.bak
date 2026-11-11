@@ -1,0 +1,153 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Сотрудники · {{ country.name }}{% endblock %}
+{% block content %}
+<style>
+.tm-head{margin-bottom:16px;}
+.tm-sub{color:var(--muted);margin-top:4px;}
+.tm-badge{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--primary-soft);color:var(--primary);}
+.tm-table{width:100%;border-collapse:collapse;}
+.tm-table th,.tm-table td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tm-table th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;}
+.tm-field{margin-bottom:12px;}
+.tm-field label{display:block;font-weight:600;font-size:13px;margin:0 0 6px;}
+.tm-field input,.tm-field select{width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit;font-size:14px;background:#fff;}
+.tm-row2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.sec-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:6px;}
+.sec-group{border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.sec-group h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);}
+.sec-group label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;margin:5px 0;cursor:pointer;}
+.sec-group input{width:16px;height:16px;}
+.edit-form{padding:14px;background:var(--bg);border-radius:8px;margin-top:10px;}
+.err{background:var(--danger-soft);color:var(--danger);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-weight:600;}
+details.emp>summary{cursor:pointer;list-style:none;color:var(--primary);font-weight:600;font-size:13px;}
+details.emp>summary::-webkit-details-marker{display:none;}
+.inline{display:inline;}
+</style>
+
+<div class="tm-head">
+  <h1 style="margin:0;">Сотрудники компании</h1>
+  <div class="tm-sub">
+    Создавайте сотрудников и выдавайте доступ к разделам.
+    Доступно разделов по тарифу: <span class="tm-badge">{{ available_count }} из {{ total_sections }}</span>
+  </div>
+</div>
+
+{% if error %}<div class="err">{{ error }}</div>{% endif %}
+
+<!-- Список сотрудников -->
+<div class="card" style="padding:0;overflow:hidden;">
+  <table class="tm-table">
+    <thead>
+      <tr><th>Сотрудник</th><th>Роль</th><th>Разделов</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for emp in employees %}
+      <tr>
+        <td style="font-weight:600;">{{ emp.username }}{% if not emp.is_active %} <span class="tm-sub" style="font-weight:400;">(отключён)</span>{% endif %}</td>
+        <td>{{ emp.profile.get_role_display }}</td>
+        <td>{{ emp.profile.allowed_sections|length }}</td>
+        <td style="text-align:right;">
+          {% if can_edit %}
+          <details class="emp">
+            <summary>Изменить</summary>
+            <form method="post" class="edit-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_employee">
+              <input type="hidden" name="user_id" value="{{ emp.id }}">
+              <div class="tm-row2">
+                <div class="tm-field"><label>Логин</label><input type="text" name="username" value="{{ emp.username }}"></div>
+                <div class="tm-field"><label>Новый пароль (оставь пустым — без изменений)</label><input type="text" name="password" autocomplete="off"></div>
+              </div>
+              <div class="tm-row2">
+                <div class="tm-field">
+                  <label>Роль</label>
+                  <select name="role">
+                    {% for code, label in employee_roles %}
+                    <option value="{{ code }}" {% if emp.profile.role == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="tm-field">
+                  <label>Филиал</label>
+                  <select name="location_id">
+                    <option value="">— не задан —</option>
+                    {% for loc in locations %}
+                    <option value="{{ loc.id }}" {% if emp.profile.location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <label style="font-weight:600;font-size:13px;">Доступ к разделам</label>
+              <div class="sec-groups">
+                {% for g in section_groups %}
+                <div class="sec-group">
+                  <h4>{{ g.label }}</h4>
+                  {% for code, label in g.items %}
+                  <label><input type="checkbox" name="allowed_sections" value="{{ code }}" {% if code in emp.profile.allowed_sections %}checked{% endif %}> {{ label }}</label>
+                  {% endfor %}
+                </div>
+                {% endfor %}
+              </div>
+              <div style="display:flex;gap:10px;margin-top:12px;">
+                <button type="submit">Сохранить</button>
+                <button type="submit" name="action" value="remove_employee" class="danger"
+                        onclick="return confirm('Убрать {{ emp.username }} из компании?');">Убрать из компании</button>
+              </div>
+            </form>
+          </details>
+          {% else %}<span class="tm-sub">—</span>{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="tm-sub" style="padding:24px;text-align:center;">Сотрудников пока нет.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Новый сотрудник -->
+{% if can_edit %}
+<div class="card">
+  <h2 style="margin-top:0;">Новый сотрудник</h2>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create_employee">
+    <div class="tm-row2">
+      <div class="tm-field"><label>Логин</label><input type="text" name="username" required autocomplete="off"></div>
+      <div class="tm-field"><label>Пароль</label><input type="text" name="password" required autocomplete="off"></div>
+    </div>
+    <div class="tm-row2">
+      <div class="tm-field">
+        <label>Роль</label>
+        <select name="role">
+          {% for code, label in employee_roles %}
+          <option value="{{ code }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="tm-field">
+        <label>Филиал</label>
+        <select name="location_id">
+          <option value="">— не задан —</option>
+          {% for loc in locations %}
+          <option value="{{ loc.id }}">{{ loc.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <label style="font-weight:600;font-size:13px;">Доступ к разделам <span class="tm-sub" style="font-weight:400;">(только доступные по тарифу)</span></label>
+    <div class="sec-groups">
+      {% for g in section_groups %}
+      <div class="sec-group">
+        <h4>{{ g.label }}</h4>
+        {% for code, label in g.items %}
+        <label><input type="checkbox" name="allowed_sections" value="{{ code }}"> {{ label }}</label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <button type="submit" style="margin-top:14px;">Создать сотрудника</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

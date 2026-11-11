@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Настройки{% endblock %}
+{% block title %}{% trans "Настройки" %}{% endblock %}
 
 {% block content %}
 
@@ -410,55 +411,55 @@ button:hover{
 
 <div class="page">
 
-    <h1>Настройки</h1>
-    <div class="muted">Управление справочниками заказов</div>
+    <h1>{% trans "Настройки" %}</h1>
+    <div class="muted">{% trans "Управление справочниками заказов" %}</div>
 
     <div class="settings-grid">
 
         <div class="settings-card">
-            <div class="settings-title">Лимиты заказа</div>
+            <div class="settings-title">{% trans "Лимиты заказа" %}</div>
 
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_order_limits">
 
                 <label style="display:block;font-size:13px;font-weight:800;margin-bottom:6px;">
-                    Минимальная сумма заказа (UZS)
+                    {% trans "Минимальная сумма заказа (UZS)" %}
                     <input name="min_order_amount" type="number" step="0.01" min="0"
                         value="{{ country.min_order_amount|floatformat:'-2' }}"
                         style="display:block;margin-top:4px;width:100%;">
                 </label>
 
                 <label style="display:block;font-size:13px;font-weight:800;margin:12px 0 6px;">
-                    Максимум для оплаты наличными (UZS)
+                    {% trans "Максимум для оплаты наличными (UZS)" %}
                     <input name="cash_max_amount" type="number" step="0.01" min="0"
                         value="{{ country.cash_max_amount|floatformat:'-2' }}"
                         style="display:block;margin-top:4px;width:100%;">
                 </label>
 
                 <div class="muted" style="font-size:12px;margin-bottom:10px;">
-                    0 — без ограничения. Выше суммы наличными — только картой.
+                    {% trans "0 — без ограничения. Выше суммы наличными — только картой." %}
                 </div>
 
-                <button type="submit">Сохранить</button>
+                <button type="submit">{% trans "Сохранить" %}</button>
             </form>
         </div>
 
         <div class="settings-card">
-            <div class="settings-title">Способы оплаты</div>
+            <div class="settings-title">{% trans "Способы оплаты" %}</div>
 
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_payment_method">
 
                 <div class="add-form">
-                    <input name="name" placeholder="Например: Наличные" required>
-                    <button type="submit">Добавить</button>
+                    <input name="name" placeholder="{% trans "Например: Наличные" %}" required>
+                    <button type="submit">{% trans "Добавить" %}</button>
                 </div>
 
                 <label class="checkbox-row">
                     <input type="checkbox" name="is_cash">
-                    Это наличная оплата
+                    {% trans "Это наличная оплата" %}
                 </label>
             </form>
 
@@ -469,7 +470,7 @@ button:hover{
                             <div>
                                 <div class="item-name">{{ item.name }}</div>
                                 <div class="item-meta">
-                                    {% if item.is_cash %}Наличные{% else %}Безналичная{% endif %}
+                                    {% if item.is_cash %}{% trans "Наличные" %}{% else %}{% trans "Безналичная" %}{% endif %}
                                 </div>
                             </div>
 
@@ -481,8 +482,8 @@ button:hover{
                                 <button
                                     type="submit"
                                     class="icon-delete-btn"
-                                    onclick="return confirm('Удалить способ оплаты?')"
-                                    title="Удалить"
+                                    onclick="return confirm('{% trans "Удалить способ оплаты?" as jt %}{{ jt|escapejs }}')"
+                                    title="{% trans "Удалить" %}"
                                 >
                                     <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
                                         <path d="M4 7h16"/>
@@ -496,13 +497,13 @@ button:hover{
                         </div>
                     </div>
                 {% empty %}
-                    <div class="empty">Пока нет способов оплаты</div>
+                    <div class="empty">{% trans "Пока нет способов оплаты" %}</div>
                 {% endfor %}
             </div>
         </div>
 
         <div class="settings-card">
-            <div class="settings-title">Источники заказов</div>
+            <div class="settings-title">{% trans "Источники заказов" %}</div>
 
             <form method="post" class="add-form promo-form">
                 {% csrf_token %}
@@ -510,7 +511,7 @@ button:hover{
 
                 <input
                     name="name"
-                    placeholder="Например: Яндекс"
+                    placeholder="{% trans "Например: Яндекс" %}"
                     required
                 >
 
@@ -518,14 +519,14 @@ button:hover{
                     name="commission_percent"
                     type="number"
                     step="0.01"
-                    placeholder="Комиссия %"
+                    placeholder="{% trans "Комиссия %" %}"
                     value="0"
                 >
 				
 				<select name="default_payment_method_id">
 
 				    <option value="">
-				        Авто не выбирать
+				        {% trans "Авто не выбирать" %}
 				    </option>
 
 				    {% for method in payment_methods %}
@@ -541,7 +542,7 @@ button:hover{
 
 				</select>
 
-                <button type="submit">Добавить</button>
+                <button type="submit">{% trans "Добавить" %}</button>
             </form>
 
             <div class="items-list">
@@ -551,7 +552,7 @@ button:hover{
                             <div>
                                 <div class="item-name">{{ item.name }}</div>
                                 <div class="item-meta">
-                                    Комиссия: {{ item.commission_percent|floatformat:-2 }}%
+                                    {% trans "Комиссия:" %} {{ item.commission_percent|floatformat:-2 }}%
                                 </div>
                             </div>
 
@@ -563,8 +564,8 @@ button:hover{
                                 <button
                                     type="submit"
                                     class="icon-delete-btn"
-                                    onclick="return confirm('Удалить источник?')"
-                                    title="Удалить"
+                                    onclick="return confirm('{% trans "Удалить источник?" as jt %}{{ jt|escapejs }}')"
+                                    title="{% trans "Удалить" %}"
                                 >
                                     <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
                                         <path d="M4 7h16"/>
@@ -595,23 +596,23 @@ button:hover{
                                 value="{{ item.commission_percent|floatformat:-2 }}"
                             >
 
-                            <button type="submit">Сохранить</button>
+                            <button type="submit">{% trans "Сохранить" %}</button>
                         </form>
                     </div>
                 {% empty %}
-                    <div class="empty">Пока нет источников заказов</div>
+                    <div class="empty">{% trans "Пока нет источников заказов" %}</div>
                 {% endfor %}
             </div>
         </div>
 
         <div class="settings-card">
-            <div class="settings-title">Доставка</div>
+            <div class="settings-title">{% trans "Доставка" %}</div>
 
             <form method="post" class="add-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_delivery_provider">
-                <input name="name" placeholder="Например: Яндекс" required>
-                <button type="submit">Добавить</button>
+                <input name="name" placeholder="{% trans "Например: Яндекс" %}" required>
+                <button type="submit">{% trans "Добавить" %}</button>
             </form>
 
             <div class="items-list">
@@ -628,8 +629,8 @@ button:hover{
                                 <button
                                     type="submit"
                                     class="icon-delete-btn"
-                                    onclick="return confirm('Удалить доставку?')"
-                                    title="Удалить"
+                                    onclick="return confirm('{% trans "Удалить доставку?" as jt %}{{ jt|escapejs }}')"
+                                    title="{% trans "Удалить" %}"
                                 >
                                     <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
                                         <path d="M4 7h16"/>
@@ -643,19 +644,19 @@ button:hover{
                         </div>
                     </div>
                 {% empty %}
-                    <div class="empty">Пока нет служб доставки</div>
+                    <div class="empty">{% trans "Пока нет служб доставки" %}</div>
                 {% endfor %}
             </div>
         </div>
 
         <div class="settings-card">
-            <div class="settings-title">Причины отказа</div>
+            <div class="settings-title">{% trans "Причины отказа" %}</div>
 
             <form method="post" class="add-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_cancel_reason">
-                <input name="name" placeholder="Например: Клиент передумал" required>
-                <button type="submit">Добавить</button>
+                <input name="name" placeholder="{% trans "Например: Клиент передумал" %}" required>
+                <button type="submit">{% trans "Добавить" %}</button>
             </form>
 
             <div class="items-list">
@@ -672,8 +673,8 @@ button:hover{
                                 <button
                                     type="submit"
                                     class="icon-delete-btn"
-                                    onclick="return confirm('Удалить причину отказа?')"
-                                    title="Удалить"
+                                    onclick="return confirm('{% trans "Удалить причину отказа?" as jt %}{{ jt|escapejs }}')"
+                                    title="{% trans "Удалить" %}"
                                 >
                                     <svg fill="none" viewBox="0 0 24 24" stroke-width="2">
                                         <path d="M4 7h16"/>
@@ -687,7 +688,7 @@ button:hover{
                         </div>
                     </div>
                 {% empty %}
-                    <div class="empty">Пока нет причин отказа</div>
+                    <div class="empty">{% trans "Пока нет причин отказа" %}</div>
                 {% endfor %}
             </div>
         </div>

@@ -1,0 +1,69 @@
+{% load i18n %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% trans "Настройка" %} · ЧекМейт</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root{--surface:#f7f8fa;--surface-raised:#fff;--surface-sunken:#f1f3f7;--border:#e5e7eb;--border-strong:#d1d5db;
+--ink:#111827;--ink-muted:#667085;--ink-subtle:#98a2b3;--primary:#123b7a;--primary-hover:#0d2d5f;--primary-soft:#e7edf7;--on-primary:#fff;
+--cat-amber:#e0a42b;--radius-md:8px;--radius-lg:12px;--radius-pill:999px;
+--shadow-sm:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.04);--font-sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--surface:#0e1420;--surface-raised:#161d2b;--surface-sunken:#1b2433;--border:#28313f;--border-strong:#3a4557;--ink:#e9eef6;--ink-muted:#9da9bd;--ink-subtle:#707e95;--primary:#5b8def;--primary-hover:#7aa4f2;--primary-soft:#1a2b49;--on-primary:#0b1220;--cat-amber:#f2c25c;}}
+*{box-sizing:border-box;}
+body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-size:14px;}
+.wrap{width:100%;max-width:620px;}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.brand{font-size:19px;font-weight:700;letter-spacing:-.01em;}
+.tag{font-size:11px;font-weight:600;color:var(--primary);background:var(--primary-soft);padding:3px 9px;border-radius:var(--radius-pill);}
+.kicker{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--cat-amber);background:color-mix(in srgb,var(--cat-amber) 14%,transparent);padding:4px 10px;border-radius:var(--radius-pill);margin:16px 0 0;}
+h1{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:12px 0 4px;}
+.lead{color:var(--ink-muted);margin:0 0 18px;font-size:15px;}
+.card{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+.row{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-top:1px solid var(--border);cursor:pointer;transition:.12s;}
+.row:first-child{border-top:0;}
+.row:hover{background:var(--surface-sunken);}
+.r-main{flex:1;min-width:0;}
+.r-title{display:block;font-weight:600;font-size:15px;}
+.r-desc{display:block;color:var(--ink-muted);font-size:13px;margin-top:3px;line-height:1.4;}
+.sw{position:relative;width:42px;height:24px;flex:0 0 auto;margin-top:4px;}
+.sw input{opacity:0;width:0;height:0;position:absolute;}
+.slider{position:absolute;inset:0;background:var(--border-strong);border-radius:var(--radius-pill);transition:.18s;}
+.slider::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.sw input:checked+.slider{background:var(--primary);}
+.sw input:checked+.slider::before{transform:translateX(18px);}
+.foot{margin-top:22px;display:flex;align-items:center;gap:14px;}
+.skip{color:var(--ink-muted);text-decoration:none;font-weight:600;font-size:14px;background:none;border:0;cursor:pointer;font-family:inherit;padding:0;}
+.skip:hover{color:var(--ink);}
+.btn{margin-left:auto;background:var(--primary);color:var(--on-primary);border:0;height:46px;padding:0 26px;border-radius:var(--radius-md);font-weight:600;font-size:15px;cursor:pointer;font-family:inherit;transition:.15s;}
+.btn:hover{background:var(--primary-hover);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="brand">ЧекМейт</span><span class="tag">{% trans "касса" %}</span></div>
+  <span class="kicker">{{ type_label }}</span>
+  <h1>{% trans "Что вам нужно для работы?" %}</h1>
+  <p class="lead">{% trans "Отметьте, что используете — покажем только нужные разделы. Всё можно включить позже." %}</p>
+  <form method="post" action="/start/questions/">
+    {% csrf_token %}
+    <div class="card">
+      {% for q in questions %}
+      <label class="row">
+        <span class="r-main">
+          <span class="r-title">{{ q.title }}</span>
+          <span class="r-desc">{{ q.desc }}</span>
+        </span>
+        <span class="sw"><input type="checkbox" name="modules" value="{{ q.key }}" {% if q.default %}checked{% endif %}><span class="slider"></span></span>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="foot">
+      <button type="submit" name="skip" value="1" class="skip">{% trans "Пропустить" %}</button>
+      <button class="btn" type="submit">{% trans "Продолжить" %} →</button>
+    </div>
+  </form>
+</div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Продаваемость блюд{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Продаваемость блюд" %}{% endblock %}
 {% block content %}
 <style>
 .ds-wrap{max-width:1200px;margin:0 auto;}
@@ -27,53 +28,53 @@
 </style>
 
 <div class="ds-wrap">
-  <h1 class="ds-h1">Продаваемость блюд</h1>
-  <p class="ds-sub">Сколько раз продано каждое блюдо за период, его выручка, себестоимость, прибыль и маржинальность. Учтены заказы без отменённых и неоплаченных.</p>
+  <h1 class="ds-h1">{% trans "Продаваемость блюд" %}</h1>
+  <p class="ds-sub">{% trans "Сколько раз продано каждое блюдо за период, его выручка, себестоимость, прибыль и маржинальность. Учтены заказы без отменённых и неоплаченных." %}</p>
 
   <!-- ФИЛЬТРЫ -->
   <form method="get" class="ds-card">
-    <div class="ds-title">Фильтры</div>
+    <div class="ds-title">{% trans "Фильтры" %}</div>
     <div class="ds-grid">
-      <div class="ds-f"><label>С даты</label><input class="ds-in" type="date" name="date_from" value="{{ f_from }}"></div>
-      <div class="ds-f"><label>По дату</label><input class="ds-in" type="date" name="date_to" value="{{ f_to }}"></div>
-      <div class="ds-f"><label>Категория</label>
+      <div class="ds-f"><label>{% trans "С даты" %}</label><input class="ds-in" type="date" name="date_from" value="{{ f_from }}"></div>
+      <div class="ds-f"><label>{% trans "По дату" %}</label><input class="ds-in" type="date" name="date_to" value="{{ f_to }}"></div>
+      <div class="ds-f"><label>{% trans "Категория" %}</label>
         <select class="ds-sel" name="category_id">
-          <option value="">Все категории</option>
+          <option value="">{% trans "Все категории" %}</option>
           {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
         </select>
       </div>
-      <div class="ds-f"><label>Сортировать по</label>
+      <div class="ds-f"><label>{% trans "Сортировать по" %}</label>
         <select class="ds-sel" name="sort">
           {% for val, label in sort_options %}<option value="{{ val }}" {% if sort == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
         </select>
       </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-      <a class="ds-btn ds-gray" href="/c/{{ country.slug }}/dish-sales/">Сбросить</a>
-      <button class="ds-btn ds-green" type="submit">Применить</button>
+      <a class="ds-btn ds-gray" href="/c/{{ country.slug }}/dish-sales/">{% trans "Сбросить" %}</a>
+      <button class="ds-btn ds-green" type="submit">{% trans "Применить" %}</button>
     </div>
   </form>
 
   <!-- МЕТРИКИ -->
   <div class="ds-tiles">
-    <div class="ds-tile"><div class="k">Позиций</div><div class="v">{{ kpi_positions }}</div></div>
-    <div class="ds-tile"><div class="k">Продано, шт</div><div class="v">{{ kpi_qty|floatformat:"-2" }}</div></div>
-    <div class="ds-tile"><div class="k">Выручка</div><div class="v green">{{ kpi_revenue_fmt }}</div></div>
-    <div class="ds-tile"><div class="k">Себестоимость</div><div class="v red">{{ kpi_cost_fmt }}</div></div>
-    <div class="ds-tile"><div class="k">Прибыль</div><div class="v green">{{ kpi_profit_fmt }}</div></div>
-    <div class="ds-tile"><div class="k">Маржа</div><div class="v">{{ kpi_margin }}%</div></div>
+    <div class="ds-tile"><div class="k">{% trans "Позиций" %}</div><div class="v">{{ kpi_positions }}</div></div>
+    <div class="ds-tile"><div class="k">{% trans "Продано, шт" %}</div><div class="v">{{ kpi_qty|floatformat:"-2" }}</div></div>
+    <div class="ds-tile"><div class="k">{% trans "Выручка" %}</div><div class="v green">{{ kpi_revenue_fmt }}</div></div>
+    <div class="ds-tile"><div class="k">{% trans "Себестоимость" %}</div><div class="v red">{{ kpi_cost_fmt }}</div></div>
+    <div class="ds-tile"><div class="k">{% trans "Прибыль" %}</div><div class="v green">{{ kpi_profit_fmt }}</div></div>
+    <div class="ds-tile"><div class="k">{% trans "Маржа" %}</div><div class="v">{{ kpi_margin }}%</div></div>
   </div>
 
   <!-- ТАБЛИЦА -->
   <div class="ds-card">
-    <div class="ds-title">Блюда</div>
+    <div class="ds-title">{% trans "Блюда" %}</div>
     <table class="ds-table">
       <thead>
         <tr>
-          <th>Блюдо</th><th>Категория</th>
-          <th class="num">Цена</th><th class="num">Продано</th>
-          <th class="num">Выручка</th><th class="num">Себест.</th>
-          <th class="num">Прибыль</th><th class="num">Маржа %</th>
+          <th>{% trans "Блюдо" %}</th><th>{% trans "Категория" %}</th>
+          <th class="num">{% trans "Цена" %}</th><th class="num">{% trans "Продано" %}</th>
+          <th class="num">{% trans "Выручка" %}</th><th class="num">{% trans "Себест." %}</th>
+          <th class="num">{% trans "Прибыль" %}</th><th class="num">{% trans "Маржа %" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -89,7 +90,7 @@
           <td class="num">{{ r.margin_pct }}%</td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="empty">За выбранный период продаж нет.</td></tr>
+        <tr><td colspan="8" class="empty">{% trans "За выбранный период продаж нет." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Интеграции{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Интеграции" %}{% endblock %}
 {% block content %}
 <style>
 :root{--pri:#123B7A;--pri-d:#0D2D5F;--bd:#E5E7EB;--mut:#667085;--bg:#F7F8FA;}
@@ -23,10 +24,10 @@
 </style>
 
 <div class="int-wrap">
-  <h1>Интеграции</h1>
-  <div class="sub">Арендатор: {{ country.name }} · SMS отправляется общим сервисом платформы и настраивается отдельно.</div>
+  <h1>{% trans "Интеграции" %}</h1>
+  <div class="sub">{% trans "Арендатор:" %} {{ country.name }} · {% trans "SMS отправляется общим сервисом платформы и настраивается отдельно." %}</div>
 
-  {% if saved %}<div class="ok">✓ Сохранено</div>{% endif %}
+  {% if saved %}<div class="ok">{% trans "✓ Сохранено" %}</div>{% endif %}
 
   <form method="post">
     {% csrf_token %}
@@ -36,7 +37,7 @@
       <div class="f">
         <label>Bot token</label>
         <input type="password" name="telegram_bot_token" autocomplete="off"
-               placeholder="{% if secret_set.telegram_bot_token %}•••• задано — пусто = не менять{% else %}не задано{% endif %}">
+               placeholder="{% if secret_set.telegram_bot_token %}•••• {% trans "задано — пусто = не менять" %}{% else %}{% trans "не задано" %}{% endif %}">
       </div>
       <div class="f">
         <label>Chat ID</label>
@@ -51,7 +52,7 @@
         <div class="f">
           <label>Secret key</label>
           <input type="password" name="payme_secret_key" autocomplete="off"
-                 placeholder="{% if secret_set.payme_secret_key %}•••• задано — пусто = не менять{% else %}не задано{% endif %}">
+                 placeholder="{% if secret_set.payme_secret_key %}•••• {% trans "задано — пусто = не менять" %}{% else %}{% trans "не задано" %}{% endif %}">
         </div>
       </div>
       <div class="row2">
@@ -62,7 +63,7 @@
         <div class="f"><label>Success URL</label><input type="text" name="payme_success_url" value="{{ s.payme_success_url }}"></div>
         <div class="f"><label>Fail URL</label><input type="text" name="payme_fail_url" value="{{ s.payme_fail_url }}"></div>
       </div>
-      <div class="cb">Callback-URL для кабинета Payme (вставьте в настройках мерчанта):<code>{{ payme_callback_url }}</code></div>
+      <div class="cb">{% trans "Callback-URL для кабинета Payme (вставьте в настройках мерчанта):" %}<code>{{ payme_callback_url }}</code></div>
     </div>
 
     <div class="int-card">
@@ -76,17 +77,17 @@
         <div class="f">
           <label>Secret key</label>
           <input type="password" name="click_secret_key" autocomplete="off"
-                 placeholder="{% if secret_set.click_secret_key %}•••• задано — пусто = не менять{% else %}не задано{% endif %}">
+                 placeholder="{% if secret_set.click_secret_key %}•••• {% trans "задано — пусто = не менять" %}{% else %}{% trans "не задано" %}{% endif %}">
         </div>
       </div>
       <div class="row2">
         <div class="f"><label>Success URL</label><input type="text" name="click_success_url" value="{{ s.click_success_url }}"></div>
         <div class="f"><label>Fail URL</label><input type="text" name="click_fail_url" value="{{ s.click_fail_url }}"></div>
       </div>
-      <div class="cb">Callback-URL для кабинета Click:<code>{{ click_callback_url }}</code></div>
+      <div class="cb">{% trans "Callback-URL для кабинета Click:" %}<code>{{ click_callback_url }}</code></div>
     </div>
 
-    <button type="submit" class="save">Сохранить</button>
+    <button type="submit" class="save">{% trans "Сохранить" %}</button>
   </form>
 </div>
 {% endblock %}

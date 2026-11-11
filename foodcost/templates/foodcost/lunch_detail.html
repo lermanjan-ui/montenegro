@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Обед дня — {{ menu.date|date:"d.m.Y" }}{% endblock %}
+{% block title %}{% trans "Обед дня" %} — {{ menu.date|date:"d.m.Y" }}{% endblock %}
 
 {% block content %}
 
@@ -46,65 +47,65 @@
 </style>
 
 <div class="page">
-    <a class="back" href="/c/{{ country.slug }}/lunch/">← Все обеды</a>
-    <h1 style="margin-top:8px;">Обед дня — {{ menu.date|date:"d.m.Y" }}</h1>
+    <a class="back" href="/c/{{ country.slug }}/lunch/">{% trans "← Все обеды" %}</a>
+    <h1 style="margin-top:8px;">{% trans "Обед дня" %} — {{ menu.date|date:"d.m.Y" }}</h1>
 
     <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_menu">
 
         <div class="card">
-            <h2>Параметры</h2>
+            <h2>{% trans "Параметры" %}</h2>
             <div class="grid2">
                 <div class="field">
-                    <label>Заголовок</label>
+                    <label>{% trans "Заголовок" %}</label>
                     <input type="text" name="title" value="{{ menu.title }}" maxlength="120">
                 </div>
                 <div class="field">
-                    <label>Доставка с (напр. 11:00)</label>
+                    <label>{% trans "Доставка с (напр. 11:00)" %}</label>
                     <input type="text" name="delivery_from" value="{{ menu.delivery_from }}" maxlength="20" placeholder="11:00">
                 </div>
                 <div class="field">
-                    <label>Цена комплекта, UZS</label>
+                    <label>{% trans "Цена комплекта, UZS" %}</label>
                     <input type="number" name="combo_price" value="{{ menu.combo_price|floatformat:'0' }}" min="0" step="1">
                 </div>
                 <div class="field">
-                    <label>Стоимость по отдельности, UZS</label>
+                    <label>{% trans "Стоимость по отдельности, UZS" %}</label>
                     <input type="number" value="{{ menu.separate_price|floatformat:'0' }}" disabled>
-                    <p class="hint">Считается из цен блюд ниже (сумма). Экономия = отдельно − комплект = {{ menu.savings|floatformat:'0' }}.</p>
+                    <p class="hint">{% trans "Считается из цен блюд ниже (сумма). Экономия = отдельно − комплект =" %} {{ menu.savings|floatformat:'0' }}.</p>
                 </div>
             </div>
             <div class="check">
                 <input type="checkbox" id="is_active" name="is_active" {% if menu.is_active %}checked{% endif %}>
-                <label for="is_active">Активно (показывать на сайте)</label>
+                <label for="is_active">{% trans "Активно (показывать на сайте)" %}</label>
             </div>
         </div>
 
         <div class="card">
-            <h2>Состав</h2>
-            <p class="muted" style="margin:0 0 8px; font-size:13px;">На каждый слот: выберите блюдо из системы <strong>или</strong> впишите название текстом. Если выбрано блюдо — берётся его имя и фото.</p>
+            <h2>{% trans "Состав" %}</h2>
+            <p class="muted" style="margin:0 0 8px; font-size:13px;">{% trans "На каждый слот: выберите блюдо из системы" %} <strong>{% trans "или" %}</strong> {% trans "впишите название текстом. Если выбрано блюдо — берётся его имя и фото." %}</p>
             {% for slot in slots %}
             <div class="slot-row">
                 <div class="slot-label">{{ slot.label }}</div>
                 <div>
-                    <label>Блюдо из системы</label>
+                    <label>{% trans "Блюдо из системы" %}</label>
                     <select name="{{ slot.key }}_dish">
-                        <option value="">— не выбрано —</option>
+                        <option value="">{% trans "— не выбрано —" %}</option>
                         {% for d in dishes %}
                         <option value="{{ d.id }}" {% if slot.dish_id == d.id %}selected{% endif %}>{{ d.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label>Или впишите название</label>
-                    <input type="text" name="{{ slot.key }}_name" value="{{ slot.name }}" maxlength="255" placeholder="напр. Куриный суп">
+                    <label>{% trans "Или впишите название" %}</label>
+                    <input type="text" name="{{ slot.key }}_name" value="{{ slot.name }}" maxlength="255" placeholder="{% trans "напр. Куриный суп" %}">
                 </div>
                 <div>
-                    <label>Граммовка</label>
-                    <input type="number" name="{{ slot.key }}_grams" value="{{ slot.grams|default:0 }}" min="0" step="1" placeholder="г">
+                    <label>{% trans "Граммовка" %}</label>
+                    <input type="number" name="{{ slot.key }}_grams" value="{{ slot.grams|default:0 }}" min="0" step="1" placeholder="{% trans "г" %}">
                 </div>
                 <div>
-                    <label>Цена отдельно</label>
+                    <label>{% trans "Цена отдельно" %}</label>
                     <input type="number" name="{{ slot.key }}_price" value="{{ slot.price|floatformat:'0' }}" min="0" step="1" placeholder="UZS">
                 </div>
             </div>
@@ -113,20 +114,20 @@
 
         <div class="card">
             <div class="row-input" style="justify-content:space-between;">
-                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <button type="submit" class="btn btn-primary">{% trans "Сохранить" %}</button>
                 {% if can_edit %}
-                <span class="muted" style="font-size:13px;">Изменения применяются сразу на сайте, если меню активно.</span>
+                <span class="muted" style="font-size:13px;">{% trans "Изменения применяются сразу на сайте, если меню активно." %}</span>
                 {% endif %}
             </div>
         </div>
     </form>
 
     <div class="card">
-        <h2>Допродажи «Добавить к обеду»</h2>
-        <p class="muted" style="margin:0 0 14px; font-size:13px;">Только реальные блюда из каталога — их кладут в корзину как обычный товар.</p>
+        <h2>{% trans "Допродажи «Добавить к обеду»" %}</h2>
+        <p class="muted" style="margin:0 0 14px; font-size:13px;">{% trans "Только реальные блюда из каталога — их кладут в корзину как обычный товар." %}</p>
         {% if upsells %}
         <table>
-            <thead><tr><th>Блюдо</th><th>Порядок</th><th></th></tr></thead>
+            <thead><tr><th>{% trans "Блюдо" %}</th><th>{% trans "Порядок" %}</th><th></th></tr></thead>
             <tbody>
                 {% for u in upsells %}
                 <tr>
@@ -138,7 +139,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete_upsell">
                             <input type="hidden" name="upsell_id" value="{{ u.id }}">
-                            <button type="submit" class="btn btn-danger">Убрать</button>
+                            <button type="submit" class="btn btn-danger">{% trans "Убрать" %}</button>
                         </form>
                         {% endif %}
                     </td>
@@ -147,7 +148,7 @@
             </tbody>
         </table>
         {% else %}
-        <div class="empty">Допродажи не добавлены.</div>
+        <div class="empty">{% trans "Допродажи не добавлены." %}</div>
         {% endif %}
 
         {% if can_edit %}
@@ -155,25 +156,25 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="add_upsell">
             <select name="upsell_dish" required style="min-width:280px;">
-                <option value="">— выберите блюдо —</option>
+                <option value="">{% trans "— выберите блюдо —" %}</option>
                 {% for d in dishes %}
                 <option value="{{ d.id }}">{{ d.name }}</option>
                 {% endfor %}
             </select>
-            <input type="number" name="sort_order" min="0" step="1" value="0" title="Порядок" style="width:110px;">
-            <button type="submit" class="btn btn-primary">Добавить</button>
+            <input type="number" name="sort_order" min="0" step="1" value="0" title="{% trans "Порядок" %}" style="width:110px;">
+            <button type="submit" class="btn btn-primary">{% trans "Добавить" %}</button>
         </form>
         {% endif %}
     </div>
 
     {% if can_edit %}
     <div class="card">
-        <h2 style="color:#b91c1c;">Удалить меню</h2>
-        <p class="muted" style="margin:0 0 14px; font-size:13px;">Удаляет меню на эту дату. Оформленные заказы не меняются (состав в них зафиксирован).</p>
-        <form method="post" onsubmit="return confirm('Удалить меню на {{ menu.date|date:"d.m.Y" }}?');">
+        <h2 style="color:#b91c1c;">{% trans "Удалить меню" %}</h2>
+        <p class="muted" style="margin:0 0 14px; font-size:13px;">{% trans "Удаляет меню на эту дату. Оформленные заказы не меняются (состав в них зафиксирован)." %}</p>
+        <form method="post" onsubmit="return confirm('{% trans "Удалить меню на" as jt %}{{ jt|escapejs }} {{ menu.date|date:"d.m.Y" }}?');">
             {% csrf_token %}
             <input type="hidden" name="action" value="delete_menu">
-            <button type="submit" class="btn btn-danger">Удалить меню</button>
+            <button type="submit" class="btn btn-danger">{% trans "Удалить меню" %}</button>
         </form>
     </div>
     {% endif %}

@@ -1,0 +1,237 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Цены и доступность{% endblock %}
+{% block content %}
+<style>
+:root{ --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-border:#E5E7EB; --fc-text:#111827;
+ --fc-muted:#6B7280; --fc-green:#16A34A; --fc-green-soft:#DCFCE7; --fc-warning:#F59E0B;
+ --fc-danger:#EF4444; --fc-hover:#F9FAFB; }
+.dp-wrap{ font-family:Inter,system-ui,sans-serif; }
+.dp-head h1{ margin:0 0 4px; font-size:30px; font-weight:600; color:var(--fc-text); }
+.dp-head p{ margin:0 0 16px; font-size:14px; color:var(--fc-muted); }
+.dp-bar{ background:#fff; border:1px solid var(--fc-border); border-radius:12px; padding:14px 16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; font-size:14px; }
+.dp-bar form{ display:flex; gap:8px; align-items:center; }
+.dp-bar select{ height:36px; border:1px solid var(--fc-border); border-radius:8px; padding:0 8px; }
+.dp-btn{ height:36px; border-radius:8px; padding:0 14px; font-weight:600; font-size:13px; border:1px solid transparent; cursor:pointer; background:var(--fc-green); color:#fff; }
+.dp-btn-sec{ background:#fff; color:var(--fc-text); border-color:var(--fc-border); }
+.dp-pill{ background:var(--fc-hover); border:1px solid var(--fc-border); border-radius:999px; padding:4px 12px; color:var(--fc-muted); }
+
+.dp-scroll{ overflow-x:auto; background:#fff; border:1px solid var(--fc-border); border-radius:12px; }
+table.dp{ border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
+table.dp th, table.dp td{ padding:8px 10px; border-bottom:1px solid #F0F2F4; text-align:right; }
+table.dp th{ position:sticky; top:0; background:#fff; color:var(--fc-muted); font-size:11px; text-transform:uppercase; font-weight:600; text-align:right; z-index:1; }
+table.dp th.l, table.dp td.l{ text-align:left; }
+table.dp td.l{ font-weight:600; color:var(--fc-text); }
+table.dp tbody tr:hover td{ background:var(--fc-hover); }
+.dp-thumb{ width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid var(--fc-border); }
+.dp-thumb-empty{ width:36px; height:36px; border-radius:8px; background:var(--fc-hover); border:1px solid var(--fc-border); }
+.dp-in{ width:84px; height:32px; border:1px solid var(--fc-border); border-radius:8px; padding:0 8px; font-size:13px; text-align:right; }
+.dp-pos{ color:var(--fc-green); font-weight:600; }
+.dp-neg{ color:var(--fc-danger); font-weight:600; }
+.dp-sep{ border-left:2px solid #EEF1F4; }
+.dp-grp{ color:#9CA3AF; font-weight:600; font-size:10px; }
+.dp-chk{ width:18px; height:18px; accent-color:var(--fc-green); }
+.dp-save{ height:32px; border-radius:8px; padding:0 12px; font-weight:600; font-size:12px; border:none; cursor:pointer; background:var(--fc-green); color:#fff; }
+.dp-muted{ color:var(--fc-muted); }
+.dp-empty{ padding:30px; text-align:center; color:var(--fc-muted); }
+
+/* Вкладки каналов */
+.dp-tabs{ display:flex; gap:6px; margin-bottom:14px; }
+.dp-tab{ height:38px; padding:0 18px; border-radius:10px; border:1px solid var(--fc-border); background:#fff; color:var(--fc-text); font-weight:600; font-size:14px; cursor:pointer; }
+.dp-tab.active{ background:var(--fc-green); color:#fff; border-color:var(--fc-green); }
+/* Показываем колонки/элементы только активного канала (общие — всегда) */
+.dp-wrap[data-tab="site"]   .c-uzum,  .dp-wrap[data-tab="site"]   .c-yandex{ display:none; }
+.dp-wrap[data-tab="uzum"]   .c-site,  .dp-wrap[data-tab="uzum"]   .c-yandex{ display:none; }
+.dp-wrap[data-tab="yandex"] .c-site,  .dp-wrap[data-tab="yandex"] .c-uzum{ display:none; }
+/* Сортировка по клику на заголовок */
+table.dp th.dp-sort{ cursor:pointer; user-select:none; }
+table.dp th.dp-sort:hover{ color:var(--fc-text); }
+.dp-arr{ font-size:10px; color:var(--fc-green); }
+</style>
+
+<div class="dp-wrap" id="dpWrap" data-tab="site">
+  <div class="dp-head">
+    <h1>Цены и доступность</h1>
+    <p>Цены, маржа и доступность блюд по точкам и в Uzum, расчёт выручки с учётом комиссий.</p>
+  </div>
+
+  <div class="dp-tabs">
+    <button type="button" class="dp-tab active" data-tab="site">Сайт</button>
+    <button type="button" class="dp-tab" data-tab="uzum">Uzum</button>
+    <button type="button" class="dp-tab" data-tab="yandex">Яндекс</button>
+  </div>
+
+  <div class="dp-bar">
+    <form method="get" style="display:inline-flex;align-items:center;gap:6px;">
+      <span>Категория:</span>
+      <select name="category_id" onchange="this.form.submit()">
+        <option value="">Все категории</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if selected_category_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="dp-btn dp-btn-sec">Фильтр</button></noscript>
+    </form>
+
+    <form method="post" class="c-uzum">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="set_uzum_source">
+      <input type="hidden" name="category_id" value="{{ selected_category_id }}">
+      <input type="hidden" name="tab" class="dp-tabfield" value="site">
+      <span>Источник Uzum:</span>
+      <select name="uzum_source_id">
+        <option value="">— не выбран —</option>
+        {% for s in order_sources %}
+        <option value="{{ s.id }}" {% if uzum_source and uzum_source.id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.commission_percent }}%)</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="dp-btn dp-btn-sec">Сохранить</button>
+    </form>
+    <span class="dp-pill c-uzum">Комиссия Uzum: {{ uzum_comm }}%</span>
+    <span class="dp-pill c-yandex">Яндекс: {{ yandex_comm }}%</span>
+
+    <form method="post" style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="apply_discount_all">
+      <input type="hidden" name="category_id" value="{{ selected_category_id }}">
+      <input type="hidden" name="tab" class="dp-tabfield" value="site">
+      <span>Скидка всем, %:</span>
+      <input class="dp-in c-site" type="text" name="all_site_discount" placeholder="сайт" style="width:64px;">
+      <input class="dp-in c-uzum" type="text" name="all_uzum_discount" placeholder="Uzum" style="width:64px;">
+      <input class="dp-in c-yandex" type="text" name="all_yandex_discount" placeholder="Яндекс" style="width:64px;">
+      <button type="submit" class="dp-btn dp-btn-sec"
+              onclick="return confirm('Применить скидку ко ВСЕМ блюдам? Пустые поля не меняются.');">
+        Применить ко всем
+      </button>
+    </form>
+  </div>
+
+  <div class="dp-scroll">
+    <table class="dp">
+      <thead>
+        <tr>
+          <th class="l">Фото</th>
+          <th class="l dp-sort" data-key="name">Блюдо<span class="dp-arr"></span></th>
+          <th class="dp-sort" data-key="cost">Себест.<span class="dp-arr"></span></th>
+          <th class="dp-sep c-site dp-sort" data-key="price">Стоимость<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_disc">Скидка сайт %<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_price_disc">Цена со ск.<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_margin">Маржа<span class="dp-arr"></span></th>
+          <th class="c-site">На сайте</th>
+          <th class="dp-sep c-uzum dp-sort" data-key="uzum_price">Цена Uzum<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_disc">Скидка Uzum %<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_net">Uzum: получим<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_margin">Маржа Uzum<span class="dp-arr"></span></th>
+          <th class="dp-sep c-yandex dp-sort" data-key="yandex_price">Цена Яндекс<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_disc">Скидка Яндекс %<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_net">Яндекс итог<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_margin">Маржа Яндекс<span class="dp-arr"></span></th>
+          {% for loc in locations %}
+            <th class="dp-sep c-site">{{ loc.name }}<div class="dp-grp">доступно</div></th>
+            <th class="c-uzum">{{ loc.name }}<div class="dp-grp">Uzum</div></th>
+          {% endfor %}
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <form method="post" style="display:contents">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_dish">
+            <input type="hidden" name="dish_id" value="{{ r.dish.id }}">
+            <input type="hidden" name="category_id" value="{{ selected_category_id }}">
+            <input type="hidden" name="tab" class="dp-tabfield" value="site">
+
+            <td class="l">
+              {% if r.dish.photo_url %}<img class="dp-thumb" src="{{ r.dish.photo_url }}">
+              {% elif r.dish.photo %}<img class="dp-thumb" src="{{ r.dish.photo.url }}">
+              {% else %}<div class="dp-thumb-empty"></div>{% endif %}
+            </td>
+            <td class="l" data-key="name" data-sort="{{ r.dish.name }}">{{ r.dish.name }}</td>
+            <td class="dp-muted" data-key="cost" data-sort="{{ r.cost }}">{{ r.cost }}</td>
+
+            <td class="dp-sep c-site" data-key="price" data-sort="{{ r.price }}"><input class="dp-in" type="text" name="selling_price" value="{{ r.price }}"></td>
+            <td class="c-site" data-key="site_disc" data-sort="{{ r.site_disc }}"><input class="dp-in" type="text" name="site_discount_percent" value="{{ r.site_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="dp-muted c-site" data-key="site_price_disc" data-sort="{{ r.site_price_disc }}">{{ r.site_price_disc }}</td>
+            <td class="c-site" data-key="site_margin" data-sort="{{ r.margin_abs }}">{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }} <span class="dp-muted">({{ r.margin_pct }}%)</span></span>{% else %}—{% endif %}</td>
+            <td class="c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
+
+            <td class="dp-sep c-uzum" data-key="uzum_price" data-sort="{{ r.uzum_price }}"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
+            <td class="c-uzum" data-key="uzum_disc" data-sort="{{ r.uzum_disc }}"><input class="dp-in" type="text" name="uzum_discount_percent" value="{{ r.uzum_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="c-uzum" data-key="uzum_net" data-sort="{{ r.uzum_net }}">{{ r.uzum_net }}</td>
+            <td class="c-uzum" data-key="uzum_margin" data-sort="{{ r.uzum_margin_abs }}"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
+
+            <td class="dp-sep c-yandex" data-key="yandex_price" data-sort="{{ r.yandex_price }}"><input class="dp-in" type="text" name="yandex_price" value="{{ r.yandex_price }}"></td>
+            <td class="c-yandex" data-key="yandex_disc" data-sort="{{ r.yandex_disc }}"><input class="dp-in" type="text" name="yandex_discount_percent" value="{{ r.yandex_disc|floatformat:'-2' }}" placeholder="0"></td>
+            <td class="c-yandex" data-key="yandex_net" data-sort="{{ r.yandex_net }}">{{ r.yandex_net }}</td>
+            <td class="c-yandex" data-key="yandex_margin" data-sort="{{ r.yandex_margin_abs }}"><span class="{% if r.yandex_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.yandex_margin_abs }}</span>{% if r.yandex_margin_pct != None %} <span class="dp-muted">({{ r.yandex_margin_pct }}%)</span>{% endif %}</td>
+
+            {% for c in r.loc_cells %}
+              <td class="dp-sep c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
+              <td class="c-uzum" style="text-align:center;" title="{% if not c.uzum_enabled %}Точка не подключена к Uzum{% endif %}"><input class="dp-chk" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
+            {% endfor %}
+
+            <td><button type="submit" class="dp-save">OK</button></td>
+          </form>
+        </tr>
+        {% empty %}
+        <tr><td class="dp-empty" colspan="30">Нет блюд.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function(){
+  var wrap = document.getElementById('dpWrap');
+
+  // --- Вкладки каналов ---
+  var tabs = document.querySelectorAll('.dp-tab');
+  function setTab(name){
+    if (['site','uzum','yandex'].indexOf(name) === -1) { name = 'site'; }
+    wrap.setAttribute('data-tab', name);
+    tabs.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === name); });
+    // прокидываем активную вкладку в скрытые поля форм, чтобы после сохранения
+    // вернуться на неё же, а не на первую («Сайт»).
+    document.querySelectorAll('.dp-tabfield').forEach(function(f){ f.value = name; });
+  }
+  tabs.forEach(function(btn){
+    btn.addEventListener('click', function(){ setTab(btn.getAttribute('data-tab')); });
+  });
+  // Восстанавливаем вкладку из ?tab= (после сохранения редиректит сюда), иначе «Сайт».
+  var _tabParam = new URLSearchParams(window.location.search).get('tab');
+  setTab(_tabParam || 'site');
+
+  // --- Сортировка по клику на заголовок (по убыванию ↔ по возрастанию) ---
+  var tbody = wrap.querySelector('table.dp tbody');
+  var state = { key: null, dir: -1 };  // первый клик: по убыванию
+  wrap.querySelectorAll('th.dp-sort').forEach(function(th){
+    th.addEventListener('click', function(){
+      var key = th.getAttribute('data-key');
+      if (state.key === key) { state.dir = -state.dir; }
+      else { state.key = key; state.dir = -1; }
+
+      var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'))
+        .filter(function(tr){ return tr.querySelector('[data-key="' + key + '"]'); });
+
+      rows.sort(function(a, b){
+        var ea = a.querySelector('[data-key="' + key + '"]');
+        var eb = b.querySelector('[data-key="' + key + '"]');
+        var va = ea ? ea.getAttribute('data-sort') : '';
+        var vb = eb ? eb.getAttribute('data-sort') : '';
+        var na = parseFloat(va), nb = parseFloat(vb), cmp;
+        if (!isNaN(na) && !isNaN(nb)) { cmp = na - nb; }
+        else { cmp = String(va).localeCompare(String(vb), 'ru'); }
+        return cmp * state.dir;
+      });
+      rows.forEach(function(tr){ tbody.appendChild(tr); });
+
+      wrap.querySelectorAll('.dp-arr').forEach(function(s){ s.textContent = ''; });
+      var arr = th.querySelector('.dp-arr');
+      if (arr) { arr.textContent = state.dir < 0 ? ' ▼' : ' ▲'; }
+    });
+  });
+})();
+</script>
+{% endblock %}

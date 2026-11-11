@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Клиенты{% endblock %}
+{% block title %}{% trans "Клиенты" %}{% endblock %}
 
 {% block content %}
 
@@ -124,110 +125,110 @@
 <div class="fc-page">
 
     <nav class="fc-breadcrumbs" aria-label="Breadcrumbs">
-        <a href="/c/{{ country.slug }}/">Главная</a>
+        <a href="/c/{{ country.slug }}/">{% trans "Главная" %}</a>
         <span class="sep">›</span>
-        <span class="current">Клиенты</span>
+        <span class="current">{% trans "Клиенты" %}</span>
     </nav>
 
     <div class="fc-page-head">
         <div>
-            <h1>Клиенты</h1>
-            <p class="muted">База клиентов: заказы с сайта и импорт из Tilda. Сводка, фильтры и история по каждому клиенту.</p>
+            <h1>{% trans "Клиенты" %}</h1>
+            <p class="muted">{% trans "База клиентов: заказы с сайта и импорт из Tilda. Сводка, фильтры и история по каждому клиенту." %}</p>
         </div>
-        <button type="button" class="fc-btn fc-btn-primary" onclick="toggleNewCust()">+ Новый клиент</button>
+        <button type="button" class="fc-btn fc-btn-primary" onclick="toggleNewCust()">{% trans "+ Новый клиент" %}</button>
     </div>
 
     <div class="fc-card" id="newCustCard" style="display:none;">
-        <div class="fc-card-head"><h2>Новый клиент</h2></div>
+        <div class="fc-card-head"><h2>{% trans "Новый клиент" %}</h2></div>
         <form method="post" action="/c/{{ country.slug }}/customers/">
             {% csrf_token %}
             <input type="hidden" name="action" value="create_customer">
             <div class="fc-filter-form">
                 <div>
-                    <label class="fc-label">Имя / название *</label>
-                    <input class="fc-input" type="text" name="name" placeholder="Имя или ООО «…»" required>
+                    <label class="fc-label">{% trans "Имя / название *" %}</label>
+                    <input class="fc-input" type="text" name="name" placeholder="{% trans "Имя или ООО «…»" %}" required>
                 </div>
                 <div>
-                    <label class="fc-label">Телефон</label>
+                    <label class="fc-label">{% trans "Телефон" %}</label>
                     <input class="fc-input" type="text" name="phone" placeholder="+998…">
                 </div>
                 <div style="display:flex;align-items:flex-end;">
                     <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;cursor:pointer;">
-                        <input type="checkbox" name="is_corporate"> Корпоративный
+                        <input type="checkbox" name="is_corporate"> {% trans "Корпоративный" %}
                     </label>
                 </div>
                 <div style="display:flex;align-items:flex-end;gap:8px;">
-                    <button type="submit" class="fc-btn fc-btn-primary">Создать и открыть</button>
-                    <button type="button" class="fc-btn fc-btn-secondary" onclick="toggleNewCust()">Отмена</button>
+                    <button type="submit" class="fc-btn fc-btn-primary">{% trans "Создать и открыть" %}</button>
+                    <button type="button" class="fc-btn fc-btn-secondary" onclick="toggleNewCust()">{% trans "Отмена" %}</button>
                 </div>
             </div>
         </form>
-        <p class="muted" style="font-size:13px;margin:12px 0 0;">Клиент для заказов не через сайт (по телефону, самовывоз и т.п.). Если клиент с таким телефоном уже есть — откроется его карточка, без дубля.</p>
+        <p class="muted" style="font-size:13px;margin:12px 0 0;">{% trans "Клиент для заказов не через сайт (по телефону, самовывоз и т.п.). Если клиент с таким телефоном уже есть — откроется его карточка, без дубля." %}</p>
     </div>
 
     <div class="fc-kpi-grid">
-        <div class="fc-kpi-card"><div class="fc-kpi-label">Всего клиентов</div><div class="fc-kpi-value">{{ kpis.total }}</div></div>
-        <div class="fc-kpi-card"><div class="fc-kpi-label">Новых за 30 дней</div><div class="fc-kpi-value">{{ kpis.new_month }}</div></div>
-        <div class="fc-kpi-card"><div class="fc-kpi-label">С повторными (2+)</div><div class="fc-kpi-value is-green">{{ kpis.repeat }}</div></div>
-        <div class="fc-kpi-card"><div class="fc-kpi-label">VIP (5+ заказов)</div><div class="fc-kpi-value is-green">{{ kpis.vip }}</div></div>
-        <div class="fc-kpi-card"><div class="fc-kpi-label">Средний чек</div><div class="fc-kpi-value">{{ kpis.avg_check }}</div></div>
-        <div class="fc-kpi-card"><div class="fc-kpi-label">Проблемных</div><div class="fc-kpi-value is-danger">{{ kpis.problematic }}</div></div>
+        <div class="fc-kpi-card"><div class="fc-kpi-label">{% trans "Всего клиентов" %}</div><div class="fc-kpi-value">{{ kpis.total }}</div></div>
+        <div class="fc-kpi-card"><div class="fc-kpi-label">{% trans "Новых за 30 дней" %}</div><div class="fc-kpi-value">{{ kpis.new_month }}</div></div>
+        <div class="fc-kpi-card"><div class="fc-kpi-label">{% trans "С повторными (2+)" %}</div><div class="fc-kpi-value is-green">{{ kpis.repeat }}</div></div>
+        <div class="fc-kpi-card"><div class="fc-kpi-label">{% trans "VIP (5+ заказов)" %}</div><div class="fc-kpi-value is-green">{{ kpis.vip }}</div></div>
+        <div class="fc-kpi-card"><div class="fc-kpi-label">{% trans "Средний чек" %}</div><div class="fc-kpi-value">{{ kpis.avg_check }}</div></div>
+        <div class="fc-kpi-card"><div class="fc-kpi-label">{% trans "Проблемных" %}</div><div class="fc-kpi-value is-danger">{{ kpis.problematic }}</div></div>
     </div>
 
     <div class="fc-card">
         <form method="get" class="fc-filter-form">
             <div>
-                <label class="fc-label">Поиск</label>
-                <input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="Имя или телефон">
+                <label class="fc-label">{% trans "Поиск" %}</label>
+                <input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="{% trans "Имя или телефон" %}">
             </div>
             <div>
-                <label class="fc-label">Период</label>
+                <label class="fc-label">{% trans "Период" %}</label>
                 <select class="fc-select" name="period">
-                    <option value="all"     {% if period == "all" %}selected{% endif %}>Все время</option>
-                    <option value="month"   {% if period == "month" %}selected{% endif %}>Месяц</option>
-                    <option value="quarter" {% if period == "quarter" %}selected{% endif %}>Квартал</option>
-                    <option value="year"    {% if period == "year" %}selected{% endif %}>Год</option>
+                    <option value="all"     {% if period == "all" %}selected{% endif %}>{% trans "Все время" %}</option>
+                    <option value="month"   {% if period == "month" %}selected{% endif %}>{% trans "Месяц" %}</option>
+                    <option value="quarter" {% if period == "quarter" %}selected{% endif %}>{% trans "Квартал" %}</option>
+                    <option value="year"    {% if period == "year" %}selected{% endif %}>{% trans "Год" %}</option>
                 </select>
             </div>
             <div>
-                <label class="fc-label">Статус</label>
+                <label class="fc-label">{% trans "Статус" %}</label>
                 <select class="fc-select" name="status">
-                    <option value="all"         {% if status == "all" %}selected{% endif %}>Все</option>
-                    <option value="regular"     {% if status == "regular" %}selected{% endif %}>Постоянный</option>
-                    <option value="problematic" {% if status == "problematic" %}selected{% endif %}>Проблемный</option>
-                    <option value="blocked"     {% if status == "blocked" %}selected{% endif %}>Отказ в доставке</option>
-                    <option value="normal"      {% if status == "normal" %}selected{% endif %}>Без флага</option>
+                    <option value="all"         {% if status == "all" %}selected{% endif %}>{% trans "Все" %}</option>
+                    <option value="regular"     {% if status == "regular" %}selected{% endif %}>{% trans "Постоянный" %}</option>
+                    <option value="problematic" {% if status == "problematic" %}selected{% endif %}>{% trans "Проблемный" %}</option>
+                    <option value="blocked"     {% if status == "blocked" %}selected{% endif %}>{% trans "Отказ в доставке" %}</option>
+                    <option value="normal"      {% if status == "normal" %}selected{% endif %}>{% trans "Без флага" %}</option>
                 </select>
             </div>
             <div>
-                <label class="fc-label">Заказов</label>
+                <label class="fc-label">{% trans "Заказов" %}</label>
                 <select class="fc-select" name="min_orders">
-                    <option value="all"  {% if min_orders == "all" %}selected{% endif %}>Любое</option>
-                    <option value="none" {% if min_orders == "none" %}selected{% endif %}>Без заказов</option>
+                    <option value="all"  {% if min_orders == "all" %}selected{% endif %}>{% trans "Любое" %}</option>
+                    <option value="none" {% if min_orders == "none" %}selected{% endif %}>{% trans "Без заказов" %}</option>
                     <option value="1"    {% if min_orders == "1" %}selected{% endif %}>1+</option>
-                    <option value="5"    {% if min_orders == "5" %}selected{% endif %}>5+ (постоянные)</option>
+                    <option value="5"    {% if min_orders == "5" %}selected{% endif %}>{% trans "5+ (постоянные)" %}</option>
                 </select>
             </div>
             <div>
-                <label class="fc-label">Источник</label>
+                <label class="fc-label">{% trans "Источник" %}</label>
                 <select class="fc-select" name="source">
-                    <option value="all"   {% if source == "all" %}selected{% endif %}>Все</option>
-                    <option value="site"  {% if source == "site" %}selected{% endif %}>Сайт</option>
+                    <option value="all"   {% if source == "all" %}selected{% endif %}>{% trans "Все" %}</option>
+                    <option value="site"  {% if source == "site" %}selected{% endif %}>{% trans "Сайт" %}</option>
                     <option value="tilda" {% if source == "tilda" %}selected{% endif %}>Tilda</option>
                 </select>
             </div>
             <div>
-                <label class="fc-label">По сумме</label>
+                <label class="fc-label">{% trans "По сумме" %}</label>
                 <select class="fc-select" name="amount">
-                    <option value="all"   {% if amount == "all" %}selected{% endif %}>Все</option>
-                    <option value="top50" {% if amount == "top50" %}selected{% endif %}>Топ-50 по тратам</option>
+                    <option value="all"   {% if amount == "all" %}selected{% endif %}>{% trans "Все" %}</option>
+                    <option value="top50" {% if amount == "top50" %}selected{% endif %}>{% trans "Топ-50 по тратам" %}</option>
                 </select>
             </div>
             <div>
-                <label class="fc-label">Обеды</label>
+                <label class="fc-label">{% trans "Обеды" %}</label>
                 <select class="fc-select" name="lunches">
-                    <option value="all" {% if lunches == "all" %}selected{% endif %}>Все</option>
-                    <option value="yes" {% if lunches == "yes" %}selected{% endif %}>Заказывал обеды</option>
+                    <option value="all" {% if lunches == "all" %}selected{% endif %}>{% trans "Все" %}</option>
+                    <option value="yes" {% if lunches == "yes" %}selected{% endif %}>{% trans "Заказывал обеды" %}</option>
                 </select>
             </div>
 
@@ -235,8 +236,8 @@
             <input type="hidden" name="per_page" value="{{ per_page }}">
 
             <div class="fc-filter-actions">
-                <button type="submit" class="fc-btn fc-btn-primary">Применить</button>
-                <a class="fc-btn fc-btn-secondary" href="{{ reset_url }}">Сбросить</a>
+                <button type="submit" class="fc-btn fc-btn-primary">{% trans "Применить" %}</button>
+                <a class="fc-btn fc-btn-secondary" href="{{ reset_url }}">{% trans "Сбросить" %}</a>
             </div>
         </form>
 
@@ -252,10 +253,10 @@
     <div class="fc-card">
         <div class="fc-card-head">
             <div>
-                <h2>Список клиентов</h2>
+                <h2>{% trans "Список клиентов" %}</h2>
                 <p class="muted">
-                    Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ page_obj.paginator.count }}
-                    · <a href="{{ sort_links.reg.url }}" style="color:var(--fc-muted);font-weight:600;">по дате регистрации {{ sort_links.reg.arrow }}</a>
+                    {% blocktrans with s=page_obj.start_index e=page_obj.end_index tot=page_obj.paginator.count %}Показано {{ s }}–{{ e }} из {{ tot }}{% endblocktrans %}
+                    · <a href="{{ sort_links.reg.url }}" style="color:var(--fc-muted);font-weight:600;">{% trans "по дате регистрации" %} {{ sort_links.reg.arrow }}</a>
                 </p>
             </div>
             <form method="get" style="display:flex;align-items:center;gap:8px;">
@@ -267,7 +268,7 @@
                 <input type="hidden" name="amount" value="{{ amount }}">
                 <input type="hidden" name="lunches" value="{{ lunches }}">
                 <input type="hidden" name="sort" value="{{ sort }}">
-                <label class="fc-label" style="margin:0;">На странице</label>
+                <label class="fc-label" style="margin:0;">{% trans "На странице" %}</label>
                 <select class="fc-select" name="per_page" style="width:auto;" onchange="this.form.submit()">
                     <option value="25"  {% if per_page == 25 %}selected{% endif %}>25</option>
                     <option value="50"  {% if per_page == 50 %}selected{% endif %}>50</option>
@@ -278,14 +279,14 @@
 
         <div class="fc-table">
             <div class="cust-head">
-                <div><a href="{{ sort_links.name.url }}">Клиент {{ sort_links.name.arrow }}</a></div>
-                <div>Телефон</div>
-                <div class="num"><a href="{{ sort_links.orders.url }}">Заказов {{ sort_links.orders.arrow }}</a></div>
-                <div class="num"><a href="{{ sort_links.spent.url }}">Сумма {{ sort_links.spent.arrow }}</a></div>
-                <div class="num">Ср. чек</div>
-                <div><a href="{{ sort_links.last.url }}">Последний {{ sort_links.last.arrow }}</a></div>
-                <div>Статус</div>
-                <div>Источник</div>
+                <div><a href="{{ sort_links.name.url }}">{% trans "Клиент" %} {{ sort_links.name.arrow }}</a></div>
+                <div>{% trans "Телефон" %}</div>
+                <div class="num"><a href="{{ sort_links.orders.url }}">{% trans "Заказов" %} {{ sort_links.orders.arrow }}</a></div>
+                <div class="num"><a href="{{ sort_links.spent.url }}">{% trans "Сумма" %} {{ sort_links.spent.arrow }}</a></div>
+                <div class="num">{% trans "Ср. чек" %}</div>
+                <div><a href="{{ sort_links.last.url }}">{% trans "Последний" %} {{ sort_links.last.arrow }}</a></div>
+                <div>{% trans "Статус" %}</div>
+                <div>{% trans "Источник" %}</div>
             </div>
 
             {% for row in rows %}
@@ -293,20 +294,20 @@
                     <div class="cust-cell-name">
                         <a class="cust-name" href="/c/{{ country.slug }}/customers/{{ row.id }}/" onclick="event.stopPropagation();">{{ row.name }}</a>
                     </div>
-                    <div data-label="Телефон" class="cust-phone">{{ row.phone }}</div>
-                    <div data-label="Заказов"><span class="cust-num{% if not row.orders_count %} is-zero{% endif %}">{{ row.orders_count }}</span></div>
-                    <div data-label="Сумма"><span class="cust-num cust-money">{{ row.total_display }}</span></div>
-                    <div data-label="Ср. чек"><span class="cust-num">{{ row.avg_display }}</span></div>
-                    <div data-label="Последний">
+                    <div data-label="{% trans "Телефон" %}" class="cust-phone">{{ row.phone }}</div>
+                    <div data-label="{% trans "Заказов" %}"><span class="cust-num{% if not row.orders_count %} is-zero{% endif %}">{{ row.orders_count }}</span></div>
+                    <div data-label="{% trans "Сумма" %}"><span class="cust-num cust-money">{{ row.total_display }}</span></div>
+                    <div data-label="{% trans "Ср. чек" %}"><span class="cust-num">{{ row.avg_display }}</span></div>
+                    <div data-label="{% trans "Последний" %}">
                         {% if row.last_order_date %}{{ row.last_order_date|date:"d.m.Y" }}{% else %}<span class="cust-num muted">—</span>{% endif %}
                     </div>
-                    <div data-label="Статус" class="cust-sources">
+                    <div data-label="{% trans "Статус" %}" class="cust-sources">
                         <span class="fc-badge {{ row.status_class }}">{{ row.status_label }}</span>
-                        {% if row.is_corporate %}<span class="fc-badge fc-badge-amber">Корп.</span>{% endif %}
-                        {% if row.ordered_lunches %}<span class="fc-badge fc-badge-green" title="Заказывал обеды">🍱</span>{% endif %}
-                        {% if row.blocked %}<span class="fc-badge fc-badge-red">⚠ Отказ</span>{% endif %}
+                        {% if row.is_corporate %}<span class="fc-badge fc-badge-amber">{% trans "Корп." %}</span>{% endif %}
+                        {% if row.ordered_lunches %}<span class="fc-badge fc-badge-green" title="{% trans "Заказывал обеды" %}">🍱</span>{% endif %}
+                        {% if row.blocked %}<span class="fc-badge fc-badge-red">{% trans "⚠ Отказ" %}</span>{% endif %}
                     </div>
-                    <div data-label="Источник" class="cust-sources">
+                    <div data-label="{% trans "Источник" %}" class="cust-sources">
                         {% for b in row.source_badges %}
                             <span class="fc-badge {{ b.cls }}">{{ b.label }}</span>
                         {% empty %}
@@ -316,25 +317,25 @@
                 </div>
             {% empty %}
                 <div class="fc-empty">
-                    <div class="fc-empty-title">Клиенты не найдены</div>
-                    <div class="fc-empty-sub">Измените фильтры или сбросьте их.</div>
+                    <div class="fc-empty-title">{% trans "Клиенты не найдены" %}</div>
+                    <div class="fc-empty-sub">{% trans "Измените фильтры или сбросьте их." %}</div>
                 </div>
             {% endfor %}
         </div>
 
         {% if page_obj.paginator.num_pages > 1 %}
             <div class="fc-pagination">
-                <div class="info">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</div>
+                <div class="info">{% blocktrans with cur=page_obj.number tot=page_obj.paginator.num_pages %}Страница {{ cur }} из {{ tot }}{% endblocktrans %}</div>
                 <div class="pages">
                     {% if page_obj.has_previous %}
-                        <a class="fc-btn fc-btn-secondary fc-btn-sm" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>
+                        <a class="fc-btn fc-btn-secondary fc-btn-sm" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">{% trans "← Назад" %}</a>
                     {% else %}
-                        <span class="fc-btn fc-btn-secondary fc-btn-sm disabled">← Назад</span>
+                        <span class="fc-btn fc-btn-secondary fc-btn-sm disabled">{% trans "← Назад" %}</span>
                     {% endif %}
                     {% if page_obj.has_next %}
-                        <a class="fc-btn fc-btn-secondary fc-btn-sm" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>
+                        <a class="fc-btn fc-btn-secondary fc-btn-sm" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.next_page_number }}">{% trans "Вперёд →" %}</a>
                     {% else %}
-                        <span class="fc-btn fc-btn-secondary fc-btn-sm disabled">Вперёд →</span>
+                        <span class="fc-btn fc-btn-secondary fc-btn-sm disabled">{% trans "Вперёд →" %}</span>
                     {% endif %}
                 </div>
             </div>

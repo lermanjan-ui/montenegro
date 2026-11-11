@@ -1,79 +1,80 @@
 {% extends "foodcost/platform/base.html" %}
-{% block title %}{{ country.name }} · Платформа{% endblock %}
+{% load i18n %}
+{% block title %}{{ country.name }} · {% trans "Платформа" %}{% endblock %}
 {% block content %}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
   <div>
-    <p class="sub" style="margin:0 0 4px;"><a href="/platform/">← Клиенты</a></p>
+    <p class="sub" style="margin:0 0 4px;"><a href="/platform/">{% trans "← Клиенты" %}</a></p>
     <h1>{{ country.name }}</h1>
     <p class="sub">/{{ country.slug }}</p>
   </div>
   <div class="row" style="gap:8px;">
-    <a class="btn" href="/platform/clients/{{ country.slug }}/open/">Открыть кабинет клиента</a>
+    <a class="btn" href="/platform/clients/{{ country.slug }}/open/">{% trans "Открыть кабинет клиента" %}</a>
   </div>
 </div>
 
 <!-- Статистика -->
 <div class="card">
-  <h2>Статистика</h2>
+  <h2>{% trans "Статистика" %}</h2>
   <div class="stat-grid">
-    <div class="stat"><div class="n">{{ stats.orders_total }}</div><div class="l">Заказов всего</div></div>
-    <div class="stat"><div class="n">{{ stats.orders_period }}</div><div class="l">Заказов за 30 дней</div></div>
-    <div class="stat"><div class="n">{{ stats.revenue_total|floatformat:0 }}</div><div class="l">Оборот всего, UZS</div></div>
-    <div class="stat"><div class="n">{{ stats.revenue_period|floatformat:0 }}</div><div class="l">Оборот за 30 дней, UZS</div></div>
-    <div class="stat"><div class="n">{{ stats.locations }}</div><div class="l">Филиалов</div></div>
-    <div class="stat"><div class="n">{{ stats.users }}</div><div class="l">Пользователей</div></div>
+    <div class="stat"><div class="n">{{ stats.orders_total }}</div><div class="l">{% trans "Заказов всего" %}</div></div>
+    <div class="stat"><div class="n">{{ stats.orders_period }}</div><div class="l">{% trans "Заказов за 30 дней" %}</div></div>
+    <div class="stat"><div class="n">{{ stats.revenue_total|floatformat:0 }}</div><div class="l">{% trans "Оборот всего, UZS" %}</div></div>
+    <div class="stat"><div class="n">{{ stats.revenue_period|floatformat:0 }}</div><div class="l">{% trans "Оборот за 30 дней, UZS" %}</div></div>
+    <div class="stat"><div class="n">{{ stats.locations }}</div><div class="l">{% trans "Филиалов" %}</div></div>
+    <div class="stat"><div class="n">{{ stats.users }}</div><div class="l">{% trans "Пользователей" %}</div></div>
   </div>
 </div>
 
 <!-- Подписка -->
 <div class="card">
-  <h2>Подписка</h2>
+  <h2>{% trans "Подписка" %}</h2>
   <div class="row" style="gap:24px;align-items:flex-end;">
     <form method="post" class="row" style="gap:12px;align-items:flex-end;margin:0;">
       {% csrf_token %}
       <input type="hidden" name="action" value="assign_plan">
       <div class="field" style="margin:0;min-width:220px;">
-        <label>Тариф</label>
+        <label>{% trans "Тариф" %}</label>
         <select name="plan_id">
-          <option value="">— без тарифа —</option>
+          <option value="">{% trans "— без тарифа —" %}</option>
           {% for p in plans %}
-          <option value="{{ p.id }}" {% if sub and sub.plan_id == p.id %}selected{% endif %}>{{ p.name }} ({{ p.monthly_price|floatformat:0 }} UZS/мес)</option>
+          <option value="{{ p.id }}" {% if sub and sub.plan_id == p.id %}selected{% endif %}>{{ p.name }} ({{ p.monthly_price|floatformat:0 }} {% trans "UZS/мес" %})</option>
           {% endfor %}
         </select>
       </div>
-      <button class="btn" type="submit">Сохранить тариф</button>
+      <button class="btn" type="submit">{% trans "Сохранить тариф" %}</button>
     </form>
 
     <form method="post" class="row" style="gap:12px;align-items:flex-end;margin:0;">
       {% csrf_token %}
       <input type="hidden" name="action" value="set_status">
       <div class="field" style="margin:0;min-width:200px;">
-        <label>Статус</label>
+        <label>{% trans "Статус" %}</label>
         <select name="status">
           {% for code, label in status_choices %}
           <option value="{{ code }}" {% if sub and sub.status == code %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
-      <button class="btn sec" type="submit">Применить статус</button>
+      <button class="btn sec" type="submit">{% trans "Применить статус" %}</button>
     </form>
 
     <form method="post" class="row" style="gap:12px;align-items:flex-end;margin:0;">
       {% csrf_token %}
       <input type="hidden" name="action" value="extend_trial">
       <div class="field" style="margin:0;width:120px;">
-        <label>Продлить триал, дней</label>
+        <label>{% trans "Продлить триал, дней" %}</label>
         <input type="number" name="days" value="14" min="1">
       </div>
-      <button class="btn sec" type="submit">Продлить</button>
+      <button class="btn sec" type="submit">{% trans "Продлить" %}</button>
     </form>
   </div>
   <p class="muted" style="margin:14px 0 0;">
     {% if sub %}
-      Триал до: {{ sub.trial_ends_at|date:"d.m.Y H:i"|default:"—" }} ·
-      Оплачено до: {{ sub.current_period_end|date:"d.m.Y H:i"|default:"—" }}
+      {% blocktrans with t=sub.trial_ends_at|date:"d.m.Y H:i"|default:"—" %}Триал до: {{ t }}{% endblocktrans %} ·
+      {% blocktrans with pd=sub.current_period_end|date:"d.m.Y H:i"|default:"—" %}Оплачено до: {{ pd }}{% endblocktrans %}
     {% else %}
-      Подписки ещё нет — назначь тариф, и она создастся автоматически.
+      {% trans "Подписки ещё нет — назначь тариф, и она создастся автоматически." %}
     {% endif %}
   </p>
 </div>
@@ -81,18 +82,18 @@
 <!-- Счета -->
 <div class="card">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-    <h2 style="margin:0;">Счета по подписке</h2>
+    <h2 style="margin:0;">{% trans "Счета по подписке" %}</h2>
     <form method="post" style="margin:0;">
       {% csrf_token %}
       <input type="hidden" name="action" value="issue_invoice">
-      <button class="btn" type="submit">Выставить счёт</button>
+      <button class="btn" type="submit">{% trans "Выставить счёт" %}</button>
     </form>
   </div>
-  <p class="muted" style="margin:10px 0 0;">Сумма берётся из тарифа и докупленных модулей. Оплата активирует подписку и продлевает период.</p>
+  <p class="muted" style="margin:10px 0 0;">{% trans "Сумма берётся из тарифа и докупленных модулей. Оплата активирует подписку и продлевает период." %}</p>
   {% if invoices %}
   <table style="margin-top:14px;">
     <thead>
-      <tr><th>Создан</th><th>Тариф</th><th>Период</th><th>Сумма</th><th>Статус</th><th style="text-align:right;">Действие</th></tr>
+      <tr><th>{% trans "Создан" %}</th><th>{% trans "Тариф" %}</th><th>{% trans "Период" %}</th><th>{% trans "Сумма" %}</th><th>{% trans "Статус" %}</th><th style="text-align:right;">{% trans "Действие" %}</th></tr>
     </thead>
     <tbody>
       {% for inv in invoices %}
@@ -102,9 +103,9 @@
         <td>{{ inv.period_start|date:"d.m.y" }}–{{ inv.period_end|date:"d.m.y" }}</td>
         <td style="font-weight:600;">{{ inv.amount|floatformat:0 }} UZS</td>
         <td>
-          {% if inv.status == "paid" %}<span class="badge ok">Оплачен</span>
-          {% elif inv.status == "pending" %}<span class="badge warn">Ожидает</span>
-          {% else %}<span class="badge neutral">Аннулирован</span>{% endif %}
+          {% if inv.status == "paid" %}<span class="badge ok">{% trans "Оплачен" %}</span>
+          {% elif inv.status == "pending" %}<span class="badge warn">{% trans "Ожидает" %}</span>
+          {% else %}<span class="badge neutral">{% trans "Аннулирован" %}</span>{% endif %}
         </td>
         <td style="text-align:right;white-space:nowrap;">
           {% if inv.status == "pending" %}
@@ -112,13 +113,13 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="mark_invoice_paid">
             <input type="hidden" name="invoice_id" value="{{ inv.id }}">
-            <button class="btn sm" type="submit">Оплачен</button>
+            <button class="btn sm" type="submit">{% trans "Оплачен" %}</button>
           </form>
           <form method="post" class="inline">
             {% csrf_token %}
             <input type="hidden" name="action" value="void_invoice">
             <input type="hidden" name="invoice_id" value="{{ inv.id }}">
-            <button class="btn danger sm" type="submit">Аннулировать</button>
+            <button class="btn danger sm" type="submit">{% trans "Аннулировать" %}</button>
           </form>
           {% else %}<span class="muted">—</span>{% endif %}
         </td>
@@ -127,19 +128,19 @@
     </tbody>
   </table>
   {% else %}
-  <p class="muted" style="margin-top:14px;">Счетов пока нет.</p>
+  <p class="muted" style="margin-top:14px;">{% trans "Счетов пока нет." %}</p>
   {% endif %}
 </div>
 
 <!-- Модули -->
 <div class="card" style="padding:0;overflow:hidden;">
   <div style="padding:18px 18px 0;">
-    <h2 style="margin-bottom:4px;">Модули</h2>
-    <p class="muted" style="margin:0 0 14px;">Зелёный — модуль доступен клиенту. Можно выключить модуль тарифа или докупить отдельный.</p>
+    <h2 style="margin-bottom:4px;">{% trans "Модули" %}</h2>
+    <p class="muted" style="margin:0 0 14px;">{% trans "Зелёный — модуль доступен клиенту. Можно выключить модуль тарифа или докупить отдельный." %}</p>
   </div>
   <table>
     <thead>
-      <tr><th>Модуль</th><th>Тип</th><th>Статус</th><th style="text-align:right;">Действие</th></tr>
+      <tr><th>{% trans "Модуль" %}</th><th>{% trans "Тип" %}</th><th>{% trans "Статус" %}</th><th style="text-align:right;">{% trans "Действие" %}</th></tr>
     </thead>
     <tbody>
       {% for m in modules %}
@@ -149,14 +150,14 @@
           <div class="muted" style="font-size:12px;">{{ m.code }}</div>
         </td>
         <td>
-          {% if m.in_plan %}<span class="badge plan">В тарифе</span>
-          {% elif m.is_addon %}<span class="badge addon">Доп · {{ m.monthly_price|floatformat:0 }} UZS</span>
-          {% else %}<span class="badge neutral">Вне тарифа</span>{% endif %}
+          {% if m.in_plan %}<span class="badge plan">{% trans "В тарифе" %}</span>
+          {% elif m.is_addon %}<span class="badge addon">{% trans "Доп" %} · {{ m.monthly_price|floatformat:0 }} UZS</span>
+          {% else %}<span class="badge neutral">{% trans "Вне тарифа" %}</span>{% endif %}
         </td>
         <td>
-          {% if m.effective %}<span class="badge ok">Доступен</span>
-          {% elif m.is_disabled %}<span class="badge off">Выключен</span>
-          {% else %}<span class="badge neutral">Не подключён</span>{% endif %}
+          {% if m.effective %}<span class="badge ok">{% trans "Доступен" %}</span>
+          {% elif m.is_disabled %}<span class="badge off">{% trans "Выключен" %}</span>
+          {% else %}<span class="badge neutral">{% trans "Не подключён" %}</span>{% endif %}
         </td>
         <td style="text-align:right;">
           <form method="post" class="inline">
@@ -164,11 +165,11 @@
             <input type="hidden" name="action" value="toggle_module">
             <input type="hidden" name="code" value="{{ m.code }}">
             {% if m.in_plan %}
-              {% if m.is_disabled %}<button class="btn sec sm" type="submit">Включить</button>
-              {% else %}<button class="btn danger sm" type="submit">Выключить</button>{% endif %}
+              {% if m.is_disabled %}<button class="btn sec sm" type="submit">{% trans "Включить" %}</button>
+              {% else %}<button class="btn danger sm" type="submit">{% trans "Выключить" %}</button>{% endif %}
             {% else %}
-              {% if m.is_extra %}<button class="btn danger sm" type="submit">Убрать доп</button>
-              {% else %}<button class="btn sec sm" type="submit">Подключить доп</button>{% endif %}
+              {% if m.is_extra %}<button class="btn danger sm" type="submit">{% trans "Убрать доп" %}</button>
+              {% else %}<button class="btn sec sm" type="submit">{% trans "Подключить доп" %}</button>{% endif %}
             {% endif %}
           </form>
         </td>

@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Платформа · FoodCost{% endblock %}</title>
+  <title>{% block title %}{% trans "Платформа · ЧекМейт" %}{% endblock %}</title>
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 :root{
@@ -58,11 +59,11 @@ tr:last-child td{border-bottom:0;}
 </head>
 <body>
   <div class="topbar">
-    <div class="brand">FoodCost <span class="tag">Платформа</span></div>
+    <div class="brand">ЧекМейт <span class="tag">{% trans "Платформа" %}</span></div>
     <div class="topbar-actions">
-      <a href="/platform/">Клиенты</a>
-      {% if is_owner %}<a href="/platform/team/">Команда</a>{% endif %}
-      <a href="/">В ERP</a>
+      <a href="/platform/">{% trans "Клиенты" %}</a>
+      {% if is_owner %}<a href="/platform/team/">{% trans "Команда" %}</a>{% endif %}
+      <a href="/">{% trans "В ERP" %}</a>
     </div>
   </div>
   <div class="container">

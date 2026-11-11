@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Техкарта: {{ dish.name }}{% endblock %}
+{% block title %}{% trans "Техкарта:" %} {{ dish.name }}{% endblock %}
 
 {% block content %}
 <style>
@@ -77,30 +78,30 @@
 <div class="tc-page">
 
     <div class="tc-toolbar">
-        <a class="tc-btn tc-btn-back" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">← К блюду</a>
-        <button class="tc-btn tc-btn-print" onclick="window.print()">🖨 Печать / Сохранить в PDF</button>
+        <a class="tc-btn tc-btn-back" href="/c/{{ country.slug }}/dish/{{ dish.id }}/">{% trans "← К блюду" %}</a>
+        <button class="tc-btn tc-btn-print" onclick="window.print()">{% trans "🖨 Печать / Сохранить в PDF" %}</button>
     </div>
 
     <div class="tc-card">
         <h1 class="tc-h1">{{ dish.name }}</h1>
         <p class="tc-meta">
-            Технологическая карта
-            {% if dish.final_weight %}· Выход: {{ dish.final_weight }} г{% endif %}
+            {% trans "Технологическая карта" %}
+            {% if dish.final_weight %}· {% trans "Выход:" %} {{ dish.final_weight }} {% trans "г" %}{% endif %}
             · {{ today }}
         </p>
 
         {% if dish.is_combo %}
-            <p class="tc-empty">Это комбо-позиция — она собирается из готовых блюд, отдельная техкарта не предусмотрена.</p>
+            <p class="tc-empty">{% trans "Это комбо-позиция — она собирается из готовых блюд, отдельная техкарта не предусмотрена." %}</p>
         {% else %}
 
-            <h2 class="tc-h2">Продукты</h2>
+            <h2 class="tc-h2">{% trans "Продукты" %}</h2>
             {% if product_items %}
             <table class="tc-table">
                 <thead>
                     <tr>
-                        <th>Наименование</th>
-                        <th style="text-align:right;">Брутто</th>
-                        <th style="text-align:right;">Нетто</th>
+                        <th>{% trans "Наименование" %}</th>
+                        <th style="text-align:right;">{% trans "Брутто" %}</th>
+                        <th style="text-align:right;">{% trans "Нетто" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -114,17 +115,17 @@
                 </tbody>
             </table>
             {% else %}
-                <p class="tc-empty">Продукты не добавлены.</p>
+                <p class="tc-empty">{% trans "Продукты не добавлены." %}</p>
             {% endif %}
 
-            <h2 class="tc-h2">Заготовки</h2>
+            <h2 class="tc-h2">{% trans "Заготовки" %}</h2>
             {% if preparation_items %}
             <table class="tc-table">
                 <thead>
                     <tr>
-                        <th>Наименование</th>
-                        <th style="text-align:right;">Брутто</th>
-                        <th style="text-align:right;">Нетто</th>
+                        <th>{% trans "Наименование" %}</th>
+                        <th style="text-align:right;">{% trans "Брутто" %}</th>
+                        <th style="text-align:right;">{% trans "Нетто" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,14 +139,14 @@
                 </tbody>
             </table>
             {% else %}
-                <p class="tc-empty">Заготовки не используются.</p>
+                <p class="tc-empty">{% trans "Заготовки не используются." %}</p>
             {% endif %}
 
-            <h2 class="tc-h2">Технология приготовления</h2>
+            <h2 class="tc-h2">{% trans "Технология приготовления" %}</h2>
             {% if dish.tech_card %}
                 <div class="tc-techtext">{{ dish.tech_card }}</div>
             {% else %}
-                <p class="tc-empty">Текст техкарты не заполнен.</p>
+                <p class="tc-empty">{% trans "Текст техкарты не заполнен." %}</p>
             {% endif %}
 
         {% endif %}

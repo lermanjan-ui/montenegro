@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Статистика по обедам{% endblock %}
+{% block title %}{% trans "Статистика по обедам" %}{% endblock %}
 
 {% block content %}
 
@@ -37,48 +38,48 @@
 </style>
 
 <div class="page">
-    <h1>Статистика по обедам</h1>
-    <p class="sub">Заказы, содержащие комплексные обеды («Обед дня»). Выручка показана <strong>по обедам</strong> (комбо), а не общая по заказу.</p>
+    <h1>{% trans "Статистика по обедам" %}</h1>
+    <p class="sub">{% trans "Заказы, содержащие комплексные обеды («Обед дня»). Выручка показана" %} <strong>{% trans "по обедам" %}</strong> {% trans "(комбо), а не общая по заказу." %}</p>
 
     <div class="tiles">
-        <div class="tile"><div class="k">Заказов с обедами</div><div class="v">{{ total_orders }}</div></div>
-        <div class="tile"><div class="k">Выручка по обедам</div><div class="v">{{ total_revenue|floatformat:"0" }}</div></div>
-        <div class="tile"><div class="k">Доставка</div><div class="v">{{ total_delivery|floatformat:"0" }}</div></div>
+        <div class="tile"><div class="k">{% trans "Заказов с обедами" %}</div><div class="v">{{ total_orders }}</div></div>
+        <div class="tile"><div class="k">{% trans "Выручка по обедам" %}</div><div class="v">{{ total_revenue|floatformat:"0" }}</div></div>
+        <div class="tile"><div class="k">{% trans "Доставка" %}</div><div class="v">{{ total_delivery|floatformat:"0" }}</div></div>
     </div>
 
     <div class="card">
         <form method="get" class="filters">
             <div>
-                <label>С даты</label>
+                <label>{% trans "С даты" %}</label>
                 <input type="date" name="date_from" value="{{ date_from|default_if_none:'' }}">
             </div>
             <div>
-                <label>По дату</label>
+                <label>{% trans "По дату" %}</label>
                 <input type="date" name="date_to" value="{{ date_to|default_if_none:'' }}">
             </div>
             <div>
-                <label>Точка</label>
+                <label>{% trans "Точка" %}</label>
                 <select name="location_id">
-                    <option value="">Все</option>
+                    <option value="">{% trans "Все" %}</option>
                     {% for loc in locations %}
                     <option value="{{ loc.id }}" {% if location_id == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label>Статус</label>
+                <label>{% trans "Статус" %}</label>
                 <select name="status">
-                    <option value="">Все</option>
-                    <option value="active" {% if status == "active" %}selected{% endif %}>Активные</option>
-                    <option value="cancelled" {% if status == "cancelled" %}selected{% endif %}>Отменённые</option>
+                    <option value="">{% trans "Все" %}</option>
+                    <option value="active" {% if status == "active" %}selected{% endif %}>{% trans "Активные" %}</option>
+                    <option value="cancelled" {% if status == "cancelled" %}selected{% endif %}>{% trans "Отменённые" %}</option>
                 </select>
             </div>
             <div>
-                <label>Поиск (телефон/имя/№)</label>
-                <input type="text" name="search" value="{{ search|default_if_none:'' }}" placeholder="напр. 90… или имя">
+                <label>{% trans "Поиск (телефон/имя/№)" %}</label>
+                <input type="text" name="search" value="{{ search|default_if_none:'' }}" placeholder="{% trans "напр. 90… или имя" %}">
             </div>
-            <button type="submit" class="btn btn-primary">Применить</button>
-            <a class="btn btn-ghost" href="/c/{{ country.slug }}/lunch-orders/">Сбросить</a>
+            <button type="submit" class="btn btn-primary">{% trans "Применить" %}</button>
+            <a class="btn btn-ghost" href="/c/{{ country.slug }}/lunch-orders/">{% trans "Сбросить" %}</a>
         </form>
     </div>
 
@@ -88,13 +89,13 @@
             <thead>
                 <tr>
                     <th>№</th>
-                    <th>Дата</th>
-                    <th>Клиент</th>
-                    <th>Точка</th>
-                    <th>Статус</th>
-                    <th>Обеды (состав)</th>
-                    <th class="right">Выручка по обедам</th>
-                    <th class="right">Итог заказа</th>
+                    <th>{% trans "Дата" %}</th>
+                    <th>{% trans "Клиент" %}</th>
+                    <th>{% trans "Точка" %}</th>
+                    <th>{% trans "Статус" %}</th>
+                    <th>{% trans "Обеды (состав)" %}</th>
+                    <th class="right">{% trans "Выручка по обедам" %}</th>
+                    <th class="right">{% trans "Итог заказа" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -108,8 +109,8 @@
                     </td>
                     <td class="muted">{% if o.location %}{{ o.location.name }}{% else %}—{% endif %}</td>
                     <td>
-                        {% if o.is_cancelled %}<span class="pill pill-off">Отменён</span>
-                        {% else %}<span class="pill pill-on">Активен</span>{% endif %}
+                        {% if o.is_cancelled %}<span class="pill pill-off">{% trans "Отменён" %}</span>
+                        {% else %}<span class="pill pill-on">{% trans "Активен" %}</span>{% endif %}
                     </td>
                     <td>
                         {% for c in o.lunch_combos.all %}
@@ -126,7 +127,7 @@
             </tbody>
         </table>
         {% else %}
-        <div class="empty">Заказов с обедами не найдено за выбранный период.</div>
+        <div class="empty">{% trans "Заказов с обедами не найдено за выбранный период." %}</div>
         {% endif %}
     </div>
 </div>

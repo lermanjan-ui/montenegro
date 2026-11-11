@@ -1,0 +1,98 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Продаваемость блюд{% endblock %}
+{% block content %}
+<style>
+.ds-wrap{max-width:1200px;margin:0 auto;}
+.ds-h1{font-size:26px;font-weight:800;margin:0 0 4px;}
+.ds-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.ds-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
+.ds-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
+.ds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ds-f label{display:block;font-size:12px;font-weight:700;color:#374151;margin:0 0 4px;}
+.ds-in,.ds-sel{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:9px 10px;font-size:14px;box-sizing:border-box;background:#fff;}
+.ds-btn{border:0;border-radius:10px;padding:9px 15px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block;}
+.ds-green{background:#047857;color:#fff;} .ds-gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+.ds-tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;}
+.ds-tile{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:12px 14px;}
+.ds-tile .k{color:#6b7280;font-size:12px;font-weight:600;margin:0 0 4px;}
+.ds-tile .v{font-size:19px;font-weight:800;letter-spacing:-.02em;}
+.green{color:#047857;} .red{color:#b91c1c;}
+.ds-table{width:100%;border-collapse:collapse;}
+.ds-table th{text-align:left;font-size:12px;text-transform:uppercase;color:#6b7280;padding:9px 10px;border-bottom:2px solid #e5e7eb;white-space:nowrap;}
+.ds-table td{padding:10px;border-bottom:1px solid #f1f5f9;font-size:14px;}
+.num{text-align:right;white-space:nowrap;}
+.muted{color:#9ca3af;}
+.empty{text-align:center;color:#9ca3af;padding:26px;}
+@media(max-width:1000px){.ds-grid{grid-template-columns:1fr 1fr;}.ds-tiles{grid-template-columns:repeat(3,1fr);}}
+</style>
+
+<div class="ds-wrap">
+  <h1 class="ds-h1">Продаваемость блюд</h1>
+  <p class="ds-sub">Сколько раз продано каждое блюдо за период, его выручка, себестоимость, прибыль и маржинальность. Учтены заказы без отменённых и неоплаченных.</p>
+
+  <!-- ФИЛЬТРЫ -->
+  <form method="get" class="ds-card">
+    <div class="ds-title">Фильтры</div>
+    <div class="ds-grid">
+      <div class="ds-f"><label>С даты</label><input class="ds-in" type="date" name="date_from" value="{{ f_from }}"></div>
+      <div class="ds-f"><label>По дату</label><input class="ds-in" type="date" name="date_to" value="{{ f_to }}"></div>
+      <div class="ds-f"><label>Категория</label>
+        <select class="ds-sel" name="category_id">
+          <option value="">Все категории</option>
+          {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="ds-f"><label>Сортировать по</label>
+        <select class="ds-sel" name="sort">
+          {% for val, label in sort_options %}<option value="{{ val }}" {% if sort == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <a class="ds-btn ds-gray" href="/c/{{ country.slug }}/dish-sales/">Сбросить</a>
+      <button class="ds-btn ds-green" type="submit">Применить</button>
+    </div>
+  </form>
+
+  <!-- МЕТРИКИ -->
+  <div class="ds-tiles">
+    <div class="ds-tile"><div class="k">Позиций</div><div class="v">{{ kpi_positions }}</div></div>
+    <div class="ds-tile"><div class="k">Продано, шт</div><div class="v">{{ kpi_qty|floatformat:"-2" }}</div></div>
+    <div class="ds-tile"><div class="k">Выручка</div><div class="v green">{{ kpi_revenue_fmt }}</div></div>
+    <div class="ds-tile"><div class="k">Себестоимость</div><div class="v red">{{ kpi_cost_fmt }}</div></div>
+    <div class="ds-tile"><div class="k">Прибыль</div><div class="v green">{{ kpi_profit_fmt }}</div></div>
+    <div class="ds-tile"><div class="k">Маржа</div><div class="v">{{ kpi_margin }}%</div></div>
+  </div>
+
+  <!-- ТАБЛИЦА -->
+  <div class="ds-card">
+    <div class="ds-title">Блюда</div>
+    <table class="ds-table">
+      <thead>
+        <tr>
+          <th>Блюдо</th><th>Категория</th>
+          <th class="num">Цена</th><th class="num">Продано</th>
+          <th class="num">Выручка</th><th class="num">Себест.</th>
+          <th class="num">Прибыль</th><th class="num">Маржа %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><strong>{{ r.name }}</strong></td>
+          <td class="muted">{{ r.category }}</td>
+          <td class="num">{{ r.price_fmt }}</td>
+          <td class="num"><strong>{{ r.qty|floatformat:"-2" }}</strong></td>
+          <td class="num green">{{ r.revenue_fmt }}</td>
+          <td class="num red">{{ r.cost_fmt }}</td>
+          <td class="num {% if r.profit < 0 %}red{% else %}green{% endif %}">{{ r.profit_fmt }}</td>
+          <td class="num">{{ r.margin_pct }}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="empty">За выбранный период продаж нет.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

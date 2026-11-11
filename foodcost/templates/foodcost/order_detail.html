@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Новый заказ{% endblock %}
+{% block title %}{% trans "Новый заказ" %}{% endblock %}
 
 {% block content %}
 
@@ -130,10 +131,10 @@ input:disabled,select:disabled{background:var(--bg);color:var(--faint);}
 
     <div class="topbar">
 
-        <h1>Заказ #{{ order.id }}</h1>
+        <h1>{% blocktrans with id=order.id %}Заказ #{{ id }}{% endblocktrans %}</h1>
 
         <div class="muted">
-            Статус: {{ order.get_status_display }}
+            {% blocktrans with s=order.get_status_display %}Статус: {{ s }}{% endblocktrans %}
         </div>
 
     </div>
@@ -148,15 +149,16 @@ input:disabled,select:disabled{background:var(--bg);color:var(--faint);}
 	        font-weight:600;
 	    "
 	>
-	    ← Назад к заказам
+	    {% trans "← Назад к заказам" %}
 	</a>
 
 
 {% if can_edit_orders %}
+    {% trans "Точно удалить заказ? Это действие нельзя отменить." as _c_delorder %}
     <form
         method="post"
         style="display:inline-flex;margin-left:12px;"
-        onsubmit="return confirm('Точно удалить заказ? Это действие нельзя отменить.')"
+        onsubmit="return confirm('{{ _c_delorder|escapejs }}')"
     >
         {% csrf_token %}
         <input type="hidden" name="action" value="delete_order">
@@ -174,7 +176,7 @@ input:disabled,select:disabled{background:var(--bg);color:var(--faint);}
                 cursor:pointer;
             "
         >
-            Удалить заказ
+            {% trans "Удалить заказ" %}
         </button>
     </form>
 {% endif %}
@@ -183,28 +185,27 @@ input:disabled,select:disabled{background:var(--bg);color:var(--faint);}
        {% csrf_token %}
 
        <div style="margin:0 0 16px;padding:16px 18px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;">
-         <label style="font-weight:600;color:#667085;display:block;margin-bottom:8px;">Статус заказа</label>
+         <label style="font-weight:600;color:#667085;display:block;margin-bottom:8px;">{% trans "Статус заказа" %}</label>
          <div style="margin-bottom:12px;color:#111827;font-size:14px;">
-           Текущий статус: <b>{{ order.get_status_display }}</b>
+           {% trans "Текущий статус:" %} <b>{{ order.get_status_display }}</b>
          </div>
          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-           <button type="button" class="os-chip os-accept" data-status="new" onclick="setOrderStatus(this)">✓ Принят</button>
-           <button type="button" class="os-chip" data-status="cooking" onclick="setOrderStatus(this)">Готовится</button>
-           <button type="button" class="os-chip" data-status="ready" onclick="setOrderStatus(this)">Готов</button>
-           <button type="button" class="os-chip" data-status="delivery" onclick="setOrderStatus(this)">Доставка</button>
-           <button type="button" class="os-chip" data-status="done" onclick="setOrderStatus(this)">Завершён</button>
+           <button type="button" class="os-chip os-accept" data-status="new" onclick="setOrderStatus(this)">{% trans "✓ Принят" %}</button>
+           <button type="button" class="os-chip" data-status="cooking" onclick="setOrderStatus(this)">{% trans "Готовится" %}</button>
+           <button type="button" class="os-chip" data-status="ready" onclick="setOrderStatus(this)">{% trans "Готов" %}</button>
+           <button type="button" class="os-chip" data-status="delivery" onclick="setOrderStatus(this)">{% trans "Доставка" %}</button>
+           <button type="button" class="os-chip" data-status="done" onclick="setOrderStatus(this)">{% trans "Завершён" %}</button>
          </div>
          <select name="status" id="orderStatusSelect" class="fc-select" style="min-width:220px;width:auto;">
-           <option value="">— не менять —</option>
-           <option value="new" {% if order.status == "new" %}selected{% endif %}>Принят</option>
-           <option value="cooking" {% if order.status == "cooking" %}selected{% endif %}>Готовится</option>
-           <option value="ready" {% if order.status == "ready" %}selected{% endif %}>Готов</option>
-           <option value="delivery" {% if order.status == "delivery" %}selected{% endif %}>Доставка</option>
-           <option value="done" {% if order.status == "done" %}selected{% endif %}>Завершен</option>
+           <option value="">{% trans "— не менять —" %}</option>
+           <option value="new" {% if order.status == "new" %}selected{% endif %}>{% trans "Принят" %}</option>
+           <option value="cooking" {% if order.status == "cooking" %}selected{% endif %}>{% trans "Готовится" %}</option>
+           <option value="ready" {% if order.status == "ready" %}selected{% endif %}>{% trans "Готов" %}</option>
+           <option value="delivery" {% if order.status == "delivery" %}selected{% endif %}>{% trans "Доставка" %}</option>
+           <option value="done" {% if order.status == "done" %}selected{% endif %}>{% trans "Завершен" %}</option>
          </select>
          <div style="margin-top:10px;color:#667085;font-size:13px;">
-           Кнопка выше меняет статус и сразу сохраняет заказ. Для заказов Uzum новый статус
-           передаётся автоматически при их следующем опросе (~1 мин).
+           {% trans "Кнопка выше меняет статус и сразу сохраняет заказ. Для заказов Uzum новый статус передаётся автоматически при их следующем опросе (~1 мин)." %}
          </div>
        </div>
 

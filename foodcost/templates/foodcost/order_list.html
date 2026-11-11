@@ -1,8 +1,9 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
 {% load humanize %}
 
-{% block title %}Заказы{% endblock %}
+{% block title %}{% trans "Заказы" %}{% endblock %}
 
 {% block content %}
 
@@ -534,22 +535,22 @@ h1{
     <div class="topbar">
 
         <div>
-            <h1>Заказы</h1>
+            <h1>{% trans "Заказы" %}</h1>
         </div>
 
         <a
             href="/c/{{ country.slug }}/orders/create/"
             class="create-btn"
         >
-            Новый заказ
+            {% trans "Новый заказ" %}
         </a>
 		<a class="create-btn" href="/c/{{ country.slug }}/orders/all/">
-		    Все заказы
+		    {% trans "Все заказы" %}
 		</a>
 
         <div id="sound-hint"
             style="display:none;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#667085;white-space:nowrap;">
-            🔔 Кликните в любом месте, чтобы включить звук уведомлений
+            {% trans "🔔 Кликните в любом месте, чтобы включить звук уведомлений" %}
         </div>
 
     </div>
@@ -565,9 +566,9 @@ h1{
           </div>
 
           <div class="stat-main">
-              <div class="stat-label">Заказов</div>
+              <div class="stat-label">{% trans "Заказов" %}</div>
               <div class="stat-value">{{ total_orders }}</div>
-              <div class="stat-sub">за сегодня</div>
+              <div class="stat-sub">{% trans "за сегодня" %}</div>
           </div>
 
           <div class="stat-trend">↑ 0%</div>
@@ -583,9 +584,9 @@ h1{
           </div>
 
           <div class="stat-main">
-              <div class="stat-label">Выручка</div>
+              <div class="stat-label">{% trans "Выручка" %}</div>
               <div class="stat-value">{{ total_revenue|floatformat:0|intcomma }}</div>
-              <div class="stat-sub">за сегодня</div>
+              <div class="stat-sub">{% trans "за сегодня" %}</div>
           </div>
 
           <div class="stat-trend">↑ +12%</div>
@@ -602,9 +603,9 @@ h1{
           </div>
 
           <div class="stat-main">
-              <div class="stat-label">Доставка</div>
+              <div class="stat-label">{% trans "Доставка" %}</div>
               <div class="stat-value">{{ total_delivery|floatformat:0|intcomma }}</div>
-              <div class="stat-sub">за сегодня</div>
+              <div class="stat-sub">{% trans "за сегодня" %}</div>
           </div>
 
           <div class="stat-trend">↑ +5%</div>
@@ -620,9 +621,9 @@ h1{
           </div>
 
           <div class="stat-main">
-              <div class="stat-label">Наличные</div>
+              <div class="stat-label">{% trans "Наличные" %}</div>
               <div class="stat-value">{{ total_cash|floatformat:0|intcomma }}</div>
-              <div class="stat-sub">за сегодня</div>
+              <div class="stat-sub">{% trans "за сегодня" %}</div>
           </div>
 
           <div class="stat-trend">↓ -3%</div>
@@ -637,9 +638,9 @@ h1{
           </div>
 
           <div class="stat-main">
-              <div class="stat-label">Отказы</div>
+              <div class="stat-label">{% trans "Отказы" %}</div>
               <div class="stat-value">{{ cancelled_orders_count }}</div>
-              <div class="stat-sub">за сегодня</div>
+              <div class="stat-sub">{% trans "за сегодня" %}</div>
           </div>
 
           <div class="stat-trend">—</div>
@@ -655,7 +656,7 @@ h1{
                 <div class="orders-header">
 
                     <div class="orders-title">
-                        Список заказов
+                        {% trans "Список заказов" %}
                     </div>
 
                 </div>
@@ -687,13 +688,13 @@ h1{
                                 {% if order.delivery_landmark %}
                                     <div class="client-landmark"
                                          title="{{ order.delivery_landmark }}">
-                                        Ориентир: {{ order.delivery_landmark }}
+                                        {% blocktrans with l=order.delivery_landmark %}Ориентир: {{ l }}{% endblocktrans %}
                                     </div>
                                 {% endif %}
 
                                 {% if order.leave_at_door %}
                                     <div class="door-badge">
-                                        🚪 Оставить у двери
+                                        {% trans "🚪 Оставить у двери" %}
                                     </div>
                                 {% endif %}
 
@@ -719,7 +720,7 @@ h1{
 
 								    {% if order.is_cancelled %}
 								        <div class="cancel-badge">
-								            Отменен
+								            {% trans "Отменен" %}
 								        </div>
 								    {% endif %}
 
@@ -749,7 +750,7 @@ h1{
                                         font-size:14px;
                                     "
                                 >
-                                    Открыть
+                                    {% trans "Открыть" %}
                                 </a>
 
                             </div>
@@ -763,7 +764,7 @@ h1{
                 {% else %}
 
                     <div class="empty">
-                        Заказов пока нет
+                        {% trans "Заказов пока нет" %}
                     </div>
 
                 {% endif %}
@@ -777,7 +778,7 @@ h1{
             <div class="summary-card">
 
 				<div class="summary-title">
-				    По филиалам
+				    {% trans "По филиалам" %}
 				</div>
 
 				{% for item in locations_summary %}
@@ -793,7 +794,7 @@ h1{
 				        </div>
 
 				        <div class="summary-label">
-				            Заказов: {{ item.orders_count }}
+				            {% trans "Заказов" %}: {{ item.orders_count }}
 				        </div>
 
 				    </div>
@@ -801,7 +802,7 @@ h1{
 				{% empty %}
 
 				    <div class="summary-label">
-				        Филиалов пока нет
+				        {% trans "Филиалов пока нет" %}
 				    </div>
 
 				{% endfor %}
@@ -811,7 +812,7 @@ h1{
             <div class="summary-card cash-box">
 
                 <div class="summary-title">
-                    Наличные в кассе
+                    {% trans "Наличные в кассе" %}
                 </div>
 
 				<div class="summary-value">
@@ -848,7 +849,7 @@ h1{
         if (blinkTimer) return;
         blinkTimer = setInterval(function () {
             blinkOn = !blinkOn;
-            document.title = blinkOn ? "🔴 Новый заказ!" : originalTitle;
+            document.title = blinkOn ? '{% trans "🔴 Новый заказ!" as jt %}{{ jt|escapejs }}' : originalTitle;
         }, 700);
     }
 
@@ -969,12 +970,12 @@ h1{
         var h2 = '<div class="client-name">' + esc(o.customer_name) + '</div>'
                + '<div class="client-phone">' + esc(o.customer_phone) + '</div>';
         if (o.delivery_landmark) {
-            h2 += '<div class="client-landmark" title="' + esc(o.delivery_landmark) + '">Ориентир: ' + esc(o.delivery_landmark) + '</div>';
+            h2 += '<div class="client-landmark" title="' + esc(o.delivery_landmark) + '">{% trans "Ориентир:" as jt %}{{ jt|escapejs }} ' + esc(o.delivery_landmark) + '</div>';
         }
         if (o.leave_at_door) {
-            h2 += '<div class="door-badge">🚪 Оставить у двери</div>';
+            h2 += '<div class="door-badge">{% trans "🚪 Оставить у двери" as jt %}{{ jt|escapejs }}</div>';
         }
-        h2 += '<span class="row-new-badge">Новый</span>';
+        h2 += '<span class="row-new-badge">{% trans "Новый" as jt %}{{ jt|escapejs }}</span>';
         c2.innerHTML = h2;
 
         var c3 = document.createElement("div");
@@ -982,7 +983,7 @@ h1{
 
         var c4 = document.createElement("div");
         var h4 = '<div class="order-sum">' + esc(o.total_display);
-        if (o.is_cancelled) { h4 += '<div class="cancel-badge">Отменен</div>'; }
+        if (o.is_cancelled) { h4 += '<div class="cancel-badge">{% trans "Отменен" as jt %}{{ jt|escapejs }}</div>'; }
         h4 += '</div>';
         c4.innerHTML = h4;
 
@@ -990,7 +991,7 @@ h1{
         c5.innerHTML = '<div class="order-time">' + (o.location ? esc(o.location) : "—") + '</div>';
 
         var c6 = document.createElement("div");
-        c6.innerHTML = '<a href="' + esc(o.url) + '" class="create-btn" style="padding:0 14px;font-size:14px;">Открыть</a>';
+        c6.innerHTML = '<a href="' + esc(o.url) + '" class="create-btn" style="padding:0 14px;font-size:14px;">{% trans "Открыть" as jt %}{{ jt|escapejs }}</a>';
 
         row.appendChild(c1); row.appendChild(c2); row.appendChild(c3);
         row.appendChild(c4); row.appendChild(c5); row.appendChild(c6);

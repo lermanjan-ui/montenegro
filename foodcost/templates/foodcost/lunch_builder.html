@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Конструктор обеда{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Конструктор обеда" %}{% endblock %}
 {% block content %}
 <style>
 .lb-wrap{max-width:1180px;margin:0 auto;}
@@ -41,55 +42,55 @@
 </style>
 
 <div class="lb-wrap">
-  <a class="lb-back" href="/c/{{ country.slug }}/lunches/">← Все обеды</a>
+  <a class="lb-back" href="/c/{{ country.slug }}/lunches/">{% trans "← Все обеды" %}</a>
   <h1 class="lb-h1" style="margin-top:8px;">{{ lunch.name }}</h1>
-  <p class="lb-sub">{{ lunch.date|date:"d.m.Y" }} · конструктор обеда: размеры, состав, себестоимость и маржа.</p>
+  <p class="lb-sub">{{ lunch.date|date:"d.m.Y" }} · {% trans "конструктор обеда: размеры, состав, себестоимость и маржа." %}</p>
 
   <!-- ОБЕД -->
   <div class="lb-card">
-    <div class="lb-title">Обед</div>
+    <div class="lb-title">{% trans "Обед" %}</div>
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="update_lunch">
       <div class="lb-grid">
-        <div class="lb-f"><label>Название</label><input class="lb-in" name="name" value="{{ lunch.name }}"></div>
-        <div class="lb-f"><label>Дата</label><input class="lb-in" type="date" name="date" value="{{ date_value }}"></div>
-        <div class="lb-f"><label>Бейдж</label>
+        <div class="lb-f"><label>{% trans "Название" %}</label><input class="lb-in" name="name" value="{{ lunch.name }}"></div>
+        <div class="lb-f"><label>{% trans "Дата" %}</label><input class="lb-in" type="date" name="date" value="{{ date_value }}"></div>
+        <div class="lb-f"><label>{% trans "Бейдж" %}</label>
           <select class="lb-sel" name="badge">
-            <option value="">— нет —</option>
+            <option value="">{% trans "— нет —" %}</option>
             {% for b in badge_choices %}<option value="{{ b.0 }}" {% if lunch.badge == b.0 %}selected{% endif %}>{{ b.1 }}</option>{% endfor %}
           </select>
         </div>
-        <div class="lb-f"><label>Дедлайн заказа (напр. 11:00)</label><input class="lb-in" name="order_cutoff" value="{{ lunch.order_cutoff }}"></div>
+        <div class="lb-f"><label>{% trans "Дедлайн заказа (напр. 11:00)" %}</label><input class="lb-in" name="order_cutoff" value="{{ lunch.order_cutoff }}"></div>
       </div>
       <div class="lb-grid" style="margin-top:12px;">
-        <div class="lb-f" style="grid-column:span 2;"><label>Описание</label><input class="lb-in" name="description" value="{{ lunch.description }}"></div>
-        <div class="lb-f" style="grid-column:span 2;"><label>Фото (URL)</label><input class="lb-in" name="photo_url" value="{{ lunch.photo_url }}" placeholder="https://…"></div>
+        <div class="lb-f" style="grid-column:span 2;"><label>{% trans "Описание" %}</label><input class="lb-in" name="description" value="{{ lunch.description }}"></div>
+        <div class="lb-f" style="grid-column:span 2;"><label>{% trans "Фото (URL)" %}</label><input class="lb-in" name="photo_url" value="{{ lunch.photo_url }}" placeholder="https://…"></div>
       </div>
       <div class="lb-grid" style="margin-top:12px;">
-        <div class="lb-f"><label>Порядок</label><input class="lb-in" type="number" name="sort_order" value="{{ lunch.sort_order }}"></div>
-        <label class="lb-check"><input type="checkbox" name="available" {% if lunch.available %}checked{% endif %}> Доступен к заказу</label>
-        <label class="lb-check"><input type="checkbox" name="is_active" {% if lunch.is_active %}checked{% endif %}> Активен (показывать)</label>
+        <div class="lb-f"><label>{% trans "Порядок" %}</label><input class="lb-in" type="number" name="sort_order" value="{{ lunch.sort_order }}"></div>
+        <label class="lb-check"><input type="checkbox" name="available" {% if lunch.available %}checked{% endif %}> {% trans "Доступен к заказу" %}</label>
+        <label class="lb-check"><input type="checkbox" name="is_active" {% if lunch.is_active %}checked{% endif %}> {% trans "Активен (показывать)" %}</label>
       </div>
       <div class="lb-actions">
-        <button class="lb-btn lb-green" type="submit">Сохранить обед</button>
+        <button class="lb-btn lb-green" type="submit">{% trans "Сохранить обед" %}</button>
       </div>
     </form>
-    <form method="post" onsubmit="return confirm('Удалить обед целиком (со всеми размерами)?');" style="margin-top:6px;text-align:right;">
+    <form method="post" onsubmit="return confirm('{% trans "Удалить обед целиком (со всеми размерами)?" as jt %}{{ jt|escapejs }}');" style="margin-top:6px;text-align:right;">
       {% csrf_token %}
       <input type="hidden" name="action" value="delete_lunch">
-      <button class="lb-btn lb-red lb-sm" type="submit">Удалить обед</button>
+      <button class="lb-btn lb-red lb-sm" type="submit">{% trans "Удалить обед" %}</button>
     </form>
   </div>
 
   <!-- РАЗМЕРЫ -->
   <div class="lb-card">
-    <div class="lb-title">Размеры и состав</div>
+    <div class="lb-title">{% trans "Размеры и состав" %}</div>
 
     {% for sd in sizes_data %}
     <div class="size-card">
       <div class="size-head">
-        <div class="size-name">{{ sd.size.label }}{% if sd.size.is_default %} <span class="muted" style="font-size:13px;">· по умолчанию</span>{% endif %}</div>
+        <div class="size-name">{{ sd.size.label }}{% if sd.size.is_default %} <span class="muted" style="font-size:13px;">{% trans "· по умолчанию" %}</span>{% endif %}</div>
       </div>
 
       <!-- параметры размера -->
@@ -98,40 +99,40 @@
         <input type="hidden" name="action" value="update_size">
         <input type="hidden" name="size_id" value="{{ sd.size.id }}">
         <div class="lb-grid">
-          <div class="lb-f"><label>Название размера</label><input class="lb-in" name="label" value="{{ sd.size.label }}"></div>
-          <div class="lb-f"><label>Цена (UZS)</label><input class="lb-in" name="price" value="{{ sd.size.price|floatformat:0 }}"></div>
-          <div class="lb-f"><label>Граммовка итого (г)</label><input class="lb-in" type="number" name="weight_total" value="{{ sd.size.weight_total }}"></div>
-          <div class="lb-f"><label>Порядок</label><input class="lb-in" type="number" name="sort_order" value="{{ sd.size.sort_order }}"></div>
+          <div class="lb-f"><label>{% trans "Название размера" %}</label><input class="lb-in" name="label" value="{{ sd.size.label }}"></div>
+          <div class="lb-f"><label>{% trans "Цена (UZS)" %}</label><input class="lb-in" name="price" value="{{ sd.size.price|floatformat:0 }}"></div>
+          <div class="lb-f"><label>{% trans "Граммовка итого (г)" %}</label><input class="lb-in" type="number" name="weight_total" value="{{ sd.size.weight_total }}"></div>
+          <div class="lb-f"><label>{% trans "Порядок" %}</label><input class="lb-in" type="number" name="sort_order" value="{{ sd.size.sort_order }}"></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
-          <label class="lb-check" style="margin:0;"><input type="checkbox" name="is_default" {% if sd.size.is_default %}checked{% endif %}> Размер по умолчанию</label>
+          <label class="lb-check" style="margin:0;"><input type="checkbox" name="is_default" {% if sd.size.is_default %}checked{% endif %}> {% trans "Размер по умолчанию" %}</label>
           <div style="display:flex;gap:8px;">
-            <button class="lb-btn lb-green lb-sm" type="submit">Сохранить размер</button>
+            <button class="lb-btn lb-green lb-sm" type="submit">{% trans "Сохранить размер" %}</button>
           </div>
         </div>
       </form>
-      <form method="post" onsubmit="return confirm('Удалить размер со всем составом?');" style="text-align:right;margin-top:6px;">
+      <form method="post" onsubmit="return confirm('{% trans "Удалить размер со всем составом?" as jt %}{{ jt|escapejs }}');" style="text-align:right;margin-top:6px;">
         {% csrf_token %}
         <input type="hidden" name="action" value="delete_size">
         <input type="hidden" name="size_id" value="{{ sd.size.id }}">
-        <button class="lb-btn lb-red lb-sm" type="submit">Удалить размер</button>
+        <button class="lb-btn lb-red lb-sm" type="submit">{% trans "Удалить размер" %}</button>
       </form>
 
       <!-- KPI -->
       <div class="kpis">
-        <div class="kpi">Себестоимость<b class="red">{{ sd.total_cost_fmt }}</b></div>
-        <div class="kpi">Цена<b>{{ sd.price_fmt }}</b></div>
-        <div class="kpi">Маржа<b class="{% if sd.margin < 0 %}red{% else %}green{% endif %}">{{ sd.margin_fmt }}</b></div>
-        <div class="kpi">Фудкост<b>{{ sd.foodcost }}%</b></div>
-        <div class="kpi">Маржа %<b>{{ sd.margin_pct }}%</b></div>
-        <div class="kpi">По отдельности<b>{{ sd.separate_fmt }}</b></div>
-        <div class="kpi">Выгода<b class="{% if sd.savings < 0 %}red{% else %}green{% endif %}">{{ sd.savings_fmt }}</b></div>
+        <div class="kpi">{% trans "Себестоимость" %}<b class="red">{{ sd.total_cost_fmt }}</b></div>
+        <div class="kpi">{% trans "Цена" %}<b>{{ sd.price_fmt }}</b></div>
+        <div class="kpi">{% trans "Маржа" %}<b class="{% if sd.margin < 0 %}red{% else %}green{% endif %}">{{ sd.margin_fmt }}</b></div>
+        <div class="kpi">{% trans "Фудкост" %}<b>{{ sd.foodcost }}%</b></div>
+        <div class="kpi">{% trans "Маржа %" %}<b>{{ sd.margin_pct }}%</b></div>
+        <div class="kpi">{% trans "По отдельности" %}<b>{{ sd.separate_fmt }}</b></div>
+        <div class="kpi">{% trans "Выгода" %}<b class="{% if sd.savings < 0 %}red{% else %}green{% endif %}">{{ sd.savings_fmt }}</b></div>
       </div>
-      <p class="muted" style="font-size:12px;margin:-6px 0 10px;">«По отдельности» = сумма цен позиций (поле «отд.цена» в строках). «Выгода» = по отдельности − цена комплекса.</p>
+      <p class="muted" style="font-size:12px;margin:-6px 0 10px;">{% trans "«По отдельности» = сумма цен позиций (поле «отд.цена» в строках). «Выгода» = по отдельности − цена комплекса." %}</p>
 
       <!-- состав -->
       <div class="irow irow-head">
-        <div>Роль</div><div>Название (текст)</div><div>Грамм.</div><div>Привязка (для себест.)</div><div>net</div><div>кол-во</div><div>Себест.вручную</div><div>Себест.</div>
+        <div>{% trans "Роль" %}</div><div>{% trans "Название (текст)" %}</div><div>{% trans "Грамм." %}</div><div>{% trans "Привязка (для себест.)" %}</div><div>net</div><div>{% trans "кол-во" %}</div><div>{% trans "Себест.вручную" %}</div><div>{% trans "Себест." %}</div>
       </div>
       {% for li in sd.items %}
       <div class="item-block">
@@ -142,7 +143,7 @@
           <div class="irow" style="border-bottom:0;padding-bottom:0;">
             <div class="lb-f"><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}" {% if li.item.role == r.0 %}selected{% endif %}>{{ r.1 }}</option>{% endfor %}</select></div>
             <div class="lb-f"><input class="lb-in" name="name" value="{{ li.item.name }}" placeholder="{{ li.display_name }}"></div>
-            <div class="lb-f"><input class="lb-in" name="weight" value="{{ li.item.weight }}" placeholder="120 г"></div>
+            <div class="lb-f"><input class="lb-in" name="weight" value="{{ li.item.weight }}" placeholder="{% trans "120 г" %}"></div>
             <div class="lb-f"><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected=li.comp_value %}</select></div>
             <div class="lb-f"><input class="lb-in" name="net" value="{{ li.item.net|floatformat:3 }}"></div>
             <div class="lb-f"><input class="lb-in" name="quantity" value="{{ li.item.quantity|floatformat:3 }}"></div>
@@ -150,22 +151,22 @@
             <div class="cost-cell">{{ li.cost_fmt }}</div>
           </div>
           <div class="irow-extra">
-            <div class="lb-f"><label>Отд. цена</label><input class="lb-in" name="separate_price" value="{{ li.item.separate_price|floatformat:0 }}"></div>
-            <div class="lb-f"><label>Доп.порция, цена</label><input class="lb-in" name="extra_price" value="{% if li.item.extra_price is not None %}{{ li.item.extra_price|floatformat:0 }}{% endif %}" placeholder="нет"></div>
-            <div class="lb-f"><label>Доп. грамм.</label><input class="lb-in" name="extra_weight" value="{{ li.item.extra_weight }}" placeholder="120 г"></div>
-            <div class="lb-f"><label>Макс.</label><input class="lb-in" name="extra_max" value="{% if li.item.extra_max is not None %}{{ li.item.extra_max }}{% endif %}" placeholder="∞"></div>
-            <div style="align-self:end;text-align:right;"><button class="lb-btn lb-green lb-sm" type="submit">Сохранить строку</button></div>
+            <div class="lb-f"><label>{% trans "Отд. цена" %}</label><input class="lb-in" name="separate_price" value="{{ li.item.separate_price|floatformat:0 }}"></div>
+            <div class="lb-f"><label>{% trans "Доп.порция, цена" %}</label><input class="lb-in" name="extra_price" value="{% if li.item.extra_price is not None %}{{ li.item.extra_price|floatformat:0 }}{% endif %}" placeholder="{% trans "нет" %}"></div>
+            <div class="lb-f"><label>{% trans "Доп. грамм." %}</label><input class="lb-in" name="extra_weight" value="{{ li.item.extra_weight }}" placeholder="{% trans "120 г" %}"></div>
+            <div class="lb-f"><label>{% trans "Макс." %}</label><input class="lb-in" name="extra_max" value="{% if li.item.extra_max is not None %}{{ li.item.extra_max }}{% endif %}" placeholder="∞"></div>
+            <div style="align-self:end;text-align:right;"><button class="lb-btn lb-green lb-sm" type="submit">{% trans "Сохранить строку" %}</button></div>
           </div>
         </form>
-        <form method="post" style="text-align:right;padding:0 8px 4px;" onsubmit="return confirm('Удалить строку?');">
+        <form method="post" style="text-align:right;padding:0 8px 4px;" onsubmit="return confirm('{% trans "Удалить строку?" as jt %}{{ jt|escapejs }}');">
           {% csrf_token %}
           <input type="hidden" name="action" value="delete_item">
           <input type="hidden" name="item_id" value="{{ li.item.id }}">
-          <button class="lb-btn lb-red lb-sm" type="submit">✕ удалить строку</button>
+          <button class="lb-btn lb-red lb-sm" type="submit">{% trans "✕ удалить строку" %}</button>
         </form>
       </div>
       {% empty %}
-      <div class="muted" style="padding:10px;">Состав пуст — добавьте строки ниже.</div>
+      <div class="muted" style="padding:10px;">{% trans "Состав пуст — добавьте строки ниже." %}</div>
       {% endfor %}
 
       <!-- добавить строку -->
@@ -174,26 +175,26 @@
         <input type="hidden" name="action" value="add_item">
         <input type="hidden" name="size_id" value="{{ sd.size.id }}">
         <div class="irow" style="border-bottom:0;padding-bottom:0;">
-          <div class="lb-f"><label>Роль</label><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}">{{ r.1 }}</option>{% endfor %}</select></div>
-          <div class="lb-f"><label>Название</label><input class="lb-in" name="name" placeholder="Куриная котлета"></div>
-          <div class="lb-f"><label>Грамм.</label><input class="lb-in" name="weight" placeholder="120 г"></div>
-          <div class="lb-f"><label>Привязка</label><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected="none" %}</select></div>
+          <div class="lb-f"><label>{% trans "Роль" %}</label><select class="lb-sel" name="role">{% for r in role_choices %}<option value="{{ r.0 }}">{{ r.1 }}</option>{% endfor %}</select></div>
+          <div class="lb-f"><label>{% trans "Название" %}</label><input class="lb-in" name="name" placeholder="{% trans "Куриная котлета" %}"></div>
+          <div class="lb-f"><label>{% trans "Грамм." %}</label><input class="lb-in" name="weight" placeholder="{% trans "120 г" %}"></div>
+          <div class="lb-f"><label>{% trans "Привязка" %}</label><select class="lb-sel" name="component">{% include "foodcost/_lunch_component_options.html" with selected="none" %}</select></div>
           <div class="lb-f"><label>net</label><input class="lb-in" name="net" value="0"></div>
-          <div class="lb-f"><label>кол-во</label><input class="lb-in" name="quantity" value="1"></div>
-          <div class="lb-f"><label>Себест.вручную</label><input class="lb-in" name="cost_override" placeholder="—"></div>
+          <div class="lb-f"><label>{% trans "кол-во" %}</label><input class="lb-in" name="quantity" value="1"></div>
+          <div class="lb-f"><label>{% trans "Себест.вручную" %}</label><input class="lb-in" name="cost_override" placeholder="—"></div>
           <div></div>
         </div>
         <div class="irow-extra">
-          <div class="lb-f"><label>Отд. цена</label><input class="lb-in" name="separate_price" value="0"></div>
-          <div class="lb-f"><label>Доп.порция, цена</label><input class="lb-in" name="extra_price" placeholder="нет"></div>
-          <div class="lb-f"><label>Доп. грамм.</label><input class="lb-in" name="extra_weight" placeholder="120 г"></div>
-          <div class="lb-f"><label>Макс.</label><input class="lb-in" name="extra_max" placeholder="∞"></div>
-          <div style="align-self:end;text-align:right;"><button class="lb-btn lb-green lb-sm" type="submit">+ Добавить</button></div>
+          <div class="lb-f"><label>{% trans "Отд. цена" %}</label><input class="lb-in" name="separate_price" value="0"></div>
+          <div class="lb-f"><label>{% trans "Доп.порция, цена" %}</label><input class="lb-in" name="extra_price" placeholder="{% trans "нет" %}"></div>
+          <div class="lb-f"><label>{% trans "Доп. грамм." %}</label><input class="lb-in" name="extra_weight" placeholder="{% trans "120 г" %}"></div>
+          <div class="lb-f"><label>{% trans "Макс." %}</label><input class="lb-in" name="extra_max" placeholder="∞"></div>
+          <div style="align-self:end;text-align:right;"><button class="lb-btn lb-green lb-sm" type="submit">{% trans "+ Добавить" %}</button></div>
         </div>
       </form>
     </div>
     {% empty %}
-    <div class="muted" style="padding:10px;">Размеров пока нет — добавьте первый ниже.</div>
+    <div class="muted" style="padding:10px;">{% trans "Размеров пока нет — добавьте первый ниже." %}</div>
     {% endfor %}
 
     <!-- добавить размер -->
@@ -201,12 +202,12 @@
       {% csrf_token %}
       <input type="hidden" name="action" value="add_size">
       <div class="lb-grid">
-        <div class="lb-f"><label>Новый размер</label><input class="lb-in" name="label" placeholder="Большой"></div>
-        <div class="lb-f"><label>Цена (UZS)</label><input class="lb-in" name="price" value="0"></div>
-        <div class="lb-f"><label>Граммовка итого (г)</label><input class="lb-in" type="number" name="weight_total" value="0"></div>
-        <label class="lb-check"><input type="checkbox" name="is_default"> По умолчанию</label>
+        <div class="lb-f"><label>{% trans "Новый размер" %}</label><input class="lb-in" name="label" placeholder="{% trans "Большой" %}"></div>
+        <div class="lb-f"><label>{% trans "Цена (UZS)" %}</label><input class="lb-in" name="price" value="0"></div>
+        <div class="lb-f"><label>{% trans "Граммовка итого (г)" %}</label><input class="lb-in" type="number" name="weight_total" value="0"></div>
+        <label class="lb-check"><input type="checkbox" name="is_default"> {% trans "По умолчанию" %}</label>
       </div>
-      <div class="lb-actions"><button class="lb-btn lb-green" type="submit">+ Добавить размер</button></div>
+      <div class="lb-actions"><button class="lb-btn lb-green" type="submit">{% trans "+ Добавить размер" %}</button></div>
     </form>
   </div>
 </div>

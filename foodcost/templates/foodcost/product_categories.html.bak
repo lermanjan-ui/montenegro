@@ -1,0 +1,88 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Категории товаров · {{ country.name }}{% endblock %}
+{% block content %}
+<style>
+.pc-note{color:var(--muted);margin:0 0 16px;max-width:70ch;}
+.pc-table{width:100%;border-collapse:collapse;}
+.pc-table th,.pc-table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:14px;}
+.pc-table th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;}
+.pc-badge{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--primary-soft);color:var(--primary);}
+.pc-field{margin-bottom:12px;}
+.pc-field label{display:block;font-weight:600;font-size:13px;margin:0 0 6px;}
+.pc-field input[type=text],.pc-field select{width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit;font-size:14px;background:#fff;}
+.pc-chk{display:flex;align-items:center;gap:8px;font-weight:500;}
+.pc-chk input{width:17px;height:17px;}
+.err{background:var(--danger-soft);color:var(--danger);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-weight:600;}
+.inline{display:inline;}
+.row2{display:grid;grid-template-columns:1.4fr 1fr auto;gap:12px;align-items:end;}
+@media(max-width:720px){.row2{grid-template-columns:1fr;}}
+</style>
+
+<h1 style="margin:0 0 4px;">Категории товаров</h1>
+<p class="pc-note">Тип учёта категории определяет, как товар участвует в себестоимости и учёте. Товар без категории считается ингредиентом.</p>
+
+{% if error %}<div class="err">{{ error }}</div>{% endif %}
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <table class="pc-table">
+    <thead>
+      <tr><th>Категория</th><th>Тип учёта</th><th>Распределять</th><th>Товаров</th><th style="text-align:right;">Действие</th></tr>
+    </thead>
+    <tbody>
+      {% for c in categories %}
+      <tr>
+        <td style="font-weight:600;">{{ c.name }}</td>
+        <td><span class="pc-badge">{{ c.get_accounting_type_display }}</span></td>
+        <td>{% if c.allocate_evenly %}да{% else %}—{% endif %}</td>
+        <td>{{ c.product_count }}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          {% if can_edit %}
+          <details class="inline">
+            <summary style="cursor:pointer;color:var(--primary);font-weight:600;font-size:13px;">Изменить</summary>
+            <form method="post" style="margin-top:10px;background:var(--bg);padding:12px;border-radius:8px;text-align:left;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="cat_id" value="{{ c.id }}">
+              <div class="pc-field"><label>Название</label><input type="text" name="name" value="{{ c.name }}"></div>
+              <div class="pc-field"><label>Тип учёта</label>
+                <select name="accounting_type">
+                  {% for code,label in type_choices %}<option value="{{ code }}" {% if c.accounting_type == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+              </div>
+              <label class="pc-chk" style="margin-bottom:10px;"><input type="checkbox" name="allocate_evenly" {% if c.allocate_evenly %}checked{% endif %}> Распределять на себестоимость равномерно</label>
+              <div style="display:flex;gap:8px;">
+                <button type="submit">Сохранить</button>
+                <button type="submit" name="action" value="delete" class="danger" onclick="return confirm('Удалить категорию? Товары останутся без категории.');">Удалить</button>
+              </div>
+            </form>
+          </details>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="padding:22px;text-align:center;color:var(--muted);">Категорий пока нет.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if can_edit %}
+<div class="card">
+  <h2 style="margin-top:0;">Новая категория</h2>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create">
+    <div class="row2">
+      <div class="pc-field" style="margin:0;"><label>Название</label><input type="text" name="name" required placeholder="Например: Бытовая химия"></div>
+      <div class="pc-field" style="margin:0;"><label>Тип учёта</label>
+        <select name="accounting_type">
+          {% for code,label in type_choices %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit">Добавить</button>
+    </div>
+    <label class="pc-chk" style="margin-top:12px;"><input type="checkbox" name="allocate_evenly"> Распределять на себестоимость равномерно (для накладных)</label>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

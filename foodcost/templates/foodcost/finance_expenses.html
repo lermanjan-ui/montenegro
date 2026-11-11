@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Расходы{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Расходы" %}{% endblock %}
 {% block content %}
 <style>
 .fx-wrap{max-width:1200px;margin:0 auto;}
@@ -39,77 +40,77 @@
 </style>
 
 <div class="fx-wrap">
-  <h1 class="fx-h1">Расходы</h1>
-  <p class="fx-sub">Учёт расходов: аренда, зарплата, маркетинг, закупки и прочее. Закупки попадают сюда автоматически из приходов.</p>
+  <h1 class="fx-h1">{% trans "Расходы" %}</h1>
+  <p class="fx-sub">{% trans "Учёт расходов: аренда, зарплата, маркетинг, закупки и прочее. Закупки попадают сюда автоматически из приходов." %}</p>
 
   <div class="fx-tabs">
-    <a href="/c/{{ country.slug }}/finance/expenses/" class="fx-tab {% if active == 'expenses' %}active{% endif %}">Расходы</a>
-    <a href="/c/{{ country.slug }}/finance/income/" class="fx-tab {% if active == 'income' %}active{% endif %}">Поступление денег</a>
-    <a href="/c/{{ country.slug }}/finance/chart/" class="fx-tab {% if active == 'chart' %}active{% endif %}">Приход / расход</a>
+    <a href="/c/{{ country.slug }}/finance/expenses/" class="fx-tab {% if active == 'expenses' %}active{% endif %}">{% trans "Расходы" %}</a>
+    <a href="/c/{{ country.slug }}/finance/income/" class="fx-tab {% if active == 'income' %}active{% endif %}">{% trans "Поступление денег" %}</a>
+    <a href="/c/{{ country.slug }}/finance/chart/" class="fx-tab {% if active == 'chart' %}active{% endif %}">{% trans "Приход / расход" %}</a>
   </div>
 
-  {% if imported %}<div class="fx-card" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;font-weight:700;">Импортировано записей: {{ imported }}</div>{% endif %}
+  {% if imported %}<div class="fx-card" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;font-weight:700;">{% blocktrans with n=imported %}Импортировано записей: {{ n }}{% endblocktrans %}</div>{% endif %}
 
   <!-- ИМПОРТ ИЗ CSV -->
   <form method="post" enctype="multipart/form-data" class="fx-card">
     {% csrf_token %}
     <input type="hidden" name="action" value="import_csv">
-    <div class="fx-card-title">Импорт из CSV</div>
+    <div class="fx-card-title">{% trans "Импорт из CSV" %}</div>
     <div class="fx-totals" style="gap:12px;">
       <input class="fx-in" type="file" name="csv_file" accept=".csv" style="max-width:360px;">
-      <button class="fx-btn fx-btn-gray" type="submit">Загрузить и импортировать</button>
-      <span class="fx-muted">Колонки: expense_date, expense_type, name, amount, source, comment</span>
+      <button class="fx-btn fx-btn-gray" type="submit">{% trans "Загрузить и импортировать" %}</button>
+      <span class="fx-muted">{% trans "Колонки: expense_date, expense_type, name, amount, source, comment" %}</span>
     </div>
   </form>
 
   <!-- ФИЛЬТРЫ -->
   <form method="get" class="fx-card">
-    <div class="fx-card-title">Фильтры</div>
+    <div class="fx-card-title">{% trans "Фильтры" %}</div>
     <div class="fx-grid">
-      <div class="fx-field"><label>С даты</label><input class="fx-in" type="date" name="date_from" value="{{ f_date_from }}"></div>
-      <div class="fx-field"><label>По дату</label><input class="fx-in" type="date" name="date_to" value="{{ f_date_to }}"></div>
-      <div class="fx-field"><label>Тип</label>
+      <div class="fx-field"><label>{% trans "С даты" %}</label><input class="fx-in" type="date" name="date_from" value="{{ f_date_from }}"></div>
+      <div class="fx-field"><label>{% trans "По дату" %}</label><input class="fx-in" type="date" name="date_to" value="{{ f_date_to }}"></div>
+      <div class="fx-field"><label>{% trans "Тип" %}</label>
         <select class="fx-sel" name="expense_type">
-          <option value="">Все типы</option>
+          <option value="">{% trans "Все типы" %}</option>
           {% for t in expense_types %}<option value="{{ t.0 }}" {% if f_type == t.0 %}selected{% endif %}>{{ t.1 }}</option>{% endfor %}
         </select>
       </div>
-      <div class="fx-field"><label>Филиал</label>
+      <div class="fx-field"><label>{% trans "Филиал" %}</label>
         <select class="fx-sel" name="location_id">
-          <option value="">Все филиалы</option>
+          <option value="">{% trans "Все филиалы" %}</option>
           {% for loc in locations %}<option value="{{ loc.id }}" {% if f_location == loc.id|stringformat:'s' %}selected{% endif %}>{{ loc.name }}</option>{% endfor %}
         </select>
       </div>
     </div>
     <div class="fx-grid" style="margin-top:12px;">
-      <div class="fx-field"><label>Источник</label>
+      <div class="fx-field"><label>{% trans "Источник" %}</label>
         <select class="fx-sel" name="source">
-          <option value="">Неопределённо</option>
+          <option value="">{% trans "Неопределённо" %}</option>
           {% for s in source_choices %}<option value="{{ s.0 }}" {% if f_source == s.0 %}selected{% endif %}>{{ s.1 }}</option>{% endfor %}
         </select>
       </div>
-      <div class="fx-field"><label>Заём от (профинансировал) — можно несколько</label>
+      <div class="fx-field"><label>{% trans "Заём от (профинансировал) — можно несколько" %}</label>
         <div style="display:flex;flex-wrap:wrap;gap:10px;padding:6px 0;">
           {% for d in debtors %}
           <label style="display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;cursor:pointer;">
             <input type="checkbox" name="debtor_id" value="{{ d.id }}" {% if d.id|stringformat:'s' in f_debtor_ids %}checked{% endif %}> {{ d.name }}
           </label>
-          {% empty %}<span class="fx-muted">Должников пока нет</span>{% endfor %}
+          {% empty %}<span class="fx-muted">{% trans "Должников пока нет" %}</span>{% endfor %}
         </div>
       </div>
     </div>
     <div class="fx-actions">
-      <a class="fx-btn fx-btn-gray" href="/c/{{ country.slug }}/finance/expenses/">Сбросить</a>
-      <button class="fx-btn fx-btn-green" type="submit">Применить</button>
+      <a class="fx-btn fx-btn-gray" href="/c/{{ country.slug }}/finance/expenses/">{% trans "Сбросить" %}</a>
+      <button class="fx-btn fx-btn-green" type="submit">{% trans "Применить" %}</button>
     </div>
   </form>
 
   <!-- ИТОГИ -->
   <div class="fx-card">
-    <div class="fx-card-title">Итого{% if f_date_from or f_date_to or f_type or f_location or f_source %} (по фильтру){% endif %}</div>
+    <div class="fx-card-title">{% trans "Итого" %}{% if f_date_from or f_date_to or f_type or f_location or f_source %} {% trans "(по фильтру)" %}{% endif %}</div>
     <div class="fx-totals">
       <div class="fx-total-big">{{ total_sum_fmt }}</div>
-      <span class="fx-muted">сум · {{ expenses_count }} записей</span>
+      <span class="fx-muted">{% trans "сум" %} · {{ expenses_count }} {% trans "записей" %}</span>
     </div>
     {% if by_type %}
     <div class="fx-totals" style="margin-top:12px;">
@@ -123,51 +124,51 @@
     {% csrf_token %}
     <input type="hidden" name="action" value="create_expense">
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <div class="fx-card-title">Добавить расход</div>
+    <div class="fx-card-title">{% trans "Добавить расход" %}</div>
     <div class="fx-grid">
-      <div class="fx-field"><label>Тип *</label>
+      <div class="fx-field"><label>{% trans "Тип *" %}</label>
         <select class="fx-sel" name="expense_type" required>
           {% for t in expense_types %}<option value="{{ t.0 }}">{{ t.1 }}</option>{% endfor %}
         </select>
       </div>
-      <div class="fx-field"><label>Сумма *</label><input class="fx-in" type="text" name="amount" inputmode="decimal" placeholder="0" required></div>
-      <div class="fx-field"><label>Дата *</label><input class="fx-in" type="date" name="expense_date" value="{{ today }}" required></div>
-      <div class="fx-field"><label>Филиал</label>
+      <div class="fx-field"><label>{% trans "Сумма *" %}</label><input class="fx-in" type="text" name="amount" inputmode="decimal" placeholder="0" required></div>
+      <div class="fx-field"><label>{% trans "Дата *" %}</label><input class="fx-in" type="date" name="expense_date" value="{{ today }}" required></div>
+      <div class="fx-field"><label>{% trans "Филиал" %}</label>
         <select class="fx-sel" name="location_id">
-          <option value="">— не указан —</option>
+          <option value="">{% trans "— не указан —" %}</option>
           {% for loc in locations %}<option value="{{ loc.id }}">{{ loc.name }}</option>{% endfor %}
         </select>
       </div>
     </div>
     <div class="fx-grid" style="margin-top:12px;">
-      <div class="fx-field"><label>Название</label><input class="fx-in" type="text" name="name" placeholder="Напр. Аренда за июнь"></div>
-      <div class="fx-field"><label>Источник</label>
+      <div class="fx-field"><label>{% trans "Название" %}</label><input class="fx-in" type="text" name="name" placeholder="{% trans "Напр. Аренда за июнь" %}"></div>
+      <div class="fx-field"><label>{% trans "Источник" %}</label>
         <select class="fx-sel fx-source-sel" name="source" data-debtor="#fx-add-debtor">
-          <option value="">— не указан —</option>
+          <option value="">{% trans "— не указан —" %}</option>
           {% for s in source_choices %}<option value="{{ s.0 }}">{{ s.1 }}</option>{% endfor %}
         </select>
       </div>
-      <div class="fx-field"><label>Юрлицо</label><input class="fx-in" type="text" name="legal_entity" placeholder="На кого оформлено"></div>
-      <div class="fx-field fx-debtor-field" id="fx-add-debtor" style="display:none;"><label>Заём от (профинансировал)</label>
+      <div class="fx-field"><label>{% trans "Юрлицо" %}</label><input class="fx-in" type="text" name="legal_entity" placeholder="{% trans "На кого оформлено" %}"></div>
+      <div class="fx-field fx-debtor-field" id="fx-add-debtor" style="display:none;"><label>{% trans "Заём от (профинансировал)" %}</label>
         <select class="fx-sel" name="debtor_id">
-          <option value="">— выбрать —</option>
+          <option value="">{% trans "— выбрать —" %}</option>
           {% for d in debtors %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
         </select>
       </div>
     </div>
-    <div class="fx-field" style="margin-top:12px;"><label>Комментарий</label><textarea class="fx-ta" name="comment" rows="1"></textarea></div>
+    <div class="fx-field" style="margin-top:12px;"><label>{% trans "Комментарий" %}</label><textarea class="fx-ta" name="comment" rows="1"></textarea></div>
     <div class="fx-actions">
-      <button class="fx-btn fx-btn-green" type="submit">Добавить расход</button>
+      <button class="fx-btn fx-btn-green" type="submit">{% trans "Добавить расход" %}</button>
     </div>
   </form>
 
   <!-- СПИСОК -->
   <div class="fx-card">
-    <div class="fx-card-title">Список расходов</div>
+    <div class="fx-card-title">{% trans "Список расходов" %}</div>
     <table class="fx-table">
       <thead>
         <tr>
-          <th>Дата</th><th>Тип</th><th>Название</th><th>Филиал</th><th>Источник</th><th>Юрлицо</th><th style="text-align:right;">Сумма</th><th></th>
+          <th>{% trans "Дата" %}</th><th>{% trans "Тип" %}</th><th>{% trans "Название" %}</th><th>{% trans "Филиал" %}</th><th>{% trans "Источник" %}</th><th>{% trans "Юрлицо" %}</th><th style="text-align:right;">{% trans "Сумма" %}</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -175,19 +176,19 @@
         <tr>
           <td>{{ e.expense_date|date:"d.m.Y" }}</td>
           <td><span class="fx-badge">{{ e.type_label }}</span></td>
-          <td>{{ e.name|default:"—" }}{% if e.purchase_receipt_id %} <span class="fx-badge fx-badge-auto">из прихода</span>{% endif %}{% if e.comment %}<div class="fx-muted" style="font-size:12px;margin-top:2px;">{{ e.comment }}</div>{% endif %}</td>
+          <td>{{ e.name|default:"—" }}{% if e.purchase_receipt_id %} <span class="fx-badge fx-badge-auto">{% trans "из прихода" %}</span>{% endif %}{% if e.comment %}<div class="fx-muted" style="font-size:12px;margin-top:2px;">{{ e.comment }}</div>{% endif %}</td>
           <td>{% if e.location %}{{ e.location.name }}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
-          <td>{% if e.source_label %}<span class="fx-badge fx-badge-src">{{ e.source_label }}</span>{% if e.debtor %} <span class="fx-muted" style="font-size:12px;">от {{ e.debtor.name }}</span>{% endif %}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
+          <td>{% if e.source_label %}<span class="fx-badge fx-badge-src">{{ e.source_label }}</span>{% if e.debtor %} <span class="fx-muted" style="font-size:12px;">{% trans "от" %} {{ e.debtor.name }}</span>{% endif %}{% else %}<span class="fx-muted">—</span>{% endif %}</td>
           <td>{{ e.legal_entity|default:"—" }}</td>
           <td class="fx-amount" style="text-align:right;">{{ e.amount_fmt }}</td>
           <td style="white-space:nowrap;text-align:right;">
-            <button type="button" class="fx-btn fx-btn-gray fx-btn-sm" onclick="fxToggle({{ e.id }})">Изменить</button>
-            <form method="post" style="display:inline;" onsubmit="return confirm('Удалить расход?');">
+            <button type="button" class="fx-btn fx-btn-gray fx-btn-sm" onclick="fxToggle({{ e.id }})">{% trans "Изменить" %}</button>
+            <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Удалить расход?" as jt %}{{ jt|escapejs }}');">
               {% csrf_token %}
               <input type="hidden" name="action" value="delete_expense">
               <input type="hidden" name="expense_id" value="{{ e.id }}">
               <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit" class="fx-btn fx-btn-red fx-btn-sm">Удалить</button>
+              <button type="submit" class="fx-btn fx-btn-red fx-btn-sm">{% trans "Удалить" %}</button>
             </form>
           </td>
         </tr>
@@ -199,46 +200,46 @@
               <input type="hidden" name="expense_id" value="{{ e.id }}">
               <input type="hidden" name="next" value="{{ request.get_full_path }}">
               <div class="fx-grid">
-                <div class="fx-field"><label>Тип</label>
+                <div class="fx-field"><label>{% trans "Тип" %}</label>
                   <select class="fx-sel" name="expense_type">
                     {% for t in expense_types %}<option value="{{ t.0 }}" {% if e.expense_type == t.0 %}selected{% endif %}>{{ t.1 }}</option>{% endfor %}
                   </select>
                 </div>
-                <div class="fx-field"><label>Сумма</label><input class="fx-in" type="text" name="amount" inputmode="decimal" value="{{ e.amount|floatformat:0 }}"></div>
-                <div class="fx-field"><label>Дата</label><input class="fx-in" type="date" name="expense_date" value="{{ e.date_value }}"></div>
-                <div class="fx-field"><label>Филиал</label>
+                <div class="fx-field"><label>{% trans "Сумма" %}</label><input class="fx-in" type="text" name="amount" inputmode="decimal" value="{{ e.amount|floatformat:0 }}"></div>
+                <div class="fx-field"><label>{% trans "Дата" %}</label><input class="fx-in" type="date" name="expense_date" value="{{ e.date_value }}"></div>
+                <div class="fx-field"><label>{% trans "Филиал" %}</label>
                   <select class="fx-sel" name="location_id">
-                    <option value="">— не указан —</option>
+                    <option value="">{% trans "— не указан —" %}</option>
                     {% for loc in locations %}<option value="{{ loc.id }}" {% if e.location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>{% endfor %}
                   </select>
                 </div>
               </div>
               <div class="fx-grid" style="margin-top:12px;">
-                <div class="fx-field"><label>Название</label><input class="fx-in" type="text" name="name" value="{{ e.name }}"></div>
-                <div class="fx-field"><label>Источник</label>
+                <div class="fx-field"><label>{% trans "Название" %}</label><input class="fx-in" type="text" name="name" value="{{ e.name }}"></div>
+                <div class="fx-field"><label>{% trans "Источник" %}</label>
                   <select class="fx-sel fx-source-sel" name="source" data-debtor="#fx-edit-debtor-{{ e.id }}">
-                    <option value="">— не указан —</option>
+                    <option value="">{% trans "— не указан —" %}</option>
                     {% for s in source_choices %}<option value="{{ s.0 }}" {% if e.source == s.0 %}selected{% endif %}>{{ s.1 }}</option>{% endfor %}
                   </select>
                 </div>
-                <div class="fx-field"><label>Юрлицо</label><input class="fx-in" type="text" name="legal_entity" value="{{ e.legal_entity }}"></div>
-                <div class="fx-field fx-debtor-field" id="fx-edit-debtor-{{ e.id }}" {% if e.source != SOURCE_DEBT %}style="display:none;"{% endif %}><label>Заём от (профинансировал)</label>
+                <div class="fx-field"><label>{% trans "Юрлицо" %}</label><input class="fx-in" type="text" name="legal_entity" value="{{ e.legal_entity }}"></div>
+                <div class="fx-field fx-debtor-field" id="fx-edit-debtor-{{ e.id }}" {% if e.source != SOURCE_DEBT %}style="display:none;"{% endif %}><label>{% trans "Заём от (профинансировал)" %}</label>
                   <select class="fx-sel" name="debtor_id">
-                    <option value="">— выбрать —</option>
+                    <option value="">{% trans "— выбрать —" %}</option>
                     {% for d in debtors %}<option value="{{ d.id }}" {% if e.debtor_id == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
                   </select>
                 </div>
               </div>
-              <div class="fx-field" style="margin-top:12px;"><label>Комментарий</label><textarea class="fx-ta" name="comment" rows="1">{{ e.comment }}</textarea></div>
+              <div class="fx-field" style="margin-top:12px;"><label>{% trans "Комментарий" %}</label><textarea class="fx-ta" name="comment" rows="1">{{ e.comment }}</textarea></div>
               <div class="fx-actions">
-                <button type="button" class="fx-btn fx-btn-gray" onclick="fxToggle({{ e.id }})">Отмена</button>
-                <button type="submit" class="fx-btn fx-btn-green">Сохранить</button>
+                <button type="button" class="fx-btn fx-btn-gray" onclick="fxToggle({{ e.id }})">{% trans "Отмена" %}</button>
+                <button type="submit" class="fx-btn fx-btn-green">{% trans "Сохранить" %}</button>
               </div>
             </form>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="fx-empty">Расходов нет. Добавьте первый расход выше или измените фильтры.</td></tr>
+        <tr><td colspan="8" class="fx-empty">{% trans "Расходов нет. Добавьте первый расход выше или измените фильтры." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

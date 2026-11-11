@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Сотрудники · {{ country.name }}{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Сотрудники" %} · {{ country.name }}{% endblock %}
 {% block content %}
 <style>
 .tm-head{margin-bottom:16px;}
@@ -25,10 +26,9 @@ details.emp>summary::-webkit-details-marker{display:none;}
 </style>
 
 <div class="tm-head">
-  <h1 style="margin:0;">Сотрудники компании</h1>
+  <h1 style="margin:0;">{% trans "Сотрудники компании" %}</h1>
   <div class="tm-sub">
-    Создавайте сотрудников и выдавайте доступ к разделам.
-    Доступно разделов по тарифу: <span class="tm-badge">{{ available_count }} из {{ total_sections }}</span>
+    {% trans "Создавайте сотрудников и выдавайте доступ к разделам. Доступно разделов по тарифу:" %} <span class="tm-badge">{% blocktrans with a=available_count tot=total_sections %}{{ a }} из {{ tot }}{% endblocktrans %}</span>
   </div>
 </div>
 
@@ -38,29 +38,29 @@ details.emp>summary::-webkit-details-marker{display:none;}
 <div class="card" style="padding:0;overflow:hidden;">
   <table class="tm-table">
     <thead>
-      <tr><th>Сотрудник</th><th>Роль</th><th>Разделов</th><th></th></tr>
+      <tr><th>{% trans "Сотрудник" %}</th><th>{% trans "Роль" %}</th><th>{% trans "Разделов" %}</th><th></th></tr>
     </thead>
     <tbody>
       {% for emp in employees %}
       <tr>
-        <td style="font-weight:600;">{{ emp.username }}{% if not emp.is_active %} <span class="tm-sub" style="font-weight:400;">(отключён)</span>{% endif %}</td>
+        <td style="font-weight:600;">{{ emp.username }}{% if not emp.is_active %} <span class="tm-sub" style="font-weight:400;">{% trans "(отключён)" %}</span>{% endif %}</td>
         <td>{{ emp.profile.get_role_display }}</td>
         <td>{{ emp.profile.allowed_sections|length }}</td>
         <td style="text-align:right;">
           {% if can_edit %}
           <details class="emp">
-            <summary>Изменить</summary>
+            <summary>{% trans "Изменить" %}</summary>
             <form method="post" class="edit-form">
               {% csrf_token %}
               <input type="hidden" name="action" value="update_employee">
               <input type="hidden" name="user_id" value="{{ emp.id }}">
               <div class="tm-row2">
-                <div class="tm-field"><label>Логин</label><input type="text" name="username" value="{{ emp.username }}"></div>
-                <div class="tm-field"><label>Новый пароль (оставь пустым — без изменений)</label><input type="text" name="password" autocomplete="off"></div>
+                <div class="tm-field"><label>{% trans "Логин" %}</label><input type="text" name="username" value="{{ emp.username }}"></div>
+                <div class="tm-field"><label>{% trans "Новый пароль (оставь пустым — без изменений)" %}</label><input type="text" name="password" autocomplete="off"></div>
               </div>
               <div class="tm-row2">
                 <div class="tm-field">
-                  <label>Роль</label>
+                  <label>{% trans "Роль" %}</label>
                   <select name="role">
                     {% for code, label in employee_roles %}
                     <option value="{{ code }}" {% if emp.profile.role == code %}selected{% endif %}>{{ label }}</option>
@@ -68,16 +68,16 @@ details.emp>summary::-webkit-details-marker{display:none;}
                   </select>
                 </div>
                 <div class="tm-field">
-                  <label>Филиал</label>
+                  <label>{% trans "Филиал" %}</label>
                   <select name="location_id">
-                    <option value="">— не задан —</option>
+                    <option value="">{% trans "— не задан —" %}</option>
                     {% for loc in locations %}
                     <option value="{{ loc.id }}" {% if emp.profile.location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>
                     {% endfor %}
                   </select>
                 </div>
               </div>
-              <label style="font-weight:600;font-size:13px;">Доступ к разделам</label>
+              <label style="font-weight:600;font-size:13px;">{% trans "Доступ к разделам" %}</label>
               <div class="sec-groups">
                 {% for g in section_groups %}
                 <div class="sec-group">
@@ -89,9 +89,9 @@ details.emp>summary::-webkit-details-marker{display:none;}
                 {% endfor %}
               </div>
               <div style="display:flex;gap:10px;margin-top:12px;">
-                <button type="submit">Сохранить</button>
+                <button type="submit">{% trans "Сохранить" %}</button>
                 <button type="submit" name="action" value="remove_employee" class="danger"
-                        onclick="return confirm('Убрать {{ emp.username }} из компании?');">Убрать из компании</button>
+                        onclick="return confirm('{% trans "Убрать" as j1 %}{{ j1|escapejs }} {{ emp.username|escapejs }} {% trans "из компании?" as j2 %}{{ j2|escapejs }}');">{% trans "Убрать из компании" %}</button>
               </div>
             </form>
           </details>
@@ -99,7 +99,7 @@ details.emp>summary::-webkit-details-marker{display:none;}
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="4" class="tm-sub" style="padding:24px;text-align:center;">Сотрудников пока нет.</td></tr>
+      <tr><td colspan="4" class="tm-sub" style="padding:24px;text-align:center;">{% trans "Сотрудников пока нет." %}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -108,17 +108,17 @@ details.emp>summary::-webkit-details-marker{display:none;}
 <!-- Новый сотрудник -->
 {% if can_edit %}
 <div class="card">
-  <h2 style="margin-top:0;">Новый сотрудник</h2>
+  <h2 style="margin-top:0;">{% trans "Новый сотрудник" %}</h2>
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="action" value="create_employee">
     <div class="tm-row2">
-      <div class="tm-field"><label>Логин</label><input type="text" name="username" required autocomplete="off"></div>
-      <div class="tm-field"><label>Пароль</label><input type="text" name="password" required autocomplete="off"></div>
+      <div class="tm-field"><label>{% trans "Логин" %}</label><input type="text" name="username" required autocomplete="off"></div>
+      <div class="tm-field"><label>{% trans "Пароль" %}</label><input type="text" name="password" required autocomplete="off"></div>
     </div>
     <div class="tm-row2">
       <div class="tm-field">
-        <label>Роль</label>
+        <label>{% trans "Роль" %}</label>
         <select name="role">
           {% for code, label in employee_roles %}
           <option value="{{ code }}">{{ label }}</option>
@@ -126,16 +126,16 @@ details.emp>summary::-webkit-details-marker{display:none;}
         </select>
       </div>
       <div class="tm-field">
-        <label>Филиал</label>
+        <label>{% trans "Филиал" %}</label>
         <select name="location_id">
-          <option value="">— не задан —</option>
+          <option value="">{% trans "— не задан —" %}</option>
           {% for loc in locations %}
           <option value="{{ loc.id }}">{{ loc.name }}</option>
           {% endfor %}
         </select>
       </div>
     </div>
-    <label style="font-weight:600;font-size:13px;">Доступ к разделам <span class="tm-sub" style="font-weight:400;">(только доступные по тарифу)</span></label>
+    <label style="font-weight:600;font-size:13px;">{% trans "Доступ к разделам" %} <span class="tm-sub" style="font-weight:400;">{% trans "(только доступные по тарифу)" %}</span></label>
     <div class="sec-groups">
       {% for g in section_groups %}
       <div class="sec-group">
@@ -146,7 +146,7 @@ details.emp>summary::-webkit-details-marker{display:none;}
       </div>
       {% endfor %}
     </div>
-    <button type="submit" style="margin-top:14px;">Создать сотрудника</button>
+    <button type="submit" style="margin-top:14px;">{% trans "Создать сотрудника" %}</button>
   </form>
 </div>
 {% endif %}

@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Продукт: {{ product.name }}{% endblock %}
+{% block title %}{% trans "Продукт:" %} {{ product.name }}{% endblock %}
 
 {% block content %}
 
@@ -289,24 +290,24 @@
 
 <div class="page">
 
-<a class="back" href="/c/{{ country.slug }}/products/">← Назад к продуктам</a>
+<a class="back" href="/c/{{ country.slug }}/products/">{% trans "← Назад к продуктам" %}</a>
 
 <div class="card">
-    <h1>Продукт: {{ product.name }}</h1>
-    <p class="muted">Карточка продукта, история закупочных цен и влияние на блюда.</p>
+    <h1>{% trans "Продукт:" %} {{ product.name }}</h1>
+    <p class="muted">{% trans "Карточка продукта, история закупочных цен и влияние на блюда." %}</p>
 
     {% if not can_edit %}
-        <div class="readonly-note">Режим просмотра: редактирование продукта недоступно.</div>
+        <div class="readonly-note">{% trans "Режим просмотра: редактирование продукта недоступно." %}</div>
     {% endif %}
 
     <div class="summary">
         <div class="metric">
-            <span>Единица</span>
+            <span>{% trans "Единица" %}</span>
             <strong>{{ product.unit_label }}</strong>
         </div>
 
         <div class="metric">
-            <span>Текущая цена</span>
+            <span>{% trans "Текущая цена" %}</span>
             {% if current_price %}
                 <strong class="green">{{ current_price|floatformat:2 }}</strong>
             {% else %}
@@ -315,7 +316,7 @@
         </div>
 
         <div class="metric">
-            <span>Предыдущая цена</span>
+            <span>{% trans "Предыдущая цена" %}</span>
             {% if previous_price %}
                 <strong>{{ previous_price|floatformat:2 }}</strong>
             {% else %}
@@ -326,7 +327,7 @@
 </div>
 
 <div class="card">
-    <h2>Данные товара</h2>
+    <h2>{% trans "Данные товара" %}</h2>
 
     <form method="post">
         {% csrf_token %}
@@ -334,20 +335,20 @@
 
         <div class="form-grid">
             <div>
-                <label>Название</label>
+                <label>{% trans "Название" %}</label>
                 <input type="text" name="name" value="{{ product.name }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
-                <label>Единица</label>
+                <label>{% trans "Единица" %}</label>
 
                 {% if can_edit %}
                     <select name="unit">
-                        <option value="kg" {% if product.unit == "kg" %}selected{% endif %}>кг</option>
-                        <option value="g" {% if product.unit == "g" %}selected{% endif %}>г</option>
-                        <option value="l" {% if product.unit == "l" %}selected{% endif %}>л</option>
-                        <option value="ml" {% if product.unit == "ml" %}selected{% endif %}>мл</option>
-                        <option value="pcs" {% if product.unit == "pcs" %}selected{% endif %}>шт</option>
+                        <option value="kg" {% if product.unit == "kg" %}selected{% endif %}>{% trans "кг" %}</option>
+                        <option value="g" {% if product.unit == "g" %}selected{% endif %}>{% trans "г" %}</option>
+                        <option value="l" {% if product.unit == "l" %}selected{% endif %}>{% trans "л" %}</option>
+                        <option value="ml" {% if product.unit == "ml" %}selected{% endif %}>{% trans "мл" %}</option>
+                        <option value="pcs" {% if product.unit == "pcs" %}selected{% endif %}>{% trans "шт" %}</option>
                     </select>
                 {% else %}
                     <input type="text" value="{{ product.unit_label }}" readonly>
@@ -355,10 +356,10 @@
             </div>
 
             <div>
-                <label>Категория товара</label>
+                <label>{% trans "Категория товара" %}</label>
                 {% if can_edit %}
                 <select name="category_id">
-                    <option value="">— без категории (ингредиент) —</option>
+                    <option value="">{% trans "— без категории (ингредиент) —" %}</option>
                     {% for c in product_categories %}
                     <option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>{{ c.name }} · {{ c.get_accounting_type_display }}</option>
                     {% endfor %}
@@ -369,38 +370,38 @@
             </div>
 
             {% if can_edit %}
-                <button type="submit">Сохранить</button>
+                <button type="submit">{% trans "Сохранить" %}</button>
             {% endif %}
         </div>
     </form>
 </div>
 
 <div class="card">
-    <h2>Каскадное влияние на блюда</h2>
+    <h2>{% trans "Каскадное влияние на блюда" %}</h2>
 
     {% if previous_price and current_price %}
         <p class="muted">
-            Сравнение между предыдущей ценой <strong>{{ previous_price|floatformat:2 }}</strong>
-            и текущей ценой <strong>{{ current_price|floatformat:2 }}</strong>.
+            {% trans "Сравнение между предыдущей ценой" %} <strong>{{ previous_price|floatformat:2 }}</strong>
+            {% trans "и текущей ценой" %} <strong>{{ current_price|floatformat:2 }}</strong>.
         </p>
     {% else %}
-        <p class="muted">Для сравнения нужно минимум две цены в истории продукта.</p>
+        <p class="muted">{% trans "Для сравнения нужно минимум две цены в истории продукта." %}</p>
     {% endif %}
 
     {% if affected_dishes %}
     <div class="impact-scroll" style="margin-top:14px;">
         <div class="table-grid impact-table">
             <div class="grid-head">
-                <div>Тип</div>
-                <div>Блюдо</div>
-                <div>Кол-во</div>
-                <div>Было</div>
-                <div>Стало</div>
-                <div>Разница</div>
-                <div>Себест. была</div>
-                <div>Себест. стала</div>
-                <div>Фудкост был</div>
-                <div>Фудкост стал</div>
+                <div>{% trans "Тип" %}</div>
+                <div>{% trans "Блюдо" %}</div>
+                <div>{% trans "Кол-во" %}</div>
+                <div>{% trans "Было" %}</div>
+                <div>{% trans "Стало" %}</div>
+                <div>{% trans "Разница" %}</div>
+                <div>{% trans "Себест. была" %}</div>
+                <div>{% trans "Себест. стала" %}</div>
+                <div>{% trans "Фудкост был" %}</div>
+                <div>{% trans "Фудкост стал" %}</div>
                 <div></div>
             </div>
 
@@ -466,12 +467,12 @@
 
                 <div>
                     {% if row.replace_action and can_edit %}
-                    <form method="post" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap;" onsubmit="return confirm('Заменить продукт в блюде «{{ row.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                    <form method="post" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap;" onsubmit="return confirm('{% trans "Заменить продукт в блюде" as j1 %}{{ j1|escapejs }} «{{ row.name|escapejs }}»? {% trans "Количество сохранится, себестоимость пересчитается." as j2 %}{{ j2|escapejs }}');">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="{{ row.replace_action }}">
                         <input type="hidden" name="item_id" value="{{ row.item_id }}">
                         <select name="new_product_id" required style="min-width:120px;font-size:13px;padding:7px 24px 7px 8px;">
-                            <option value="">Заменить…</option>
+                            <option value="">{% trans "Заменить…" %}</option>
                             {% for p in all_products %}
                                 <option value="{{ p.id }}">{{ p.name }}</option>
                             {% endfor %}
@@ -479,19 +480,19 @@
                         <button type="submit" style="padding:7px 10px;font-size:13px;">OK</button>
                     </form>
                     {% endif %}
-                    <a class="open" href="{{ row.url }}">Открыть →</a>
+                    <a class="open" href="{{ row.url }}">{% trans "Открыть →" %}</a>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
     {% else %}
-        <p class="muted" style="margin-top:14px;">Нет использования в блюдах.</p>
+        <p class="muted" style="margin-top:14px;">{% trans "Нет использования в блюдах." %}</p>
     {% endif %}
 </div>
 
 <div class="card">
-    <h2>Используется в заготовках</h2>
+    <h2>{% trans "Используется в заготовках" %}</h2>
 
     {% if preparation_items %}
     <div class="table-grid" style="margin-top:6px;">
@@ -500,36 +501,36 @@
             <div><strong>{{ item.preparation.name }}</strong> <span class="muted">· {{ item.net }} {{ item.unit_label }}</span></div>
             <div style="display:flex;gap:8px;align-items:center;">
                 {% if can_edit %}
-                <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('Заменить продукт в заготовке «{{ item.preparation.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('{% trans "Заменить продукт в заготовке" as j1 %}{{ j1|escapejs }} «{{ item.preparation.name|escapejs }}»? {% trans "Количество сохранится, себестоимость пересчитается." as j2 %}{{ j2|escapejs }}');">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="replace_in_preparation_item">
                     <input type="hidden" name="item_id" value="{{ item.id }}">
                     <select name="new_product_id" required style="min-width:160px;">
-                        <option value="">Заменить на…</option>
+                        <option value="">{% trans "Заменить на…" %}</option>
                         {% for p in all_products %}
                             <option value="{{ p.id }}">{{ p.name }}</option>
                         {% endfor %}
                     </select>
-                    <button type="submit">Заменить</button>
+                    <button type="submit">{% trans "Заменить" %}</button>
                 </form>
                 {% endif %}
-                <a class="open" href="/c/{{ country.slug }}/preparations/{{ item.preparation.id }}/">Открыть →</a>
+                <a class="open" href="/c/{{ country.slug }}/preparations/{{ item.preparation.id }}/">{% trans "Открыть →" %}</a>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-        <p class="muted" style="margin-top:6px;">Не используется ни в одной заготовке.</p>
+        <p class="muted" style="margin-top:6px;">{% trans "Не используется ни в одной заготовке." %}</p>
     {% endif %}
 </div>
 
 <div class="card">
-    <h2>История цен</h2>
+    <h2>{% trans "История цен" %}</h2>
 
     <div class="table-grid prices-table">
         <div class="grid-head">
-            <div>Дата</div>
-            <div>Цена</div>
+            <div>{% trans "Дата" %}</div>
+            <div>{% trans "Цена" %}</div>
         </div>
 
         {% for price in prices %}
@@ -548,7 +549,7 @@
 
             <input type="date" name="date">
             <input type="number" step="0.01" name="price">
-            <button type="submit">Добавить</button>
+            <button type="submit">{% trans "Добавить" %}</button>
         </form>
         {% endif %}
     </div>
@@ -556,14 +557,14 @@
 
 {% if can_edit %}
 <div class="card delete-card">
-    <h2>Удаление</h2>
+    <h2>{% trans "Удаление" %}</h2>
 
     <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="delete">
 
         <button class="danger-button" type="submit">
-            Удалить товар
+            {% trans "Удалить товар" %}
         </button>
     </form>
 </div>

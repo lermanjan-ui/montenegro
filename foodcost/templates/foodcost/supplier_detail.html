@@ -1,4 +1,5 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
 {% block title %}{{ supplier.name }}{% endblock %}
 
@@ -82,14 +83,14 @@
 <div class="fc-scope">
 <div class="fc-page">
 
-    <div class="crumbs"><a href="/c/{{ country.slug }}/suppliers/">Поставщики</a> › {{ supplier.name }}</div>
+    <div class="crumbs"><a href="/c/{{ country.slug }}/suppliers/">{% trans "Поставщики" %}</a> › {{ supplier.name }}</div>
 
     <div class="fc-head">
-        <h1>{{ supplier.name }} {% if supplier.is_active %}<span class="badge badge-green">Активный</span>{% else %}<span class="badge badge-gray">Неактивный</span>{% endif %}</h1>
+        <h1>{{ supplier.name }} {% if supplier.is_active %}<span class="badge badge-green">{% trans "Активный" %}</span>{% else %}<span class="badge badge-gray">{% trans "Неактивный" %}</span>{% endif %}</h1>
         <div class="head-actions">
             {% if can_edit %}
-            <form method="post"><input type="hidden" name="action" value="create_receipt_for_supplier">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-dark">+ Создать приход</button></form>
-            <a href="/c/{{ country.slug }}/suppliers/" class="fc-btn fc-btn-secondary">✎ К списку / редактировать</a>
+            <form method="post"><input type="hidden" name="action" value="create_receipt_for_supplier">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-dark">{% trans "+ Создать приход" %}</button></form>
+            <a href="/c/{{ country.slug }}/suppliers/" class="fc-btn fc-btn-secondary">{% trans "✎ К списку / редактировать" %}</a>
             {% endif %}
         </div>
     </div>
@@ -97,35 +98,35 @@
     <!-- Контакты -->
     <div class="fc-card">
         <div class="contacts">
-            <div><div class="c-label">Контактное лицо</div><div class="c-val">{{ supplier.contact_person|default:"—" }}</div></div>
-            <div><div class="c-label">Телефоны</div><div class="c-val">{{ supplier.phone|default:"—" }}</div></div>
+            <div><div class="c-label">{% trans "Контактное лицо" %}</div><div class="c-val">{{ supplier.contact_person|default:"—" }}</div></div>
+            <div><div class="c-label">{% trans "Телефоны" %}</div><div class="c-val">{{ supplier.phone|default:"—" }}</div></div>
             <div><div class="c-label">Telegram</div><div class="c-val">{{ supplier.telegram|default:"—" }}</div></div>
             <div><div class="c-label">Email</div><div class="c-val">{{ supplier.email|default:"—" }}</div></div>
-            <div style="grid-column:span 2;"><div class="c-label">Комментарий</div><div class="c-val">{{ supplier.comment|default:"—" }}</div></div>
+            <div style="grid-column:span 2;"><div class="c-label">{% trans "Комментарий" %}</div><div class="c-val">{{ supplier.comment|default:"—" }}</div></div>
         </div>
     </div>
 
     <!-- KPI -->
     <div class="kpi-grid">
-        {% if show_money %}<div class="kpi"><div class="kpi-label">Общая сумма закупок</div><div class="kpi-value num">{{ kpi_total_display }}</div><div class="kpi-sub">подтверждённых</div></div>{% endif %}
-        <div class="kpi"><div class="kpi-label">Количество закупок</div><div class="kpi-value">{{ kpi_count }}</div><div class="kpi-sub">документов</div></div>
-        {% if show_money %}<div class="kpi"><div class="kpi-label">Не оплачено</div><div class="kpi-value num" style="color:var(--fc-danger-text);">{{ kpi_debt_display }}</div><div class="kpi-sub">задолженность</div></div>{% endif %}
-        <div class="kpi"><div class="kpi-label">Последняя закупка</div><div class="kpi-value">{% if kpi_last %}{{ kpi_last|date:"d.m.Y" }}{% else %}—{% endif %}</div><div class="kpi-sub">дата</div></div>
+        {% if show_money %}<div class="kpi"><div class="kpi-label">{% trans "Общая сумма закупок" %}</div><div class="kpi-value num">{{ kpi_total_display }}</div><div class="kpi-sub">{% trans "подтверждённых" %}</div></div>{% endif %}
+        <div class="kpi"><div class="kpi-label">{% trans "Количество закупок" %}</div><div class="kpi-value">{{ kpi_count }}</div><div class="kpi-sub">{% trans "документов" %}</div></div>
+        {% if show_money %}<div class="kpi"><div class="kpi-label">{% trans "Не оплачено" %}</div><div class="kpi-value num" style="color:var(--fc-danger-text);">{{ kpi_debt_display }}</div><div class="kpi-sub">{% trans "задолженность" %}</div></div>{% endif %}
+        <div class="kpi"><div class="kpi-label">{% trans "Последняя закупка" %}</div><div class="kpi-value">{% if kpi_last %}{{ kpi_last|date:"d.m.Y" }}{% else %}—{% endif %}</div><div class="kpi-sub">{% trans "дата" %}</div></div>
     </div>
 
     <!-- Вкладки -->
     <div class="fc-card">
         <div class="tabs">
-            <button class="tab" data-tab="products">Товары</button>
-            <button class="tab" data-tab="purchases">Закупки</button>
-            <button class="tab" data-tab="prices">История цен</button>
-            <button class="tab" data-tab="debts">Долги</button>
+            <button class="tab" data-tab="products">{% trans "Товары" %}</button>
+            <button class="tab" data-tab="purchases">{% trans "Закупки" %}</button>
+            <button class="tab" data-tab="prices">{% trans "История цен" %}</button>
+            <button class="tab" data-tab="debts">{% trans "Долги" %}</button>
         </div>
 
         <!-- Товары -->
         <div class="tab-pane" data-pane="products">
             <table class="items">
-                <thead><tr><th>Товар</th>{% if show_money %}<th>Последняя цена</th>{% endif %}<th>Последняя закупка</th><th>Кол-во закупок</th>{% if can_edit %}<th></th>{% endif %}</tr></thead>
+                <thead><tr><th>{% trans "Товар" %}</th>{% if show_money %}<th>{% trans "Последняя цена" %}</th>{% endif %}<th>{% trans "Последняя закупка" %}</th><th>{% trans "Кол-во закупок" %}</th>{% if can_edit %}<th></th>{% endif %}</tr></thead>
                 <tbody>
                     {% for p in product_rows %}
                     <tr>
@@ -133,10 +134,10 @@
                         {% if show_money %}<td class="num">{{ p.last_price_display }}</td>{% endif %}
                         <td>{% if p.last_date %}{{ p.last_date|date:"d.m.Y" }}{% else %}<span class="muted">—</span>{% endif %}</td>
                         <td class="num">{{ p.count }}</td>
-                        {% if can_edit %}<td style="text-align:right;"><form method="post" onsubmit="return confirm('Убрать товар у поставщика? История закупок не удалится.');"><input type="hidden" name="action" value="remove_product"><input type="hidden" name="supplier_product_id" value="{{ p.sp_id }}">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
+                        {% if can_edit %}<td style="text-align:right;"><form method="post" onsubmit="return confirm('{% trans "Убрать товар у поставщика? История закупок не удалится." as jt %}{{ jt|escapejs }}');"><input type="hidden" name="action" value="remove_product"><input type="hidden" name="supplier_product_id" value="{{ p.sp_id }}">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5" class="empty">Товары не привязаны. Они добавятся автоматически при подтверждении приходов, либо вручную ниже.</td></tr>
+                    <tr><td colspan="5" class="empty">{% trans "Товары не привязаны. Они добавятся автоматически при подтверждении приходов, либо вручную ниже." %}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -144,13 +145,13 @@
             <form method="post" class="add-row">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add_product">
-                <div><label class="fc-label">Добавить товар поставщику</label>
+                <div><label class="fc-label">{% trans "Добавить товар поставщику" %}</label>
                     <select class="fc-select" name="product_id" required>
-                        <option value="">— выбрать товар —</option>
+                        <option value="">{% trans "— выбрать товар —" %}</option>
                         {% for p in all_products %}<option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>{% endfor %}
                     </select>
                 </div>
-                <button type="submit" class="fc-btn fc-btn-secondary">+ Добавить</button>
+                <button type="submit" class="fc-btn fc-btn-secondary">{% trans "+ Добавить" %}</button>
             </form>
             {% endif %}
         </div>
@@ -158,19 +159,19 @@
         <!-- Закупки -->
         <div class="tab-pane" data-pane="purchases">
             <table class="items">
-                <thead><tr><th>Документ</th><th>Дата</th><th>Склад</th><th>Позиций</th>{% if show_money %}<th>Сумма</th>{% endif %}<th>Оплата</th><th>Статус</th></tr></thead>
+                <thead><tr><th>{% trans "Документ" %}</th><th>{% trans "Дата" %}</th><th>{% trans "Склад" %}</th><th>{% trans "Позиций" %}</th>{% if show_money %}<th>{% trans "Сумма" %}</th>{% endif %}<th>{% trans "Оплата" %}</th><th>{% trans "Статус" %}</th></tr></thead>
                 <tbody>
                     {% for r in receipts %}
                     <tr>
-                        <td><a href="/c/{{ country.slug }}/purchases/{{ r.id }}/" style="font-weight:600;color:var(--fc-info-text);text-decoration:none;">{{ r.document_number|default:"черновик" }}</a></td>
+                        <td><a href="/c/{{ country.slug }}/purchases/{{ r.id }}/" style="font-weight:600;color:var(--fc-info-text);text-decoration:none;">{% if r.document_number %}{{ r.document_number }}{% else %}{% trans "черновик" %}{% endif %}</a></td>
                         <td>{{ r.receipt_date|date:"d.m.Y" }}</td>
                         <td>{{ r.warehouse.name|default:"—" }}</td>
                         <td class="num">{{ r.items_count }}</td>
                         {% if show_money %}<td class="num">{{ r.total_amount|floatformat:0 }}</td>{% endif %}
-                        <td>{% if r.is_paid %}<span class="badge badge-green">Оплачен</span>{% else %}<span class="badge badge-gray">Нет</span>{% endif %}</td>
-                        <td>{% if r.status == 'confirmed' %}<span class="badge badge-green">Подтверждён</span>{% elif r.status == 'cancelled' %}<span class="badge badge-red">Отменён</span>{% else %}<span class="badge badge-amber">Черновик</span>{% endif %}</td>
+                        <td>{% if r.is_paid %}<span class="badge badge-green">{% trans "Оплачен" %}</span>{% else %}<span class="badge badge-gray">{% trans "Нет" %}</span>{% endif %}</td>
+                        <td>{% if r.status == 'confirmed' %}<span class="badge badge-green">{% trans "Подтверждён" %}</span>{% elif r.status == 'cancelled' %}<span class="badge badge-red">{% trans "Отменён" %}</span>{% else %}<span class="badge badge-amber">{% trans "Черновик" %}</span>{% endif %}</td>
                     </tr>
-                    {% empty %}<tr><td colspan="7" class="empty">Закупок пока нет.</td></tr>{% endfor %}
+                    {% empty %}<tr><td colspan="7" class="empty">{% trans "Закупок пока нет." %}</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>
@@ -178,7 +179,7 @@
         <!-- История цен -->
         <div class="tab-pane" data-pane="prices">
             <table class="items">
-                <thead><tr><th>Товар</th><th>Дата</th>{% if show_money %}<th>Цена</th><th>Предыдущая</th><th>Изменение</th><th>Изм. %</th>{% endif %}<th>Документ</th></tr></thead>
+                <thead><tr><th>{% trans "Товар" %}</th><th>{% trans "Дата" %}</th>{% if show_money %}<th>{% trans "Цена" %}</th><th>{% trans "Предыдущая" %}</th><th>{% trans "Изменение" %}</th><th>{% trans "Изм. %" %}</th>{% endif %}<th>{% trans "Документ" %}</th></tr></thead>
                 <tbody>
                     {% for h in price_history %}
                     <tr>
@@ -192,7 +193,7 @@
                         {% endif %}
                         <td class="muted">{{ h.doc }}</td>
                     </tr>
-                    {% empty %}<tr><td colspan="7" class="empty">История цен появится после подтверждённых приходов.</td></tr>{% endfor %}
+                    {% empty %}<tr><td colspan="7" class="empty">{% trans "История цен появится после подтверждённых приходов." %}</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>
@@ -201,21 +202,21 @@
         <div class="tab-pane" data-pane="debts">
             {% if show_money %}
             <table class="items">
-                <thead><tr><th>Документ</th><th>Дата</th><th>Позиций</th><th>Сумма</th></tr></thead>
+                <thead><tr><th>{% trans "Документ" %}</th><th>{% trans "Дата" %}</th><th>{% trans "Позиций" %}</th><th>{% trans "Сумма" %}</th></tr></thead>
                 <tbody>
                     {% for r in debt_rows %}
                     <tr>
-                        <td><a href="/c/{{ country.slug }}/purchases/{{ r.id }}/" style="font-weight:600;color:var(--fc-info-text);text-decoration:none;">{{ r.document_number|default:"черновик" }}</a></td>
+                        <td><a href="/c/{{ country.slug }}/purchases/{{ r.id }}/" style="font-weight:600;color:var(--fc-info-text);text-decoration:none;">{% if r.document_number %}{{ r.document_number }}{% else %}{% trans "черновик" %}{% endif %}</a></td>
                         <td>{{ r.receipt_date|date:"d.m.Y" }}</td>
                         <td class="num">{{ r.items_count }}</td>
                         <td class="num" style="color:var(--fc-danger-text);font-weight:600;">{{ r.total_amount|floatformat:0 }}</td>
                     </tr>
-                    {% empty %}<tr><td colspan="4" class="empty">Неоплаченных приходов нет.</td></tr>{% endfor %}
+                    {% empty %}<tr><td colspan="4" class="empty">{% trans "Неоплаченных приходов нет." %}</td></tr>{% endfor %}
                 </tbody>
             </table>
-            <div class="debt-banner"><div><div class="muted" style="font-weight:600;">Общая задолженность</div></div><div class="v">{{ debt_total_display }}</div></div>
+            <div class="debt-banner"><div><div class="muted" style="font-weight:600;">{% trans "Общая задолженность" %}</div></div><div class="v">{{ debt_total_display }}</div></div>
             {% else %}
-            <div class="empty">Финансовая информация скрыта.</div>
+            <div class="empty">{% trans "Финансовая информация скрыта." %}</div>
             {% endif %}
         </div>
     </div>

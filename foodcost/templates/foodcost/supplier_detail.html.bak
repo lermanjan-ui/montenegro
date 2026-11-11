@@ -1,0 +1,238 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}{{ supplier.name }}{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Карточка поставщика: KPI + вкладки
+     Товары / Закупки / История цен / Долги. Деньги скрыты для кухни. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1180px; margin:0 auto; padding:24px; }
+.crumbs{ font-size:13px; color:var(--fc-muted); margin-bottom:10px; }
+.crumbs a{ color:var(--fc-muted); text-decoration:none; }
+.fc-head{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+.fc-head h1{ margin:0; font-size:28px; font-weight:600; letter-spacing:-0.02em; display:flex; align-items:center; gap:12px; }
+.head-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.muted{ color:var(--fc-muted); }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+
+.contacts{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.contacts .c-label{ font-size:12px; color:var(--fc-muted); font-weight:600; margin-bottom:3px; }
+.contacts .c-val{ font-size:15px; white-space:pre-line; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:18px; }
+.kpi-label{ color:var(--fc-muted); font-size:13px; font-weight:600; margin-bottom:4px; }
+.kpi-value{ font-size:22px; font-weight:700; letter-spacing:-0.01em; }
+.kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
+
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; } .fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-dark{ background:var(--fc-text); color:#fff; }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); } .fc-btn-secondary:hover{ border-color:var(--fc-text); }
+.fc-btn-danger{ background:var(--fc-card); color:var(--fc-danger-text); border-color:#FCA5A5; } .fc-btn-danger:hover{ background:var(--fc-danger-soft); }
+.fc-btn-sm{ height:32px; padding:0 10px; font-size:13px; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:var(--fc-radius-pill); font-size:13px; font-weight:600; }
+.badge-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-gray{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.badge-red{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.badge-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+
+.tabs{ display:flex; gap:4px; border-bottom:1px solid var(--fc-border); margin-bottom:0; flex-wrap:wrap; }
+.tab{ padding:12px 16px; font-size:14px; font-weight:600; color:var(--fc-muted); cursor:pointer; border-bottom:2px solid transparent; background:none; border-top:0; border-left:0; border-right:0; font-family:inherit; }
+.tab.active{ color:var(--fc-text); border-bottom-color:var(--fc-green); }
+.tab-pane{ display:none; padding-top:18px; }
+.tab-pane.active{ display:block; }
+
+.items{ width:100%; border-collapse:collapse; }
+.items th{ text-align:left; font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; padding:10px 8px; border-bottom:1px solid var(--fc-border); }
+.items td{ padding:11px 8px; border-bottom:1px solid var(--fc-border-soft); font-size:14px; vertical-align:middle; }
+.items tr:last-child td{ border-bottom:0; }
+.num{ font-variant-numeric:tabular-nums; }
+.up{ color:var(--fc-danger-text); font-weight:600; } .down{ color:var(--fc-green-text); font-weight:600; } .flat{ color:var(--fc-muted); }
+.add-row{ display:flex; gap:10px; align-items:end; margin-top:16px; padding-top:16px; border-top:1px dashed var(--fc-border); flex-wrap:wrap; }
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-select{ height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; min-width:260px; }
+.empty{ text-align:center; padding:30px 12px; color:var(--fc-muted); font-size:14px; }
+.debt-banner{ margin-top:16px; background:var(--fc-danger-soft); border:1px solid #FCA5A5; border-radius:var(--fc-radius-card); padding:16px; display:flex; justify-content:space-between; align-items:center; }
+.debt-banner .v{ font-size:24px; font-weight:800; color:var(--fc-danger-text); }
+
+@media (max-width:720px){ .contacts,.kpi-grid{ grid-template-columns:1fr 1fr; } .fc-page{ padding:16px; } }
+@media (max-width:480px){ .contacts,.kpi-grid{ grid-template-columns:1fr; } }
+
+@media (max-width:680px){ table.items{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; } table.items th,table.items td{ white-space:nowrap; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="crumbs"><a href="/c/{{ country.slug }}/suppliers/">Поставщики</a> › {{ supplier.name }}</div>
+
+    <div class="fc-head">
+        <h1>{{ supplier.name }} {% if supplier.is_active %}<span class="badge badge-green">Активный</span>{% else %}<span class="badge badge-gray">Неактивный</span>{% endif %}</h1>
+        <div class="head-actions">
+            {% if can_edit %}
+            <form method="post"><input type="hidden" name="action" value="create_receipt_for_supplier">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-dark">+ Создать приход</button></form>
+            <a href="/c/{{ country.slug }}/suppliers/" class="fc-btn fc-btn-secondary">✎ К списку / редактировать</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Контакты -->
+    <div class="fc-card">
+        <div class="contacts">
+            <div><div class="c-label">Контактное лицо</div><div class="c-val">{{ supplier.contact_person|default:"—" }}</div></div>
+            <div><div class="c-label">Телефоны</div><div class="c-val">{{ supplier.phone|default:"—" }}</div></div>
+            <div><div class="c-label">Telegram</div><div class="c-val">{{ supplier.telegram|default:"—" }}</div></div>
+            <div><div class="c-label">Email</div><div class="c-val">{{ supplier.email|default:"—" }}</div></div>
+            <div style="grid-column:span 2;"><div class="c-label">Комментарий</div><div class="c-val">{{ supplier.comment|default:"—" }}</div></div>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+        {% if show_money %}<div class="kpi"><div class="kpi-label">Общая сумма закупок</div><div class="kpi-value num">{{ kpi_total_display }}</div><div class="kpi-sub">подтверждённых</div></div>{% endif %}
+        <div class="kpi"><div class="kpi-label">Количество закупок</div><div class="kpi-value">{{ kpi_count }}</div><div class="kpi-sub">документов</div></div>
+        {% if show_money %}<div class="kpi"><div class="kpi-label">Не оплачено</div><div class="kpi-value num" style="color:var(--fc-danger-text);">{{ kpi_debt_display }}</div><div class="kpi-sub">задолженность</div></div>{% endif %}
+        <div class="kpi"><div class="kpi-label">Последняя закупка</div><div class="kpi-value">{% if kpi_last %}{{ kpi_last|date:"d.m.Y" }}{% else %}—{% endif %}</div><div class="kpi-sub">дата</div></div>
+    </div>
+
+    <!-- Вкладки -->
+    <div class="fc-card">
+        <div class="tabs">
+            <button class="tab" data-tab="products">Товары</button>
+            <button class="tab" data-tab="purchases">Закупки</button>
+            <button class="tab" data-tab="prices">История цен</button>
+            <button class="tab" data-tab="debts">Долги</button>
+        </div>
+
+        <!-- Товары -->
+        <div class="tab-pane" data-pane="products">
+            <table class="items">
+                <thead><tr><th>Товар</th>{% if show_money %}<th>Последняя цена</th>{% endif %}<th>Последняя закупка</th><th>Кол-во закупок</th>{% if can_edit %}<th></th>{% endif %}</tr></thead>
+                <tbody>
+                    {% for p in product_rows %}
+                    <tr>
+                        <td><strong>{{ p.name }}</strong>{% if p.sku %}<div class="muted" style="font-size:12px;">{{ p.sku }}</div>{% endif %} <span class="muted">· {{ p.unit }}</span></td>
+                        {% if show_money %}<td class="num">{{ p.last_price_display }}</td>{% endif %}
+                        <td>{% if p.last_date %}{{ p.last_date|date:"d.m.Y" }}{% else %}<span class="muted">—</span>{% endif %}</td>
+                        <td class="num">{{ p.count }}</td>
+                        {% if can_edit %}<td style="text-align:right;"><form method="post" onsubmit="return confirm('Убрать товар у поставщика? История закупок не удалится.');"><input type="hidden" name="action" value="remove_product"><input type="hidden" name="supplier_product_id" value="{{ p.sp_id }}">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger fc-btn-sm">✕</button></form></td>{% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="empty">Товары не привязаны. Они добавятся автоматически при подтверждении приходов, либо вручную ниже.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if can_edit %}
+            <form method="post" class="add-row">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_product">
+                <div><label class="fc-label">Добавить товар поставщику</label>
+                    <select class="fc-select" name="product_id" required>
+                        <option value="">— выбрать товар —</option>
+                        {% for p in all_products %}<option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>{% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="fc-btn fc-btn-secondary">+ Добавить</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- Закупки -->
+        <div class="tab-pane" data-pane="purchases">
+            <table class="items">
+                <thead><tr><th>Документ</th><th>Дата</th><th>Склад</th><th>Позиций</th>{% if show_money %}<th>Сумма</th>{% endif %}<th>Оплата</th><th>Статус</th></tr></thead>
+                <tbody>
+                    {% for r in receipts %}
+                    <tr>
+                        <td><a href="/c/{{ country.slug }}/purchases/{{ r.id }}/" style="font-weight:600;color:var(--fc-info-text);text-decoration:none;">{{ r.document_number|default:"черновик" }}</a></td>
+                        <td>{{ r.receipt_date|date:"d.m.Y" }}</td>
+                        <td>{{ r.warehouse.name|default:"—" }}</td>
+                        <td class="num">{{ r.items_count }}</td>
+                        {% if show_money %}<td class="num">{{ r.total_amount|floatformat:0 }}</td>{% endif %}
+                        <td>{% if r.is_paid %}<span class="badge badge-green">Оплачен</span>{% else %}<span class="badge badge-gray">Нет</span>{% endif %}</td>
+                        <td>{% if r.status == 'confirmed' %}<span class="badge badge-green">Подтверждён</span>{% elif r.status == 'cancelled' %}<span class="badge badge-red">Отменён</span>{% else %}<span class="badge badge-amber">Черновик</span>{% endif %}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="7" class="empty">Закупок пока нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- История цен -->
+        <div class="tab-pane" data-pane="prices">
+            <table class="items">
+                <thead><tr><th>Товар</th><th>Дата</th>{% if show_money %}<th>Цена</th><th>Предыдущая</th><th>Изменение</th><th>Изм. %</th>{% endif %}<th>Документ</th></tr></thead>
+                <tbody>
+                    {% for h in price_history %}
+                    <tr>
+                        <td><strong>{{ h.name }}</strong></td>
+                        <td>{{ h.date|date:"d.m.Y" }}</td>
+                        {% if show_money %}
+                        <td class="num">{{ h.price_display }}</td>
+                        <td class="num muted">{{ h.prev_display }}</td>
+                        <td class="num {{ h.dir }}">{{ h.change_display }}</td>
+                        <td class="num {{ h.dir }}">{{ h.pct_display }}</td>
+                        {% endif %}
+                        <td class="muted">{{ h.doc }}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="7" class="empty">История цен появится после подтверждённых приходов.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Долги -->
+        <div class="tab-pane" data-pane="debts">
+            {% if show_money %}
+            <table class="items">
+                <thead><tr><th>Документ</th><th>Дата</th><th>Позиций</th><th>Сумма</th></tr></thead>
+                <tbody>
+                    {% for r in debt_rows %}
+                    <tr>
+                        <td><a href="/c/{{ country.slug }}/purchases/{{ r.id }}/" style="font-weight:600;color:var(--fc-info-text);text-decoration:none;">{{ r.document_number|default:"черновик" }}</a></td>
+                        <td>{{ r.receipt_date|date:"d.m.Y" }}</td>
+                        <td class="num">{{ r.items_count }}</td>
+                        <td class="num" style="color:var(--fc-danger-text);font-weight:600;">{{ r.total_amount|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="4" class="empty">Неоплаченных приходов нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+            <div class="debt-banner"><div><div class="muted" style="font-weight:600;">Общая задолженность</div></div><div class="v">{{ debt_total_display }}</div></div>
+            {% else %}
+            <div class="empty">Финансовая информация скрыта.</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+(function(){
+    var active = "{{ active_tab|escapejs }}" || "products";
+    function show(tab){
+        document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === tab); });
+        document.querySelectorAll(".tab-pane").forEach(function(p){ p.classList.toggle("active", p.dataset.pane === tab); });
+    }
+    document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ show(b.dataset.tab); }); });
+    show(active);
+})();
+</script>
+
+{% endblock %}

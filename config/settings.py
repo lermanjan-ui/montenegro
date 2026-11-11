@@ -26,12 +26,14 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     'foodcost',  # твое приложение
+    'pos',  # касса (POS) — новые таблицы настроек
 ]
 
 # 🔧 middleware
 MIDDLEWARE = [
     "config.cors_middleware.PublicCorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
+    'foodcost.middleware_staging_auth.StagingBasicAuthMiddleware',  # staging lock (инертен без STAGING_BASIC_AUTH)
 
     # 👇 обязательно для Railway
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -80,7 +82,7 @@ DATABASES = {
 
 
 # 🌍 локализация
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'ru'
 TIME_ZONE = "Asia/Tashkent"
 USE_I18N = True
 USE_TZ = True

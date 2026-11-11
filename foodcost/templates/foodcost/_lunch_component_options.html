@@ -1,10 +1,11 @@
-<option value="none"{% if not selected or selected == "none" %} selected{% endif %}>— без привязки (текст) —</option>
-<optgroup label="Блюда">
+{% load i18n %}
+<option value="none"{% if not selected or selected == "none" %} selected{% endif %}>{% trans "— без привязки (текст) —" %}</option>
+<optgroup label="{% trans "Блюда" %}">
   {% for o in dish_options %}<option value="{{ o.value }}"{% if selected == o.value %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
 </optgroup>
-<optgroup label="Заготовки">
+<optgroup label="{% trans "Заготовки" %}">
   {% for o in prep_options %}<option value="{{ o.value }}"{% if selected == o.value %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
 </optgroup>
-<optgroup label="Продукты">
+<optgroup label="{% trans "Продукты" %}">
   {% for o in product_options %}<option value="{{ o.value }}"{% if selected == o.value %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
 </optgroup>

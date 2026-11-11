@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Мой кабинет{% endblock %}
+{% block title %}{% trans "Мой кабинет" %}{% endblock %}
 
 {% block content %}
 
@@ -65,9 +66,9 @@
 <div class="fc-page">
 
 {% if not employee %}
-    <div class="hero"><h1>Мой кабинет</h1></div>
+    <div class="hero"><h1>{% trans "Мой кабинет" %}</h1></div>
     <div class="notice">
-        Ваш аккаунт пока не привязан к карточке сотрудника. Обратитесь к менеджеру, чтобы он связал ваш профиль с сотрудником — после этого здесь появятся ваши смены и начисления.
+        {% trans "Ваш аккаунт пока не привязан к карточке сотрудника. Обратитесь к менеджеру, чтобы он связал ваш профиль с сотрудником — после этого здесь появятся ваши смены и начисления." %}
     </div>
 {% else %}
 
@@ -81,57 +82,57 @@
 
     {% if geo_error %}
     <div class="notice" style="margin-bottom:16px;">
-        Не удалось начать смену: вы вне зоны точки или не разрешён доступ к геолокации. Начать смену можно, находясь на точке (в радиусе 200 м) и разрешив доступ к геопозиции в браузере.
+        {% trans "Не удалось начать смену: вы вне зоны точки или не разрешён доступ к геолокации. Начать смену можно, находясь на точке (в радиусе 200 м) и разрешив доступ к геопозиции в браузере." %}
     </div>
     {% endif %}
 
     <div class="fc-card">
-        <h2>Моя смена сегодня</h2>
+        <h2>{% trans "Моя смена сегодня" %}</h2>
         {% if active_shift %}
             <div class="active-shift">
                 <div>
-                    <div class="big">● Смена идёт</div>
-                    <div class="sub" style="color:var(--fc-info-text);">Начало в {{ active_shift.start }} · {{ active_shift.location }}</div>
+                    <div class="big">{% trans "● Смена идёт" %}</div>
+                    <div class="sub" style="color:var(--fc-info-text);">{% trans "Начало в" %} {{ active_shift.start }} · {{ active_shift.location }}</div>
                 </div>
-                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="finish_shift"><input type="hidden" name="shift_id" value="{{ active_shift.id }}"><button type="submit" class="fc-btn fc-btn-dark">■ Завершить смену</button></form>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="finish_shift"><input type="hidden" name="shift_id" value="{{ active_shift.id }}"><button type="submit" class="fc-btn fc-btn-dark">{% trans "■ Завершить смену" %}</button></form>
             </div>
         {% elif today_planned %}
             {% for s in today_planned %}
             <div class="active-shift" style="background:var(--fc-card-soft);border-color:var(--fc-border);">
                 <div>
-                    <div class="big" style="color:var(--fc-text);">Запланирована на сегодня</div>
+                    <div class="big" style="color:var(--fc-text);">{% trans "Запланирована на сегодня" %}</div>
                     <div class="sub">{{ s.start }}–{{ s.end }} · {{ s.location }}</div>
                 </div>
-                <form method="post" class="geo-start">{% csrf_token %}<input type="hidden" name="action" value="start_shift"><input type="hidden" name="shift_id" value="{{ s.id }}"><input type="hidden" name="lat"><input type="hidden" name="lng"><button type="submit" class="fc-btn fc-btn-primary">▶ Начать смену</button></form>
+                <form method="post" class="geo-start">{% csrf_token %}<input type="hidden" name="action" value="start_shift"><input type="hidden" name="shift_id" value="{{ s.id }}"><input type="hidden" name="lat"><input type="hidden" name="lng"><button type="submit" class="fc-btn fc-btn-primary">{% trans "▶ Начать смену" %}</button></form>
             </div>
             {% endfor %}
         {% else %}
-            <p style="color:var(--fc-muted);margin:0 0 14px;">На сегодня смен в графике нет.</p>
-            <form method="post" class="geo-start">{% csrf_token %}<input type="hidden" name="action" value="start_new"><input type="hidden" name="lat"><input type="hidden" name="lng"><button type="submit" class="fc-btn fc-btn-primary fc-btn-block">▶ Начать смену сейчас</button></form>
+            <p style="color:var(--fc-muted);margin:0 0 14px;">{% trans "На сегодня смен в графике нет." %}</p>
+            <form method="post" class="geo-start">{% csrf_token %}<input type="hidden" name="action" value="start_new"><input type="hidden" name="lat"><input type="hidden" name="lng"><button type="submit" class="fc-btn fc-btn-primary fc-btn-block">{% trans "▶ Начать смену сейчас" %}</button></form>
         {% endif %}
     </div>
 
     <div class="fc-card">
-        <h2>Ближайшие смены</h2>
+        <h2>{% trans "Ближайшие смены" %}</h2>
         <table class="items">
-            <thead><tr><th>Дата</th><th>Время</th><th>Локация</th><th>Статус</th></tr></thead>
+            <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Время" %}</th><th>{% trans "Локация" %}</th><th>{% trans "Статус" %}</th></tr></thead>
             <tbody>
                 {% for s in upcoming %}
                 <tr>
                     <td class="num">{{ s.date|date:"d.m" }}</td>
                     <td class="num">{{ s.start }}–{{ s.end }}</td>
                     <td>{{ s.location }}</td>
-                    <td>{% if s.status == 'in_progress' %}<span class="badge badge-live">Идёт</span>{% elif s.status == 'done' %}<span class="badge badge-green">Отработана</span>{% elif s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% elif s.status == 'missed' %}<span class="badge badge-red">Пропуск</span>{% else %}<span class="badge badge-info">Запланирована</span>{% endif %}</td>
+                    <td>{% if s.status == 'in_progress' %}<span class="badge badge-live">{% trans "Идёт" %}</span>{% elif s.status == 'done' %}<span class="badge badge-green">{% trans "Отработана" %}</span>{% elif s.status == 'late' %}<span class="badge badge-amber">{% trans "Опоздание" %}</span>{% elif s.status == 'missed' %}<span class="badge badge-red">{% trans "Пропуск" %}</span>{% else %}<span class="badge badge-info">{% trans "Запланирована" %}</span>{% endif %}</td>
                 </tr>
-                {% empty %}<tr><td colspan="4" class="empty">Запланированных смен нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="4" class="empty">{% trans "Запланированных смен нет." %}</td></tr>{% endfor %}
             </tbody>
         </table>
     </div>
 
     <div class="fc-card">
-        <h2>Отработанные смены и заработок</h2>
+        <h2>{% trans "Отработанные смены и заработок" %}</h2>
         <table class="items">
-            <thead><tr><th>Дата</th><th>Время</th><th>Локация</th><th class="r">Часы</th><th>Статус</th><th class="r">За смену</th></tr></thead>
+            <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Время" %}</th><th>{% trans "Локация" %}</th><th class="r">{% trans "Часы" %}</th><th>{% trans "Статус" %}</th><th class="r">{% trans "За смену" %}</th></tr></thead>
             <tbody>
                 {% for s in worked_rows %}
                 <tr>
@@ -139,19 +140,19 @@
                     <td class="num">{{ s.start }}–{{ s.end }}</td>
                     <td>{{ s.location }}</td>
                     <td class="r num">{{ s.hours }}</td>
-                    <td>{% if s.status == 'late' %}<span class="badge badge-amber">Опоздание</span>{% else %}<span class="badge badge-green">Отработана</span>{% endif %}</td>
+                    <td>{% if s.status == 'late' %}<span class="badge badge-amber">{% trans "Опоздание" %}</span>{% else %}<span class="badge badge-green">{% trans "Отработана" %}</span>{% endif %}</td>
                     <td class="r num pos">{{ s.pay_display }}</td>
                 </tr>
-                {% empty %}<tr><td colspan="6" class="empty">Отработанных смен пока нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="6" class="empty">{% trans "Отработанных смен пока нет." %}</td></tr>{% endfor %}
             </tbody>
         </table>
-        <div class="totrow"><span>Смен: {{ worked_count }} · Часов: {{ worked_hours_display }}</span><span class="num pos" style="font-weight:700;">Заработано: {{ earned_total_display }}</span></div>
+        <div class="totrow"><span>{% trans "Смен:" %} {{ worked_count }} · {% trans "Часов:" %} {{ worked_hours_display }}</span><span class="num pos" style="font-weight:700;">{% trans "Заработано:" %} {{ earned_total_display }}</span></div>
     </div>
 
     <div class="fc-card">
-        <h2>Штрафы и бонусы</h2>
+        <h2>{% trans "Штрафы и бонусы" %}</h2>
         <table class="items">
-            <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th></tr></thead>
+            <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Тип" %}</th><th>{% trans "Комментарий" %}</th><th class="r">{% trans "Сумма" %}</th></tr></thead>
             <tbody>
                 {% for p in adj_rows %}
                 <tr>
@@ -160,18 +161,18 @@
                     <td style="color:var(--fc-muted);">{{ p.comment|default:"—" }}</td>
                     <td class="r num {% if p.is_penalty %}neg{% else %}pos{% endif %}">{% if p.is_penalty %}−{% else %}+{% endif %}{{ p.amount_display }}</td>
                 </tr>
-                {% empty %}<tr><td colspan="4" class="empty">Штрафов и бонусов нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="4" class="empty">{% trans "Штрафов и бонусов нет." %}</td></tr>{% endfor %}
             </tbody>
         </table>
-        <div class="totrow"><span class="muted">Бонусы: +{{ bonuses_total_display }} · Штрафы: −{{ penalties_total_display }}</span></div>
-        <div class="accrue-box"><span>Итого к начислению</span><span class="num">{{ to_accrue_display }}</span></div>
+        <div class="totrow"><span class="muted">{% trans "Бонусы:" %} +{{ bonuses_total_display }} · {% trans "Штрафы:" %} −{{ penalties_total_display }}</span></div>
+        <div class="accrue-box"><span>{% trans "Итого к начислению" %}</span><span class="num">{{ to_accrue_display }}</span></div>
     </div>
 
     <div class="fc-card">
-        <h2>Выплаты</h2>
-        <p class="muted" style="margin:0 0 12px;font-size:13px;">Реально отправленные вам деньги.</p>
+        <h2>{% trans "Выплаты" %}</h2>
+        <p class="muted" style="margin:0 0 12px;font-size:13px;">{% trans "Реально отправленные вам деньги." %}</p>
         <table class="items">
-            <thead><tr><th>Дата</th><th>Тип</th><th>Комментарий</th><th class="r">Сумма</th><th>Статус</th></tr></thead>
+            <thead><tr><th>{% trans "Дата" %}</th><th>{% trans "Тип" %}</th><th>{% trans "Комментарий" %}</th><th class="r">{% trans "Сумма" %}</th><th>{% trans "Статус" %}</th></tr></thead>
             <tbody>
                 {% for p in pay_rows %}
                 <tr>
@@ -179,16 +180,16 @@
                     <td>{{ p.type_label }}</td>
                     <td style="color:var(--fc-muted);">{{ p.comment|default:"—" }}</td>
                     <td class="r num">{{ p.amount_display }}</td>
-                    <td>{% if p.status == 'done' %}<span class="badge badge-green">Отправлено</span>{% else %}<span class="badge badge-gray">Планируется</span>{% endif %}</td>
+                    <td>{% if p.status == 'done' %}<span class="badge badge-green">{% trans "Отправлено" %}</span>{% else %}<span class="badge badge-gray">{% trans "Планируется" %}</span>{% endif %}</td>
                 </tr>
-                {% empty %}<tr><td colspan="5" class="empty">Выплат пока нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="5" class="empty">{% trans "Выплат пока нет." %}</td></tr>{% endfor %}
             </tbody>
         </table>
-        <div class="totrow"><span class="muted">Всего выплачено: {{ paid_total_display }}</span></div>
-        <div class="accrue-box"><span>Остаток к выплате</span><span class="num">{{ remaining_display }}</span></div>
+        <div class="totrow"><span class="muted">{% trans "Всего выплачено:" %} {{ paid_total_display }}</span></div>
+        <div class="accrue-box"><span>{% trans "Остаток к выплате" %}</span><span class="num">{{ remaining_display }}</span></div>
     </div>
 
-    <a href="/c/{{ country.slug }}/shift-handover/" class="fc-btn fc-btn-dark fc-btn-block" style="margin-bottom:20px;">Передача смены →</a>
+    <a href="/c/{{ country.slug }}/shift-handover/" class="fc-btn fc-btn-dark fc-btn-block" style="margin-bottom:20px;">{% trans "Передача смены →" %}</a>
 
 {% endif %}
 
@@ -204,7 +205,7 @@ document.querySelectorAll('form.geo-start').forEach(function(form){
         if (form.dataset.ready === '1') return; // уже с координатами — отправляем
         e.preventDefault();
         var btn = form.querySelector('button[type=submit]');
-        if (btn){ btn.disabled = true; btn.textContent = 'Определяем геопозицию…'; }
+        if (btn){ btn.disabled = true; btn.textContent = '{% trans "Определяем геопозицию…" as jt %}{{ jt|escapejs }}'; }
         function submitNow(){ form.dataset.ready = '1'; form.submit(); }
         if (!navigator.geolocation){ submitNow(); return; }
         navigator.geolocation.getCurrentPosition(

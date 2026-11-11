@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Автосписание продаж{% endblock %}
+{% block title %}{% trans "Автосписание продаж" %}{% endblock %}
 
 {% block content %}
 
@@ -49,43 +50,43 @@
 <div class="fc-page">
 
     <div class="fc-page-head">
-        <h1>Автосписание продаж</h1>
-        <p class="muted">Списание ингредиентов со склада по проданным блюдам (по техкарте) за выбранную дату.</p>
+        <h1>{% trans "Автосписание продаж" %}</h1>
+        <p class="muted">{% trans "Списание ингредиентов со склада по проданным блюдам (по техкарте) за выбранную дату." %}</p>
     </div>
 
     {% if result %}
     <div class="banner banner-green">
-        Пересчёт за <strong>{{ result.date }}</strong> выполнен.
+        {% trans "Пересчёт за" %} <strong>{{ result.date }}</strong> {% trans "выполнен." %}
         <div class="res-grid">
-            <div class="res"><div class="l">Заказов обработано</div><div class="v">{{ result.orders }}</div></div>
-            <div class="res"><div class="l">Движений создано</div><div class="v">{{ result.movements }}</div></div>
-            <div class="res"><div class="l">Себестоимость продаж</div><div class="v">{{ result.total_cost_display }}</div></div>
+            <div class="res"><div class="l">{% trans "Заказов обработано" %}</div><div class="v">{{ result.orders }}</div></div>
+            <div class="res"><div class="l">{% trans "Движений создано" %}</div><div class="v">{{ result.movements }}</div></div>
+            <div class="res"><div class="l">{% trans "Себестоимость продаж" %}</div><div class="v">{{ result.total_cost_display }}</div></div>
         </div>
-        {% if result.deleted %}<p class="muted" style="margin-top:10px;">Прежних движений за эту дату удалено: {{ result.deleted }} (пересчёт заменил их новыми).</p>{% endif %}
-        {% if result.skipped %}<p class="muted" style="margin-top:6px;">Пропущено заказов без склада: {{ result.skipped }}.</p>{% endif %}
+        {% if result.deleted %}<p class="muted" style="margin-top:10px;">{% blocktrans with d=result.deleted %}Прежних движений за эту дату удалено: {{ d }} (пересчёт заменил их новыми).{% endblocktrans %}</p>{% endif %}
+        {% if result.skipped %}<p class="muted" style="margin-top:6px;">{% blocktrans with sk=result.skipped %}Пропущено заказов без склада: {{ sk }}.{% endblocktrans %}</p>{% endif %}
     </div>
     {% endif %}
 
     <div class="fc-card">
-        <h2>Пересчитать за дату</h2>
+        <h2>{% trans "Пересчитать за дату" %}</h2>
         <form method="post">
             {% csrf_token %}
             <div class="row">
-                <div><label class="fc-label">Дата</label><input class="fc-input" type="date" name="date" value="{{ default_date|date:'Y-m-d' }}"></div>
-                <div><label class="fc-label">Склад (необязательно)</label><select class="fc-select" name="location_id"><option value="">Все склады</option>{% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}</select></div>
-                <div><button type="submit" class="fc-btn fc-btn-primary" onclick="return confirm('Пересчитать автосписание за выбранную дату? Прежние списания продаж за эту дату будут заменены.');">Пересчитать</button></div>
+                <div><label class="fc-label">{% trans "Дата" %}</label><input class="fc-input" type="date" name="date" value="{{ default_date|date:'Y-m-d' }}"></div>
+                <div><label class="fc-label">{% trans "Склад (необязательно)" %}</label><select class="fc-select" name="location_id"><option value="">{% trans "Все склады" %}</option>{% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}</select></div>
+                <div><button type="submit" class="fc-btn fc-btn-primary" onclick="return confirm('{% trans "Пересчитать автосписание за выбранную дату? Прежние списания продаж за эту дату будут заменены." as jt %}{{ jt|escapejs }}');">{% trans "Пересчитать" %}</button></div>
             </div>
         </form>
-        <p class="muted" style="margin-top:12px;">Пересчёт <strong>идемпотентен</strong>: можно запускать сколько угодно раз — прежние движения-продажи за эту дату заменяются новыми. Отменённые заказы при пересчёте не списываются.</p>
+        <p class="muted" style="margin-top:12px;">{% trans "Пересчёт" %} <strong>{% trans "идемпотентен" %}</strong>{% trans ": можно запускать сколько угодно раз — прежние движения-продажи за эту дату заменяются новыми. Отменённые заказы при пересчёте не списываются." %}</p>
     </div>
 
     <div class="fc-card">
-        <h2>Как это работает</h2>
+        <h2>{% trans "Как это работает" %}</h2>
         <p class="muted" style="line-height:1.6;">
-            Для каждого неотменённого заказа за дату система берёт состав блюд (техкарту) и списывает со склада заказа продукты и заготовки: количество = валовый расход (gross) × количество блюда. Заготовки списываются как единицы (без разворота их техкарты). Результат виден в «Остатках» и «Движениях склада» (тип «Списание по заказу»).
+            {% trans "Для каждого неотменённого заказа за дату система берёт состав блюд (техкарту) и списывает со склада заказа продукты и заготовки: количество = валовый расход (gross) × количество блюда. Заготовки списываются как единицы (без разворота их техкарты). Результат виден в «Остатках» и «Движениях склада» (тип «Списание по заказу»)." %}
         </p>
         <div class="banner banner-amber" style="margin-top:12px;margin-bottom:0;">
-            Ночной автозапуск пока не настроен (хостинг засыпает). Сейчас пересчёт запускается вручную здесь. Автоматический ежедневный запуск подключим отдельно через внешний планировщик.
+            {% trans "Ночной автозапуск пока не настроен (хостинг засыпает). Сейчас пересчёт запускается вручную здесь. Автоматический ежедневный запуск подключим отдельно через внешний планировщик." %}
         </div>
     </div>
 

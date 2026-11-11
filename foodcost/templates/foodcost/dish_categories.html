@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Категории{% endblock %}
+{% block title %}{% trans "Категории" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -68,8 +69,8 @@
 .cat-edit{ border-bottom:1px solid var(--fc-border); }
 .cat-edit > summary{ list-style:none; cursor:pointer; font-size:13px; font-weight:600; color:var(--fc-info); padding:8px 4px 14px; user-select:none; }
 .cat-edit > summary::-webkit-details-marker{ display:none; }
-.cat-edit > summary::before{ content:"✎ Редактировать"; }
-.cat-edit[open] > summary::before{ content:"✕ Свернуть"; }
+.cat-edit > summary::before{ content:'✎ {% trans "Редактировать" %}'; }
+.cat-edit[open] > summary::before{ content:'✕ {% trans "Свернуть" %}'; }
 .cat-edit-body{ padding:4px 4px 18px; }
 
 .cat-photo-row{ display:flex; gap:14px; align-items:flex-start; margin-bottom:14px; }
@@ -85,93 +86,93 @@
 <div class="cat-wrap">
 
     <div class="cat-pagehead">
-        <h1>Категории</h1>
-        <p>Категории меню и их карточки на сайте: видимость, блоки главной, фото и оформление.</p>
+        <h1>{% trans "Категории" %}</h1>
+        <p>{% trans "Категории меню и их карточки на сайте: видимость, блоки главной, фото и оформление." %}</p>
     </div>
 
     <!-- ============ СОЗДАНИЕ ============ -->
     <div class="fc-card">
-        <h2>Новая категория</h2>
+        <h2>{% trans "Новая категория" %}</h2>
 
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action" value="create_category">
 
             <div class="fc-field">
-                <label class="fc-label">Название</label>
-                <input class="fc-input" name="name" placeholder="Например: Пицца" required>
+                <label class="fc-label">{% trans "Название" %}</label>
+                <input class="fc-input" name="name" placeholder="{% trans "Например: Пицца" %}" required>
             </div>
 
-            <div class="fc-block-title">Сайт</div>
+            <div class="fc-block-title">{% trans "Сайт" %}</div>
             <div class="fc-checks">
-                <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1"> Показывать на сайте</label>
-                <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" checked> Блок 1 (основной)</label>
-                <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1"> Блок 2 (новый)</label>
+                <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1"> {% trans "Показывать на сайте" %}</label>
+                <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" checked> {% trans "Блок 1 (основной)" %}</label>
+                <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1"> {% trans "Блок 2 (новый)" %}</label>
             </div>
             <div class="fc-field">
-                <label class="fc-label" for="cat-create-photo-url">Ссылка на фото (приоритет)</label>
+                <label class="fc-label" for="cat-create-photo-url">{% trans "Ссылка на фото (приоритет)" %}</label>
                 <input class="fc-input" id="cat-create-photo-url" name="photo_url" type="url" placeholder="https://example.com/category.jpg">
-                <div class="fc-hint">Используется на сайте вместо загруженного файла.</div>
+                <div class="fc-hint">{% trans "Используется на сайте вместо загруженного файла." %}</div>
             </div>
             <div class="fc-field">
-                <label class="fc-label">Галерея фото (по одной ссылке в строке)</label>
+                <label class="fc-label">{% trans "Галерея фото (по одной ссылке в строке)" %}</label>
                 <textarea class="fc-textarea" name="gallery" rows="3" placeholder="https://.../1.jpg"></textarea>
             </div>
 
-            <div class="fc-block-title">Карточка «ресторана»</div>
+            <div class="fc-block-title">{% trans "Карточка «ресторана»" %}</div>
             <div class="fc-field">
-                <label class="fc-label">Логотип бренда — ссылка</label>
+                <label class="fc-label">{% trans "Логотип бренда — ссылка" %}</label>
                 <input class="fc-input" name="logo_url" type="url" placeholder="https://example.com/logo.png">
-                <div class="fc-hint">Блок «Наши рестораны». Можно вместо ссылки загрузить файл ниже.</div>
+                <div class="fc-hint">{% trans "Блок «Наши рестораны». Можно вместо ссылки загрузить файл ниже." %}</div>
                 <input class="cat-photo-file" type="file" name="logo" accept="image/*" style="margin-top:8px;">
             </div>
             <div class="fc-grid">
                 <div class="fc-field">
-                    <label class="fc-label">Подзаголовок (тип кухни)</label>
-                    <input class="fc-input" name="subtitle" type="text" placeholder="Напр. Римская пинца">
+                    <label class="fc-label">{% trans "Подзаголовок (тип кухни)" %}</label>
+                    <input class="fc-input" name="subtitle" type="text" placeholder="{% trans "Напр. Римская пинца" %}">
                 </div>
                 <div class="fc-field">
-                    <label class="fc-label">Рейтинг</label>
-                    <input class="fc-input" name="rating" type="number" step="0.1" min="0" max="5" placeholder="напр. 4.9">
+                    <label class="fc-label">{% trans "Рейтинг" %}</label>
+                    <input class="fc-input" name="rating" type="number" step="0.1" min="0" max="5" placeholder="{% trans "напр. 4.9" %}">
                 </div>
                 <div class="fc-field">
-                    <label class="fc-label">Бейдж на фото</label>
-                    <input class="fc-input" name="badge_label" type="text" placeholder="напр. -50%">
+                    <label class="fc-label">{% trans "Бейдж на фото" %}</label>
+                    <input class="fc-input" name="badge_label" type="text" placeholder="{% trans "напр." %} -50%">
                 </div>
                 <div class="fc-field">
-                    <label class="fc-label">Цвет бейджа</label>
+                    <label class="fc-label">{% trans "Цвет бейджа" %}</label>
                     <select class="fc-select" name="badge_style">
-                        <option value="">По умолчанию</option>
-                        <option value="red">Красный</option>
-                        <option value="green">Зелёный</option>
-                        <option value="orange">Оранжевый</option>
+                        <option value="">{% trans "По умолчанию" %}</option>
+                        <option value="red">{% trans "Красный" %}</option>
+                        <option value="green">{% trans "Зелёный" %}</option>
+                        <option value="orange">{% trans "Оранжевый" %}</option>
                     </select>
                 </div>
                 <div class="fc-field">
-                    <label class="fc-label">Время доставки</label>
-                    <input class="fc-input" name="delivery_time_label" type="text" placeholder="напр. 15–25 мин">
+                    <label class="fc-label">{% trans "Время доставки" %}</label>
+                    <input class="fc-input" name="delivery_time_label" type="text" placeholder="{% trans "напр. 15–25 мин" %}">
                 </div>
             </div>
 
-            <div class="fc-block-title">Фото (резерв)</div>
+            <div class="fc-block-title">{% trans "Фото (резерв)" %}</div>
             <div class="cat-photo-row">
-                <div class="cat-photo-preview"><div class="cat-photo-empty">Фото не выбрано</div></div>
+                <div class="cat-photo-preview"><div class="cat-photo-empty">{% trans "Фото не выбрано" %}</div></div>
                 <div class="cat-photo-controls">
-                    <label class="fc-label" for="cat-create-photo">Загруженное фото</label>
+                    <label class="fc-label" for="cat-create-photo">{% trans "Загруженное фото" %}</label>
                     <input id="cat-create-photo" class="cat-photo-file" type="file" name="photo" accept="image/*">
-                    <div class="fc-hint">JPG, PNG или WebP. Используется, только если выше не указана внешняя ссылка.</div>
+                    <div class="fc-hint">{% trans "JPG, PNG или WebP. Используется, только если выше не указана внешняя ссылка." %}</div>
                 </div>
             </div>
 
             <div class="fc-row-end">
-                <button type="submit" class="fc-btn fc-btn-primary">Добавить категорию</button>
+                <button type="submit" class="fc-btn fc-btn-primary">{% trans "Добавить категорию" %}</button>
             </div>
         </form>
     </div>
 
     <!-- ============ СПИСОК ============ -->
     <div class="fc-card">
-        <h2>Все категории</h2>
+        <h2>{% trans "Все категории" %}</h2>
 
         {% for item in categories %}
         <div class="cat-row">
@@ -180,19 +181,19 @@
             {% elif item.photo %}
                 <img class="cat-thumb" src="{{ item.photo.url }}" alt="{{ item.name }}">
             {% else %}
-                <div class="cat-thumb-empty">нет фото</div>
+                <div class="cat-thumb-empty">{% trans "нет фото" %}</div>
             {% endif %}
 
             <div class="cat-info">
                 <div class="cat-name">{{ item.name }}</div>
                 <div class="cat-badges">
                     {% if item.is_visible_on_site %}
-                        <span class="fc-badge fc-badge-green">На сайте</span>
+                        <span class="fc-badge fc-badge-green">{% trans "На сайте" %}</span>
                     {% else %}
-                        <span class="fc-badge fc-badge-gray">Скрыта</span>
+                        <span class="fc-badge fc-badge-gray">{% trans "Скрыта" %}</span>
                     {% endif %}
-                    {% if item.in_home_block_1 %}<span class="fc-badge fc-badge-blue">Блок 1</span>{% endif %}
-                    {% if item.in_home_block_2 %}<span class="fc-badge fc-badge-blue">Блок 2</span>{% endif %}
+                    {% if item.in_home_block_1 %}<span class="fc-badge fc-badge-blue">{% trans "Блок 1" %}</span>{% endif %}
+                    {% if item.in_home_block_2 %}<span class="fc-badge fc-badge-blue">{% trans "Блок 2" %}</span>{% endif %}
                     {% if item.rating %}<span class="fc-badge fc-badge-amber">★ {{ item.rating }}</span>{% endif %}
                 </div>
             </div>
@@ -202,7 +203,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="delete_category">
                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <button type="submit" class="cat-del" onclick="return confirm('Удалить категорию?')" title="Удалить">
+                    <button type="submit" class="cat-del" onclick="return confirm('{% trans "Удалить категорию?" as jt %}{{ jt|escapejs }}')" title="{% trans "Удалить" %}">
                         <svg viewBox="0 0 24 24" stroke-width="2">
                             <path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/>
                             <path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/>
@@ -220,86 +221,86 @@
                     <input type="hidden" name="action" value="update_category">
                     <input type="hidden" name="item_id" value="{{ item.id }}">
 
-                    <div class="fc-block-title">Основное</div>
+                    <div class="fc-block-title">{% trans "Основное" %}</div>
                     <div class="fc-grid">
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-name-{{ item.id }}">Название</label>
-                            <input class="fc-input" id="cat-name-{{ item.id }}" name="name" value="{{ item.name }}" placeholder="Название (для админки)" required>
+                            <label class="fc-label" for="cat-name-{{ item.id }}">{% trans "Название" %}</label>
+                            <input class="fc-input" id="cat-name-{{ item.id }}" name="name" value="{{ item.name }}" placeholder="{% trans "Название (для админки)" %}" required>
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-public-name-{{ item.id }}">Название на сайте</label>
-                            <input class="fc-input" id="cat-public-name-{{ item.id }}" name="public_name" value="{{ item.public_name }}" placeholder="Если пусто — берётся обычное">
+                            <label class="fc-label" for="cat-public-name-{{ item.id }}">{% trans "Название на сайте" %}</label>
+                            <input class="fc-input" id="cat-public-name-{{ item.id }}" name="public_name" value="{{ item.public_name }}" placeholder="{% trans "Если пусто — берётся обычное" %}">
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-slug-{{ item.id }}">Slug (адрес)</label>
+                            <label class="fc-label" for="cat-slug-{{ item.id }}">{% trans "Slug (адрес)" %}</label>
                             <input class="fc-input" id="cat-slug-{{ item.id }}" name="slug" value="{{ item.slug }}" placeholder="pizza">
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-sort-{{ item.id }}">Порядок</label>
+                            <label class="fc-label" for="cat-sort-{{ item.id }}">{% trans "Порядок" %}</label>
                             <input class="fc-input" id="cat-sort-{{ item.id }}" name="site_sort_order" type="number" min="0" step="1" value="{{ item.site_sort_order }}">
                         </div>
                     </div>
 
-                    <div class="fc-block-title">Сайт</div>
+                    <div class="fc-block-title">{% trans "Сайт" %}</div>
                     <div class="fc-checks">
-                        <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1" {% if item.is_visible_on_site %}checked{% endif %}> Показывать на сайте</label>
-                        <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" {% if item.in_home_block_1 %}checked{% endif %}> Блок 1 (основной)</label>
-                        <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1" {% if item.in_home_block_2 %}checked{% endif %}> Блок 2 (новый)</label>
+                        <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1" {% if item.is_visible_on_site %}checked{% endif %}> {% trans "Показывать на сайте" %}</label>
+                        <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" {% if item.in_home_block_1 %}checked{% endif %}> {% trans "Блок 1 (основной)" %}</label>
+                        <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1" {% if item.in_home_block_2 %}checked{% endif %}> {% trans "Блок 2 (новый)" %}</label>
                     </div>
                     <div class="fc-grid">
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-sort2-{{ item.id }}">Порядок (блок 2)</label>
+                            <label class="fc-label" for="cat-sort2-{{ item.id }}">{% trans "Порядок (блок 2)" %}</label>
                             <input class="fc-input" id="cat-sort2-{{ item.id }}" name="home_block_2_sort_order" type="number" min="0" step="1" value="{{ item.home_block_2_sort_order }}">
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-photo-url-{{ item.id }}">Ссылка на фото (приоритет)</label>
+                            <label class="fc-label" for="cat-photo-url-{{ item.id }}">{% trans "Ссылка на фото (приоритет)" %}</label>
                             <input class="fc-input" id="cat-photo-url-{{ item.id }}" name="photo_url" type="url" value="{{ item.photo_url }}" placeholder="https://example.com/category.jpg">
                         </div>
                     </div>
                     <div class="fc-field">
-                        <label class="fc-label" for="cat-gallery-{{ item.id }}">Галерея фото (по одной ссылке в строке)</label>
+                        <label class="fc-label" for="cat-gallery-{{ item.id }}">{% trans "Галерея фото (по одной ссылке в строке)" %}</label>
                         <textarea class="fc-textarea" id="cat-gallery-{{ item.id }}" name="gallery" rows="3" placeholder="https://.../1.jpg">{% for u in item.gallery %}{{ u }}
 {% endfor %}</textarea>
                     </div>
 
-                    <div class="fc-block-title">Карточка «ресторана»</div>
+                    <div class="fc-block-title">{% trans "Карточка «ресторана»" %}</div>
                     <div class="fc-field">
-                        <label class="fc-label" for="cat-logo-url-{{ item.id }}">Логотип бренда — ссылка</label>
+                        <label class="fc-label" for="cat-logo-url-{{ item.id }}">{% trans "Логотип бренда — ссылка" %}</label>
                         <input class="fc-input" id="cat-logo-url-{{ item.id }}" name="logo_url" type="url" value="{{ item.logo_url }}" placeholder="https://example.com/logo.png">
                         <input class="cat-photo-file" type="file" name="logo" accept="image/*" style="margin-top:8px;">
                         {% if item.logo %}
-                        <label class="cat-photo-clear"><input type="checkbox" name="logo_clear" value="1"> Удалить логотип</label>
+                        <label class="cat-photo-clear"><input type="checkbox" name="logo_clear" value="1"> {% trans "Удалить логотип" %}</label>
                         {% endif %}
                     </div>
                     <div class="fc-grid">
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-subtitle-{{ item.id }}">Подзаголовок (тип кухни)</label>
-                            <input class="fc-input" id="cat-subtitle-{{ item.id }}" name="subtitle" type="text" value="{{ item.subtitle }}" placeholder="Напр. Римская пинца">
+                            <label class="fc-label" for="cat-subtitle-{{ item.id }}">{% trans "Подзаголовок (тип кухни)" %}</label>
+                            <input class="fc-input" id="cat-subtitle-{{ item.id }}" name="subtitle" type="text" value="{{ item.subtitle }}" placeholder="{% trans "Напр. Римская пинца" %}">
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-rating-{{ item.id }}">Рейтинг</label>
-                            <input class="fc-input" id="cat-rating-{{ item.id }}" name="rating" type="number" step="0.1" min="0" max="5" value="{{ item.rating|default_if_none:'' }}" placeholder="напр. 4.9">
+                            <label class="fc-label" for="cat-rating-{{ item.id }}">{% trans "Рейтинг" %}</label>
+                            <input class="fc-input" id="cat-rating-{{ item.id }}" name="rating" type="number" step="0.1" min="0" max="5" value="{{ item.rating|default_if_none:'' }}" placeholder="{% trans "напр. 4.9" %}">
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-badge-{{ item.id }}">Бейдж на фото</label>
-                            <input class="fc-input" id="cat-badge-{{ item.id }}" name="badge_label" type="text" value="{{ item.badge_label }}" placeholder="напр. -50%">
+                            <label class="fc-label" for="cat-badge-{{ item.id }}">{% trans "Бейдж на фото" %}</label>
+                            <input class="fc-input" id="cat-badge-{{ item.id }}" name="badge_label" type="text" value="{{ item.badge_label }}" placeholder="{% trans "напр." %} -50%">
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-badge-style-{{ item.id }}">Цвет бейджа</label>
+                            <label class="fc-label" for="cat-badge-style-{{ item.id }}">{% trans "Цвет бейджа" %}</label>
                             <select class="fc-select" id="cat-badge-style-{{ item.id }}" name="badge_style">
-                                <option value="" {% if not item.badge_style %}selected{% endif %}>По умолчанию</option>
-                                <option value="red" {% if item.badge_style == 'red' %}selected{% endif %}>Красный</option>
-                                <option value="green" {% if item.badge_style == 'green' %}selected{% endif %}>Зелёный</option>
-                                <option value="orange" {% if item.badge_style == 'orange' %}selected{% endif %}>Оранжевый</option>
+                                <option value="" {% if not item.badge_style %}selected{% endif %}>{% trans "По умолчанию" %}</option>
+                                <option value="red" {% if item.badge_style == 'red' %}selected{% endif %}>{% trans "Красный" %}</option>
+                                <option value="green" {% if item.badge_style == 'green' %}selected{% endif %}>{% trans "Зелёный" %}</option>
+                                <option value="orange" {% if item.badge_style == 'orange' %}selected{% endif %}>{% trans "Оранжевый" %}</option>
                             </select>
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label" for="cat-delivery-{{ item.id }}">Время доставки</label>
-                            <input class="fc-input" id="cat-delivery-{{ item.id }}" name="delivery_time_label" type="text" value="{{ item.delivery_time_label }}" placeholder="напр. 15–25 мин">
+                            <label class="fc-label" for="cat-delivery-{{ item.id }}">{% trans "Время доставки" %}</label>
+                            <input class="fc-input" id="cat-delivery-{{ item.id }}" name="delivery_time_label" type="text" value="{{ item.delivery_time_label }}" placeholder="{% trans "напр. 15–25 мин" %}">
                         </div>
                     </div>
 
-                    <div class="fc-block-title">Фото (резерв)</div>
+                    <div class="fc-block-title">{% trans "Фото (резерв)" %}</div>
                     <div class="cat-photo-row">
                         <div class="cat-photo-preview">
                             {% if item.photo_url %}
@@ -307,27 +308,27 @@
                             {% elif item.photo %}
                                 <img src="{{ item.photo.url }}" alt="{{ item.name }}">
                             {% else %}
-                                <div class="cat-photo-empty">Фото не загружено</div>
+                                <div class="cat-photo-empty">{% trans "Фото не загружено" %}</div>
                             {% endif %}
                         </div>
                         <div class="cat-photo-controls">
-                            <label class="fc-label" for="cat-photo-{{ item.id }}">Загруженное фото</label>
+                            <label class="fc-label" for="cat-photo-{{ item.id }}">{% trans "Загруженное фото" %}</label>
                             <input id="cat-photo-{{ item.id }}" class="cat-photo-file" type="file" name="photo" accept="image/*">
                             {% if item.photo %}
-                            <label class="cat-photo-clear"><input type="checkbox" name="photo_clear" value="1"> Удалить загруженный файл</label>
+                            <label class="cat-photo-clear"><input type="checkbox" name="photo_clear" value="1"> {% trans "Удалить загруженный файл" %}</label>
                             {% endif %}
-                            <div class="fc-hint">Используется, только если выше не указана внешняя ссылка.</div>
+                            <div class="fc-hint">{% trans "Используется, только если выше не указана внешняя ссылка." %}</div>
                         </div>
                     </div>
 
                     <div class="fc-row-end">
-                        <button type="submit" class="fc-btn fc-btn-primary">Сохранить</button>
+                        <button type="submit" class="fc-btn fc-btn-primary">{% trans "Сохранить" %}</button>
                     </div>
                 </form>
             </div>
         </details>
         {% empty %}
-        <div class="cat-empty">Пока нет категорий. Добавьте первую категорию выше.</div>
+        <div class="cat-empty">{% trans "Пока нет категорий. Добавьте первую категорию выше." %}</div>
         {% endfor %}
     </div>
 

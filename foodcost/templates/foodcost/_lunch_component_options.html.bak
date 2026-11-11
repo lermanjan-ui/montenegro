@@ -1,0 +1,10 @@
+<option value="none"{% if not selected or selected == "none" %} selected{% endif %}>— без привязки (текст) —</option>
+<optgroup label="Блюда">
+  {% for o in dish_options %}<option value="{{ o.value }}"{% if selected == o.value %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
+</optgroup>
+<optgroup label="Заготовки">
+  {% for o in prep_options %}<option value="{{ o.value }}"{% if selected == o.value %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
+</optgroup>
+<optgroup label="Продукты">
+  {% for o in product_options %}<option value="{{ o.value }}"{% if selected == o.value %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
+</optgroup>

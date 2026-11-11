@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Заготовка: {{ preparation.name }}{% endblock %}
+{% block title %}{% trans "Заготовка:" %} {{ preparation.name }}{% endblock %}
 
 {% block content %}
 
@@ -269,41 +270,41 @@
     {% endfor %}
 </datalist>
 
-<a class="back" href="/c/{{ country.slug }}/preparations/">← Назад к заготовкам</a>
+<a class="back" href="/c/{{ country.slug }}/preparations/">{% trans "← Назад к заготовкам" %}</a>
 
 <div class="card">
-    <h1>Заготовка: {{ preparation.name }}</h1>
-    <p class="muted">Состав, выход, общий вес ингредиентов и себестоимость.</p>
+    <h1>{% trans "Заготовка:" %} {{ preparation.name }}</h1>
+    <p class="muted">{% trans "Состав, выход, общий вес ингредиентов и себестоимость." %}</p>
 
     {% if not can_edit %}
-        <div class="readonly-note">Режим просмотра: редактирование заготовки недоступно.</div>
+        <div class="readonly-note">{% trans "Режим просмотра: редактирование заготовки недоступно." %}</div>
     {% endif %}
 
     <div class="summary">
         <div class="metric">
-            <span>Итого брутто</span>
+            <span>{% trans "Итого брутто" %}</span>
             <strong>{{ total_gross|floatformat:3 }}</strong>
         </div>
 
         <div class="metric">
-            <span>Итого нетто</span>
+            <span>{% trans "Итого нетто" %}</span>
             <strong>{{ total_net|floatformat:3 }}</strong>
         </div>
 
         <div class="metric">
-            <span>Себестоимость</span>
+            <span>{% trans "Себестоимость" %}</span>
             <strong>{{ preparation.calculate_cost|floatformat:0 }}</strong>
         </div>
 
         <div class="metric">
-            <span>Цена за кг</span>
+            <span>{% trans "Цена за кг" %}</span>
             <strong>{{ preparation.cost_per_kg|floatformat:0 }}</strong>
         </div>
     </div>
 </div>
 
 <div class="card">
-    <h2>Основные данные</h2>
+    <h2>{% trans "Основные данные" %}</h2>
 
     <form method="post">
         {% csrf_token %}
@@ -311,25 +312,25 @@
 
         <div class="main-grid">
             <div>
-                <label>Название</label>
+                <label>{% trans "Название" %}</label>
                 <input name="name" value="{{ preparation.name }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
-                <label>Выход, кг</label>
+                <label>{% trans "Выход, кг" %}</label>
                 <input type="text" name="final_weight" value="{{ preparation.final_weight }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
-                <label>Время, мин</label>
+                <label>{% trans "Время, мин" %}</label>
                 <input type="text" name="cooking_minutes" value="{{ preparation.cooking_minutes }}" {% if not can_edit %}readonly{% endif %}>
             </div>
 
             <div>
-                <label>Повар</label>
+                <label>{% trans "Повар" %}</label>
                 <select name="cook_id" {% if not can_edit %}disabled{% endif %}
                         style="width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;background:white;color:#111827;font-weight:700;">
-                    <option value="">— не выбран —</option>
+                    <option value="">{% trans "— не выбран —" %}</option>
                     {% for emp in employees %}
                         <option value="{{ emp.id }}" {% if preparation.cook_id == emp.id %}selected{% endif %}>{{ emp.name }}</option>
                     {% endfor %}
@@ -337,30 +338,30 @@
             </div>
 
             <div style="grid-column:1 / -1;">
-                <label>Техкарта приготовления</label>
+                <label>{% trans "Техкарта приготовления" %}</label>
                 <textarea name="tech_card" rows="6" {% if not can_edit %}readonly{% endif %}
-                          placeholder="Как готовить заготовку…"
+                          placeholder="{% trans "Как готовить заготовку…" %}"
                           style="width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;background:white;color:#111827;line-height:1.6;resize:vertical;">{{ preparation.tech_card }}</textarea>
             </div>
 
             {% if can_edit %}
-                <button type="submit">Сохранить</button>
+                <button type="submit">{% trans "Сохранить" %}</button>
             {% endif %}
         </div>
     </form>
 </div>
 
 <div class="card">
-    <h2>Ингредиенты</h2>
+    <h2>{% trans "Ингредиенты" %}</h2>
 
     <div class="table-box">
         <div class="table-head">
-            <div>Продукт</div>
-            <div>Брутто / кол-во</div>
-            <div>Нетто / кол-во</div>
-            <div>Стоимость</div>
+            <div>{% trans "Продукт" %}</div>
+            <div>{% trans "Брутто / кол-во" %}</div>
+            <div>{% trans "Нетто / кол-во" %}</div>
+            <div>{% trans "Стоимость" %}</div>
             {% if can_edit %}
-                <div>Действия</div>
+                <div>{% trans "Действия" %}</div>
             {% endif %}
         </div>
 
@@ -382,7 +383,7 @@
                                 list="products-options"
                                 value="{{ item.product.name }}"
                                 data-hidden-input="product-existing-{{ item.id }}"
-                                placeholder="Начните вводить продукт..."
+                                placeholder="{% trans "Начните вводить продукт..." %}"
                             >
                         {% endif %}
                     </div>
@@ -407,22 +408,22 @@
 
                     {% if can_edit %}
                     <div class="table-actions">
-                        <button type="button" class="edit-btn">Редактировать</button>
+                        <button type="button" class="edit-btn">{% trans "Редактировать" %}</button>
                         <button
                             type="submit"
                             name="action"
                             value="delete_item"
                             class="danger"
-                            onclick="return confirm('Удалить ингредиент из заготовки?')"
+                            onclick="return confirm('{% trans "Удалить ингредиент из заготовки?" as jt %}{{ jt|escapejs }}')"
                         >
-                            Удалить
+                            {% trans "Удалить" %}
                         </button>
                     </div>
                     {% endif %}
                 </form>
             </div>
             {% empty %}
-                <div class="empty">Ингредиентов пока нет.</div>
+                <div class="empty">{% trans "Ингредиентов пока нет." %}</div>
             {% endfor %}
         </div>
 
@@ -437,15 +438,15 @@
                     class="search-field"
                     list="products-options"
                     data-hidden-input="product-add-hidden"
-                    placeholder="Начните вводить продукт..."
+                    placeholder="{% trans "Начните вводить продукт..." %}"
                 >
 
-                <input type="text" name="gross" placeholder="Брутто / кол-во">
-                <input type="text" name="net" placeholder="Нетто / кол-во">
+                <input type="text" name="gross" placeholder="{% trans "Брутто / кол-во" %}">
+                <input type="text" name="net" placeholder="{% trans "Нетто / кол-во" %}">
 
                 <span class="preview-cost">—</span>
 
-                <button type="submit">Добавить</button>
+                <button type="submit">{% trans "Добавить" %}</button>
             </form>
         </div>
         {% endif %}
@@ -453,16 +454,16 @@
 </div>
 
 <div class="card">
-    <h2>Заготовки в составе</h2>
+    <h2>{% trans "Заготовки в составе" %}</h2>
 
     <div class="table-box">
         <div class="table-head">
-            <div>Заготовка</div>
-            <div>Брутто, кг</div>
-            <div>Нетто, кг</div>
-            <div>Стоимость</div>
+            <div>{% trans "Заготовка" %}</div>
+            <div>{% trans "Брутто, кг" %}</div>
+            <div>{% trans "Нетто, кг" %}</div>
+            <div>{% trans "Стоимость" %}</div>
             {% if can_edit %}
-                <div>Действия</div>
+                <div>{% trans "Действия" %}</div>
             {% endif %}
         </div>
 
@@ -484,7 +485,7 @@
                                 list="preparations-options"
                                 value="{{ item.sub_preparation.name }}"
                                 data-hidden-input="sub-prep-existing-{{ item.id }}"
-                                placeholder="Начните вводить заготовку..."
+                                placeholder="{% trans "Начните вводить заготовку..." %}"
                             >
                         {% endif %}
                     </div>
@@ -509,22 +510,22 @@
 
                     {% if can_edit %}
                     <div class="table-actions">
-                        <button type="button" class="edit-btn">Редактировать</button>
+                        <button type="button" class="edit-btn">{% trans "Редактировать" %}</button>
                         <button
                             type="submit"
                             name="action"
                             value="delete_subitem"
                             class="danger"
-                            onclick="return confirm('Удалить заготовку из состава?')"
+                            onclick="return confirm('{% trans "Удалить заготовку из состава?" as jt %}{{ jt|escapejs }}')"
                         >
-                            Удалить
+                            {% trans "Удалить" %}
                         </button>
                     </div>
                     {% endif %}
                 </form>
             </div>
             {% empty %}
-                <div class="empty">Заготовок пока нет.</div>
+                <div class="empty">{% trans "Заготовок пока нет." %}</div>
             {% endfor %}
         </div>
 
@@ -539,15 +540,15 @@
                     class="search-field"
                     list="preparations-options"
                     data-hidden-input="sub-prep-add-hidden"
-                    placeholder="Начните вводить заготовку..."
+                    placeholder="{% trans "Начните вводить заготовку..." %}"
                 >
 
-                <input type="text" name="gross" placeholder="Брутто">
-                <input type="text" name="net" placeholder="Нетто">
+                <input type="text" name="gross" placeholder="{% trans "Брутто" %}">
+                <input type="text" name="net" placeholder="{% trans "Нетто" %}">
 
                 <span class="preview-cost">—</span>
 
-                <button type="submit">Добавить</button>
+                <button type="submit">{% trans "Добавить" %}</button>
             </form>
         </div>
         {% endif %}
@@ -555,30 +556,30 @@
 </div>
 
 <div class="card">
-    <h2>Используется в</h2>
+    <h2>{% trans "Используется в" %}</h2>
 
     {% if used_in_dishes %}
-        <h3 style="font-size:16px;margin:0 0 10px;color:#111827;">Блюда</h3>
+        <h3 style="font-size:16px;margin:0 0 10px;color:#111827;">{% trans "Блюда" %}</h3>
         <div class="table-grid" style="margin-bottom:18px;">
             {% for row in used_in_dishes %}
             <div class="grid-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eef2f7;flex-wrap:wrap;">
-                <div><strong>{{ row.name }}</strong> <span class="muted">· {{ row.net }} кг</span></div>
+                <div><strong>{{ row.name }}</strong> <span class="muted">· {{ row.net }} {% trans "кг" %}</span></div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     {% if can_edit %}
-                    <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('Заменить заготовку в блюде «{{ row.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                    <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('{% trans "Заменить заготовку в блюде" as j1 %}{{ j1|escapejs }} «{{ row.name|escapejs }}»? {% trans "Количество сохранится, себестоимость пересчитается." as j2 %}{{ j2|escapejs }}');">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="replace_in_dish">
                         <input type="hidden" name="item_id" value="{{ row.item_id }}">
                         <select name="new_preparation_id" required style="min-width:160px;">
-                            <option value="">Заменить на…</option>
+                            <option value="">{% trans "Заменить на…" %}</option>
                             {% for prep in preparations %}
                                 <option value="{{ prep.id }}">{{ prep.name }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit">Заменить</button>
+                        <button type="submit">{% trans "Заменить" %}</button>
                     </form>
                     {% endif %}
-                    <a class="open" href="{{ row.url }}" style="font-weight:900;text-decoration:none;color:#111827;">Открыть →</a>
+                    <a class="open" href="{{ row.url }}" style="font-weight:900;text-decoration:none;color:#111827;">{% trans "Открыть →" %}</a>
                 </div>
             </div>
             {% endfor %}
@@ -586,27 +587,27 @@
     {% endif %}
 
     {% if used_in_preparations %}
-        <h3 style="font-size:16px;margin:0 0 10px;color:#111827;">Заготовки</h3>
+        <h3 style="font-size:16px;margin:0 0 10px;color:#111827;">{% trans "Заготовки" %}</h3>
         <div class="table-grid" style="margin-bottom:6px;">
             {% for row in used_in_preparations %}
             <div class="grid-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eef2f7;flex-wrap:wrap;">
-                <div><strong>{{ row.name }}</strong> <span class="muted">· {{ row.net }} кг</span></div>
+                <div><strong>{{ row.name }}</strong> <span class="muted">· {{ row.net }} {% trans "кг" %}</span></div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     {% if can_edit %}
-                    <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('Заменить заготовку в составе «{{ row.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                    <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('{% trans "Заменить заготовку в составе" as j1 %}{{ j1|escapejs }} «{{ row.name|escapejs }}»? {% trans "Количество сохранится, себестоимость пересчитается." as j2 %}{{ j2|escapejs }}');">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="replace_in_preparation">
                         <input type="hidden" name="item_id" value="{{ row.item_id }}">
                         <select name="new_preparation_id" required style="min-width:160px;">
-                            <option value="">Заменить на…</option>
+                            <option value="">{% trans "Заменить на…" %}</option>
                             {% for prep in preparations %}
                                 <option value="{{ prep.id }}">{{ prep.name }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit">Заменить</button>
+                        <button type="submit">{% trans "Заменить" %}</button>
                     </form>
                     {% endif %}
-                    <a class="open" href="{{ row.url }}" style="font-weight:900;text-decoration:none;color:#111827;">Открыть →</a>
+                    <a class="open" href="{{ row.url }}" style="font-weight:900;text-decoration:none;color:#111827;">{% trans "Открыть →" %}</a>
                 </div>
             </div>
             {% endfor %}
@@ -614,30 +615,30 @@
     {% endif %}
 
     {% if not used_in_dishes and not used_in_preparations %}
-        <p class="muted">Эта заготовка пока нигде не используется — её можно удалить без последствий.</p>
+        <p class="muted">{% trans "Эта заготовка пока нигде не используется — её можно удалить без последствий." %}</p>
     {% endif %}
 </div>
 
 {% if is_super_admin %}
 <div class="card" style="border-color:#fecaca;background:#fffafa;">
-    <h2 style="color:#991b1b;">Удаление заготовки</h2>
+    <h2 style="color:#991b1b;">{% trans "Удаление заготовки" %}</h2>
     <p class="muted" style="margin-bottom:14px;">
-        Удалить заготовку «{{ preparation.name }}» полностью.
+        {% blocktrans with n=preparation.name %}Удалить заготовку «{{ n }}» полностью.{% endblocktrans %}
         {% if used_in_dishes or used_in_preparations %}
-            Она используется в блюдах/заготовках выше — после удаления она исчезнет из их состава, а их себестоимость пересчитается.
+            {% trans "Она используется в блюдах/заготовках выше — после удаления она исчезнет из их состава, а их себестоимость пересчитается." %}
         {% else %}
-            Нигде не используется — удаление безопасно.
+            {% trans "Нигде не используется — удаление безопасно." %}
         {% endif %}
     </p>
 
     <button type="button" onclick="document.getElementById('prep-delete-confirm').style.display='block';this.style.display='none';"
             style="background:white;color:#b91c1c;border:1px solid #fecaca;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
-        Удалить заготовку
+        {% trans "Удалить заготовку" %}
     </button>
 
     <div id="prep-delete-confirm" style="display:none;margin-top:14px;padding:16px;background:white;border:1px solid #fecaca;border-radius:12px;">
         <p style="margin:0 0 12px;font-weight:800;color:#111827;">
-            Точно удалить «{{ preparation.name }}»? Это действие необратимо.
+            {% blocktrans with n=preparation.name %}Точно удалить «{{ n }}»? Это действие необратимо.{% endblocktrans %}
         </p>
         <div style="display:flex;gap:10px;align-items:center;">
             <form method="post" style="display:inline;">
@@ -645,12 +646,12 @@
                 <input type="hidden" name="action" value="delete_preparation">
                 <button type="submit"
                         style="background:#b91c1c;color:white;border:0;border-radius:12px;padding:11px 18px;font-weight:900;font-size:14px;cursor:pointer;">
-                    Да, удалить
+                    {% trans "Да, удалить" %}
                 </button>
             </form>
             <button type="button" onclick="document.getElementById('prep-delete-confirm').style.display='none';"
                     style="background:white;color:#111827;border:1px solid #d1d5db;border-radius:12px;padding:11px 16px;font-weight:900;font-size:14px;cursor:pointer;">
-                Отмена
+                {% trans "Отмена" %}
             </button>
         </div>
     </div>
@@ -721,7 +722,7 @@ document.addEventListener("click", function(e) {
         form.querySelectorAll(".view-mode").forEach(el => el.style.display = "none");
         form.querySelectorAll(".edit-mode").forEach(el => el.style.display = "block");
 
-        btn.textContent = "Сохранить";
+        btn.textContent = "{% trans "Сохранить" as jt %}{{ jt|escapejs }}";
         return;
     }
 

@@ -1,0 +1,333 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-27 17:31+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: foodcost/templates/foodcost/base.html:129
+msgid "Главная"
+msgstr "Home"
+
+#: foodcost/templates/foodcost/base.html:151
+msgid "🧾 Касса (зал)"
+msgstr "🧾 POS (hall)"
+
+#: foodcost/templates/foodcost/base.html:154
+msgid "🍳 Кухня (KDS)"
+msgstr "🍳 Kitchen (KDS)"
+
+#: foodcost/templates/foodcost/base.html:165
+msgid "Настройка кассы"
+msgstr "POS settings"
+
+#: foodcost/templates/foodcost/base.html:170
+msgid "Экраны и пороги кухни"
+msgstr "Kitchen screens & timers"
+
+#: foodcost/templates/foodcost/base.html:171
+msgid "Обслуживание и чаевые"
+msgstr "Service & tips"
+
+#: foodcost/templates/foodcost/base.html:172
+msgid "Лояльность и баллы"
+msgstr "Loyalty & points"
+
+#: foodcost/templates/foodcost/base.html:173
+msgid "Оплаты и фискализация"
+msgstr "Payments & fiscalization"
+
+#: foodcost/templates/foodcost/base.html:174
+msgid "Расстановка столов"
+msgstr "Table layout"
+
+#: foodcost/templates/foodcost/base.html:175
+msgid "Доступы кассы"
+msgstr "POS access"
+
+#: foodcost/templates/foodcost/base.html:189
+msgid "Касса"
+msgstr "POS"
+
+#: foodcost/templates/foodcost/base.html:195
+msgid "Управление заказами"
+msgstr "Order management"
+
+#: foodcost/templates/foodcost/base.html:208
+msgid "Меню"
+msgstr "Menu"
+
+#: foodcost/templates/foodcost/base.html:213
+msgid "Блюда"
+msgstr "Dishes"
+
+#: foodcost/templates/foodcost/base.html:214
+msgid "Цены и стоп-лист"
+msgstr "Prices & stop-list"
+
+#: foodcost/templates/foodcost/base.html:226
+msgid "Обеды"
+msgstr "Lunches"
+
+#: foodcost/templates/foodcost/base.html:232
+msgid "Обед дня"
+msgstr "Lunch of the day"
+
+#: foodcost/templates/foodcost/base.html:233
+msgid "Конструктор обедов"
+msgstr "Lunch builder"
+
+#: foodcost/templates/foodcost/base.html:234
+msgid "Апсейл обедов"
+msgstr "Lunch upsell"
+
+#: foodcost/templates/foodcost/base.html:237
+msgid "Учёт обедов"
+msgstr "Lunch accounting"
+
+#: foodcost/templates/foodcost/base.html:240
+msgid "Статистика обедов"
+msgstr "Lunch statistics"
+
+#: foodcost/templates/foodcost/base.html:254
+msgid "Товары и склад"
+msgstr "Goods & stock"
+
+#: foodcost/templates/foodcost/base.html:260
+msgid "Товары"
+msgstr "Goods"
+
+#: foodcost/templates/foodcost/base.html:261
+msgid "Категории товаров"
+msgstr "Goods categories"
+
+#: foodcost/templates/foodcost/base.html:262
+msgid "Активы"
+msgstr "Assets"
+
+#: foodcost/templates/foodcost/base.html:265
+msgid "Заготовки"
+msgstr "Preparations"
+
+#: foodcost/templates/foodcost/base.html:268
+msgid "Упаковка"
+msgstr "Packaging"
+
+#: foodcost/templates/foodcost/base.html:271
+msgid "Остатки"
+msgstr "Stock"
+
+#: foodcost/templates/foodcost/base.html:274
+msgid "Приходы"
+msgstr "Purchases"
+
+#: foodcost/templates/foodcost/base.html:277
+msgid "Перемещения"
+msgstr "Transfers"
+
+#: foodcost/templates/foodcost/base.html:280
+msgid "Поставщики"
+msgstr "Suppliers"
+
+#: foodcost/templates/foodcost/base.html:283
+msgid "Инвентаризация"
+msgstr "Inventory"
+
+#: foodcost/templates/foodcost/base.html:286
+msgid "Движения склада"
+msgstr "Stock movements"
+
+#: foodcost/templates/foodcost/base.html:288
+msgid "Автосписание продаж"
+msgstr "Auto write-off of sales"
+
+#: foodcost/templates/foodcost/base.html:302
+msgid "CRM и аналитика"
+msgstr "CRM & analytics"
+
+#: foodcost/templates/foodcost/base.html:308
+#: foodcost/templates/foodcost/base.html:489
+msgid "Клиенты"
+msgstr "Customers"
+
+#: foodcost/templates/foodcost/base.html:311
+msgid "Все заказы"
+msgstr "All orders"
+
+#: foodcost/templates/foodcost/base.html:314
+msgid "Аналитика заказов"
+msgstr "Order analytics"
+
+#: foodcost/templates/foodcost/base.html:315
+msgid "Аналитика по блюдам"
+msgstr "Dish analytics"
+
+#: foodcost/templates/foodcost/base.html:318
+msgid "Аналитика списаний"
+msgstr "Write-off analytics"
+
+#: foodcost/templates/foodcost/base.html:321
+msgid "Журнал передач смен"
+msgstr "Shift handover log"
+
+#: foodcost/templates/foodcost/base.html:332
+msgid "Финансы"
+msgstr "Finance"
+
+#: foodcost/templates/foodcost/base.html:338
+msgid "Расходы"
+msgstr "Expenses"
+
+#: foodcost/templates/foodcost/base.html:339
+msgid "Поступление денег"
+msgstr "Income"
+
+#: foodcost/templates/foodcost/base.html:340
+msgid "Приход / расход"
+msgstr "Income / expense"
+
+#: foodcost/templates/foodcost/base.html:343
+msgid "Коммуналка"
+msgstr "Utilities"
+
+#: foodcost/templates/foodcost/base.html:354
+msgid "Кухня (операции)"
+msgstr "Kitchen (operations)"
+
+#: foodcost/templates/foodcost/base.html:360
+msgid "Списания"
+msgstr "Write-offs"
+
+#: foodcost/templates/foodcost/base.html:363
+msgid "Передача смены"
+msgstr "Shift handover"
+
+#: foodcost/templates/foodcost/base.html:366
+msgid "Техкарты"
+msgstr "Tech cards"
+
+#: foodcost/templates/foodcost/base.html:377
+msgid "Персонал"
+msgstr "Staff"
+
+#: foodcost/templates/foodcost/base.html:383
+msgid "Сотрудники"
+msgstr "Employees"
+
+#: foodcost/templates/foodcost/base.html:386
+msgid "График смен"
+msgstr "Shift schedule"
+
+#: foodcost/templates/foodcost/base.html:389
+msgid "Журнал смен"
+msgstr "Shift log"
+
+#: foodcost/templates/foodcost/base.html:400
+msgid "Мой кабинет"
+msgstr "My cabinet"
+
+#: foodcost/templates/foodcost/base.html:405
+msgid "Мои смены и зарплата"
+msgstr "My shifts & salary"
+
+#: foodcost/templates/foodcost/base.html:415
+msgid "Сайт / витрина"
+msgstr "Website / storefront"
+
+#: foodcost/templates/foodcost/base.html:421
+msgid "Главная сайта"
+msgstr "Site homepage"
+
+#: foodcost/templates/foodcost/base.html:422
+msgid "Промокоды и акции"
+msgstr "Promo codes & offers"
+
+#: foodcost/templates/foodcost/base.html:425
+msgid "Категории блюд"
+msgstr "Dish categories"
+
+#: foodcost/templates/foodcost/base.html:426
+msgid "Комбо на главной"
+msgstr "Homepage combos"
+
+#: foodcost/templates/foodcost/base.html:437
+msgid "Интеграции"
+msgstr "Integrations"
+
+#: foodcost/templates/foodcost/base.html:442
+msgid "Локации (Uzum и пр.)"
+msgstr "Locations (Uzum etc.)"
+
+#: foodcost/templates/foodcost/base.html:452
+msgid "Компания"
+msgstr "Company"
+
+#: foodcost/templates/foodcost/base.html:457
+msgid "Моя подписка"
+msgstr "My subscription"
+
+#: foodcost/templates/foodcost/base.html:458
+msgid "Настройки"
+msgstr "Settings"
+
+#: foodcost/templates/foodcost/base.html:468
+#: foodcost/templates/foodcost/base.html:500
+msgid "Админка"
+msgstr "Admin"
+
+#: foodcost/templates/foodcost/base.html:473
+msgid "Пользователи"
+msgstr "Users"
+
+#: foodcost/templates/foodcost/base.html:484
+msgid "Платформа"
+msgstr "Platform"
+
+#: foodcost/templates/foodcost/base.html:490
+msgid "Команда"
+msgstr "Team"
+
+#: foodcost/templates/foodcost/base.html:499
+msgid "Страны"
+msgstr "Countries"
+
+#: foodcost/templates/foodcost/base.html:525
+msgid "Язык"
+msgstr "Language"
+
+#: foodcost/templates/foodcost/base.html:539
+msgid "Главный админ"
+msgstr "Main admin"
+
+#: foodcost/templates/foodcost/base.html:541
+msgid "Пользователь"
+msgstr "User"
+
+#: foodcost/templates/foodcost/base.html:548
+msgid "Профиль"
+msgstr "Profile"
+
+#: foodcost/templates/foodcost/base.html:549
+msgid "Реквизиты компании"
+msgstr "Company details"
+
+#: foodcost/templates/foodcost/base.html:550
+msgid "Сотрудники компании"
+msgstr "Company employees"
+
+#: foodcost/templates/foodcost/base.html:553
+msgid "Выход"
+msgstr "Log out"

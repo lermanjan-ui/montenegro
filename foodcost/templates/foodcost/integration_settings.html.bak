@@ -1,0 +1,92 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Интеграции{% endblock %}
+{% block content %}
+<style>
+:root{--pri:#123B7A;--pri-d:#0D2D5F;--bd:#E5E7EB;--mut:#667085;--bg:#F7F8FA;}
+.int-wrap{max-width:860px;margin:0 auto;font-family:Inter,system-ui,sans-serif;color:#111827;}
+.int-wrap h1{font-size:26px;font-weight:700;margin:0 0 4px;}
+.int-wrap .sub{color:var(--mut);font-size:14px;margin-bottom:18px;}
+.ok{background:#E7F6ED;border:1px solid #C7E9D5;color:#166B3C;border-radius:8px;padding:10px 14px;font-weight:600;margin-bottom:16px;}
+.int-card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:18px;margin-bottom:16px;}
+.int-card h2{font-size:16px;font-weight:700;margin:0 0 14px;}
+.f{margin-bottom:12px;}
+.f label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:6px;}
+.f input{width:100%;height:40px;border:1px solid var(--bd);border-radius:8px;padding:0 12px;font:inherit;font-size:14px;box-sizing:border-box;}
+.f input:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(18,59,122,.12);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:560px){.row2{grid-template-columns:1fr;}}
+.hint{font-size:12px;color:var(--mut);margin-top:4px;}
+.cb{margin-top:10px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;font-size:13px;}
+.cb code{display:block;margin-top:4px;color:var(--pri-d);word-break:break-all;font-weight:600;}
+.save{height:44px;padding:0 22px;background:var(--pri);color:#fff;border:0;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;}
+.save:hover{background:var(--pri-d);}
+</style>
+
+<div class="int-wrap">
+  <h1>Интеграции</h1>
+  <div class="sub">Арендатор: {{ country.name }} · SMS отправляется общим сервисом платформы и настраивается отдельно.</div>
+
+  {% if saved %}<div class="ok">✓ Сохранено</div>{% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="int-card">
+      <h2>Telegram</h2>
+      <div class="f">
+        <label>Bot token</label>
+        <input type="password" name="telegram_bot_token" autocomplete="off"
+               placeholder="{% if secret_set.telegram_bot_token %}•••• задано — пусто = не менять{% else %}не задано{% endif %}">
+      </div>
+      <div class="f">
+        <label>Chat ID</label>
+        <input type="text" name="telegram_chat_id" value="{{ s.telegram_chat_id }}">
+      </div>
+    </div>
+
+    <div class="int-card">
+      <h2>Payme</h2>
+      <div class="row2">
+        <div class="f"><label>Merchant ID</label><input type="text" name="payme_merchant_id" value="{{ s.payme_merchant_id }}"></div>
+        <div class="f">
+          <label>Secret key</label>
+          <input type="password" name="payme_secret_key" autocomplete="off"
+                 placeholder="{% if secret_set.payme_secret_key %}•••• задано — пусто = не менять{% else %}не задано{% endif %}">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="f"><label>Checkout URL</label><input type="text" name="payme_checkout_url" value="{{ s.payme_checkout_url }}" placeholder="https://checkout.paycom.uz"></div>
+        <div class="f"><label>Account field</label><input type="text" name="payme_account_field" value="{{ s.payme_account_field }}" placeholder="order_id"></div>
+      </div>
+      <div class="row2">
+        <div class="f"><label>Success URL</label><input type="text" name="payme_success_url" value="{{ s.payme_success_url }}"></div>
+        <div class="f"><label>Fail URL</label><input type="text" name="payme_fail_url" value="{{ s.payme_fail_url }}"></div>
+      </div>
+      <div class="cb">Callback-URL для кабинета Payme (вставьте в настройках мерчанта):<code>{{ payme_callback_url }}</code></div>
+    </div>
+
+    <div class="int-card">
+      <h2>Click</h2>
+      <div class="row2">
+        <div class="f"><label>Service ID</label><input type="text" name="click_service_id" value="{{ s.click_service_id }}"></div>
+        <div class="f"><label>Merchant ID</label><input type="text" name="click_merchant_id" value="{{ s.click_merchant_id }}"></div>
+      </div>
+      <div class="row2">
+        <div class="f"><label>Merchant User ID</label><input type="text" name="click_merchant_user_id" value="{{ s.click_merchant_user_id }}"></div>
+        <div class="f">
+          <label>Secret key</label>
+          <input type="password" name="click_secret_key" autocomplete="off"
+                 placeholder="{% if secret_set.click_secret_key %}•••• задано — пусто = не менять{% else %}не задано{% endif %}">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="f"><label>Success URL</label><input type="text" name="click_success_url" value="{{ s.click_success_url }}"></div>
+        <div class="f"><label>Fail URL</label><input type="text" name="click_fail_url" value="{{ s.click_fail_url }}"></div>
+      </div>
+      <div class="cb">Callback-URL для кабинета Click:<code>{{ click_callback_url }}</code></div>
+    </div>
+
+    <button type="submit" class="save">Сохранить</button>
+  </form>
+</div>
+{% endblock %}

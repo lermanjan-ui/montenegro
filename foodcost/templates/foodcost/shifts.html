@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Журнал смен{% endblock %}
+{% block title %}{% trans "Журнал смен" %}{% endblock %}
 
 {% block content %}
 
@@ -68,31 +69,31 @@
 <div class="fc-page">
 
     <div class="fc-head">
-        <div><h1>Журнал смен</h1><p class="muted">Фактический учёт рабочего времени — начать и завершить смену</p></div>
-        {% if can_edit %}<button type="button" class="fc-btn fc-btn-dark" onclick="document.getElementById('ovStart').classList.add('show')">▶ Начать смену</button>{% endif %}
+        <div><h1>{% trans "Журнал смен" %}</h1><p class="muted">{% trans "Фактический учёт рабочего времени — начать и завершить смену" %}</p></div>
+        {% if can_edit %}<button type="button" class="fc-btn fc-btn-dark" onclick="document.getElementById('ovStart').classList.add('show')">{% trans "▶ Начать смену" %}</button>{% endif %}
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Смен в выборке</div><div class="kpi-value">{{ count }}</div></div>
-        <div class="kpi"><div class="kpi-label">Сейчас идёт</div><div class="kpi-value" style="color:var(--fc-info-text);">{{ in_progress }}</div></div>
-        <div class="kpi"><div class="kpi-label">Отработано часов</div><div class="kpi-value num">{{ total_hours_display }} ч</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Смен в выборке" %}</div><div class="kpi-value">{{ count }}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Сейчас идёт" %}</div><div class="kpi-value" style="color:var(--fc-info-text);">{{ in_progress }}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Отработано часов" %}</div><div class="kpi-value num">{{ total_hours_display }} {% trans "ч" %}</div></div>
     </div>
 
     <div class="fc-card">
         <form method="get">
             <div class="filters">
-                <div><label class="fc-label">Дата от</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
-                <div><label class="fc-label">Дата до</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
-                <div><label class="fc-label">Сотрудник</label><select class="fc-select" name="employee"><option value="">Все</option>{% for e in employees %}<option value="{{ e.id }}" {% if emp_id == e.id|stringformat:'s' %}selected{% endif %}>{{ e.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Филиал</label><select class="fc-select" name="location"><option value="">Все</option>{% for l in locations %}<option value="{{ l.id }}" {% if location_id == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
-                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/shifts/" class="fc-btn fc-btn-secondary">Сброс</a></div>
+                <div><label class="fc-label">{% trans "Дата от" %}</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
+                <div><label class="fc-label">{% trans "Дата до" %}</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
+                <div><label class="fc-label">{% trans "Сотрудник" %}</label><select class="fc-select" name="employee"><option value="">{% trans "Все" %}</option>{% for e in employees %}<option value="{{ e.id }}" {% if emp_id == e.id|stringformat:'s' %}selected{% endif %}>{{ e.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Филиал" %}</label><select class="fc-select" name="location"><option value="">{% trans "Все" %}</option>{% for l in locations %}<option value="{{ l.id }}" {% if location_id == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">{% trans "Применить" %}</button><a href="/c/{{ country.slug }}/shifts/" class="fc-btn fc-btn-secondary">{% trans "Сброс" %}</a></div>
             </div>
         </form>
     </div>
 
     <div class="fc-card">
         <table class="items">
-            <thead><tr><th>Сотрудник</th><th>Локация</th><th>Дата</th><th>Начало</th><th>Конец</th><th class="r">Часы</th><th>Статус</th>{% if can_edit %}<th class="r">Действие</th>{% endif %}</tr></thead>
+            <thead><tr><th>{% trans "Сотрудник" %}</th><th>{% trans "Локация" %}</th><th>{% trans "Дата" %}</th><th>{% trans "Начало" %}</th><th>{% trans "Конец" %}</th><th class="r">{% trans "Часы" %}</th><th>{% trans "Статус" %}</th>{% if can_edit %}<th class="r">{% trans "Действие" %}</th>{% endif %}</tr></thead>
             <tbody>
                 {% for r in rows %}
                 <tr>
@@ -103,19 +104,19 @@
                     <td class="num">{{ r.end }}</td>
                     <td class="r num">{{ r.hours }}</td>
                     <td>
-                        {% if r.status == 'in_progress' %}<span class="badge badge-live">● Идёт</span>
-                        {% elif r.status == 'done' %}<span class="badge badge-green">Отработана</span>
-                        {% elif r.status == 'late' %}<span class="badge badge-amber">Опоздание</span>
-                        {% elif r.status == 'missed' %}<span class="badge badge-red">Пропуск</span>
-                        {% elif r.status == 'cancelled' %}<span class="badge badge-gray">Отменена</span>
-                        {% else %}<span class="badge badge-info">Запланирована</span>{% endif %}
+                        {% if r.status == 'in_progress' %}<span class="badge badge-live">{% trans "● Идёт" %}</span>
+                        {% elif r.status == 'done' %}<span class="badge badge-green">{% trans "Отработана" %}</span>
+                        {% elif r.status == 'late' %}<span class="badge badge-amber">{% trans "Опоздание" %}</span>
+                        {% elif r.status == 'missed' %}<span class="badge badge-red">{% trans "Пропуск" %}</span>
+                        {% elif r.status == 'cancelled' %}<span class="badge badge-gray">{% trans "Отменена" %}</span>
+                        {% else %}<span class="badge badge-info">{% trans "Запланирована" %}</span>{% endif %}
                     </td>
                     {% if can_edit %}
                     <td class="r">
                         {% if r.status == 'planned' %}
-                            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="start_shift"><input type="hidden" name="shift_id" value="{{ r.id }}"><button type="submit" class="fc-btn fc-btn-primary fc-btn-sm">▶ Начать</button></form>
+                            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="start_shift"><input type="hidden" name="shift_id" value="{{ r.id }}"><button type="submit" class="fc-btn fc-btn-primary fc-btn-sm">{% trans "▶ Начать" %}</button></form>
                         {% elif r.status == 'in_progress' %}
-                            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="finish_shift"><input type="hidden" name="shift_id" value="{{ r.id }}"><button type="submit" class="fc-btn fc-btn-dark fc-btn-sm">■ Завершить</button></form>
+                            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="finish_shift"><input type="hidden" name="shift_id" value="{{ r.id }}"><button type="submit" class="fc-btn fc-btn-dark fc-btn-sm">{% trans "■ Завершить" %}</button></form>
                         {% else %}
                             <span class="muted">—</span>
                         {% endif %}
@@ -123,7 +124,7 @@
                     {% endif %}
                 </tr>
                 {% empty %}
-                    <tr><td colspan="8" class="empty">Смен по выбранным условиям нет.</td></tr>
+                    <tr><td colspan="8" class="empty">{% trans "Смен по выбранным условиям нет." %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -135,16 +136,16 @@
 {% if can_edit %}
 <div class="ov" id="ovStart">
     <div class="modal">
-        <h3>Начать смену</h3>
+        <h3>{% trans "Начать смену" %}</h3>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="start_new">
-            <label class="fc-label">Сотрудник</label>
-            <select class="fc-input" name="employee_id" required><option value="">— выберите —</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select>
-            <label class="fc-label">Локация</label>
-            <select class="fc-input" name="location_id"><option value="">— по умолчанию —</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select>
-            <p class="muted" style="margin-top:12px;font-size:13px;">Время начала будет записано автоматически (сейчас). Завершите смену кнопкой «Завершить» — часы посчитаются сами.</p>
-            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="document.getElementById('ovStart').classList.remove('show')">Отмена</button><button type="submit" class="fc-btn fc-btn-primary">▶ Начать</button></div>
+            <label class="fc-label">{% trans "Сотрудник" %}</label>
+            <select class="fc-input" name="employee_id" required><option value="">{% trans "— выберите —" %}</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select>
+            <label class="fc-label">{% trans "Локация" %}</label>
+            <select class="fc-input" name="location_id"><option value="">{% trans "— по умолчанию —" %}</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select>
+            <p class="muted" style="margin-top:12px;font-size:13px;">{% trans "Время начала будет записано автоматически (сейчас). Завершите смену кнопкой «Завершить» — часы посчитаются сами." %}</p>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="document.getElementById('ovStart').classList.remove('show')">{% trans "Отмена" %}</button><button type="submit" class="fc-btn fc-btn-primary">{% trans "▶ Начать" %}</button></div>
         </form>
     </div>
 </div>

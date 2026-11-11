@@ -1,0 +1,114 @@
+{% extends "foodcost/base.html" %}
+{% load i18n %}
+
+{% block title %}Лояльность и баллы{% endblock %}
+
+{% block content %}
+<style>
+.poswrap{--pw-ink:#111827;--pw-muted:#667085;--pw-subtle:#98a2b3;--pw-border:#e5e7eb;--pw-bstrong:#d1d5db;--pw-surface:#fff;--pw-sunken:#eef1f5;--pw-primary:#123b7a;--pw-primary-soft:#e7edf7;--pw-danger:#d92d20;
+  max-width:800px;margin:0 auto;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--pw-ink);}
+.poswrap .pw-h1{font-weight:700;font-size:24px;letter-spacing:-.02em;margin:0 0 16px;}
+.poswrap .pw-card{border:1px solid var(--pw-border);border-radius:12px;background:var(--pw-surface);box-shadow:0 1px 2px rgba(16,24,40,.06);margin-bottom:16px;}
+.poswrap .pw-ch{font-weight:700;font-size:15px;padding:14px 16px;border-bottom:1px solid var(--pw-border);}
+.poswrap .pw-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:13px 16px;border-top:1px solid var(--pw-border);}
+.poswrap .pw-row:first-of-type{border-top:0;}
+.poswrap .pw-fl{flex:1 1 260px;min-width:0;}
+.poswrap .pw-fn{font-weight:600;font-size:14px;}
+.poswrap .pw-fd{font-size:12px;color:var(--pw-muted);margin-top:2px;}
+.poswrap input.pw-in,.poswrap select.pw-in{height:38px;padding:0 10px;border:1px solid var(--pw-bstrong);border-radius:8px;background:var(--pw-surface);font-family:inherit;font-size:13px;color:var(--pw-ink);outline:none;}
+.poswrap input.pw-in:focus,.poswrap select.pw-in:focus{border-color:var(--pw-primary);box-shadow:0 0 0 3px var(--pw-primary-soft);}
+.poswrap input.pw-pct{width:72px;text-align:right;font-weight:700;}
+.poswrap input.pw-sum{width:130px;text-align:right;font-weight:700;}
+.poswrap .pw-check{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer;}
+.poswrap .pw-check input{width:18px;height:18px;accent-color:var(--pw-primary);cursor:pointer;}
+.poswrap .pw-lbl{font-size:12px;color:var(--pw-muted);font-weight:600;}
+.poswrap form.pw-inline{display:inline-flex;align-items:center;gap:8px;margin:0;flex-wrap:wrap;}
+.poswrap .pw-grow{flex:1 1 160px;min-width:0;}
+.poswrap .pw-btn{height:38px;padding:0 14px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid var(--pw-bstrong);background:var(--pw-surface);color:var(--pw-ink);}
+.poswrap .pw-btn.prim{border:0;background:var(--pw-primary);color:#fff;}
+.poswrap .pw-btn.danger{border-color:var(--pw-danger);color:var(--pw-danger);}
+.poswrap .pw-save{display:flex;justify-content:flex-end;padding:14px 16px;border-top:1px solid var(--pw-border);}
+.poswrap .pw-add{border-top:1px solid var(--pw-border);padding:14px 16px;background:var(--pw-sunken);border-radius:0 0 12px 12px;}
+.poswrap .pw-add .pw-at{font-size:12px;font-weight:700;color:var(--pw-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:10px;}
+.poswrap .pw-fields{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.poswrap .pw-fld{display:flex;flex-direction:column;gap:5px;}
+.poswrap .pw-empty{padding:16px;color:var(--pw-subtle);font-size:13px;}
+</style>
+
+<div class="poswrap">
+  <div class="pw-h1">{% trans "Лояльность и баллы" %}</div>
+
+  <!-- ПРОГРАММА -->
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="save_program">
+
+    <div class="pw-card">
+      <div class="pw-ch">{% trans "Программа" %}</div>
+      <div class="pw-row"><label class="pw-check"><input type="checkbox" name="enabled" {% if program.enabled %}checked{% endif %}> {% trans "Программа лояльности включена" %}</label></div>
+      <div class="pw-row"><label class="pw-check"><input type="checkbox" name="identify_by_phone" {% if program.identify_by_phone %}checked{% endif %}> {% trans "Идентификация по номеру телефона" %}</label></div>
+      <div class="pw-row"><label class="pw-check"><input type="checkbox" name="identify_by_qr" {% if program.identify_by_qr %}checked{% endif %}> {% trans "Идентификация по QR-коду гостя" %}</label></div>
+      <div class="pw-row"><label class="pw-check"><input type="checkbox" name="require_sms_on_redeem" {% if program.require_sms_on_redeem %}checked{% endif %}> {% trans "Подтверждение по SMS при списании баллов" %}</label></div>
+    </div>
+
+    <div class="pw-card">
+      <div class="pw-ch">{% trans "Начисление баллов" %}</div>
+      <div class="pw-row"><div class="pw-fl"><div class="pw-fn">{% trans "Начислять с заказа" %}</div><div class="pw-fd">{% trans "процент от суммы уходит в баллы (1 балл = 1 сум)" %}</div></div>
+        <input class="pw-in pw-pct" name="earn_percent" value="{{ program.earn_percent|floatformat:'-2' }}"> %</div>
+      <div class="pw-row"><label class="pw-check"><input type="checkbox" name="earn_exclude_discounted" {% if program.earn_exclude_discounted %}checked{% endif %}> {% trans "Не начислять на позиции со скидкой" %}</label></div>
+    </div>
+
+    <div class="pw-card">
+      <div class="pw-ch">{% trans "Списание баллов" %}</div>
+      <div class="pw-row"><div class="pw-fl"><div class="pw-fn">{% trans "Оплачивать баллами до" %}</div><div class="pw-fd">{% trans "макс. доля счёта" %}</div></div>
+        <input class="pw-in pw-pct" name="redeem_max_percent" value="{{ program.redeem_max_percent|floatformat:'-2' }}"> {% trans "% счёта" %}</div>
+      <div class="pw-row"><label class="pw-check"><input type="checkbox" name="combine_with_discounts" {% if program.combine_with_discounts %}checked{% endif %}> {% trans "Можно совмещать со скидками" %}</label></div>
+      <div class="pw-row"><div class="pw-fl"><div class="pw-fn">{% trans "Срок действия баллов" %}</div></div>
+        <select class="pw-in" name="points_expiry_months">
+          <option value="0" {% if program.points_expiry_months == 0 %}selected{% endif %}>{% trans "Не сгорают" %}</option>
+          <option value="6" {% if program.points_expiry_months == 6 %}selected{% endif %}>{% trans "6 месяцев" %}</option>
+          <option value="12" {% if program.points_expiry_months == 12 %}selected{% endif %}>{% trans "12 месяцев" %}</option>
+          <option value="24" {% if program.points_expiry_months == 24 %}selected{% endif %}>{% trans "24 месяца" %}</option>
+        </select></div>
+      <div class="pw-row"><label class="pw-check"><input type="checkbox" name="tiers_enabled" {% if program.tiers_enabled %}checked{% endif %}> {% trans "Включить уровни гостей" %}</label></div>
+      <div class="pw-save"><button class="pw-btn prim" type="submit">{% trans "Сохранить программу" %}</button></div>
+    </div>
+  </form>
+
+  <!-- УРОВНИ -->
+  <div class="pw-card">
+    <div class="pw-ch">{% trans "Уровни гостей (опционально)" %}</div>
+    {% for t in tiers %}
+      <div class="pw-row">
+        <form class="pw-inline pw-grow" method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="save_tier">
+          <input type="hidden" name="tier_id" value="{{ t.id }}">
+          <input class="pw-in pw-grow" name="name" value="{{ t.name }}">
+          <span class="pw-lbl">{% trans "оборот от" %}</span><input class="pw-in pw-sum" name="min_turnover" value="{{ t.min_turnover|floatformat:'-2' }}">
+          <span class="pw-lbl">{% trans "начисление" %}</span><input class="pw-in pw-pct" name="tier_earn" value="{{ t.earn_percent|floatformat:'-2' }}"><span class="pw-lbl">%</span>
+          <button class="pw-btn" type="submit">{% trans "Сохранить" %}</button>
+        </form>
+        <form class="pw-inline" method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="delete_tier">
+          <input type="hidden" name="tier_id" value="{{ t.id }}">
+          <button class="pw-btn danger" type="submit">✕</button>
+        </form>
+      </div>
+    {% empty %}
+      <div class="pw-empty">{% trans "Уровней нет. Добавьте, если нужны (например Бронза / Серебро / Золото)." %}</div>
+    {% endfor %}
+
+    <div class="pw-add">
+      <div class="pw-at">{% trans "Добавить уровень" %}</div>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="add_tier">
+        <div class="pw-fields">
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Название" %}</span><input class="pw-in" name="name" placeholder="{% trans "Напр.: Серебро" %}" required></div>
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Оборот от" %}</span><input class="pw-in pw-sum" name="min_turnover" value="0"></div>
+          <div class="pw-fld"><span class="pw-lbl">{% trans "Начисление, %" %}</span><input class="pw-in pw-pct" name="tier_earn" value="0"></div>
+          <button class="pw-btn prim" type="submit">{% trans "Добавить" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

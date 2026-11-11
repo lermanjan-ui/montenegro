@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Передачи смен — админ{% endblock %}
+{% block title %}{% trans "Передачи смен — админ" %}{% endblock %}
 
 {% block content %}
 
@@ -149,15 +150,15 @@
 
     <div class="topbar">
         <div>
-            <h1>Передачи смен</h1>
+            <h1>{% trans "Передачи смен" %}</h1>
             <div class="muted">
-                Все филиалы и все передачи смен
+                {% trans "Все филиалы и все передачи смен" %}
             </div>
         </div>
 
         <form method="get" class="filter-form">
             <select name="location">
-                <option value="">Все филиалы</option>
+                <option value="">{% trans "Все филиалы" %}</option>
 
                 {% for location in locations %}
                     <option
@@ -171,7 +172,7 @@
                 {% endfor %}
             </select>
 
-            <button type="submit">Фильтр</button>
+            <button type="submit">{% trans "Фильтр" %}</button>
         </form>
     </div>
 
@@ -196,25 +197,25 @@
 
                     {% if handover.from_employee %}
                         <div class="muted" style="margin-top:8px;">
-                            От: {{ handover.from_employee.name }}
+                            {% trans "От:" %} {{ handover.from_employee.name }}
                         </div>
                     {% endif %}
 
                     <div style="margin-top:8px;">
                         {% if handover.effective_status == 'viewed' %}
-                            <span class="tag" style="background:#dcfce7;color:#166534;">Просмотрена</span>
+                            <span class="tag" style="background:#dcfce7;color:#166534;">{% trans "Просмотрена" %}</span>
                         {% elif handover.effective_status == 'expired' %}
-                            <span class="tag" style="background:#f3f4f6;color:#6b7280;">Истекла</span>
+                            <span class="tag" style="background:#f3f4f6;color:#6b7280;">{% trans "Истекла" %}</span>
                         {% elif handover.effective_status == 'archived' %}
-                            <span class="tag" style="background:#f3f4f6;color:#6b7280;">В архиве</span>
+                            <span class="tag" style="background:#f3f4f6;color:#6b7280;">{% trans "В архиве" %}</span>
                         {% else %}
-                            <span class="tag" style="background:#dbeafe;color:#1e40af;">Создана</span>
+                            <span class="tag" style="background:#dbeafe;color:#1e40af;">{% trans "Создана" %}</span>
                         {% endif %}
                     </div>
 
                     {% if handover.viewed_at %}
                         <div class="muted" style="margin-top:6px;">
-                            Просмотрел: {{ handover.viewed_by.username }} в {{ handover.viewed_at|date:"d.m H:i" }}
+                            {% trans "Просмотрел:" %} {{ handover.viewed_by.username }} {% trans "в" %} {{ handover.viewed_at|date:"d.m H:i" }}
                         </div>
                     {% endif %}
 
@@ -227,7 +228,7 @@
 
                     <div class="block">
                         <div class="block-title">
-                            Нужно докупить
+                            {% trans "Нужно докупить" %}
                         </div>
 
                         <div class="tag-list">
@@ -249,7 +250,7 @@
 
                     <div class="block">
                         <div class="block-title">
-                            Заготовки
+                            {% trans "Заготовки" %}
                         </div>
 
                         <div class="tag-list">
@@ -271,7 +272,7 @@
 
                     <div class="block">
                         <div class="block-title">
-                            Стоп
+                            {% trans "Стоп" %}
                         </div>
 
                         <div class="tag-list">
@@ -290,7 +291,7 @@
 
                     <div class="block">
                         <div class="block-title">
-                            Задачи для следующей смены
+                            {% trans "Задачи для следующей смены" %}
                         </div>
 
                         <div class="tag-list">
@@ -313,7 +314,7 @@
             </div>
         {% empty %}
             <div class="muted">
-                Передач смен пока нет
+                {% trans "Передач смен пока нет" %}
             </div>
         {% endfor %}
     </div>

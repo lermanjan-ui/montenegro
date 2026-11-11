@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Аналитика — {{ inventory.document_number }}{% endblock %}
+{% block title %}{% trans "Аналитика" %} — {{ inventory.document_number }}{% endblock %}
 
 {% block content %}
 
@@ -80,82 +81,82 @@
 <div class="fc-scope">
 <div class="fc-page">
 
-    <div class="crumbs"><a href="/c/{{ country.slug }}/inventory/">Инвентаризация</a> › {{ inventory.document_number }}</div>
+    <div class="crumbs"><a href="/c/{{ country.slug }}/inventory/">{% trans "Инвентаризация" %}</a> › {{ inventory.document_number }}</div>
 
     <div class="fc-head">
         <h1>{{ inventory.document_number }}
-            {% if is_confirmed %}<span class="badge badge-green">Подтверждена</span>
-            {% elif is_rejected %}<span class="badge badge-red">Отклонена</span>
-            {% elif is_awaiting %}<span class="badge badge-info">Ожидает проверки</span>
-            {% else %}<span class="badge badge-amber">Проводится</span>{% endif %}
+            {% if is_confirmed %}<span class="badge badge-green">{% trans "Подтверждена" %}</span>
+            {% elif is_rejected %}<span class="badge badge-red">{% trans "Отклонена" %}</span>
+            {% elif is_awaiting %}<span class="badge badge-info">{% trans "Ожидает проверки" %}</span>
+            {% else %}<span class="badge badge-amber">{% trans "Проводится" %}</span>{% endif %}
         </h1>
         <div class="head-actions">
             {% if is_awaiting %}
-                <form method="post"><input type="hidden" name="action" value="confirm">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-primary" onclick="return confirm('Подтвердить инвентаризацию? Остатки склада будут приведены к фактическим значениям.');">✓ Подтвердить</button></form>
-                <form method="post"><input type="hidden" name="action" value="recount">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">↩ На пересчёт</button></form>
-                <form method="post" onsubmit="return confirm('Отклонить инвентаризацию?');"><input type="hidden" name="action" value="reject">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger">✕ Отклонить</button></form>
+                <form method="post"><input type="hidden" name="action" value="confirm">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-primary" onclick="return confirm('{% trans "Подтвердить инвентаризацию? Остатки склада будут приведены к фактическим значениям." as jt %}{{ jt|escapejs }}');">{% trans "✓ Подтвердить" %}</button></form>
+                <form method="post"><input type="hidden" name="action" value="recount">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">{% trans "↩ На пересчёт" %}</button></form>
+                <form method="post" onsubmit="return confirm('{% trans "Отклонить инвентаризацию?" as jt %}{{ jt|escapejs }}');"><input type="hidden" name="action" value="reject">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-danger">{% trans "✕ Отклонить" %}</button></form>
             {% elif is_rejected %}
-                <form method="post"><input type="hidden" name="action" value="recount">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">↩ Вернуть на пересчёт</button></form>
+                <form method="post"><input type="hidden" name="action" value="recount">{% csrf_token %}<button type="submit" class="fc-btn fc-btn-secondary">{% trans "↩ Вернуть на пересчёт" %}</button></form>
             {% endif %}
         </div>
     </div>
-    <p class="sub">Склад: <strong>{{ inventory.warehouse.name }}</strong> · Дата: {{ inventory.inventory_date|date:"d.m.Y" }}</p>
+    <p class="sub">{% trans "Склад:" %} <strong>{{ inventory.warehouse.name }}</strong> · {% trans "Дата:" %} {{ inventory.inventory_date|date:"d.m.Y" }}</p>
 
-    {% if confirmed_flag %}<div class="banner banner-green">Инвентаризация подтверждена. Остатки склада приведены к факту.</div>{% endif %}
-    {% if rejected_flag %}<div class="banner banner-red">Инвентаризация отклонена.</div>{% endif %}
-    {% if editable_stage %}<div class="banner banner-info">Подсчёт ещё не завершён поваром. Цифры предварительные.</div>{% endif %}
-    {% if is_confirmed %}<div class="banner banner-green">Документ подтверждён, остатки склада обновлены по факту.</div>{% endif %}
+    {% if confirmed_flag %}<div class="banner banner-green">{% trans "Инвентаризация подтверждена. Остатки склада приведены к факту." %}</div>{% endif %}
+    {% if rejected_flag %}<div class="banner banner-red">{% trans "Инвентаризация отклонена." %}</div>{% endif %}
+    {% if editable_stage %}<div class="banner banner-info">{% trans "Подсчёт ещё не завершён поваром. Цифры предварительные." %}</div>{% endif %}
+    {% if is_confirmed %}<div class="banner banner-green">{% trans "Документ подтверждён, остатки склада обновлены по факту." %}</div>{% endif %}
 
     <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Посчитано позиций</div><div class="kpi-value">{{ counted_count }} / {{ total_items }}</div><div class="kpi-sub">факт введён</div></div>
-        <div class="kpi"><div class="kpi-label">Недостача</div><div class="kpi-value num" style="color:var(--fc-danger-text);">{{ total_shortage_display }}</div><div class="kpi-sub">стоимость</div></div>
-        <div class="kpi"><div class="kpi-label">Излишки</div><div class="kpi-value num" style="color:var(--fc-green-text);">{{ total_surplus_display }}</div><div class="kpi-sub">стоимость</div></div>
-        <div class="kpi"><div class="kpi-label">Итог (недостача − излишки)</div><div class="kpi-value num">{{ net_display }}</div><div class="kpi-sub">влияние на склад</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Посчитано позиций" %}</div><div class="kpi-value">{{ counted_count }} / {{ total_items }}</div><div class="kpi-sub">{% trans "факт введён" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Недостача" %}</div><div class="kpi-value num" style="color:var(--fc-danger-text);">{{ total_shortage_display }}</div><div class="kpi-sub">{% trans "стоимость" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Излишки" %}</div><div class="kpi-value num" style="color:var(--fc-green-text);">{{ total_surplus_display }}</div><div class="kpi-sub">{% trans "стоимость" %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Итог (недостача − излишки)" %}</div><div class="kpi-value num">{{ net_display }}</div><div class="kpi-sub">{% trans "влияние на склад" %}</div></div>
     </div>
 
     <!-- Продукты -->
     <div class="fc-card">
-        <h2>Продукты</h2>
+        <h2>{% trans "Продукты" %}</h2>
         <table class="items">
-            <thead><tr><th>Товар</th><th class="r">Система</th><th class="r">Факт</th><th class="r hide">Ушло в заготовки</th><th class="r">Недостача</th><th class="r">Стоимость</th></tr></thead>
+            <thead><tr><th>{% trans "Товар" %}</th><th class="r">{% trans "Система" %}</th><th class="r">{% trans "Факт" %}</th><th class="r hide">{% trans "Ушло в заготовки" %}</th><th class="r">{% trans "Недостача" %}</th><th class="r">{% trans "Стоимость" %}</th></tr></thead>
             <tbody>
                 {% for r in product_rows %}
                 <tr>
                     <td><strong>{{ r.name }}</strong> <span class="muted">{{ r.unit }}</span></td>
                     <td class="r num">{{ r.system }}</td>
-                    <td class="r num">{% if r.counted %}{{ r.fact }}{% else %}<span class="notcounted">не посчитано</span>{% endif %}</td>
+                    <td class="r num">{% if r.counted %}{{ r.fact }}{% else %}<span class="notcounted">{% trans "не посчитано" %}</span>{% endif %}</td>
                     <td class="r num hide muted">{{ r.gone }}</td>
                     <td class="r num {{ r.shortage_dir }}">{% if r.shortage != None %}{{ r.shortage }}{% else %}—{% endif %}</td>
                     <td class="r num {{ r.shortage_dir }}">{{ r.cost }}</td>
                 </tr>
-                {% empty %}<tr><td colspan="6" class="empty">Продуктов нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="6" class="empty">{% trans "Продуктов нет." %}</td></tr>{% endfor %}
             </tbody>
         </table>
-        <p class="muted" style="font-size:12px;margin-top:10px;">«Ушло в заготовки» — сколько этого продукта вошло в посчитанные заготовки по техкарте (рекурсивно). Недостача = Система − Факт − Ушло в заготовки.</p>
+        <p class="muted" style="font-size:12px;margin-top:10px;">{% trans "«Ушло в заготовки» — сколько этого продукта вошло в посчитанные заготовки по техкарте (рекурсивно). Недостача = Система − Факт − Ушло в заготовки." %}</p>
     </div>
 
     <!-- Заготовки -->
     <div class="fc-card">
-        <h2>Заготовки</h2>
+        <h2>{% trans "Заготовки" %}</h2>
         <table class="items">
-            <thead><tr><th>Заготовка</th><th class="r">Система</th><th class="r">Факт</th><th class="r">Расхождение</th><th class="r">Стоимость</th></tr></thead>
+            <thead><tr><th>{% trans "Заготовка" %}</th><th class="r">{% trans "Система" %}</th><th class="r">{% trans "Факт" %}</th><th class="r">{% trans "Расхождение" %}</th><th class="r">{% trans "Стоимость" %}</th></tr></thead>
             <tbody>
                 {% for r in prep_rows %}
                 <tr>
                     <td><strong>{{ r.name }}</strong> <span class="muted">{{ r.unit }}</span></td>
                     <td class="r num">{{ r.system }}</td>
-                    <td class="r num">{% if r.counted %}{{ r.fact }}{% else %}<span class="notcounted">не посчитано</span>{% endif %}</td>
+                    <td class="r num">{% if r.counted %}{{ r.fact }}{% else %}<span class="notcounted">{% trans "не посчитано" %}</span>{% endif %}</td>
                     <td class="r num {{ r.diff_dir }}">{% if r.diff != None %}{{ r.diff }}{% else %}—{% endif %}</td>
                     <td class="r num {{ r.diff_dir }}">{{ r.cost }}</td>
                 </tr>
-                {% empty %}<tr><td colspan="5" class="empty">Заготовок нет.</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="5" class="empty">{% trans "Заготовок нет." %}</td></tr>{% endfor %}
             </tbody>
         </table>
     </div>
 
     {% if logs %}
     <div class="fc-card">
-        <h2>История</h2>
+        <h2>{% trans "История" %}</h2>
         <div class="log-list">
             {% for log in logs %}<div class="log-item"><div>{{ log.action }}{% if log.comment %} — {{ log.comment }}{% endif %}</div><div class="log-meta">{{ log.created_at|date:"d.m.Y H:i" }} · {{ log.user.username|default:"—" }}</div></div>{% endfor %}
         </div>

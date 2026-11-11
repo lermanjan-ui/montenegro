@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Цены и доступность{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Цены и доступность" %}{% endblock %}
 {% block content %}
 <style>
 :root{ --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-border:#E5E7EB; --fc-text:#111827;
@@ -50,26 +51,26 @@ table.dp th.dp-sort:hover{ color:var(--fc-text); }
 
 <div class="dp-wrap" id="dpWrap" data-tab="site">
   <div class="dp-head">
-    <h1>Цены и доступность</h1>
-    <p>Цены, маржа и доступность блюд по точкам и в Uzum, расчёт выручки с учётом комиссий.</p>
+    <h1>{% trans "Цены и доступность" %}</h1>
+    <p>{% trans "Цены, маржа и доступность блюд по точкам и в Uzum, расчёт выручки с учётом комиссий." %}</p>
   </div>
 
   <div class="dp-tabs">
-    <button type="button" class="dp-tab active" data-tab="site">Сайт</button>
+    <button type="button" class="dp-tab active" data-tab="site">{% trans "Сайт" %}</button>
     <button type="button" class="dp-tab" data-tab="uzum">Uzum</button>
-    <button type="button" class="dp-tab" data-tab="yandex">Яндекс</button>
+    <button type="button" class="dp-tab" data-tab="yandex">{% trans "Яндекс" %}</button>
   </div>
 
   <div class="dp-bar">
     <form method="get" style="display:inline-flex;align-items:center;gap:6px;">
-      <span>Категория:</span>
+      <span>{% trans "Категория:" %}</span>
       <select name="category_id" onchange="this.form.submit()">
-        <option value="">Все категории</option>
+        <option value="">{% trans "Все категории" %}</option>
         {% for c in categories %}
         <option value="{{ c.id }}" {% if selected_category_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
       </select>
-      <noscript><button type="submit" class="dp-btn dp-btn-sec">Фильтр</button></noscript>
+      <noscript><button type="submit" class="dp-btn dp-btn-sec">{% trans "Фильтр" %}</button></noscript>
     </form>
 
     <form method="post" class="c-uzum">
@@ -77,30 +78,30 @@ table.dp th.dp-sort:hover{ color:var(--fc-text); }
       <input type="hidden" name="action" value="set_uzum_source">
       <input type="hidden" name="category_id" value="{{ selected_category_id }}">
       <input type="hidden" name="tab" class="dp-tabfield" value="site">
-      <span>Источник Uzum:</span>
+      <span>{% trans "Источник Uzum:" %}</span>
       <select name="uzum_source_id">
-        <option value="">— не выбран —</option>
+        <option value="">{% trans "— не выбран —" %}</option>
         {% for s in order_sources %}
         <option value="{{ s.id }}" {% if uzum_source and uzum_source.id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.commission_percent }}%)</option>
         {% endfor %}
       </select>
-      <button type="submit" class="dp-btn dp-btn-sec">Сохранить</button>
+      <button type="submit" class="dp-btn dp-btn-sec">{% trans "Сохранить" %}</button>
     </form>
-    <span class="dp-pill c-uzum">Комиссия Uzum: {{ uzum_comm }}%</span>
-    <span class="dp-pill c-yandex">Яндекс: {{ yandex_comm }}%</span>
+    <span class="dp-pill c-uzum">{% trans "Комиссия Uzum:" %} {{ uzum_comm }}%</span>
+    <span class="dp-pill c-yandex">{% trans "Яндекс" %}: {{ yandex_comm }}%</span>
 
     <form method="post" style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;">
       {% csrf_token %}
       <input type="hidden" name="action" value="apply_discount_all">
       <input type="hidden" name="category_id" value="{{ selected_category_id }}">
       <input type="hidden" name="tab" class="dp-tabfield" value="site">
-      <span>Скидка всем, %:</span>
-      <input class="dp-in c-site" type="text" name="all_site_discount" placeholder="сайт" style="width:64px;">
+      <span>{% trans "Скидка всем," %} %:</span>
+      <input class="dp-in c-site" type="text" name="all_site_discount" placeholder="{% trans "сайт" %}" style="width:64px;">
       <input class="dp-in c-uzum" type="text" name="all_uzum_discount" placeholder="Uzum" style="width:64px;">
-      <input class="dp-in c-yandex" type="text" name="all_yandex_discount" placeholder="Яндекс" style="width:64px;">
+      <input class="dp-in c-yandex" type="text" name="all_yandex_discount" placeholder="{% trans "Яндекс" %}" style="width:64px;">
       <button type="submit" class="dp-btn dp-btn-sec"
-              onclick="return confirm('Применить скидку ко ВСЕМ блюдам? Пустые поля не меняются.');">
-        Применить ко всем
+              onclick="return confirm('{% trans "Применить скидку ко ВСЕМ блюдам? Пустые поля не меняются." as jt %}{{ jt|escapejs }}');">
+        {% trans "Применить ко всем" %}
       </button>
     </form>
   </div>
@@ -109,24 +110,24 @@ table.dp th.dp-sort:hover{ color:var(--fc-text); }
     <table class="dp">
       <thead>
         <tr>
-          <th class="l">Фото</th>
-          <th class="l dp-sort" data-key="name">Блюдо<span class="dp-arr"></span></th>
-          <th class="dp-sort" data-key="cost">Себест.<span class="dp-arr"></span></th>
-          <th class="dp-sep c-site dp-sort" data-key="price">Стоимость<span class="dp-arr"></span></th>
-          <th class="c-site dp-sort" data-key="site_disc">Скидка сайт %<span class="dp-arr"></span></th>
-          <th class="c-site dp-sort" data-key="site_price_disc">Цена со ск.<span class="dp-arr"></span></th>
-          <th class="c-site dp-sort" data-key="site_margin">Маржа<span class="dp-arr"></span></th>
-          <th class="c-site">На сайте</th>
-          <th class="dp-sep c-uzum dp-sort" data-key="uzum_price">Цена Uzum<span class="dp-arr"></span></th>
-          <th class="c-uzum dp-sort" data-key="uzum_disc">Скидка Uzum %<span class="dp-arr"></span></th>
-          <th class="c-uzum dp-sort" data-key="uzum_net">Uzum: получим<span class="dp-arr"></span></th>
-          <th class="c-uzum dp-sort" data-key="uzum_margin">Маржа Uzum<span class="dp-arr"></span></th>
-          <th class="dp-sep c-yandex dp-sort" data-key="yandex_price">Цена Яндекс<span class="dp-arr"></span></th>
-          <th class="c-yandex dp-sort" data-key="yandex_disc">Скидка Яндекс %<span class="dp-arr"></span></th>
-          <th class="c-yandex dp-sort" data-key="yandex_net">Яндекс итог<span class="dp-arr"></span></th>
-          <th class="c-yandex dp-sort" data-key="yandex_margin">Маржа Яндекс<span class="dp-arr"></span></th>
+          <th class="l">{% trans "Фото" %}</th>
+          <th class="l dp-sort" data-key="name">{% trans "Блюдо" %}<span class="dp-arr"></span></th>
+          <th class="dp-sort" data-key="cost">{% trans "Себест." %}<span class="dp-arr"></span></th>
+          <th class="dp-sep c-site dp-sort" data-key="price">{% trans "Стоимость" %}<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_disc">{% trans "Скидка сайт" %} %<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_price_disc">{% trans "Цена со ск." %}<span class="dp-arr"></span></th>
+          <th class="c-site dp-sort" data-key="site_margin">{% trans "Маржа" %}<span class="dp-arr"></span></th>
+          <th class="c-site">{% trans "На сайте" %}</th>
+          <th class="dp-sep c-uzum dp-sort" data-key="uzum_price">{% trans "Цена Uzum" %}<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_disc">{% trans "Скидка Uzum" %} %<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_net">{% trans "Uzum: получим" %}<span class="dp-arr"></span></th>
+          <th class="c-uzum dp-sort" data-key="uzum_margin">{% trans "Маржа Uzum" %}<span class="dp-arr"></span></th>
+          <th class="dp-sep c-yandex dp-sort" data-key="yandex_price">{% trans "Цена Яндекс" %}<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_disc">{% trans "Скидка Яндекс" %} %<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_net">{% trans "Яндекс итог" %}<span class="dp-arr"></span></th>
+          <th class="c-yandex dp-sort" data-key="yandex_margin">{% trans "Маржа Яндекс" %}<span class="dp-arr"></span></th>
           {% for loc in locations %}
-            <th class="dp-sep c-site">{{ loc.name }}<div class="dp-grp">доступно</div></th>
+            <th class="dp-sep c-site">{{ loc.name }}<div class="dp-grp">{% trans "доступно" %}</div></th>
             <th class="c-uzum">{{ loc.name }}<div class="dp-grp">Uzum</div></th>
           {% endfor %}
           <th></th>
@@ -156,7 +157,7 @@ table.dp th.dp-sort:hover{ color:var(--fc-text); }
             <td class="c-site" data-key="site_margin" data-sort="{{ r.margin_abs }}">{% if r.margin_pct != None %}<span class="{% if r.margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.margin_abs }} <span class="dp-muted">({{ r.margin_pct }}%)</span></span>{% else %}—{% endif %}</td>
             <td class="c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="is_visible_on_site" value="1" {% if r.dish.is_visible_on_site %}checked{% endif %}></td>
 
-            <td class="dp-sep c-uzum" data-key="uzum_price" data-sort="{{ r.uzum_price }}"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="как сайт"></td>
+            <td class="dp-sep c-uzum" data-key="uzum_price" data-sort="{{ r.uzum_price }}"><input class="dp-in" type="text" name="uzum_price" value="{{ r.uzum_price }}" placeholder="{% trans "как сайт" %}"></td>
             <td class="c-uzum" data-key="uzum_disc" data-sort="{{ r.uzum_disc }}"><input class="dp-in" type="text" name="uzum_discount_percent" value="{{ r.uzum_disc|floatformat:'-2' }}" placeholder="0"></td>
             <td class="c-uzum" data-key="uzum_net" data-sort="{{ r.uzum_net }}">{{ r.uzum_net }}</td>
             <td class="c-uzum" data-key="uzum_margin" data-sort="{{ r.uzum_margin_abs }}"><span class="{% if r.uzum_margin_abs >= 0 %}dp-pos{% else %}dp-neg{% endif %}">{{ r.uzum_margin_abs }}</span>{% if r.uzum_margin_pct != None %} <span class="dp-muted">({{ r.uzum_margin_pct }}%)</span>{% endif %}</td>
@@ -168,14 +169,14 @@ table.dp th.dp-sort:hover{ color:var(--fc-text); }
 
             {% for c in r.loc_cells %}
               <td class="dp-sep c-site" style="text-align:center;"><input class="dp-chk" type="checkbox" name="avail" value="{{ c.loc.id }}" {% if c.available %}checked{% endif %}></td>
-              <td class="c-uzum" style="text-align:center;" title="{% if not c.uzum_enabled %}Точка не подключена к Uzum{% endif %}"><input class="dp-chk" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
+              <td class="c-uzum" style="text-align:center;" title="{% if not c.uzum_enabled %}{% trans "Точка не подключена к Uzum" %}{% endif %}"><input class="dp-chk" type="checkbox" name="uzum_ok" value="{{ c.loc.id }}" {% if c.uzum_ok %}checked{% endif %}></td>
             {% endfor %}
 
             <td><button type="submit" class="dp-save">OK</button></td>
           </form>
         </tr>
         {% empty %}
-        <tr><td class="dp-empty" colspan="30">Нет блюд.</td></tr>
+        <tr><td class="dp-empty" colspan="30">{% trans "Нет блюд." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

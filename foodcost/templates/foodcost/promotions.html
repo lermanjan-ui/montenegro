@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Акции{% endblock %}
+{% block title %}{% trans "Акции" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -207,16 +208,15 @@
 
 <div class="promo-page">
 
-    <h1>Акции</h1>
+    <h1>{% trans "Акции" %}</h1>
     <div class="promo-subtitle">
-        Маркетинговые акции: скидки, «N по цене M» и подарки. Промокоды настраиваются
-        отдельно на странице настроек.
+        {% trans "Маркетинговые акции: скидки, «N по цене M» и подарки. Промокоды настраиваются отдельно на странице настроек." %}
     </div>
 
     {# ===== Создание новой акции ===== #}
     {% if can_edit %}
     <div class="promo-card">
-        <div class="promo-card-title">Новая акция</div>
+        <div class="promo-card-title">{% trans "Новая акция" %}</div>
 
         <form method="post" data-promo-form>
             {% csrf_token %}
@@ -224,117 +224,117 @@
 
             <div class="promo-grid">
                 <div>
-                    <label class="fld">Тип акции</label>
+                    <label class="fld">{% trans "Тип акции" %}</label>
                     <select name="type" class="promo-type">
-                        <option value="percent_off">Скидка %</option>
-                        <option value="amount_off">Скидка суммой</option>
-                        <option value="buy_x_pay_y">N по цене M</option>
-                        <option value="gift">Подарок</option>
+                        <option value="percent_off">{% trans "Скидка %" %}</option>
+                        <option value="amount_off">{% trans "Скидка суммой" %}</option>
+                        <option value="buy_x_pay_y">{% trans "N по цене M" %}</option>
+                        <option value="gift">{% trans "Подарок" %}</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="fld">Текст для покупателя (бейдж)</label>
-                    <input type="text" name="label" placeholder="Например: 2 по цене 1" required>
+                    <label class="fld">{% trans "Текст для покупателя (бейдж)" %}</label>
+                    <input type="text" name="label" placeholder="{% trans "Например: 2 по цене 1" %}" required>
                 </div>
 
                 <div>
-                    <label class="fld">Цвет бейджа</label>
+                    <label class="fld">{% trans "Цвет бейджа" %}</label>
                     <select name="style">
-                        <option value="gray">Серый</option>
-                        <option value="red">Красный</option>
-                        <option value="purple">Фиолетовый</option>
-                        <option value="green">Зелёный</option>
+                        <option value="gray">{% trans "Серый" %}</option>
+                        <option value="red">{% trans "Красный" %}</option>
+                        <option value="purple">{% trans "Фиолетовый" %}</option>
+                        <option value="green">{% trans "Зелёный" %}</option>
                     </select>
                 </div>
 
                 <div>
                     <label class="promo-check" style="margin-top:24px;">
                         <input type="checkbox" name="is_active" value="1" checked>
-                        Акция включена
+                        {% trans "Акция включена" %}
                     </label>
                 </div>
 
                 <div>
-                    <label class="fld">Действует с</label>
+                    <label class="fld">{% trans "Действует с" %}</label>
                     <input type="date" name="date_from">
                 </div>
 
                 <div>
-                    <label class="fld">Действует по</label>
+                    <label class="fld">{% trans "Действует по" %}</label>
                     <input type="date" name="date_to">
                 </div>
 
                 <div>
-                    <label class="fld">Часы с (счастливые часы)</label>
+                    <label class="fld">{% trans "Часы с (счастливые часы)" %}</label>
                     <input type="time" name="time_from">
                 </div>
                 <div>
-                    <label class="fld">Часы по</label>
+                    <label class="fld">{% trans "Часы по" %}</label>
                     <input type="time" name="time_to">
                 </div>
 
                 {# скидка % #}
                 <div data-for-type="percent_off">
-                    <label class="fld">Процент скидки</label>
+                    <label class="fld">{% trans "Процент скидки" %}</label>
                     <input type="number" name="percent" min="0" max="100" step="0.01" placeholder="15">
                 </div>
 
                 {# скидка суммой #}
                 <div data-for-type="amount_off">
-                    <label class="fld">Сумма скидки (UZS)</label>
+                    <label class="fld">{% trans "Сумма скидки (UZS)" %}</label>
                     <input type="number" name="amount" min="0" step="1" placeholder="12000">
                 </div>
 
                 {# N по цене M #}
                 <div data-for-type="buy_x_pay_y">
-                    <label class="fld">Купить (N)</label>
+                    <label class="fld">{% trans "Купить (N)" %}</label>
                     <input type="number" name="buy_quantity" min="1" step="1" placeholder="2">
                 </div>
                 <div data-for-type="buy_x_pay_y">
-                    <label class="fld">Оплатить (M)</label>
+                    <label class="fld">{% trans "Оплатить (M)" %}</label>
                     <input type="number" name="pay_quantity" min="1" step="1" placeholder="1">
                 </div>
 
                 {# подарок #}
                 <div data-for-type="gift">
-                    <label class="fld">Подарок при сумме от (UZS)</label>
+                    <label class="fld">{% trans "Подарок при сумме от (UZS)" %}</label>
                     <input type="number" name="threshold_amount" min="0" step="1" placeholder="200000">
-                    <div class="promo-hint">Пусто — подарок не по сумме, а по набору блюд (ниже).</div>
+                    <div class="promo-hint">{% trans "Пусто — подарок не по сумме, а по набору блюд (ниже)." %}</div>
                 </div>
                 <div data-for-type="gift">
-                    <label class="fld">Что дарим</label>
+                    <label class="fld">{% trans "Что дарим" %}</label>
                     <select name="gift_dish">
-                        <option value="">— выберите блюдо —</option>
+                        <option value="">{% trans "— выберите блюдо —" %}</option>
                         {% for dish in dishes %}
                             <option value="{{ dish.id }}">{{ dish.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div data-for-type="gift">
-                    <label class="fld">Кол-во подарков</label>
+                    <label class="fld">{% trans "Кол-во подарков" %}</label>
                     <input type="number" name="gift_quantity" min="1" step="1" value="1">
                 </div>
                 <div data-for-type="gift" class="span-2">
-                    <label class="fld">Подарок при наличии блюд (набор)</label>
+                    <label class="fld">{% trans "Подарок при наличии блюд (набор)" %}</label>
                     <select name="required_dishes" multiple>
                         {% for dish in dishes %}
                             <option value="{{ dish.id }}">{{ dish.name }}</option>
                         {% endfor %}
                     </select>
-                    <div class="promo-hint">Удерживайте Ctrl/Cmd для выбора нескольких. Пусто — не по набору.</div>
+                    <div class="promo-hint">{% trans "Удерживайте Ctrl/Cmd для выбора нескольких. Пусто — не по набору." %}</div>
                 </div>
 
                 {# область действия (для скидок и N+M) #}
                 <div class="span-2" data-for-type="percent_off amount_off buy_x_pay_y" data-scope-wrap>
-                    <label class="fld">На какие блюда</label>
+                    <label class="fld">{% trans "На какие блюда" %}</label>
                     <select name="scope_type" class="promo-scope-type">
-                        <option value="all">Все блюда</option>
-                        <option value="include">Только выбранные</option>
-                        <option value="exclude">Все, кроме выбранных</option>
+                        <option value="all">{% trans "Все блюда" %}</option>
+                        <option value="include">{% trans "Только выбранные" %}</option>
+                        <option value="exclude">{% trans "Все, кроме выбранных" %}</option>
                     </select>
                     <div data-scope-dishes style="margin-top:10px;">
-                        <label class="fld">Блюда</label>
+                        <label class="fld">{% trans "Блюда" %}</label>
                         <select name="scope_dishes" multiple>
                             {% for dish in dishes %}
                                 <option value="{{ dish.id }}">{{ dish.name }}</option>
@@ -347,18 +347,18 @@
                 <div>
                     <label class="promo-check" style="margin-top:24px;">
                         <input type="checkbox" name="stackable" value="1">
-                        Сочетается с другими акциями
+                        {% trans "Сочетается с другими акциями" %}
                     </label>
                 </div>
                 <div>
-                    <label class="fld">Приоритет</label>
+                    <label class="fld">{% trans "Приоритет" %}</label>
                     <input type="number" name="priority" step="1" value="0">
-                    <div class="promo-hint">Чем больше, тем раньше применяется при конфликте.</div>
+                    <div class="promo-hint">{% trans "Чем больше, тем раньше применяется при конфликте." %}</div>
                 </div>
             </div>
 
             <div class="promo-actions">
-                <button type="submit" class="promo-btn">Создать акцию</button>
+                <button type="submit" class="promo-btn">{% trans "Создать акцию" %}</button>
             </div>
         </form>
     </div>
@@ -372,8 +372,8 @@
                 <span class="promo-badge {{ promo.style }}">{{ promo.label }}</span>
                 <div style="margin-top:8px;font-size:13px;color:#6b7280;font-weight:800;">
                     {{ promo.get_type_display }}
-                    · {% if promo.is_active %}<span class="promo-state-on">включена</span>{% else %}<span class="promo-state-off">выключена</span>{% endif %}
-                    · приоритет {{ promo.priority }}
+                    · {% if promo.is_active %}<span class="promo-state-on">{% trans "включена" %}</span>{% else %}<span class="promo-state-off">{% trans "выключена" %}</span>{% endif %}
+                    · {% blocktrans with p=promo.priority %}приоритет {{ p }}{% endblocktrans %}
                 </div>
             </div>
 
@@ -384,14 +384,14 @@
                     <input type="hidden" name="action" value="toggle_promotion">
                     <input type="hidden" name="item_id" value="{{ promo.id }}">
                     <button type="submit" class="promo-btn-light">
-                        {% if promo.is_active %}Выключить{% else %}Включить{% endif %}
+                        {% if promo.is_active %}{% trans "Выключить" %}{% else %}{% trans "Включить" %}{% endif %}
                     </button>
                 </form>
-                <form method="post" onsubmit="return confirm('Удалить акцию?');">
+                {% trans "Удалить акцию?" as _c_delpromo %}<form method="post" onsubmit="return confirm('{{ _c_delpromo|escapejs }}');">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="delete_promotion">
                     <input type="hidden" name="item_id" value="{{ promo.id }}">
-                    <button type="submit" class="promo-btn-danger">Удалить</button>
+                    <button type="submit" class="promo-btn-danger">{% trans "Удалить" %}</button>
                 </form>
             </div>
             {% endif %}
@@ -405,94 +405,94 @@
 
             <div class="promo-grid">
                 <div>
-                    <label class="fld">Тип акции</label>
+                    <label class="fld">{% trans "Тип акции" %}</label>
                     <select name="type" class="promo-type">
-                        <option value="percent_off" {% if promo.type == "percent_off" %}selected{% endif %}>Скидка %</option>
-                        <option value="amount_off" {% if promo.type == "amount_off" %}selected{% endif %}>Скидка суммой</option>
-                        <option value="buy_x_pay_y" {% if promo.type == "buy_x_pay_y" %}selected{% endif %}>N по цене M</option>
-                        <option value="gift" {% if promo.type == "gift" %}selected{% endif %}>Подарок</option>
+                        <option value="percent_off" {% if promo.type == "percent_off" %}selected{% endif %}>{% trans "Скидка %" %}</option>
+                        <option value="amount_off" {% if promo.type == "amount_off" %}selected{% endif %}>{% trans "Скидка суммой" %}</option>
+                        <option value="buy_x_pay_y" {% if promo.type == "buy_x_pay_y" %}selected{% endif %}>{% trans "N по цене M" %}</option>
+                        <option value="gift" {% if promo.type == "gift" %}selected{% endif %}>{% trans "Подарок" %}</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="fld">Текст для покупателя (бейдж)</label>
+                    <label class="fld">{% trans "Текст для покупателя (бейдж)" %}</label>
                     <input type="text" name="label" value="{{ promo.label }}" required>
                 </div>
 
                 <div>
-                    <label class="fld">Цвет бейджа</label>
+                    <label class="fld">{% trans "Цвет бейджа" %}</label>
                     <select name="style">
-                        <option value="gray" {% if promo.style == "gray" %}selected{% endif %}>Серый</option>
-                        <option value="red" {% if promo.style == "red" %}selected{% endif %}>Красный</option>
-                        <option value="purple" {% if promo.style == "purple" %}selected{% endif %}>Фиолетовый</option>
-                        <option value="green" {% if promo.style == "green" %}selected{% endif %}>Зелёный</option>
+                        <option value="gray" {% if promo.style == "gray" %}selected{% endif %}>{% trans "Серый" %}</option>
+                        <option value="red" {% if promo.style == "red" %}selected{% endif %}>{% trans "Красный" %}</option>
+                        <option value="purple" {% if promo.style == "purple" %}selected{% endif %}>{% trans "Фиолетовый" %}</option>
+                        <option value="green" {% if promo.style == "green" %}selected{% endif %}>{% trans "Зелёный" %}</option>
                     </select>
                 </div>
 
                 <div>
                     <label class="promo-check" style="margin-top:24px;">
                         <input type="checkbox" name="is_active" value="1" {% if promo.is_active %}checked{% endif %}>
-                        Акция включена
+                        {% trans "Акция включена" %}
                     </label>
                 </div>
 
                 <div>
-                    <label class="fld">Действует с</label>
+                    <label class="fld">{% trans "Действует с" %}</label>
                     <input type="date" name="date_from" value="{{ promo.date_from|date:'Y-m-d' }}">
                 </div>
 
                 <div>
-                    <label class="fld">Действует по</label>
+                    <label class="fld">{% trans "Действует по" %}</label>
                     <input type="date" name="date_to" value="{{ promo.date_to|date:'Y-m-d' }}">
                 </div>
 
                 <div>
-                    <label class="fld">Часы с (счастливые часы)</label>
+                    <label class="fld">{% trans "Часы с (счастливые часы)" %}</label>
                     <input type="time" name="time_from" value="{{ promo.time_from|time:'H:i' }}">
                 </div>
                 <div>
-                    <label class="fld">Часы по</label>
+                    <label class="fld">{% trans "Часы по" %}</label>
                     <input type="time" name="time_to" value="{{ promo.time_to|time:'H:i' }}">
                 </div>
 
                 <div data-for-type="percent_off">
-                    <label class="fld">Процент скидки</label>
+                    <label class="fld">{% trans "Процент скидки" %}</label>
                     <input type="number" name="percent" min="0" max="100" step="0.01" value="{{ promo.percent|default_if_none:'' }}">
                 </div>
 
                 <div data-for-type="amount_off">
-                    <label class="fld">Сумма скидки (UZS)</label>
+                    <label class="fld">{% trans "Сумма скидки (UZS)" %}</label>
                     <input type="number" name="amount" min="0" step="1" value="{{ promo.amount|default_if_none:'' }}">
                 </div>
 
                 <div data-for-type="buy_x_pay_y">
-                    <label class="fld">Купить (N)</label>
+                    <label class="fld">{% trans "Купить (N)" %}</label>
                     <input type="number" name="buy_quantity" min="1" step="1" value="{{ promo.buy_quantity|default_if_none:'' }}">
                 </div>
                 <div data-for-type="buy_x_pay_y">
-                    <label class="fld">Оплатить (M)</label>
+                    <label class="fld">{% trans "Оплатить (M)" %}</label>
                     <input type="number" name="pay_quantity" min="1" step="1" value="{{ promo.pay_quantity|default_if_none:'' }}">
                 </div>
 
                 <div data-for-type="gift">
-                    <label class="fld">Подарок при сумме от (UZS)</label>
+                    <label class="fld">{% trans "Подарок при сумме от (UZS)" %}</label>
                     <input type="number" name="threshold_amount" min="0" step="1" value="{{ promo.threshold_amount|default_if_none:'' }}">
                 </div>
                 <div data-for-type="gift">
-                    <label class="fld">Что дарим</label>
+                    <label class="fld">{% trans "Что дарим" %}</label>
                     <select name="gift_dish">
-                        <option value="">— выберите блюдо —</option>
+                        <option value="">{% trans "— выберите блюдо —" %}</option>
                         {% for dish in dishes %}
                             <option value="{{ dish.id }}" {% if dish.id == promo.gift_dish_id %}selected{% endif %}>{{ dish.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div data-for-type="gift">
-                    <label class="fld">Кол-во подарков</label>
+                    <label class="fld">{% trans "Кол-во подарков" %}</label>
                     <input type="number" name="gift_quantity" min="1" step="1" value="{{ promo.gift_quantity }}">
                 </div>
                 <div data-for-type="gift" class="span-2">
-                    <label class="fld">Подарок при наличии блюд (набор)</label>
+                    <label class="fld">{% trans "Подарок при наличии блюд (набор)" %}</label>
                     <select name="required_dishes" multiple>
                         {% for dish in dishes %}
                             <option value="{{ dish.id }}" {% if dish in promo.required_dishes.all %}selected{% endif %}>{{ dish.name }}</option>
@@ -501,14 +501,14 @@
                 </div>
 
                 <div class="span-2" data-for-type="percent_off amount_off buy_x_pay_y" data-scope-wrap>
-                    <label class="fld">На какие блюда</label>
+                    <label class="fld">{% trans "На какие блюда" %}</label>
                     <select name="scope_type" class="promo-scope-type">
-                        <option value="all" {% if promo.scope_type == "all" %}selected{% endif %}>Все блюда</option>
-                        <option value="include" {% if promo.scope_type == "include" %}selected{% endif %}>Только выбранные</option>
-                        <option value="exclude" {% if promo.scope_type == "exclude" %}selected{% endif %}>Все, кроме выбранных</option>
+                        <option value="all" {% if promo.scope_type == "all" %}selected{% endif %}>{% trans "Все блюда" %}</option>
+                        <option value="include" {% if promo.scope_type == "include" %}selected{% endif %}>{% trans "Только выбранные" %}</option>
+                        <option value="exclude" {% if promo.scope_type == "exclude" %}selected{% endif %}>{% trans "Все, кроме выбранных" %}</option>
                     </select>
                     <div data-scope-dishes style="margin-top:10px;">
-                        <label class="fld">Блюда</label>
+                        <label class="fld">{% trans "Блюда" %}</label>
                         <select name="scope_dishes" multiple>
                             {% for dish in dishes %}
                                 <option value="{{ dish.id }}" {% if dish in promo.scope_dishes.all %}selected{% endif %}>{{ dish.name }}</option>
@@ -520,16 +520,16 @@
                 <div>
                     <label class="promo-check" style="margin-top:24px;">
                         <input type="checkbox" name="stackable" value="1" {% if promo.stackable %}checked{% endif %}>
-                        Сочетается с другими акциями
+                        {% trans "Сочетается с другими акциями" %}
                     </label>
                 </div>
                 <div>
-                    <label class="fld">Приоритет</label>
+                    <label class="fld">{% trans "Приоритет" %}</label>
                     <input type="number" name="priority" step="1" value="{{ promo.priority }}">
                 </div>
 
                 <div class="span-2">
-                    <label class="fld">Не сочетается с акциями</label>
+                    <label class="fld">{% trans "Не сочетается с акциями" %}</label>
                     <select name="excludes" multiple>
                         {% for other in promotions %}
                             {% if other.id != promo.id %}
@@ -541,20 +541,20 @@
             </div>
 
             <div class="promo-actions">
-                <button type="submit" class="promo-btn">Сохранить</button>
+                <button type="submit" class="promo-btn">{% trans "Сохранить" %}</button>
             </div>
         </form>
         {% endif %}
     </div>
     {% empty %}
     <div class="promo-card">
-        <div class="promo-empty">Акций пока нет. Создайте первую выше.</div>
+        <div class="promo-empty">{% trans "Акций пока нет. Создайте первую выше." %}</div>
     </div>
     {% endfor %}
 
     {# ===== Промокоды (перенесены со страницы настроек) ===== #}
     <div class="promo-card">
-        <div class="promo-card-title">Промокоды</div>
+        <div class="promo-card-title">{% trans "Промокоды" %}</div>
 
         {% if can_edit %}
         <form method="post">
@@ -562,11 +562,11 @@
             <input type="hidden" name="action" value="create_promo_code">
             <div class="promo-grid">
                 <div>
-                    <label class="fld">Код</label>
-                    <input type="text" name="code" placeholder="Например: F94" required>
+                    <label class="fld">{% trans "Код" %}</label>
+                    <input type="text" name="code" placeholder="{% trans "Например: F94" %}" required>
                 </div>
                 <div>
-                    <label class="fld">Скидка %</label>
+                    <label class="fld">{% trans "Скидка %" %}</label>
                     <input type="number" name="percent" step="0.01" min="0" placeholder="10">
                 </div>
                 <div>
@@ -580,12 +580,12 @@
                 <div>
                     <label class="promo-check" style="margin-top:24px;">
                         <input type="checkbox" name="is_active" value="1" checked>
-                        Включён
+                        {% trans "Включён" %}
                     </label>
                 </div>
             </div>
             <div class="promo-actions">
-                <button type="submit" class="promo-btn">Добавить промокод</button>
+                <button type="submit" class="promo-btn">{% trans "Добавить промокод" %}</button>
             </div>
         </form>
         {% endif %}
@@ -597,26 +597,26 @@
                     <div>
                         <div style="font-weight:950;font-size:16px;">{{ item.code }}</div>
                         <div style="margin-top:6px;font-size:13px;color:#6b7280;font-weight:800;">
-                            Скидка {{ item.percent }}%
-                            {% if item.eligible_ids %}· на {{ item.eligible_ids|length }} блюд{% else %}· на весь заказ{% endif %}
+                            {% blocktrans with pct=item.percent %}Скидка {{ pct }}{% endblocktrans %}%
+                            {% if item.eligible_ids %}· {% blocktrans with n=item.eligible_ids|length %}на {{ n }} блюд{% endblocktrans %}{% else %}· {% trans "на весь заказ" %}{% endif %}
                             {% if item.utm_campaign %}· {{ item.utm_campaign }}{% endif %}
-                            · {% if item.is_active %}<span class="promo-state-on">включён</span>{% else %}<span class="promo-state-off">выключен</span>{% endif %}
+                            · {% if item.is_active %}<span class="promo-state-on">{% trans "включён" %}</span>{% else %}<span class="promo-state-off">{% trans "выключен" %}</span>{% endif %}
                             {% if item.valid_from or item.valid_until %}· {{ item.valid_from|date:'d.m.y'|default:'…' }}–{{ item.valid_until|date:'d.m.y'|default:'∞' }}{% endif %}
                         </div>
                     </div>
                     {% if can_edit %}
-                    <form method="post" onsubmit="return confirm('Удалить промокод?');">
+                    {% trans "Удалить промокод?" as _c_delcode %}<form method="post" onsubmit="return confirm('{{ _c_delcode|escapejs }}');">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete_promo_code">
                         <input type="hidden" name="item_id" value="{{ item.id }}">
-                        <button type="submit" class="promo-btn-danger">Удалить</button>
+                        <button type="submit" class="promo-btn-danger">{% trans "Удалить" %}</button>
                     </form>
                     {% endif %}
                 </div>
 
                 {% if can_edit %}
                 <details style="margin-top:12px;">
-                    <summary style="cursor:pointer;font-weight:900;font-size:13px;color:#374151;">Настроить (срок, UTM, блюда)</summary>
+                    <summary style="cursor:pointer;font-weight:900;font-size:13px;color:#374151;">{% trans "Настроить (срок, UTM, блюда)" %}</summary>
                     <form method="post" style="margin-top:12px;">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="update_promo_code">
@@ -624,21 +624,21 @@
 
                         <div class="promo-grid">
                             <div>
-                                <label class="fld">Скидка %</label>
+                                <label class="fld">{% trans "Скидка %" %}</label>
                                 <input type="number" name="percent" step="0.01" min="0" value="{{ item.percent }}">
                             </div>
                             <div>
                                 <label class="promo-check" style="margin-top:24px;">
                                     <input type="checkbox" name="is_active" value="1" {% if item.is_active %}checked{% endif %}>
-                                    Включён
+                                    {% trans "Включён" %}
                                 </label>
                             </div>
                             <div>
-                                <label class="fld">Действует с</label>
+                                <label class="fld">{% trans "Действует с" %}</label>
                                 <input type="date" name="valid_from" value="{{ item.valid_from|date:'Y-m-d' }}">
                             </div>
                             <div>
-                                <label class="fld">по</label>
+                                <label class="fld">{% trans "по" %}</label>
                                 <input type="date" name="valid_until" value="{{ item.valid_until|date:'Y-m-d' }}">
                             </div>
                             <div>
@@ -662,17 +662,17 @@
                                 <input type="text" name="utm_term" value="{{ item.utm_term }}">
                             </div>
                             <div class="span-2">
-                                <label class="fld">Режим скидки</label>
+                                <label class="fld">{% trans "Режим скидки" %}</label>
                                 <select name="scope">
-                                    <option value="auto" {% if item.scope == "auto" %}selected{% endif %}>Авто (как раньше)</option>
-                                    <option value="all" {% if item.scope == "all" %}selected{% endif %}>На весь заказ</option>
-                                    <option value="include" {% if item.scope == "include" %}selected{% endif %}>Только выбранные блюда</option>
-                                    <option value="exclude" {% if item.scope == "exclude" %}selected{% endif %}>Все, кроме выбранных</option>
+                                    <option value="auto" {% if item.scope == "auto" %}selected{% endif %}>{% trans "Авто (как раньше)" %}</option>
+                                    <option value="all" {% if item.scope == "all" %}selected{% endif %}>{% trans "На весь заказ" %}</option>
+                                    <option value="include" {% if item.scope == "include" %}selected{% endif %}>{% trans "Только выбранные блюда" %}</option>
+                                    <option value="exclude" {% if item.scope == "exclude" %}selected{% endif %}>{% trans "Все, кроме выбранных" %}</option>
                                 </select>
-                                <div class="promo-hint">«Только выбранные» и «Все, кроме» используют список блюд ниже.</div>
+                                <div class="promo-hint">{% trans "«Только выбранные» и «Все, кроме» используют список блюд ниже." %}</div>
                             </div>
                             <div class="span-2">
-                                <label class="fld">Блюда для скидки (пусто — на весь заказ)</label>
+                                <label class="fld">{% trans "Блюда для скидки (пусто — на весь заказ)" %}</label>
                                 <select name="eligible_dishes" multiple>
                                     {% for d in dishes %}
                                         <option value="{{ d.id }}" {% if d.id in item.eligible_ids %}selected{% endif %}>{{ d.name }}</option>
@@ -682,14 +682,14 @@
                         </div>
 
                         <div class="promo-actions">
-                            <button type="submit" class="promo-btn">Сохранить</button>
+                            <button type="submit" class="promo-btn">{% trans "Сохранить" %}</button>
                         </div>
                     </form>
                 </details>
                 {% endif %}
             </div>
             {% empty %}
-            <div class="promo-empty">Пока нет промокодов</div>
+            <div class="promo-empty">{% trans "Пока нет промокодов" %}</div>
             {% endfor %}
         </div>
     </div>

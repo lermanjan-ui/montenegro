@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Склейка дублей Payme{% endblock %}
+{% block title %}{% trans "Склейка дублей Payme" %}{% endblock %}
 
 {% block content %}
 
@@ -33,27 +34,18 @@ code{ background:#f3f4f6; padding:1px 6px; border-radius:6px; font-size:13px; }
 
 <div class="pm-wrap">
 
-    <h1>Склейка дублей «Payme»</h1>
+    <h1>{% trans "Склейка дублей «Payme»" %}</h1>
     <p class="pm-sub">
-        Временный инструмент (только суперадмин). Объединяет несколько
-        записей платёжного метода «Payme» в одну. Заказы и источники
-        перепривязываются к оставляемой записи, дубликаты удаляются.
-        Оставляемая запись всегда получает имя ровно <code>{{ canonical }}</code> —
-        именно его использует сайт при онлайн-оплате.
+        {% trans "Временный инструмент (только суперадмин). Объединяет несколько записей платёжного метода «Payme» в одну. Заказы и источники перепривязываются к оставляемой записи, дубликаты удаляются. Оставляемая запись всегда получает имя ровно" %} <code>{{ canonical }}</code> {% trans "— именно его использует сайт при онлайн-оплате." %}
     </p>
 
     {% if result %}
         <div class="pm-banner ok">
-            <strong>Готово.</strong>
-            Склеено групп: {{ result.groups_merged }}.
-            Перепривязано заказов: {{ result.orders_reattached }},
-            источников: {{ result.sources_reattached }}.
-            Удалено дубликатов: {{ result.duplicates_deleted }}.
+            <strong>{% trans "Готово." %}</strong>
+            {% blocktrans with g=result.groups_merged o=result.orders_reattached s=result.sources_reattached d=result.duplicates_deleted %}Склеено групп: {{ g }}. Перепривязано заказов: {{ o }}, источников: {{ s }}. Удалено дубликатов: {{ d }}.{% endblocktrans %}
             {% for d in result.details %}
                 <div style="margin-top:6px;">
-                    {{ d.country }}: оставлена запись id={{ d.keeper_id }},
-                    перенесено {{ d.moved_orders }} заказ(ов) и {{ d.moved_sources }} источник(ов),
-                    удалены id: {{ d.deleted_ids|join:", " }}.
+                    {% blocktrans with c=d.country k=d.keeper_id mo=d.moved_orders ms=d.moved_sources ids=d.deleted_ids|join:", " %}{{ c }}: оставлена запись id={{ k }}, перенесено {{ mo }} заказ(ов) и {{ ms }} источник(ов), удалены id: {{ ids }}.{% endblocktrans %}
                 </div>
             {% endfor %}
         </div>
@@ -62,56 +54,55 @@ code{ background:#f3f4f6; padding:1px 6px; border-radius:6px; font-size:13px; }
     {% if plans %}
 
         <div class="pm-banner warn">
-            <strong>Проверь план ниже и нажми «Склеить».</strong>
-            Операция выполняется в одной транзакции — при любой ошибке
-            ничего не меняется. После склейки эту страницу и маршрут можно удалить.
+            <strong>{% trans "Проверь план ниже и нажми «Склеить»." %}</strong>
+            {% trans "Операция выполняется в одной транзакции — при любой ошибке ничего не меняется. После склейки эту страницу и маршрут можно удалить." %}
         </div>
 
         {% for plan in plans %}
             <div class="pm-card">
-                <h2>Страна: {{ plan.country.name }}</h2>
+                <h2>{% blocktrans with n=plan.country.name %}Страна: {{ n }}{% endblocktrans %}</h2>
 
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th><th>Имя</th><th>Активен</th><th>Нал.</th>
-                            <th class="num">Заказов</th><th class="num">Источников</th><th>Роль</th>
+                            <th>ID</th><th>{% trans "Имя" %}</th><th>{% trans "Активен" %}</th><th>{% trans "Нал." %}</th>
+                            <th class="num">{% trans "Заказов" %}</th><th class="num">{% trans "Источников" %}</th><th>{% trans "Роль" %}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>{{ plan.keeper.id }}</td>
                             <td><strong>{{ plan.keeper.name }}</strong></td>
-                            <td>{% if plan.keeper.is_active %}<span class="tag tag-on">да</span>{% else %}<span class="tag tag-off">нет</span>{% endif %}</td>
-                            <td>{% if plan.keeper.is_cash %}<span class="tag tag-on">да</span>{% else %}<span class="tag tag-off">нет</span>{% endif %}</td>
+                            <td>{% if plan.keeper.is_active %}<span class="tag tag-on">{% trans "да" %}</span>{% else %}<span class="tag tag-off">{% trans "нет" %}</span>{% endif %}</td>
+                            <td>{% if plan.keeper.is_cash %}<span class="tag tag-on">{% trans "да" %}</span>{% else %}<span class="tag tag-off">{% trans "нет" %}</span>{% endif %}</td>
                             <td class="num">{{ plan.keeper.orders }}</td>
                             <td class="num">{{ plan.keeper.sources }}</td>
-                            <td><span class="tag tag-keep">оставляем</span></td>
+                            <td><span class="tag tag-keep">{% trans "оставляем" %}</span></td>
                         </tr>
                         {% for d in plan.dups %}
                             <tr>
                                 <td>{{ d.id }}</td>
                                 <td>{{ d.name }}</td>
-                                <td>{% if d.is_active %}<span class="tag tag-on">да</span>{% else %}<span class="tag tag-off">нет</span>{% endif %}</td>
-                                <td>{% if d.is_cash %}<span class="tag tag-on">да</span>{% else %}<span class="tag tag-off">нет</span>{% endif %}</td>
+                                <td>{% if d.is_active %}<span class="tag tag-on">{% trans "да" %}</span>{% else %}<span class="tag tag-off">{% trans "нет" %}</span>{% endif %}</td>
+                                <td>{% if d.is_cash %}<span class="tag tag-on">{% trans "да" %}</span>{% else %}<span class="tag tag-off">{% trans "нет" %}</span>{% endif %}</td>
                                 <td class="num">{{ d.orders }}</td>
                                 <td class="num">{{ d.sources }}</td>
-                                <td><span class="tag tag-dup">склеить → удалить</span></td>
+                                <td><span class="tag tag-dup">{% trans "склеить → удалить" %}</span></td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
 
                 <div class="plan-line">
-                    Переедет на оставляемую запись:
-                    <strong>{{ plan.orders_to_move }}</strong> заказ(ов),
-                    <strong>{{ plan.sources_to_move }}</strong> источник(ов).
+                    {% trans "Переедет на оставляемую запись:" %}
+                    <strong>{{ plan.orders_to_move }}</strong> {% trans "заказ(ов)," %}
+                    <strong>{{ plan.sources_to_move }}</strong> {% trans "источник(ов)." %}
                 </div>
                 {% if plan.keeper_needs_rename %}
-                    <div class="plan-line">Оставляемая запись будет переименована в <code>{{ canonical }}</code>.</div>
+                    <div class="plan-line">{% trans "Оставляемая запись будет переименована в" %} <code>{{ canonical }}</code>.</div>
                 {% endif %}
                 {% if plan.keeper_needs_cash_fix %}
-                    <div class="plan-line">У оставляемой записи будет снят флаг «наличные» (Payme — онлайн-оплата).</div>
+                    <div class="plan-line">{% trans "У оставляемой записи будет снят флаг «наличные» (Payme — онлайн-оплата)." %}</div>
                 {% endif %}
             </div>
         {% endfor %}
@@ -119,17 +110,17 @@ code{ background:#f3f4f6; padding:1px 6px; border-radius:6px; font-size:13px; }
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="merge">
-            <button type="submit" class="btn"
-                    onclick="return confirm('Склеить дубли Payme? Действие изменит привязку заказов и удалит дубликаты.');">
-                Склеить
+            {% trans "Склеить дубли Payme? Действие изменит привязку заказов и удалит дубликаты." as _c_pm %}<button type="submit" class="btn"
+                    onclick="return confirm('{{ _c_pm|escapejs }}');">
+                {% trans "Склеить" %}
             </button>
         </form>
 
     {% else %}
 
         <div class="pm-banner info">
-            Дублей «Payme» не найдено — склеивать нечего. Всё чисто.
-            {% if result %}Можно удалять этот инструмент.{% endif %}
+            {% trans "Дублей «Payme» не найдено — склеивать нечего. Всё чисто." %}
+            {% if result %}{% trans "Можно удалять этот инструмент." %}{% endif %}
         </div>
 
     {% endif %}

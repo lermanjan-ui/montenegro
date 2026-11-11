@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Новый клиент{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Новый клиент" %}{% endblock %}
 {% block content %}
 <style>
 .nc-wrap{max-width:640px;margin:0 auto;}
@@ -20,34 +21,34 @@
 </style>
 
 <div class="nc-wrap">
-  <a class="nc-back" href="/c/{{ country.slug }}/customers/">← К списку клиентов</a>
-  <h1 class="nc-h1">Новый клиент</h1>
-  <p class="nc-sub">Для клиентов, которые заказывают не через сайт (по телефону, самовывоз, юрлица и т.п.).</p>
+  <a class="nc-back" href="/c/{{ country.slug }}/customers/">{% trans "← К списку клиентов" %}</a>
+  <h1 class="nc-h1">{% trans "Новый клиент" %}</h1>
+  <p class="nc-sub">{% trans "Для клиентов, которые заказывают не через сайт (по телефону, самовывоз, юрлица и т.п.)." %}</p>
 
   <div class="nc-card">
     {% if error %}<div class="nc-err">{{ error }}</div>{% endif %}
     <form method="post" action="/c/{{ country.slug }}/customers/new/">
       {% csrf_token %}
       <div class="nc-f">
-        <label>Имя / название *</label>
-        <input class="nc-in" type="text" name="name" value="{{ form.name }}" placeholder="Имя или ООО «…»" autofocus>
+        <label>{% trans "Имя / название *" %}</label>
+        <input class="nc-in" type="text" name="name" value="{{ form.name }}" placeholder="{% trans "Имя или ООО «…»" %}" autofocus>
       </div>
       <div class="nc-f">
-        <label>Телефон</label>
+        <label>{% trans "Телефон" %}</label>
         <input class="nc-in" type="text" name="phone" value="{{ form.phone }}" placeholder="+998…">
       </div>
       <div class="nc-f">
         <label class="nc-check">
           <input type="checkbox" name="is_corporate" {% if form.is_corporate %}checked{% endif %}>
-          Корпоративный клиент (юрлицо) — будет доступен в журнале «Учёт обедов»
+          {% trans "Корпоративный клиент (юрлицо) — будет доступен в журнале «Учёт обедов»" %}
         </label>
       </div>
       <div class="nc-actions">
-        <button type="submit" class="nc-btn nc-green">Создать и открыть карточку</button>
-        <a class="nc-btn nc-gray" href="/c/{{ country.slug }}/customers/">Отмена</a>
+        <button type="submit" class="nc-btn nc-green">{% trans "Создать и открыть карточку" %}</button>
+        <a class="nc-btn nc-gray" href="/c/{{ country.slug }}/customers/">{% trans "Отмена" %}</a>
       </div>
     </form>
-    <p class="nc-note">Если клиент с таким телефоном уже есть — откроется его карточка (без дубля).</p>
+    <p class="nc-note">{% trans "Если клиент с таким телефоном уже есть — откроется его карточка (без дубля)." %}</p>
   </div>
 </div>
 {% endblock %}

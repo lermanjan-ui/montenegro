@@ -1,55 +1,56 @@
 {% extends "foodcost/platform/base.html" %}
-{% block title %}Новый клиент · Платформа{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Новый клиент · Платформа" %}{% endblock %}
 {% block content %}
-<p class="sub" style="margin:0 0 4px;"><a href="/platform/">← Клиенты</a></p>
-<h1>Новый клиент</h1>
-<p class="sub">Создаст арендатора, первый филиал и админа компании.</p>
+<p class="sub" style="margin:0 0 4px;"><a href="/platform/">{% trans "← Клиенты" %}</a></p>
+<h1>{% trans "Новый клиент" %}</h1>
+<p class="sub">{% trans "Создаст арендатора, первый филиал и админа компании." %}</p>
 
 {% if error %}<div class="err">{{ error }}</div>{% endif %}
 
 <form method="post">
   {% csrf_token %}
   <div class="card" style="max-width:640px;">
-    <h2>Компания</h2>
+    <h2>{% trans "Компания" %}</h2>
     <div class="field">
-      <label>Название компании</label>
-      <input type="text" name="name" required placeholder="Например: Чайхана Navruz">
+      <label>{% trans "Название компании" %}</label>
+      <input type="text" name="name" required placeholder="{% trans "Например: Чайхана Navruz" %}">
     </div>
     <div class="field">
-      <label>Slug (адрес кабинета, /c/&lt;slug&gt;/)</label>
-      <input type="text" name="slug" placeholder="navruz — можно оставить пустым, сгенерируется из названия">
+      <label>{% trans "Slug (адрес кабинета, /c/&lt;slug&gt;/)" %}</label>
+      <input type="text" name="slug" placeholder="{% trans "navruz — можно оставить пустым, сгенерируется из названия" %}">
     </div>
     <div class="field">
-      <label>Название первого филиала</label>
-      <input type="text" name="location_name" placeholder="Основной филиал">
+      <label>{% trans "Название первого филиала" %}</label>
+      <input type="text" name="location_name" placeholder="{% trans "Основной филиал" %}">
     </div>
     <div class="field" style="margin:0;">
-      <label>Тариф (можно назначить позже)</label>
+      <label>{% trans "Тариф (можно назначить позже)" %}</label>
       <select name="plan_id">
-        <option value="">— без тарифа —</option>
+        <option value="">{% trans "— без тарифа —" %}</option>
         {% for p in plans %}
-        <option value="{{ p.id }}">{{ p.name }} ({{ p.monthly_price|floatformat:0 }} UZS/мес)</option>
+        <option value="{{ p.id }}">{{ p.name }} ({{ p.monthly_price|floatformat:0 }} {% trans "UZS/мес" %})</option>
         {% endfor %}
       </select>
     </div>
   </div>
 
   <div class="card" style="max-width:640px;">
-    <h2>Админ компании</h2>
-    <p class="muted" style="margin:-8px 0 14px;">Этот пользователь будет управлять своей компанией (не платформой).</p>
+    <h2>{% trans "Админ компании" %}</h2>
+    <p class="muted" style="margin:-8px 0 14px;">{% trans "Этот пользователь будет управлять своей компанией (не платформой)." %}</p>
     <div class="field">
-      <label>Логин</label>
+      <label>{% trans "Логин" %}</label>
       <input type="text" name="admin_login" required autocomplete="off">
     </div>
     <div class="field" style="margin:0;">
-      <label>Пароль</label>
+      <label>{% trans "Пароль" %}</label>
       <input type="text" name="admin_password" required autocomplete="off">
     </div>
   </div>
 
   <div class="row" style="max-width:640px;">
-    <button class="btn" type="submit">Создать клиента</button>
-    <a class="btn sec" href="/platform/">Отмена</a>
+    <button class="btn" type="submit">{% trans "Создать клиента" %}</button>
+    <a class="btn sec" href="/platform/">{% trans "Отмена" %}</a>
   </div>
 </form>
 {% endblock %}

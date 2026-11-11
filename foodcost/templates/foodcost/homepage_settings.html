@@ -1,7 +1,8 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 {% load static %}
 
-{% block title %}Главная сайта{% endblock %}
+{% block title %}{% trans "Главная сайта" %}{% endblock %}
 
 {% block content %}
 
@@ -1060,18 +1061,17 @@ button[type=submit]:hover{
 
     {# ─── Breadcrumbs ─────────────────────────────────────────── #}
     <nav class="fc-breadcrumbs" aria-label="Breadcrumbs">
-        <a href="/c/{{ country.slug }}/">Главная</a>
+        <a href="/c/{{ country.slug }}/">{% trans "Главная" %}</a>
         <span class="sep">›</span>
-        <span class="current">Главная сайта</span>
+        <span class="current">{% trans "Главная сайта" %}</span>
     </nav>
 
     {# ─── Page header ─────────────────────────────────────────── #}
     <div class="fc-page-head">
         <div>
-            <h1>Главная сайта</h1>
+            <h1>{% trans "Главная сайта" %}</h1>
             <p class="muted">
-                Управление контентом главной страницы публичного сайта.
-                Все изменения сразу отображаются в публичном API.
+                {% trans "Управление контентом главной страницы публичного сайта. Все изменения сразу отображаются в публичном API." %}
             </p>
         </div>
     </div>
@@ -1079,7 +1079,7 @@ button[type=submit]:hover{
     {# ─── Error banner (global, used by all tabs) ─────────────── #}
     {% if error %}
         <div class="fc-banner fc-banner-error" role="alert">
-            <strong>Ошибка:</strong> {{ error }}
+            <strong>{% trans "Ошибка:" %}</strong> {{ error }}
         </div>
     {% endif %}
 
@@ -1090,23 +1090,23 @@ button[type=submit]:hover{
     <nav class="fc-tabs" role="tablist">
         <a href="?tab=banners" role="tab"
            class="fc-tab {% if active_tab == 'banners' %}is-active{% endif %}">
-            Баннеры главной
+            {% trans "Баннеры главной" %}
         </a>
         <a href="?tab=combo" role="tab"
            class="fc-tab {% if active_tab == 'combo' %}is-active{% endif %}">
-            Combo-баннеры
+            {% trans "Combo-баннеры" %}
         </a>
         <a href="?tab=compact_upsell" role="tab"
            class="fc-tab {% if active_tab == 'compact_upsell' %}is-active{% endif %}">
-            Компактный блок допродаж
+            {% trans "Компактный блок допродаж" %}
         </a>
         <a href="?tab=product_blocks" role="tab"
            class="fc-tab {% if active_tab == 'product_blocks' %}is-active{% endif %}">
-            Часто заказывают вместе
+            {% trans "Часто заказывают вместе" %}
         </a>
         <a href="?tab=bestsellers" role="tab"
            class="fc-tab {% if active_tab == 'bestsellers' %}is-active{% endif %}">
-            Хиты продаж
+            {% trans "Хиты продаж" %}
         </a>
     </nav>
 
@@ -1118,16 +1118,15 @@ button[type=submit]:hover{
     <div class="fc-card">
         <div class="fc-card-head">
             <div>
-                <h2>Баннеры главной</h2>
+                <h2>{% trans "Баннеры главной" %}</h2>
                 <p class="fc-card-sub fc-mb-0">
-                    Hero-баннеры на главной странице сайта. Порядок задаётся
-                    перетаскиванием — изменения сохраняются автоматически.
+                    {% trans "Hero-баннеры на главной странице сайта. Порядок задаётся перетаскиванием — изменения сохраняются автоматически." %}
                 </p>
             </div>
             <button type="button" class="fc-btn fc-btn-primary"
                     onclick="document.getElementById('banner-create-card').scrollIntoView({behavior:'smooth'});document.getElementById('banner-create-toggle').open=true;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Создать баннер
+                {% trans "Создать баннер" %}
             </button>
         </div>
 
@@ -1137,18 +1136,18 @@ button[type=submit]:hover{
             <div class="fc-table-head"
                  style="grid-template-columns: 24px 96px 1fr 140px 120px 96px;">
                 <div></div>{# drag handle #}
-                <div>Фото</div>
-                <div>Название</div>
-                <div>Действие</div>
-                <div>Статус</div>
-                <div style="text-align:right;">Управление</div>
+                <div>{% trans "Фото" %}</div>
+                <div>{% trans "Название" %}</div>
+                <div>{% trans "Действие" %}</div>
+                <div>{% trans "Статус" %}</div>
+                <div style="text-align:right;">{% trans "Управление" %}</div>
             </div>
 
             {% for banner in banners %}
                 <div class="fc-table-row" data-id="{{ banner.id }}"
                      style="grid-template-columns: 24px 96px 1fr 140px 120px 96px;">
 
-                    <div class="fc-drag-handle" title="Перетащите чтобы изменить порядок">
+                    <div class="fc-drag-handle" title="{% trans "Перетащите чтобы изменить порядок" %}">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
                     </div>
 
@@ -1165,7 +1164,7 @@ button[type=submit]:hover{
 
                     <div>
                         <div style="font-weight:600;color:var(--fc-text);">
-                            {{ banner.title|default:"Без названия" }}
+                            {% if banner.title %}{{ banner.title }}{% else %}{% trans "Без названия" %}{% endif %}
                         </div>
                         {% if banner.subtitle %}
                             <div class="fc-muted fc-text-xs" style="margin-top:2px;">
@@ -1191,24 +1190,25 @@ button[type=submit]:hover{
 
                     <div>
                         {% if banner.is_active %}
-                            <span class="fc-badge fc-badge-green">Активен</span>
+                            <span class="fc-badge fc-badge-green">{% trans "Активен" %}</span>
                         {% else %}
-                            <span class="fc-badge fc-badge-gray">Отключён</span>
+                            <span class="fc-badge fc-badge-gray">{% trans "Отключён" %}</span>
                         {% endif %}
                     </div>
 
                     <div style="text-align:right;display:flex;justify-content:flex-end;gap:6px;">
                         <button type="button" class="fc-btn-icon"
-                                title="Редактировать"
+                                title="{% trans "Редактировать" %}"
                                 onclick="toggleBannerEdit({{ banner.id }})">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
+                        {% blocktrans with t=banner.title asvar _c_delbanner %}Удалить баннер «{{ t }}»?{% endblocktrans %}
                         <form method="post" style="display:inline;"
-                              onsubmit="return confirm('Удалить баннер «{{ banner.title|escapejs }}»?');">
+                              onsubmit="return confirm('{{ _c_delbanner|escapejs }}');">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete_homepage_banner">
                             <input type="hidden" name="banner_id" value="{{ banner.id }}">
-                            <button type="submit" class="fc-btn-icon is-danger" title="Удалить">
+                            <button type="submit" class="fc-btn-icon is-danger" title="{% trans "Удалить" %}">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                             </button>
                         </form>
@@ -1226,25 +1226,25 @@ button[type=submit]:hover{
 
                         <div class="fc-form-grid">
                             <div class="fc-field span-2">
-                                <label class="fc-label">Заголовок <span class="optional">(до 60 символов)</span></label>
+                                <label class="fc-label">{% trans "Заголовок" %} <span class="optional">{% trans "(до 60 символов)" %}</span></label>
                                 <input class="fc-input" name="title" maxlength="60"
                                        value="{{ banner.title }}">
                             </div>
                             <div class="fc-field span-2">
-                                <label class="fc-label">Подзаголовок</label>
+                                <label class="fc-label">{% trans "Подзаголовок" %}</label>
                                 <input class="fc-input" name="subtitle" maxlength="120"
                                        value="{{ banner.subtitle }}">
                             </div>
 
                             <div class="fc-field">
-                                <label class="fc-label">URL картинки (десктоп)</label>
+                                <label class="fc-label">{% trans "URL картинки (десктоп)" %}</label>
                                 <input class="fc-input" name="desktop_image"
                                        placeholder="https://..."
                                        value="{{ banner.desktop_image }}">
                                 <div class="fc-field-hint">1600×600, JPG/PNG/WEBP</div>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">URL картинки (мобильный)</label>
+                                <label class="fc-label">{% trans "URL картинки (мобильный)" %}</label>
                                 <input class="fc-input" name="mobile_image"
                                        placeholder="https://..."
                                        value="{{ banner.mobile_image }}">
@@ -1252,7 +1252,7 @@ button[type=submit]:hover{
                             </div>
 
                             <div class="fc-field span-2">
-                                <label class="fc-label">Действие при клике</label>
+                                <label class="fc-label">{% trans "Действие при клике" %}</label>
                                 <select class="fc-select" name="action_type"
                                         onchange="updateBannerActionHint(this)">
                                     {% for value, label in action_choices %}
@@ -1264,29 +1264,29 @@ button[type=submit]:hover{
                                 </select>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Значение действия</label>
+                                <label class="fc-label">{% trans "Значение действия" %}</label>
                                 <input class="fc-input" name="action_value"
                                        value="{{ banner.action_value }}"
-                                       placeholder="slug категории / товара или URL">
+                                       placeholder="{% trans "slug категории / товара или URL" %}">
                                 <div class="fc-field-hint">
-                                    Например: <code>/category/pasta</code>,
-                                    <code>/product/pizza</code> или <code>https://...</code>
+                                    {% trans "Например:" %} <code>/category/pasta</code>,
+                                    <code>/product/pizza</code> {% trans "или" %} <code>https://...</code>
                                 </div>
                             </div>
 
                             <div class="fc-field">
-                                <label class="fc-label">Сортировка</label>
+                                <label class="fc-label">{% trans "Сортировка" %}</label>
                                 <input class="fc-input" type="number" min="0" step="1"
                                        name="sort_order" value="{{ banner.sort_order }}">
-                                <div class="fc-field-hint">Чем меньше — тем выше</div>
+                                <div class="fc-field-hint">{% trans "Чем меньше — тем выше" %}</div>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Видимость</label>
+                                <label class="fc-label">{% trans "Видимость" %}</label>
                                 <label class="fc-switch" style="margin-top:8px;">
                                     <input type="checkbox" name="is_active"
                                            {% if banner.is_active %}checked{% endif %}>
                                     <span class="fc-switch-track"></span>
-                                    <span class="fc-switch-label">Показывать на сайте</span>
+                                    <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                                 </label>
                             </div>
 
@@ -1295,10 +1295,10 @@ button[type=submit]:hover{
                                     <input type="checkbox" name="show_text"
                                            {% if banner.show_text %}checked{% endif %}>
                                     <span class="fc-switch-track"></span>
-                                    <span class="fc-switch-label">Показывать текст на баннере</span>
+                                    <span class="fc-switch-label">{% trans "Показывать текст на баннере" %}</span>
                                 </label>
                                 <div class="fc-field-hint">
-                                    Если выключено — рендерится только картинка
+                                    {% trans "Если выключено — рендерится только картинка" %}
                                 </div>
                             </div>
                         </div>
@@ -1306,19 +1306,19 @@ button[type=submit]:hover{
                         <div class="fc-row fc-row-end" style="margin-top:16px;gap:8px;">
                             <button type="button" class="fc-btn fc-btn-secondary"
                                     onclick="toggleBannerEdit({{ banner.id }})">
-                                Отмена
+                                {% trans "Отмена" %}
                             </button>
                             <button type="submit" class="fc-btn fc-btn-primary">
-                                Сохранить
+                                {% trans "Сохранить" %}
                             </button>
                         </div>
                     </form>
                 </div>
             {% empty %}
                 <div class="fc-table-empty">
-                    <div class="fc-empty-title">Баннеров пока нет</div>
+                    <div class="fc-empty-title">{% trans "Баннеров пока нет" %}</div>
                     <div class="fc-empty-sub">
-                        Создайте первый баннер — он сразу появится на главной сайта.
+                        {% trans "Создайте первый баннер — он сразу появится на главной сайта." %}
                     </div>
                 </div>
             {% endfor %}
@@ -1330,13 +1330,13 @@ button[type=submit]:hover{
         <details id="banner-create-toggle">
             <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;">
                 <div>
-                    <h2 style="margin:0;font-size:18px;font-weight:600;">Создать новый баннер</h2>
+                    <h2 style="margin:0;font-size:18px;font-weight:600;">{% trans "Создать новый баннер" %}</h2>
                     <p class="fc-card-sub fc-mb-0" style="margin-top:4px;">
-                        Заполните поля и нажмите «Создать баннер»
+                        {% trans "Заполните поля и нажмите «Создать баннер»" %}
                     </p>
                 </div>
                 <span class="fc-btn fc-btn-secondary fc-btn-sm" style="pointer-events:none;">
-                    Развернуть
+                    {% trans "Развернуть" %}
                 </span>
             </summary>
 
@@ -1348,31 +1348,31 @@ button[type=submit]:hover{
                     <div class="fc-form-grid">
                         <div class="fc-field span-2">
                             <label class="fc-label">
-                                Заголовок <span class="required">*</span>
-                                <span class="optional">(до 60 символов)</span>
+                                {% trans "Заголовок" %} <span class="required">*</span>
+                                <span class="optional">{% trans "(до 60 символов)" %}</span>
                             </label>
                             <input class="fc-input" name="title" maxlength="60" required
-                                   placeholder="Например: Паста за 49 000 сум!">
+                                   placeholder="{% trans "Например: Паста за 49 000 сум!" %}">
                         </div>
                         <div class="fc-field span-2">
-                            <label class="fc-label">Подзаголовок <span class="optional">(до 120)</span></label>
+                            <label class="fc-label">{% trans "Подзаголовок" %} <span class="optional">{% trans "(до 120)" %}</span></label>
                             <input class="fc-input" name="subtitle" maxlength="120"
-                                   placeholder="Например: Вкусно, быстро и выгодно">
+                                   placeholder="{% trans "Например: Вкусно, быстро и выгодно" %}">
                         </div>
 
                         <div class="fc-field">
-                            <label class="fc-label">URL картинки (десктоп)</label>
+                            <label class="fc-label">{% trans "URL картинки (десктоп)" %}</label>
                             <input class="fc-input" name="desktop_image" placeholder="https://example.com/banner.jpg">
                             <div class="fc-field-hint">1600×600, JPG/PNG/WEBP</div>
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label">URL картинки (мобильный)</label>
+                            <label class="fc-label">{% trans "URL картинки (мобильный)" %}</label>
                             <input class="fc-input" name="mobile_image" placeholder="https://example.com/banner-mobile.jpg">
                             <div class="fc-field-hint">800×800</div>
                         </div>
 
                         <div class="fc-field">
-                            <label class="fc-label">Действие при клике</label>
+                            <label class="fc-label">{% trans "Действие при клике" %}</label>
                             <select class="fc-select" name="action_type">
                                 {% for value, label in action_choices %}
                                     <option value="{{ value }}">{{ label }}</option>
@@ -1380,16 +1380,16 @@ button[type=submit]:hover{
                             </select>
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label">Значение действия</label>
+                            <label class="fc-label">{% trans "Значение действия" %}</label>
                             <input class="fc-input" name="action_value"
-                                   placeholder="slug категории / товара или URL">
+                                   placeholder="{% trans "slug категории / товара или URL" %}">
                             <div class="fc-field-hint">
-                                Категория: <code>/category/pasta</code> · Товар: <code>/product/pizza</code> · Ссылка: <code>https://...</code>
+                                {% trans "Категория:" %} <code>/category/pasta</code> {% trans "· Товар:" %} <code>/product/pizza</code> {% trans "· Ссылка:" %} <code>https://...</code>
                             </div>
                         </div>
 
                         <div class="fc-field">
-                            <label class="fc-label">Сортировка</label>
+                            <label class="fc-label">{% trans "Сортировка" %}</label>
                             <input class="fc-input" type="number" min="0" step="1" name="sort_order" value="0">
                         </div>
                         <div class="fc-field">
@@ -1397,24 +1397,24 @@ button[type=submit]:hover{
                             <label class="fc-switch">
                                 <input type="checkbox" name="is_active" checked>
                                 <span class="fc-switch-track"></span>
-                                <span class="fc-switch-label">Показывать на сайте</span>
+                                <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                             </label>
                         </div>
                         <div class="fc-field span-2">
                             <label class="fc-switch">
                                 <input type="checkbox" name="show_text" checked>
                                 <span class="fc-switch-track"></span>
-                                <span class="fc-switch-label">Показывать текст на баннере</span>
+                                <span class="fc-switch-label">{% trans "Показывать текст на баннере" %}</span>
                             </label>
                             <div class="fc-field-hint">
-                                Если выключить — рендерится только картинка без наложенного текста
+                                {% trans "Если выключить — рендерится только картинка без наложенного текста" %}
                             </div>
                         </div>
                     </div>
 
                     <div class="fc-row fc-row-end" style="margin-top:20px;">
                         <button type="submit" class="fc-btn fc-btn-primary">
-                            Создать баннер
+                            {% trans "Создать баннер" %}
                         </button>
                     </div>
                 </form>
@@ -1435,18 +1435,15 @@ button[type=submit]:hover{
     <div class="fc-card">
         <div class="fc-card-head">
             <div>
-                <h2>Хиты продаж</h2>
+                <h2>{% trans "Хиты продаж" %}</h2>
                 <p class="fc-card-sub fc-mb-0">
-                    Блюда с пометкой «Хит» появляются на главной в подборке
-                    «Хиты продаж». Порядок задаётся перетаскиванием. Скрытые
-                    с сайта или стоп-листовые блюда здесь отмечены, но
-                    публичный API их прячет автоматически.
+                    {% trans "Блюда с пометкой «Хит» появляются на главной в подборке «Хиты продаж». Порядок задаётся перетаскиванием. Скрытые с сайта или стоп-листовые блюда здесь отмечены, но публичный API их прячет автоматически." %}
                 </p>
             </div>
             <button type="button" class="fc-btn fc-btn-primary"
                     onclick="document.getElementById('bestseller-add-card').scrollIntoView({behavior:'smooth'});document.getElementById('bestseller-combo-input').focus();">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Добавить блюдо в хиты
+                {% trans "Добавить блюдо в хиты" %}
             </button>
         </div>
 
@@ -1462,18 +1459,18 @@ button[type=submit]:hover{
             <div class="fc-table-head"
                  style="grid-template-columns: 24px 64px 1fr 110px 200px 96px;">
                 <div></div>
-                <div>Фото</div>
-                <div>Блюдо</div>
-                <div>Цена</div>
-                <div>Статус</div>
-                <div style="text-align:right;">Управление</div>
+                <div>{% trans "Фото" %}</div>
+                <div>{% trans "Блюдо" %}</div>
+                <div>{% trans "Цена" %}</div>
+                <div>{% trans "Статус" %}</div>
+                <div style="text-align:right;">{% trans "Управление" %}</div>
             </div>
 
             {% for dish in featured_dishes %}
                 <div class="fc-table-row" data-id="{{ dish.id }}"
                      style="grid-template-columns: 24px 64px 1fr 110px 200px 96px;">
 
-                    <div class="fc-drag-handle" title="Перетащите чтобы изменить порядок">
+                    <div class="fc-drag-handle" title="{% trans "Перетащите чтобы изменить порядок" %}">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
                     </div>
 
@@ -1504,29 +1501,30 @@ button[type=submit]:hover{
 
                     <div style="display:flex;flex-wrap:wrap;gap:4px;">
                         {% if dish.is_visible_on_site %}
-                            <span class="fc-badge fc-badge-green">На сайте</span>
+                            <span class="fc-badge fc-badge-green">{% trans "На сайте" %}</span>
                         {% else %}
-                            <span class="fc-badge fc-badge-gray">Скрыто</span>
+                            <span class="fc-badge fc-badge-gray">{% trans "Скрыто" %}</span>
                         {% endif %}
                         {% if dish.is_stop_list %}
-                            <span class="fc-badge fc-badge-red">Стоп-лист</span>
+                            <span class="fc-badge fc-badge-red">{% trans "Стоп-лист" %}</span>
                         {% else %}
-                            <span class="fc-badge fc-badge-blue">Доступно</span>
+                            <span class="fc-badge fc-badge-blue">{% trans "Доступно" %}</span>
                         {% endif %}
                     </div>
 
                     <div style="text-align:right;display:flex;justify-content:flex-end;gap:6px;">
                         <button type="button" class="fc-btn-icon"
-                                title="Изменить сортировку"
+                                title="{% trans "Изменить сортировку" %}"
                                 onclick="toggleBestsellerEdit({{ dish.id }})">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
+                        {% blocktrans with n=dish.name asvar _c_unhit %}Убрать «{{ n }}» из хитов? Блюдо останется в каталоге.{% endblocktrans %}
                         <form method="post" style="display:inline;"
-                              onsubmit="return confirm('Убрать «{{ dish.name|escapejs }}» из хитов? Блюдо останется в каталоге.');">
+                              onsubmit="return confirm('{{ _c_unhit|escapejs }}');">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="remove_bestseller">
                             <input type="hidden" name="dish_id" value="{{ dish.id }}">
-                            <button type="submit" class="fc-btn-icon is-danger" title="Убрать из хитов">
+                            <button type="submit" class="fc-btn-icon is-danger" title="{% trans "Убрать из хитов" %}">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             </button>
                         </form>
@@ -1543,22 +1541,21 @@ button[type=submit]:hover{
 
                         <div class="fc-form-grid">
                             <div class="fc-field">
-                                <label class="fc-label">Сортировка</label>
+                                <label class="fc-label">{% trans "Сортировка" %}</label>
                                 <input class="fc-input" type="number" min="0" step="1"
                                        name="site_sort_order"
                                        value="{{ dish.site_sort_order }}">
                                 <div class="fc-field-hint">
-                                    Меньше число — выше в подборке.
-                                    Обычно проще тащить за «⋮⋮», но можно вписать вручную.
+                                    {% trans "Меньше число — выше в подборке. Обычно проще тащить за «⋮⋮», но можно вписать вручную." %}
                                 </div>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Видимость на сайте</label>
+                                <label class="fc-label">{% trans "Видимость на сайте" %}</label>
                                 <div class="fc-text-sm fc-muted" style="margin-top:8px;line-height:1.5;">
-                                    Управляется на карточке блюда.
+                                    {% trans "Управляется на карточке блюда." %}
                                     <a href="/c/{{ country.slug }}/dish/{{ dish.id }}/"
                                        style="color:var(--fc-green-text);font-weight:600;">
-                                        Открыть карточку →
+                                        {% trans "Открыть карточку →" %}
                                     </a>
                                 </div>
                             </div>
@@ -1567,20 +1564,19 @@ button[type=submit]:hover{
                         <div class="fc-row fc-row-end" style="margin-top:16px;gap:8px;">
                             <button type="button" class="fc-btn fc-btn-secondary"
                                     onclick="toggleBestsellerEdit({{ dish.id }})">
-                                Отмена
+                                {% trans "Отмена" %}
                             </button>
                             <button type="submit" class="fc-btn fc-btn-primary">
-                                Сохранить
+                                {% trans "Сохранить" %}
                             </button>
                         </div>
                     </form>
                 </div>
             {% empty %}
                 <div class="fc-table-empty">
-                    <div class="fc-empty-title">В хитах пока ничего нет</div>
+                    <div class="fc-empty-title">{% trans "В хитах пока ничего нет" %}</div>
                     <div class="fc-empty-sub">
-                        Добавьте первое блюдо — оно появится на главной сайта
-                        в подборке «Хиты продаж».
+                        {% trans "Добавьте первое блюдо — оно появится на главной сайта в подборке «Хиты продаж»." %}
                     </div>
                 </div>
             {% endfor %}
@@ -1590,10 +1586,9 @@ button[type=submit]:hover{
     <!-- Add bestseller — combobox with live search -->
     <div class="fc-card" id="bestseller-add-card">
         <div style="margin-bottom:8px;">
-            <h2 style="margin:0;font-size:18px;font-weight:600;">Добавить блюдо в хиты</h2>
+            <h2 style="margin:0;font-size:18px;font-weight:600;">{% trans "Добавить блюдо в хиты" %}</h2>
             <p class="fc-card-sub fc-mb-0" style="margin-top:4px;">
-                Начните вводить название — список отфильтруется. Можно
-                выбрать из выпадающего списка или клавишами ↑↓ Enter.
+                {% trans "Начните вводить название — список отфильтруется. Можно выбрать из выпадающего списка или клавишами ↑↓ Enter." %}
             </p>
         </div>
 
@@ -1603,11 +1598,11 @@ button[type=submit]:hover{
 
             <div class="fc-field fc-combo" style="flex:1;min-width:280px;"
                  data-combo-root>
-                <label class="fc-label" for="bestseller-combo-input">Блюдо</label>
+                <label class="fc-label" for="bestseller-combo-input">{% trans "Блюдо" %}</label>
                 <input type="text" class="fc-input fc-combo-input"
                        id="bestseller-combo-input"
                        data-combo-search
-                       placeholder="Начните вводить название..."
+                       placeholder="{% trans "Начните вводить название..." %}"
                        autocomplete="off">
                 <svg class="fc-combo-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1626,20 +1621,20 @@ button[type=submit]:hover{
                             <span class="label">{{ dish.name }}</span>
                             <span class="meta">
                                 {% if dish.selling_price %}{{ dish.selling_price|floatformat:0 }}{% endif %}
-                                {% if not dish.is_visible_on_site %} · скрыто{% endif %}
-                                {% if dish.is_stop_list %} · стоп-лист{% endif %}
+                                {% if not dish.is_visible_on_site %} · {% trans "скрыто" %}{% endif %}
+                                {% if dish.is_stop_list %} · {% trans "стоп-лист" %}{% endif %}
                             </span>
                         </div>
                     {% empty %}
                         <div class="fc-combo-empty">
-                            Все доступные блюда уже в хитах.
+                            {% trans "Все доступные блюда уже в хитах." %}
                         </div>
                     {% endfor %}
                 </div>
             </div>
 
             <button type="submit" class="fc-btn fc-btn-primary">
-                Добавить в хиты
+                {% trans "Добавить в хиты" %}
             </button>
         </form>
     </div>
@@ -1657,18 +1652,15 @@ button[type=submit]:hover{
     <div class="fc-card">
         <div class="fc-card-head">
             <div>
-                <h2>Часто заказывают вместе</h2>
+                <h2>{% trans "Часто заказывают вместе" %}</h2>
                 <p class="fc-card-sub fc-mb-0">
-                    Подборки товаров на главной — каждый блок выводится отдельной
-                    лентой. Внутри блока — свои товары с собственной сортировкой
-                    и переключателями. Порядок блоков и порядок товаров внутри
-                    задаются перетаскиванием.
+                    {% trans "Подборки товаров на главной — каждый блок выводится отдельной лентой. Внутри блока — свои товары с собственной сортировкой и переключателями. Порядок блоков и порядок товаров внутри задаются перетаскиванием." %}
                 </p>
             </div>
             <button type="button" class="fc-btn fc-btn-primary"
                     onclick="document.getElementById('product-block-create-toggle').open=true;document.getElementById('product-block-create-card').scrollIntoView({behavior:'smooth'});">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Создать блок
+                {% trans "Создать блок" %}
             </button>
         </div>
 
@@ -1678,17 +1670,17 @@ button[type=submit]:hover{
             <div class="fc-table-head"
                  style="grid-template-columns: 24px 1fr 140px 120px 96px;">
                 <div></div>
-                <div>Название блока</div>
-                <div>Товаров</div>
-                <div>Статус</div>
-                <div style="text-align:right;">Управление</div>
+                <div>{% trans "Название блока" %}</div>
+                <div>{% trans "Товаров" %}</div>
+                <div>{% trans "Статус" %}</div>
+                <div style="text-align:right;">{% trans "Управление" %}</div>
             </div>
 
             {% for block in homepage_blocks %}
                 <div class="fc-table-row" data-id="{{ block.id }}"
                      style="grid-template-columns: 24px 1fr 140px 120px 96px;">
 
-                    <div class="fc-drag-handle" title="Перетащите чтобы изменить порядок">
+                    <div class="fc-drag-handle" title="{% trans "Перетащите чтобы изменить порядок" %}">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
                     </div>
 
@@ -1697,7 +1689,7 @@ button[type=submit]:hover{
                             {{ block.title }}
                         </div>
                         <div class="fc-text-xs fc-muted" style="margin-top:2px;">
-                            Сортировка: {{ block.sort_order }}
+                            {% blocktrans with s=block.sort_order %}Сортировка: {{ s }}{% endblocktrans %}
                         </div>
                     </div>
 
@@ -1707,24 +1699,25 @@ button[type=submit]:hover{
 
                     <div>
                         {% if block.is_active %}
-                            <span class="fc-badge fc-badge-green">Активен</span>
+                            <span class="fc-badge fc-badge-green">{% trans "Активен" %}</span>
                         {% else %}
-                            <span class="fc-badge fc-badge-gray">Отключён</span>
+                            <span class="fc-badge fc-badge-gray">{% trans "Отключён" %}</span>
                         {% endif %}
                     </div>
 
                     <div style="text-align:right;display:flex;justify-content:flex-end;gap:6px;">
                         <button type="button" class="fc-btn-icon"
-                                title="Редактировать блок и товары"
+                                title="{% trans "Редактировать блок и товары" %}"
                                 onclick="toggleProductBlockEdit({{ block.id }})">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
+                        {% blocktrans with t=block.title asvar _c_delblock %}Удалить блок «{{ t }}»? Все товары блока удалятся, сами блюда останутся в каталоге.{% endblocktrans %}
                         <form method="post" style="display:inline;"
-                              onsubmit="return confirm('Удалить блок «{{ block.title|escapejs }}»? Все товары блока удалятся, сами блюда останутся в каталоге.');">
+                              onsubmit="return confirm('{{ _c_delblock|escapejs }}');">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete_homepage_product_block">
                             <input type="hidden" name="block_id" value="{{ block.id }}">
-                            <button type="submit" class="fc-btn-icon is-danger" title="Удалить блок">
+                            <button type="submit" class="fc-btn-icon is-danger" title="{% trans "Удалить блок" %}">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                             </button>
                         </form>
@@ -1744,30 +1737,30 @@ button[type=submit]:hover{
                         <div class="fc-form-grid">
                             <div class="fc-field span-2">
                                 <label class="fc-label">
-                                    Название блока <span class="required">*</span>
+                                    {% trans "Название блока" %} <span class="required">*</span>
                                 </label>
                                 <input class="fc-input" name="title"
                                        value="{{ block.title }}" required>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Сортировка</label>
+                                <label class="fc-label">{% trans "Сортировка" %}</label>
                                 <input class="fc-input" type="number" min="0" step="1"
                                        name="sort_order" value="{{ block.sort_order }}">
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Видимость</label>
+                                <label class="fc-label">{% trans "Видимость" %}</label>
                                 <label class="fc-switch" style="margin-top:8px;">
                                     <input type="checkbox" name="is_active"
                                            {% if block.is_active %}checked{% endif %}>
                                     <span class="fc-switch-track"></span>
-                                    <span class="fc-switch-label">Показывать на сайте</span>
+                                    <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                                 </label>
                             </div>
                         </div>
 
                         <div class="fc-row fc-row-end" style="margin-top:14px;">
                             <button type="submit" class="fc-btn fc-btn-primary">
-                                Сохранить блок
+                                {% trans "Сохранить блок" %}
                             </button>
                         </div>
                     </form>
@@ -1775,11 +1768,10 @@ button[type=submit]:hover{
                     <!-- Inner items table (also DnD-sortable, scoped to this block) -->
                     <div style="margin-bottom:16px;">
                         <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:var(--fc-text);">
-                            Товары в блоке
+                            {% trans "Товары в блоке" %}
                         </h3>
                         <p class="fc-text-sm fc-muted fc-mb-0">
-                            Перетаскивайте товары чтобы изменить порядок внутри
-                            этого блока.
+                            {% trans "Перетаскивайте товары чтобы изменить порядок внутри этого блока." %}
                         </p>
                     </div>
 
@@ -1793,10 +1785,10 @@ button[type=submit]:hover{
                         <div class="fc-table-head"
                              style="grid-template-columns: 24px 64px 1fr 110px 200px 60px;">
                             <div></div>
-                            <div>Фото</div>
-                            <div>Блюдо</div>
-                            <div>Цена</div>
-                            <div>Статус</div>
+                            <div>{% trans "Фото" %}</div>
+                            <div>{% trans "Блюдо" %}</div>
+                            <div>{% trans "Цена" %}</div>
+                            <div>{% trans "Статус" %}</div>
                             <div></div>
                         </div>
 
@@ -1804,7 +1796,7 @@ button[type=submit]:hover{
                             <div class="fc-table-row" data-id="{{ item.id }}"
                                  style="grid-template-columns: 24px 64px 1fr 110px 200px 60px;">
 
-                                <div class="fc-drag-handle" title="Перетащите чтобы изменить порядок">
+                                <div class="fc-drag-handle" title="{% trans "Перетащите чтобы изменить порядок" %}">
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
                                 </div>
 
@@ -1850,21 +1842,22 @@ button[type=submit]:hover{
                                     </form>
 
                                     {% if not item.dish.is_visible_on_site %}
-                                        <span class="fc-badge fc-badge-gray">Скрыто</span>
+                                        <span class="fc-badge fc-badge-gray">{% trans "Скрыто" %}</span>
                                     {% endif %}
                                     {% if item.dish.is_stop_list %}
-                                        <span class="fc-badge fc-badge-red">Стоп-лист</span>
+                                        <span class="fc-badge fc-badge-red">{% trans "Стоп-лист" %}</span>
                                     {% endif %}
                                 </div>
 
                                 <div style="text-align:right;">
+                                    {% blocktrans with n=item.dish.name b=block.title asvar _c_rmitem %}Убрать «{{ n }}» из блока «{{ b }}»?{% endblocktrans %}
                                     <form method="post" style="display:inline;"
-                                          onsubmit="return confirm('Убрать «{{ item.dish.name|escapejs }}» из блока «{{ block.title|escapejs }}»?');">
+                                          onsubmit="return confirm('{{ _c_rmitem|escapejs }}');">
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="delete_homepage_product_block_item">
                                         <input type="hidden" name="block_id" value="{{ block.id }}">
                                         <input type="hidden" name="item_id" value="{{ item.id }}">
-                                        <button type="submit" class="fc-btn-icon is-danger" title="Убрать из блока">
+                                        <button type="submit" class="fc-btn-icon is-danger" title="{% trans "Убрать из блока" %}">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                         </button>
                                     </form>
@@ -1873,7 +1866,7 @@ button[type=submit]:hover{
                         {% empty %}
                             <div class="fc-table-empty">
                                 <div class="fc-empty-sub fc-mb-0">
-                                    В этом блоке пока нет товаров. Добавьте через форму ниже.
+                                    {% trans "В этом блоке пока нет товаров. Добавьте через форму ниже." %}
                                 </div>
                             </div>
                         {% endfor %}
@@ -1888,10 +1881,10 @@ button[type=submit]:hover{
 
                         <div class="fc-field fc-combo" style="flex:1;min-width:240px;"
                              data-combo-root>
-                            <label class="fc-label">Добавить блюдо</label>
+                            <label class="fc-label">{% trans "Добавить блюдо" %}</label>
                             <input type="text" class="fc-input fc-combo-input"
                                    data-combo-search
-                                   placeholder="Начните вводить название..."
+                                   placeholder="{% trans "Начните вводить название..." %}"
                                    autocomplete="off">
                             <svg class="fc-combo-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
                                 <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1906,20 +1899,20 @@ button[type=submit]:hover{
                                         <span class="label">{{ d.name }}</span>
                                         <span class="meta">
                                             {% if d.selling_price %}{{ d.selling_price|floatformat:0 }}{% endif %}
-                                            {% if not d.is_visible_on_site %} · скрыто{% endif %}
-                                            {% if d.is_stop_list %} · стоп-лист{% endif %}
+                                            {% if not d.is_visible_on_site %} · {% trans "скрыто" %}{% endif %}
+                                            {% if d.is_stop_list %} · {% trans "стоп-лист" %}{% endif %}
                                         </span>
                                     </div>
                                 {% empty %}
                                     <div class="fc-combo-empty">
-                                        Доступных блюд нет.
+                                        {% trans "Доступных блюд нет." %}
                                     </div>
                                 {% endfor %}
                             </div>
                         </div>
 
                         <div class="fc-field" style="flex:0 0 120px;">
-                            <label class="fc-label">Сортировка</label>
+                            <label class="fc-label">{% trans "Сортировка" %}</label>
                             <input class="fc-input" type="number" min="0" step="1"
                                    name="sort_order" value="0">
                         </div>
@@ -1928,21 +1921,20 @@ button[type=submit]:hover{
                             <label class="fc-switch">
                                 <input type="checkbox" name="is_active" checked>
                                 <span class="fc-switch-track"></span>
-                                <span class="fc-switch-label">Активен</span>
+                                <span class="fc-switch-label">{% trans "Активен" %}</span>
                             </label>
                         </div>
 
                         <button type="submit" class="fc-btn fc-btn-primary">
-                            Добавить в блок
+                            {% trans "Добавить в блок" %}
                         </button>
                     </form>
                 </div>
             {% empty %}
                 <div class="fc-table-empty">
-                    <div class="fc-empty-title">Блоков пока нет</div>
+                    <div class="fc-empty-title">{% trans "Блоков пока нет" %}</div>
                     <div class="fc-empty-sub">
-                        Создайте первый блок — он появится на главной сайта
-                        как горизонтальная лента «Часто заказывают вместе».
+                        {% trans "Создайте первый блок — он появится на главной сайта как горизонтальная лента «Часто заказывают вместе»." %}
                     </div>
                 </div>
             {% endfor %}
@@ -1954,13 +1946,13 @@ button[type=submit]:hover{
         <details id="product-block-create-toggle">
             <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;">
                 <div>
-                    <h2 style="margin:0;font-size:18px;font-weight:600;">Создать новый блок</h2>
+                    <h2 style="margin:0;font-size:18px;font-weight:600;">{% trans "Создать новый блок" %}</h2>
                     <p class="fc-card-sub fc-mb-0" style="margin-top:4px;">
-                        Создайте пустой блок, потом добавьте в него блюда
+                        {% trans "Создайте пустой блок, потом добавьте в него блюда" %}
                     </p>
                 </div>
                 <span class="fc-btn fc-btn-secondary fc-btn-sm" style="pointer-events:none;">
-                    Развернуть
+                    {% trans "Развернуть" %}
                 </span>
             </summary>
 
@@ -1972,16 +1964,16 @@ button[type=submit]:hover{
                     <div class="fc-form-grid">
                         <div class="fc-field span-2">
                             <label class="fc-label">
-                                Название блока <span class="required">*</span>
+                                {% trans "Название блока" %} <span class="required">*</span>
                             </label>
                             <input class="fc-input" name="title"
-                                   value="Часто заказывают вместе" required>
+                                   {% trans "Часто заказывают вместе" as _vph %}value="{{ _vph }}" required>
                             <div class="fc-field-hint">
-                                Заголовок выводится на сайте над лентой товаров
+                                {% trans "Заголовок выводится на сайте над лентой товаров" %}
                             </div>
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label">Сортировка</label>
+                            <label class="fc-label">{% trans "Сортировка" %}</label>
                             <input class="fc-input" type="number" min="0" step="1"
                                    name="sort_order" value="0">
                         </div>
@@ -1990,14 +1982,14 @@ button[type=submit]:hover{
                             <label class="fc-switch">
                                 <input type="checkbox" name="is_active" checked>
                                 <span class="fc-switch-track"></span>
-                                <span class="fc-switch-label">Показывать на сайте</span>
+                                <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                             </label>
                         </div>
                     </div>
 
                     <div class="fc-row fc-row-end" style="margin-top:20px;">
                         <button type="submit" class="fc-btn fc-btn-primary">
-                            Создать блок
+                            {% trans "Создать блок" %}
                         </button>
                     </div>
                 </form>
@@ -2024,31 +2016,29 @@ button[type=submit]:hover{
     <div class="fc-card">
         <div class="fc-card-head" style="margin-bottom:8px;">
             <div>
-                <h2>Компактный блок допродаж</h2>
+                <h2>{% trans "Компактный блок допродаж" %}</h2>
                 <p class="fc-card-sub fc-mb-0">
-                    Горизонтальная лента с быстрым добавлением в корзину.
-                    Один и тот же тип блока используется и на главной, и в корзине —
-                    переключитесь между ними ниже.
+                    {% trans "Горизонтальная лента с быстрым добавлением в корзину. Один и тот же тип блока используется и на главной, и в корзине — переключитесь между ними ниже." %}
                 </p>
             </div>
             <button type="button" class="fc-btn fc-btn-primary"
                     onclick="document.getElementById('compact-create-toggle').open=true;document.getElementById('compact-create-card').scrollIntoView({behavior:'smooth'});">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Создать блок
+                {% trans "Создать блок" %}
             </button>
         </div>
 
         <!-- Segmented switch: Главная | Корзина -->
-        <div class="fc-segmented" role="tablist" aria-label="Где показывать блок">
+        <div class="fc-segmented" role="tablist" aria-label="{% trans "Где показывать блок" %}">
             <a href="?tab=compact_upsell" role="tab"
                class="fc-segmented-item {% if active_placement != 'cart' %}is-active{% endif %}"
                {% if active_placement != 'cart' %}aria-current="true"{% endif %}>
-                Главная
+                {% trans "Главная" %}
             </a>
             <a href="?tab=compact_upsell&placement=cart" role="tab"
                class="fc-segmented-item {% if active_placement == 'cart' %}is-active{% endif %}"
                {% if active_placement == 'cart' %}aria-current="true"{% endif %}>
-                Корзина
+                {% trans "Корзина" %}
             </a>
         </div>
     </div>
@@ -2065,7 +2055,7 @@ button[type=submit]:hover{
         <div class="fc-card-head">
             <div>
                 <h2 style="font-size:18px;">
-                    Блоки на {{ current_placement_label }}
+                    {% blocktrans with p=current_placement_label %}Блоки на {{ p }}{% endblocktrans %}
                 </h2>
                 <p class="fc-card-sub fc-mb-0">
                     {{ current_placement_surface_hint }}
@@ -2078,17 +2068,17 @@ button[type=submit]:hover{
             <div class="fc-table-head"
                  style="grid-template-columns: 24px 1fr 140px 120px 96px;">
                 <div></div>
-                <div>Название блока</div>
-                <div>Товаров</div>
-                <div>Статус</div>
-                <div style="text-align:right;">Управление</div>
+                <div>{% trans "Название блока" %}</div>
+                <div>{% trans "Товаров" %}</div>
+                <div>{% trans "Статус" %}</div>
+                <div style="text-align:right;">{% trans "Управление" %}</div>
             </div>
 
             {% for block in current_blocks %}
                 <div class="fc-table-row" data-id="{{ block.id }}"
                      style="grid-template-columns: 24px 1fr 140px 120px 96px;">
 
-                    <div class="fc-drag-handle" title="Перетащите чтобы изменить порядок">
+                    <div class="fc-drag-handle" title="{% trans "Перетащите чтобы изменить порядок" %}">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
                     </div>
 
@@ -2097,7 +2087,7 @@ button[type=submit]:hover{
                             {{ block.title }}
                         </div>
                         <div class="fc-text-xs fc-muted" style="margin-top:2px;">
-                            Сортировка: {{ block.sort_order }}
+                            {% blocktrans with s=block.sort_order %}Сортировка: {{ s }}{% endblocktrans %}
                         </div>
                     </div>
 
@@ -2107,25 +2097,26 @@ button[type=submit]:hover{
 
                     <div>
                         {% if block.is_active %}
-                            <span class="fc-badge fc-badge-green">Активен</span>
+                            <span class="fc-badge fc-badge-green">{% trans "Активен" %}</span>
                         {% else %}
-                            <span class="fc-badge fc-badge-gray">Отключён</span>
+                            <span class="fc-badge fc-badge-gray">{% trans "Отключён" %}</span>
                         {% endif %}
                     </div>
 
                     <div style="text-align:right;display:flex;justify-content:flex-end;gap:6px;">
                         <button type="button" class="fc-btn-icon"
-                                title="Редактировать блок и товары"
+                                title="{% trans "Редактировать блок и товары" %}"
                                 onclick="toggleCompactBlockEdit({{ block.id }})">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
+                        {% blocktrans with t=block.title asvar _c_delblock %}Удалить блок «{{ t }}»? Все товары блока удалятся, сами блюда останутся в каталоге.{% endblocktrans %}
                         <form method="post" style="display:inline;"
-                              onsubmit="return confirm('Удалить блок «{{ block.title|escapejs }}»? Все товары блока удалятся, сами блюда останутся в каталоге.');">
+                              onsubmit="return confirm('{{ _c_delblock|escapejs }}');">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete_compact_upsell_block">
                             <input type="hidden" name="block_id" value="{{ block.id }}">
                             <input type="hidden" name="_placement" value="{{ active_placement }}">
-                            <button type="submit" class="fc-btn-icon is-danger" title="Удалить блок">
+                            <button type="submit" class="fc-btn-icon is-danger" title="{% trans "Удалить блок" %}">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                             </button>
                         </form>
@@ -2146,30 +2137,30 @@ button[type=submit]:hover{
                         <div class="fc-form-grid">
                             <div class="fc-field span-2">
                                 <label class="fc-label">
-                                    Название блока <span class="required">*</span>
+                                    {% trans "Название блока" %} <span class="required">*</span>
                                 </label>
                                 <input class="fc-input" name="title"
                                        value="{{ block.title }}" required>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Сортировка</label>
+                                <label class="fc-label">{% trans "Сортировка" %}</label>
                                 <input class="fc-input" type="number" min="0" step="1"
                                        name="sort_order" value="{{ block.sort_order }}">
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Видимость</label>
+                                <label class="fc-label">{% trans "Видимость" %}</label>
                                 <label class="fc-switch" style="margin-top:8px;">
                                     <input type="checkbox" name="is_active"
                                            {% if block.is_active %}checked{% endif %}>
                                     <span class="fc-switch-track"></span>
-                                    <span class="fc-switch-label">Показывать на сайте</span>
+                                    <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                                 </label>
                             </div>
                         </div>
 
                         <div class="fc-row fc-row-end" style="margin-top:14px;">
                             <button type="submit" class="fc-btn fc-btn-primary">
-                                Сохранить блок
+                                {% trans "Сохранить блок" %}
                             </button>
                         </div>
                     </form>
@@ -2177,10 +2168,10 @@ button[type=submit]:hover{
                     <!-- Inner items -->
                     <div style="margin-bottom:16px;">
                         <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:var(--fc-text);">
-                            Товары в блоке
+                            {% trans "Товары в блоке" %}
                         </h3>
                         <p class="fc-text-sm fc-muted fc-mb-0">
-                            Перетаскивайте товары чтобы изменить порядок внутри блока.
+                            {% trans "Перетаскивайте товары чтобы изменить порядок внутри блока." %}
                         </p>
                     </div>
 
@@ -2191,10 +2182,10 @@ button[type=submit]:hover{
                         <div class="fc-table-head"
                              style="grid-template-columns: 24px 64px 1fr 110px 200px 60px;">
                             <div></div>
-                            <div>Фото</div>
-                            <div>Блюдо</div>
-                            <div>Цена</div>
-                            <div>Статус</div>
+                            <div>{% trans "Фото" %}</div>
+                            <div>{% trans "Блюдо" %}</div>
+                            <div>{% trans "Цена" %}</div>
+                            <div>{% trans "Статус" %}</div>
                             <div></div>
                         </div>
 
@@ -2202,7 +2193,7 @@ button[type=submit]:hover{
                             <div class="fc-table-row" data-id="{{ item.id }}"
                                  style="grid-template-columns: 24px 64px 1fr 110px 200px 60px;">
 
-                                <div class="fc-drag-handle" title="Перетащите чтобы изменить порядок">
+                                <div class="fc-drag-handle" title="{% trans "Перетащите чтобы изменить порядок" %}">
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
                                 </div>
 
@@ -2248,25 +2239,26 @@ button[type=submit]:hover{
                                     </form>
 
                                     {% if not item.dish.is_visible_on_site %}
-                                        <span class="fc-badge fc-badge-gray">Скрыто</span>
+                                        <span class="fc-badge fc-badge-gray">{% trans "Скрыто" %}</span>
                                     {% endif %}
                                     {% if item.dish.is_stop_list %}
-                                        <span class="fc-badge fc-badge-red">Стоп-лист</span>
+                                        <span class="fc-badge fc-badge-red">{% trans "Стоп-лист" %}</span>
                                     {% endif %}
                                     {% if item.dish.is_archived %}
-                                        <span class="fc-badge fc-badge-amber">Архив</span>
+                                        <span class="fc-badge fc-badge-amber">{% trans "Архив" %}</span>
                                     {% endif %}
                                 </div>
 
                                 <div style="text-align:right;">
+                                    {% blocktrans with n=item.dish.name b=block.title asvar _c_rmitem %}Убрать «{{ n }}» из блока «{{ b }}»?{% endblocktrans %}
                                     <form method="post" style="display:inline;"
-                                          onsubmit="return confirm('Убрать «{{ item.dish.name|escapejs }}» из блока «{{ block.title|escapejs }}»?');">
+                                          onsubmit="return confirm('{{ _c_rmitem|escapejs }}');">
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="delete_compact_upsell_item">
                                         <input type="hidden" name="block_id" value="{{ block.id }}">
                                         <input type="hidden" name="item_id" value="{{ item.id }}">
                                         <input type="hidden" name="_placement" value="{{ active_placement }}">
-                                        <button type="submit" class="fc-btn-icon is-danger" title="Убрать из блока">
+                                        <button type="submit" class="fc-btn-icon is-danger" title="{% trans "Убрать из блока" %}">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                         </button>
                                     </form>
@@ -2275,7 +2267,7 @@ button[type=submit]:hover{
                         {% empty %}
                             <div class="fc-table-empty">
                                 <div class="fc-empty-sub fc-mb-0">
-                                    В этом блоке пока нет товаров. Добавьте через форму ниже.
+                                    {% trans "В этом блоке пока нет товаров. Добавьте через форму ниже." %}
                                 </div>
                             </div>
                         {% endfor %}
@@ -2291,10 +2283,10 @@ button[type=submit]:hover{
 
                         <div class="fc-field fc-combo" style="flex:1;min-width:240px;"
                              data-combo-root>
-                            <label class="fc-label">Добавить блюдо</label>
+                            <label class="fc-label">{% trans "Добавить блюдо" %}</label>
                             <input type="text" class="fc-input fc-combo-input"
                                    data-combo-search
-                                   placeholder="Начните вводить название..."
+                                   placeholder="{% trans "Начните вводить название..." %}"
                                    autocomplete="off">
                             <svg class="fc-combo-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
                                 <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2309,20 +2301,20 @@ button[type=submit]:hover{
                                         <span class="label">{{ d.name }}</span>
                                         <span class="meta">
                                             {% if d.selling_price %}{{ d.selling_price|floatformat:0 }}{% endif %}
-                                            {% if not d.is_visible_on_site %} · скрыто{% endif %}
-                                            {% if d.is_stop_list %} · стоп-лист{% endif %}
+                                            {% if not d.is_visible_on_site %} · {% trans "скрыто" %}{% endif %}
+                                            {% if d.is_stop_list %} · {% trans "стоп-лист" %}{% endif %}
                                         </span>
                                     </div>
                                 {% empty %}
                                     <div class="fc-combo-empty">
-                                        Доступных блюд нет.
+                                        {% trans "Доступных блюд нет." %}
                                     </div>
                                 {% endfor %}
                             </div>
                         </div>
 
                         <div class="fc-field" style="flex:0 0 120px;">
-                            <label class="fc-label">Сортировка</label>
+                            <label class="fc-label">{% trans "Сортировка" %}</label>
                             <input class="fc-input" type="number" min="0" step="1"
                                    name="sort_order" value="0">
                         </div>
@@ -2331,21 +2323,20 @@ button[type=submit]:hover{
                             <label class="fc-switch">
                                 <input type="checkbox" name="is_active" checked>
                                 <span class="fc-switch-track"></span>
-                                <span class="fc-switch-label">Активен</span>
+                                <span class="fc-switch-label">{% trans "Активен" %}</span>
                             </label>
                         </div>
 
                         <button type="submit" class="fc-btn fc-btn-primary">
-                            Добавить в блок
+                            {% trans "Добавить в блок" %}
                         </button>
                     </form>
                 </div>
             {% empty %}
                 <div class="fc-table-empty">
-                    <div class="fc-empty-title">Блоков на {{ current_placement_label }} пока нет</div>
+                    <div class="fc-empty-title">{% blocktrans with p=current_placement_label %}Блоков на {{ p }} пока нет{% endblocktrans %}</div>
                     <div class="fc-empty-sub">
-                        Создайте первый блок — он появится на сайте как
-                        компактная горизонтальная лента товаров.
+                        {% trans "Создайте первый блок — он появится на сайте как компактная горизонтальная лента товаров." %}
                     </div>
                 </div>
             {% endfor %}
@@ -2358,14 +2349,14 @@ button[type=submit]:hover{
             <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;">
                 <div>
                     <h2 style="margin:0;font-size:18px;font-weight:600;">
-                        Создать блок на {{ current_placement_label }}
+                        {% blocktrans with p=current_placement_label %}Создать блок на {{ p }}{% endblocktrans %}
                     </h2>
                     <p class="fc-card-sub fc-mb-0" style="margin-top:4px;">
-                        Создайте пустой блок, потом добавьте в него блюда
+                        {% trans "Создайте пустой блок, потом добавьте в него блюда" %}
                     </p>
                 </div>
                 <span class="fc-btn fc-btn-secondary fc-btn-sm" style="pointer-events:none;">
-                    Развернуть
+                    {% trans "Развернуть" %}
                 </span>
             </summary>
 
@@ -2379,13 +2370,13 @@ button[type=submit]:hover{
                     <div class="fc-form-grid">
                         <div class="fc-field span-2">
                             <label class="fc-label">
-                                Название блока <span class="required">*</span>
+                                {% trans "Название блока" %} <span class="required">*</span>
                             </label>
                             <input class="fc-input" name="title"
                                    value="{{ current_placement_default_title }}" required>
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label">Сортировка</label>
+                            <label class="fc-label">{% trans "Сортировка" %}</label>
                             <input class="fc-input" type="number" min="0" step="1"
                                    name="sort_order" value="0">
                         </div>
@@ -2394,14 +2385,14 @@ button[type=submit]:hover{
                             <label class="fc-switch">
                                 <input type="checkbox" name="is_active" checked>
                                 <span class="fc-switch-track"></span>
-                                <span class="fc-switch-label">Показывать на сайте</span>
+                                <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                             </label>
                         </div>
                     </div>
 
                     <div class="fc-row fc-row-end" style="margin-top:20px;">
                         <button type="submit" class="fc-btn fc-btn-primary">
-                            Создать блок
+                            {% trans "Создать блок" %}
                         </button>
                     </div>
                 </form>
@@ -2421,18 +2412,15 @@ button[type=submit]:hover{
     <div class="fc-card">
         <div class="fc-card-head">
             <div>
-                <h2>Combo-баннеры</h2>
+                <h2>{% trans "Combo-баннеры" %}</h2>
                 <p class="fc-card-sub fc-mb-0">
-                    Два узких CTA-баннера в секции «Комбо и акции». Показывается
-                    максимум 2 активных одновременно; если активен только один —
-                    фронт растягивает его на всю ширину секции. Порядок задаётся
-                    перетаскиванием.
+                    {% trans "Два узких CTA-баннера в секции «Комбо и акции». Показывается максимум 2 активных одновременно; если активен только один — фронт растягивает его на всю ширину секции. Порядок задаётся перетаскиванием." %}
                 </p>
             </div>
             <button type="button" class="fc-btn fc-btn-primary"
                     onclick="document.getElementById('combo-create-toggle').open=true;document.getElementById('combo-create-card').scrollIntoView({behavior:'smooth'});">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Создать combo-баннер
+                {% trans "Создать combo-баннер" %}
             </button>
         </div>
 
@@ -2442,18 +2430,18 @@ button[type=submit]:hover{
             <div class="fc-table-head"
                  style="grid-template-columns: 24px 96px 1fr 160px 120px 96px;">
                 <div></div>
-                <div>Превью</div>
-                <div>Заголовок</div>
-                <div>Действие</div>
-                <div>Статус</div>
-                <div style="text-align:right;">Управление</div>
+                <div>{% trans "Превью" %}</div>
+                <div>{% trans "Заголовок" %}</div>
+                <div>{% trans "Действие" %}</div>
+                <div>{% trans "Статус" %}</div>
+                <div style="text-align:right;">{% trans "Управление" %}</div>
             </div>
 
             {% for banner in combo_banners %}
                 <div class="fc-table-row" data-id="{{ banner.id }}"
                      style="grid-template-columns: 24px 96px 1fr 160px 120px 96px;">
 
-                    <div class="fc-drag-handle" title="Перетащите чтобы изменить порядок">
+                    <div class="fc-drag-handle" title="{% trans "Перетащите чтобы изменить порядок" %}">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
                     </div>
 
@@ -2474,7 +2462,7 @@ button[type=submit]:hover{
 
                     <div>
                         <div style="font-weight:600;color:var(--fc-text);">
-                            {{ banner.title|default:"Без заголовка" }}
+                            {% if banner.title %}{{ banner.title }}{% else %}{% trans "Без заголовка" %}{% endif %}
                         </div>
                         {% if banner.subtitle %}
                             <div class="fc-muted fc-text-xs" style="margin-top:2px;">
@@ -2504,24 +2492,25 @@ button[type=submit]:hover{
 
                     <div>
                         {% if banner.is_active %}
-                            <span class="fc-badge fc-badge-green">Активен</span>
+                            <span class="fc-badge fc-badge-green">{% trans "Активен" %}</span>
                         {% else %}
-                            <span class="fc-badge fc-badge-gray">Отключён</span>
+                            <span class="fc-badge fc-badge-gray">{% trans "Отключён" %}</span>
                         {% endif %}
                     </div>
 
                     <div style="text-align:right;display:flex;justify-content:flex-end;gap:6px;">
                         <button type="button" class="fc-btn-icon"
-                                title="Редактировать"
+                                title="{% trans "Редактировать" %}"
                                 onclick="toggleComboEdit({{ banner.id }})">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
+                        {% blocktrans with t=banner.title asvar _c_delbanner %}Удалить баннер «{{ t }}»?{% endblocktrans %}
                         <form method="post" style="display:inline;"
-                              onsubmit="return confirm('Удалить баннер «{{ banner.title|escapejs }}»?');">
+                              onsubmit="return confirm('{{ _c_delbanner|escapejs }}');">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete_combo_banner">
                             <input type="hidden" name="banner_id" value="{{ banner.id }}">
-                            <button type="submit" class="fc-btn-icon is-danger" title="Удалить">
+                            <button type="submit" class="fc-btn-icon is-danger" title="{% trans "Удалить" %}">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                             </button>
                         </form>
@@ -2539,15 +2528,15 @@ button[type=submit]:hover{
                         <div class="fc-form-grid">
                             <div class="fc-field span-2">
                                 <label class="fc-label">
-                                    Заголовок <span class="required">*</span>
-                                    <span class="optional">(до 30)</span>
+                                    {% trans "Заголовок" %} <span class="required">*</span>
+                                    <span class="optional">{% trans "(до 30)" %}</span>
                                 </label>
                                 <input class="fc-input" name="title" maxlength="30"
                                        value="{{ banner.title }}" required>
                             </div>
                             <div class="fc-field span-2">
                                 <label class="fc-label">
-                                    Подзаголовок <span class="optional">(до 100, \n для переноса)</span>
+                                    {% trans "Подзаголовок" %} <span class="optional">{% trans "(до 100, \n для переноса)" %}</span>
                                 </label>
                                 <input class="fc-input" name="subtitle" maxlength="100"
                                        value="{{ banner.subtitle }}">
@@ -2555,14 +2544,14 @@ button[type=submit]:hover{
 
                             <div class="fc-field">
                                 <label class="fc-label">
-                                    Текст кнопки <span class="required">*</span>
-                                    <span class="optional">(до 20)</span>
+                                    {% trans "Текст кнопки" %} <span class="required">*</span>
+                                    <span class="optional">{% trans "(до 20)" %}</span>
                                 </label>
                                 <input class="fc-input" name="cta_label" maxlength="20"
                                        value="{{ banner.cta_label }}" required>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Действие кнопки</label>
+                                <label class="fc-label">{% trans "Действие кнопки" %}</label>
                                 <select class="fc-select" name="cta_action_type"
                                         data-combo-action-select="combo-edit-action-value-{{ banner.id }}"
                                         onchange="updateComboActionHint(this)">
@@ -2575,18 +2564,18 @@ button[type=submit]:hover{
                                 </select>
                             </div>
                             <div class="fc-field span-2">
-                                <label class="fc-label">Значение действия</label>
+                                <label class="fc-label">{% trans "Значение действия" %}</label>
                                 <input class="fc-input" name="cta_action_value"
                                        id="combo-edit-action-value-{{ banner.id }}"
                                        value="{{ banner.cta_action_value }}"
-                                       placeholder="slug категории / товара / промокод / URL">
+                                       placeholder="{% trans "slug категории / товара / промокод / URL" %}">
                                 <div class="fc-field-hint" data-combo-action-hint>
-                                    Зависит от типа действия выше
+                                    {% trans "Зависит от типа действия выше" %}
                                 </div>
                             </div>
 
                             <div class="fc-field">
-                                <label class="fc-label">Цвет фона (HEX)</label>
+                                <label class="fc-label">{% trans "Цвет фона (HEX)" %}</label>
                                 <div style="display:flex;gap:8px;align-items:center;">
                                     <input class="fc-input" name="background_color"
                                            value="{{ banner.background_color }}"
@@ -2597,10 +2586,10 @@ button[type=submit]:hover{
                                     <span data-combo-color-preview
                                           style="width:40px;height:40px;border-radius:8px;border:1px solid var(--fc-border);background:{{ banner.background_color|default:'#181818' }};flex-shrink:0;"></span>
                                 </div>
-                                <div class="fc-field-hint">Например <code>#181818</code>, <code>#55C83A</code></div>
+                                <div class="fc-field-hint">{% trans "Например" %} <code>#181818</code>, <code>#55C83A</code></div>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Цвет текста</label>
+                                <label class="fc-label">{% trans "Цвет текста" %}</label>
                                 <select class="fc-select" name="text_color">
                                     {% for value, label in combo_text_color_choices %}
                                         <option value="{{ value }}"
@@ -2612,7 +2601,7 @@ button[type=submit]:hover{
                             </div>
 
                             <div class="fc-field span-2">
-                                <label class="fc-label">Картинка фона</label>
+                                <label class="fc-label">{% trans "Картинка фона" %}</label>
                                 {% if banner.background_image %}
                                     <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
                                         <img src="{{ banner.background_image.url }}"
@@ -2620,19 +2609,19 @@ button[type=submit]:hover{
                                              style="max-width:200px;border-radius:8px;border:1px solid var(--fc-border);">
                                         <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--fc-danger);cursor:pointer;">
                                             <input type="checkbox" name="background_image_clear">
-                                            Удалить текущую
+                                            {% trans "Удалить текущую" %}
                                         </label>
                                     </div>
                                 {% endif %}
                                 <input class="fc-input" name="background_image"
                                        type="file" accept="image/*"
                                        style="padding:6px 10px;line-height:28px;">
-                                <div class="fc-field-hint">Или загрузите файл (JPG/PNG/WEBP)</div>
+                                <div class="fc-field-hint">{% trans "Или загрузите файл (JPG/PNG/WEBP)" %}</div>
                             </div>
                             <div class="fc-field span-2">
                                 <label class="fc-label">
-                                    … или URL картинки
-                                    <span class="optional">(приоритет над файлом)</span>
+                                    {% trans "… или URL картинки" %}
+                                    <span class="optional">{% trans "(приоритет над файлом)" %}</span>
                                 </label>
                                 <input class="fc-input" name="background_image_url"
                                        value="{{ banner.background_image_url }}"
@@ -2640,18 +2629,18 @@ button[type=submit]:hover{
                             </div>
 
                             <div class="fc-field">
-                                <label class="fc-label">Сортировка</label>
+                                <label class="fc-label">{% trans "Сортировка" %}</label>
                                 <input class="fc-input" type="number" min="0" step="1"
                                        name="sort_order" value="{{ banner.sort_order }}">
-                                <div class="fc-field-hint">Меньше = выше</div>
+                                <div class="fc-field-hint">{% trans "Меньше = выше" %}</div>
                             </div>
                             <div class="fc-field">
-                                <label class="fc-label">Видимость</label>
+                                <label class="fc-label">{% trans "Видимость" %}</label>
                                 <label class="fc-switch" style="margin-top:8px;">
                                     <input type="checkbox" name="is_active"
                                            {% if banner.is_active %}checked{% endif %}>
                                     <span class="fc-switch-track"></span>
-                                    <span class="fc-switch-label">Показывать на сайте</span>
+                                    <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                                 </label>
                             </div>
                         </div>
@@ -2659,20 +2648,19 @@ button[type=submit]:hover{
                         <div class="fc-row fc-row-end" style="margin-top:16px;gap:8px;">
                             <button type="button" class="fc-btn fc-btn-secondary"
                                     onclick="toggleComboEdit({{ banner.id }})">
-                                Отмена
+                                {% trans "Отмена" %}
                             </button>
                             <button type="submit" class="fc-btn fc-btn-primary">
-                                Сохранить
+                                {% trans "Сохранить" %}
                             </button>
                         </div>
                     </form>
                 </div>
             {% empty %}
                 <div class="fc-table-empty">
-                    <div class="fc-empty-title">Combo-баннеров пока нет</div>
+                    <div class="fc-empty-title">{% trans "Combo-баннеров пока нет" %}</div>
                     <div class="fc-empty-sub">
-                        Создайте первый — он сразу появится в секции
-                        «Комбо и акции» на главной.
+                        {% trans "Создайте первый — он сразу появится в секции «Комбо и акции» на главной." %}
                     </div>
                 </div>
             {% endfor %}
@@ -2684,13 +2672,13 @@ button[type=submit]:hover{
         <details id="combo-create-toggle">
             <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;">
                 <div>
-                    <h2 style="margin:0;font-size:18px;font-weight:600;">Создать новый combo-баннер</h2>
+                    <h2 style="margin:0;font-size:18px;font-weight:600;">{% trans "Создать новый combo-баннер" %}</h2>
                     <p class="fc-card-sub fc-mb-0" style="margin-top:4px;">
-                        Заполните поля и нажмите «Создать combo-баннер»
+                        {% trans "Заполните поля и нажмите «Создать combo-баннер»" %}
                     </p>
                 </div>
                 <span class="fc-btn fc-btn-secondary fc-btn-sm" style="pointer-events:none;">
-                    Развернуть
+                    {% trans "Развернуть" %}
                 </span>
             </summary>
 
@@ -2702,30 +2690,30 @@ button[type=submit]:hover{
                     <div class="fc-form-grid">
                         <div class="fc-field span-2">
                             <label class="fc-label">
-                                Заголовок <span class="required">*</span>
-                                <span class="optional">(до 30)</span>
+                                {% trans "Заголовок" %} <span class="required">*</span>
+                                <span class="optional">{% trans "(до 30)" %}</span>
                             </label>
                             <input class="fc-input" name="title" maxlength="30" required
-                                   placeholder="Например: Семейные комбо">
+                                   placeholder="{% trans "Например: Семейные комбо" %}">
                         </div>
                         <div class="fc-field span-2">
                             <label class="fc-label">
-                                Подзаголовок <span class="optional">(до 100, \n для переноса строки)</span>
+                                {% trans "Подзаголовок" %} <span class="optional">{% trans "(до 100, \n для переноса строки)" %}</span>
                             </label>
                             <input class="fc-input" name="subtitle" maxlength="100"
-                                   placeholder="Например: Выгодно для большой компании">
+                                   placeholder="{% trans "Например: Выгодно для большой компании" %}">
                         </div>
 
                         <div class="fc-field">
                             <label class="fc-label">
-                                Текст кнопки <span class="required">*</span>
-                                <span class="optional">(до 20)</span>
+                                {% trans "Текст кнопки" %} <span class="required">*</span>
+                                <span class="optional">{% trans "(до 20)" %}</span>
                             </label>
                             <input class="fc-input" name="cta_label" maxlength="20" required
-                                   placeholder="Смотреть комбо">
+                                   placeholder="{% trans "Смотреть комбо" %}">
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label">Действие кнопки</label>
+                            <label class="fc-label">{% trans "Действие кнопки" %}</label>
                             <select class="fc-select" name="cta_action_type"
                                     data-combo-action-select="combo-create-action-value"
                                     onchange="updateComboActionHint(this)">
@@ -2735,17 +2723,17 @@ button[type=submit]:hover{
                             </select>
                         </div>
                         <div class="fc-field span-2">
-                            <label class="fc-label">Значение действия</label>
+                            <label class="fc-label">{% trans "Значение действия" %}</label>
                             <input class="fc-input" name="cta_action_value"
                                    id="combo-create-action-value"
-                                   placeholder="slug категории / товара / промокод / URL">
+                                   placeholder="{% trans "slug категории / товара / промокод / URL" %}">
                             <div class="fc-field-hint" data-combo-action-hint>
-                                Зависит от типа действия выше
+                                {% trans "Зависит от типа действия выше" %}
                             </div>
                         </div>
 
                         <div class="fc-field">
-                            <label class="fc-label">Цвет фона (HEX)</label>
+                            <label class="fc-label">{% trans "Цвет фона (HEX)" %}</label>
                             <div style="display:flex;gap:8px;align-items:center;">
                                 <input class="fc-input" name="background_color"
                                        value="#181818"
@@ -2756,10 +2744,10 @@ button[type=submit]:hover{
                                 <span data-combo-color-preview
                                       style="width:40px;height:40px;border-radius:8px;border:1px solid var(--fc-border);background:#181818;flex-shrink:0;"></span>
                             </div>
-                            <div class="fc-field-hint">Например <code>#181818</code>, <code>#55C83A</code></div>
+                            <div class="fc-field-hint">{% trans "Например" %} <code>#181818</code>, <code>#55C83A</code></div>
                         </div>
                         <div class="fc-field">
-                            <label class="fc-label">Цвет текста</label>
+                            <label class="fc-label">{% trans "Цвет текста" %}</label>
                             <select class="fc-select" name="text_color">
                                 {% for value, label in combo_text_color_choices %}
                                     <option value="{{ value }}">{{ label }}</option>
@@ -2768,37 +2756,37 @@ button[type=submit]:hover{
                         </div>
 
                         <div class="fc-field span-2">
-                            <label class="fc-label">Картинка фона</label>
+                            <label class="fc-label">{% trans "Картинка фона" %}</label>
                             <input class="fc-input" name="background_image"
                                    type="file" accept="image/*"
                                    style="padding:6px 10px;line-height:28px;">
-                            <div class="fc-field-hint">Или укажите URL ниже (имеет приоритет над файлом)</div>
+                            <div class="fc-field-hint">{% trans "Или укажите URL ниже (имеет приоритет над файлом)" %}</div>
                         </div>
                         <div class="fc-field span-2">
-                            <label class="fc-label">URL картинки</label>
+                            <label class="fc-label">{% trans "URL картинки" %}</label>
                             <input class="fc-input" name="background_image_url"
                                    placeholder="https://example.com/banner.jpg">
                         </div>
 
                         <div class="fc-field">
-                            <label class="fc-label">Сортировка</label>
+                            <label class="fc-label">{% trans "Сортировка" %}</label>
                             <input class="fc-input" type="number" min="0" step="1"
                                    name="sort_order" value="0">
-                            <div class="fc-field-hint">Меньше = выше</div>
+                            <div class="fc-field-hint">{% trans "Меньше = выше" %}</div>
                         </div>
                         <div class="fc-field">
                             <label class="fc-label">&nbsp;</label>
                             <label class="fc-switch">
                                 <input type="checkbox" name="is_active" checked>
                                 <span class="fc-switch-track"></span>
-                                <span class="fc-switch-label">Показывать на сайте</span>
+                                <span class="fc-switch-label">{% trans "Показывать на сайте" %}</span>
                             </label>
                         </div>
                     </div>
 
                     <div class="fc-row fc-row-end" style="margin-top:20px;">
                         <button type="submit" class="fc-btn fc-btn-primary">
-                            Создать combo-баннер
+                            {% trans "Создать combo-баннер" %}
                         </button>
                     </div>
                 </form>

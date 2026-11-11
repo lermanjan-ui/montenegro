@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Клиент{% endblock %}
+{% block title %}{% trans "Клиент" %}{% endblock %}
 
 {% block content %}
 
@@ -120,47 +121,47 @@
 <div class="fc-page">
 
     <nav class="fc-breadcrumbs" aria-label="Breadcrumbs">
-        <a href="/c/{{ country.slug }}/">Главная</a>
+        <a href="/c/{{ country.slug }}/">{% trans "Главная" %}</a>
         <span class="sep">›</span>
-        <a href="/c/{{ country.slug }}/customers/">Клиенты</a>
+        <a href="/c/{{ country.slug }}/customers/">{% trans "Клиенты" %}</a>
         <span class="sep">›</span>
-        <span class="current">{{ customer.name|default:"Без имени" }}</span>
+        <span class="current">{% if customer.name %}{{ customer.name }}{% else %}{% trans "Без имени" %}{% endif %}</span>
     </nav>
 
     {% if saved %}
-        <div class="fc-banner fc-banner-success"><strong>Сохранено.</strong> Статусы клиента обновлены.</div>
+        <div class="fc-banner fc-banner-success"><strong>{% trans "Сохранено." %}</strong> {% trans "Статусы клиента обновлены." %}</div>
     {% endif %}
 
     {% if customer.delivery_blocked %}
         <div class="fc-banner fc-banner-danger">
-            <strong>⚠ Отказ в доставке.</strong>
-            Этому клиенту отказано в доставке.
-            {% if customer.delivery_block_reason %}Причина: {{ customer.delivery_block_reason }}{% endif %}
+            <strong>{% trans "⚠ Отказ в доставке." %}</strong>
+            {% trans "Этому клиенту отказано в доставке." %}
+            {% if customer.delivery_block_reason %}{% trans "Причина:" %} {{ customer.delivery_block_reason }}{% endif %}
         </div>
     {% endif %}
 
     <div class="fc-page-head">
         <div>
-            <h1>{{ customer.name|default:"Без имени" }}</h1>
+            <h1>{% if customer.name %}{{ customer.name }}{% else %}{% trans "Без имени" %}{% endif %}</h1>
             <p class="muted">{{ customer.phone }}</p>
             <div class="head-badges">
-                {% if customer.is_regular %}<span class="fc-badge fc-badge-green">Постоянный</span>{% endif %}
-                {% if customer.is_corporate %}<span class="fc-badge fc-badge-amber">Корпоративный</span>{% endif %}
-                {% if ordered_lunches %}<span class="fc-badge fc-badge-green">🍱 Заказывал обеды</span>{% endif %}
-                {% if customer.is_problematic %}<span class="fc-badge fc-badge-red">Проблемный</span>{% endif %}
-                {% if customer.delivery_blocked %}<span class="fc-badge fc-badge-red">⚠ Отказ в доставке</span>{% endif %}
+                {% if customer.is_regular %}<span class="fc-badge fc-badge-green">{% trans "Постоянный" %}</span>{% endif %}
+                {% if customer.is_corporate %}<span class="fc-badge fc-badge-amber">{% trans "Корпоративный" %}</span>{% endif %}
+                {% if ordered_lunches %}<span class="fc-badge fc-badge-green">{% trans "🍱 Заказывал обеды" %}</span>{% endif %}
+                {% if customer.is_problematic %}<span class="fc-badge fc-badge-red">{% trans "Проблемный" %}</span>{% endif %}
+                {% if customer.delivery_blocked %}<span class="fc-badge fc-badge-red">{% trans "⚠ Отказ в доставке" %}</span>{% endif %}
                 {% if not customer.is_regular and not customer.is_problematic and not customer.delivery_blocked %}
-                    <span class="fc-badge fc-badge-gray">Без флага</span>
+                    <span class="fc-badge fc-badge-gray">{% trans "Без флага" %}</span>
                 {% endif %}
             </div>
         </div>
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">Заказов</div><div class="stat-value">{{ total_orders }}</div></div>
-        <div class="stat-card"><div class="stat-label">Сумма заказов</div><div class="stat-value green">{{ total_amount_display }} сум</div></div>
-        <div class="stat-card"><div class="stat-label">Средний чек</div><div class="stat-value">{{ average_check_display }} сум</div></div>
-        <div class="stat-card"><div class="stat-label">Адресов</div><div class="stat-value">{{ addresses_count }}</div></div>
+        <div class="stat-card"><div class="stat-label">{% trans "Заказов" %}</div><div class="stat-value">{{ total_orders }}</div></div>
+        <div class="stat-card"><div class="stat-label">{% trans "Сумма заказов" %}</div><div class="stat-value green">{{ total_amount_display }} {% trans "сум" %}</div></div>
+        <div class="stat-card"><div class="stat-label">{% trans "Средний чек" %}</div><div class="stat-value">{{ average_check_display }} {% trans "сум" %}</div></div>
+        <div class="stat-card"><div class="stat-label">{% trans "Адресов" %}</div><div class="stat-value">{{ addresses_count }}</div></div>
     </div>
 
     <div class="layout">
@@ -168,27 +169,27 @@
         <div>
             <div class="fc-card" style="padding:0;">
                 <div style="padding:20px 24px;border-bottom:1px solid var(--fc-border-soft);">
-                    <h2 style="margin:0;">История заказов</h2>
+                    <h2 style="margin:0;">{% trans "История заказов" %}</h2>
                 </div>
                 {% if order_rows %}
                     <div class="fc-table" style="border:0;border-radius:0;">
                         <div class="ord-head">
-                            <div>№</div><div>Дата</div><div>Сумма</div><div>Филиал</div><div>Действие</div>
+                            <div>№</div><div>{% trans "Дата" %}</div><div>{% trans "Сумма" %}</div><div>{% trans "Филиал" %}</div><div>{% trans "Действие" %}</div>
                         </div>
                         {% for o in order_rows %}
                             <div class="ord-row">
                                 <div data-label="№" class="ord-id">#{{ o.id }}</div>
-                                <div data-label="Дата">{{ o.order_date|date:"d.m.Y H:i" }}</div>
-                                <div data-label="Сумма" class="ord-sum">{{ o.sum_display }} сум</div>
-                                <div data-label="Филиал">{{ o.location_name }}</div>
+                                <div data-label="{% trans "Дата" %}">{{ o.order_date|date:"d.m.Y H:i" }}</div>
+                                <div data-label="{% trans "Сумма" %}" class="ord-sum">{{ o.sum_display }} {% trans "сум" %}</div>
+                                <div data-label="{% trans "Филиал" %}">{{ o.location_name }}</div>
                                 <div class="ord-cell-action">
-                                    <a class="ord-open" href="/c/{{ country.slug }}/orders/{{ o.id }}/">Открыть</a>
+                                    <a class="ord-open" href="/c/{{ country.slug }}/orders/{{ o.id }}/">{% trans "Открыть" %}</a>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="fc-empty">Заказов пока нет</div>
+                    <div class="fc-empty">{% trans "Заказов пока нет" %}</div>
                 {% endif %}
             </div>
         </div>
@@ -197,54 +198,54 @@
 
             {% if can_edit %}
                 <div class="fc-card">
-                    <h2>Статус клиента</h2>
+                    <h2>{% trans "Статус клиента" %}</h2>
                     <form method="post" action="/c/{{ country.slug }}/customers/{{ customer.id }}/">
                         {% csrf_token %}
 
                         <label class="toggle">
                             <input type="checkbox" name="is_regular" {% if customer.is_regular %}checked{% endif %}>
-                            <span><span class="t-title">Постоянный</span><span class="t-sub">Лояльный клиент, заказывает регулярно.</span></span>
+                            <span><span class="t-title">{% trans "Постоянный" %}</span><span class="t-sub">{% trans "Лояльный клиент, заказывает регулярно." %}</span></span>
                         </label>
 
                         <label class="toggle">
                             <input type="checkbox" name="is_corporate" {% if customer.is_corporate %}checked{% endif %}>
-                            <span><span class="t-title">Корпоративный (юрлицо)</span><span class="t-sub">Доступен для выбора в журнале «Учёт обедов».</span></span>
+                            <span><span class="t-title">{% trans "Корпоративный (юрлицо)" %}</span><span class="t-sub">{% trans "Доступен для выбора в журнале «Учёт обедов»." %}</span></span>
                         </label>
 
                         <label class="toggle">
                             <input type="checkbox" name="is_problematic" {% if customer.is_problematic %}checked{% endif %}>
-                            <span><span class="t-title">Проблемный</span><span class="t-sub">На заметке: жалобы, возвраты, сложности.</span></span>
+                            <span><span class="t-title">{% trans "Проблемный" %}</span><span class="t-sub">{% trans "На заметке: жалобы, возвраты, сложности." %}</span></span>
                         </label>
 
                         <label class="toggle danger">
                             <input type="checkbox" name="delivery_blocked" {% if customer.delivery_blocked %}checked{% endif %}>
-                            <span><span class="t-title">⚠ Отказ в доставке (алярм)</span><span class="t-sub">Жёсткий стоп: этому клиенту доставку не оформляем.</span></span>
+                            <span><span class="t-title">{% trans "⚠ Отказ в доставке (алярм)" %}</span><span class="t-sub">{% trans "Жёсткий стоп: этому клиенту доставку не оформляем." %}</span></span>
                         </label>
 
                         <div style="margin:6px 0 14px;">
-                            <label class="fc-label">Причина отказа</label>
+                            <label class="fc-label">{% trans "Причина отказа" %}</label>
                             <input class="fc-input" type="text" name="delivery_block_reason" maxlength="255"
-                                   value="{{ customer.delivery_block_reason }}" placeholder="Например: систематические ложные заказы">
+                                   value="{{ customer.delivery_block_reason }}" placeholder="{% trans "Например: систематические ложные заказы" %}">
                         </div>
 
                         <div style="margin-bottom:14px;">
-                            <label class="fc-label">Комментарий</label>
-                            <textarea class="fc-textarea" name="comment" placeholder="Заметки о клиенте">{{ customer.comment }}</textarea>
+                            <label class="fc-label">{% trans "Комментарий" %}</label>
+                            <textarea class="fc-textarea" name="comment" placeholder="{% trans "Заметки о клиенте" %}">{{ customer.comment }}</textarea>
                         </div>
 
-                        <button type="submit" class="fc-btn fc-btn-primary" style="width:100%;">Сохранить</button>
+                        <button type="submit" class="fc-btn fc-btn-primary" style="width:100%;">{% trans "Сохранить" %}</button>
                     </form>
                 </div>
             {% endif %}
 
             <div class="fc-card">
-                <h2>Клиент</h2>
+                <h2>{% trans "Клиент" %}</h2>
                 <div class="info-row">
-                    <span class="info-label">Имя</span>
+                    <span class="info-label">{% trans "Имя" %}</span>
                     <span class="info-value">{{ customer.name|default:"—" }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Телефон</span>
+                    <span class="info-label">{% trans "Телефон" %}</span>
                     <span class="info-value">{{ customer.phone }}</span>
                 </div>
                 <div class="info-row">
@@ -252,35 +253,35 @@
                     <span class="info-value">{{ customer.telegram|default:"—" }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Статус</span>
+                    <span class="info-label">{% trans "Статус" %}</span>
                     <span class="info-value">
-                        {% if customer.is_problematic %}Проблемный
-                        {% elif customer.is_regular %}Постоянный
-                        {% else %}Обычный{% endif %}
-                        {% if customer.delivery_blocked %} · ⚠ отказ в доставке{% endif %}
+                        {% if customer.is_problematic %}{% trans "Проблемный" %}
+                        {% elif customer.is_regular %}{% trans "Постоянный" %}
+                        {% else %}{% trans "Обычный" %}{% endif %}
+                        {% if customer.delivery_blocked %} · ⚠ {% trans "отказ в доставке" %}{% endif %}
                     </span>
                 </div>
             </div>
 
             <div class="fc-card">
-                <h2>Адреса доставки</h2>
+                <h2>{% trans "Адреса доставки" %}</h2>
                 {% for address in customer.addresses.all %}
                     <div class="address-item">
                         <div class="address-text">
                             {{ address.address }}
-                            {% if address.is_default %}<span class="fc-badge fc-badge-gray" style="margin-left:6px;">Основной</span>{% endif %}
+                            {% if address.is_default %}<span class="fc-badge fc-badge-gray" style="margin-left:6px;">{% trans "Основной" %}</span>{% endif %}
                         </div>
                         {% if address.location %}<div class="address-meta">{{ address.location.name }}</div>{% endif %}
                     </div>
                 {% empty %}
-                    <div class="fc-empty">Адресов нет</div>
+                    <div class="fc-empty">{% trans "Адресов нет" %}</div>
                 {% endfor %}
             </div>
 
             {% if not can_edit %}
                 <div class="fc-card">
-                    <h2>Комментарий</h2>
-                    <div class="comment-box">{{ customer.comment|default:"Комментария нет" }}</div>
+                    <h2>{% trans "Комментарий" %}</h2>
+                    <div class="comment-box">{% if customer.comment %}{{ customer.comment }}{% else %}{% trans "Комментария нет" %}{% endif %}</div>
                 </div>
             {% endif %}
 

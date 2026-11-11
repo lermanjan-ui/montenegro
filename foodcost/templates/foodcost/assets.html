@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Активы · {{ country.name }}{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Активы" %} · {{ country.name }}{% endblock %}
 {% block content %}
 <style>
 .as-note{color:var(--muted);margin:0 0 16px;max-width:70ch;}
@@ -16,17 +17,17 @@ tr:last-child td{border-bottom:0;}
 .muted{color:var(--muted);}
 </style>
 
-<h1 style="margin:0 0 4px;">Активы (основные средства)</h1>
-<p class="as-note">Товары из категорий с типом учёта «Основное средство»: оборудование, мебель и т.п. На баланс, а не в расход. Стоимость — последняя цена закупки.</p>
+<h1 style="margin:0 0 4px;">{% trans "Активы (основные средства)" %}</h1>
+<p class="as-note">{% trans "Товары из категорий с типом учёта «Основное средство»: оборудование, мебель и т.п. На баланс, а не в расход. Стоимость — последняя цена закупки." %}</p>
 
 <div class="as-sum">
-  <div class="as-tile"><div class="n">{{ count }}</div><div class="l">Позиций</div></div>
-  <div class="as-tile"><div class="n">{{ total|floatformat:0 }}</div><div class="l">Стоимость, UZS</div></div>
+  <div class="as-tile"><div class="n">{{ count }}</div><div class="l">{% trans "Позиций" %}</div></div>
+  <div class="as-tile"><div class="n">{{ total|floatformat:0 }}</div><div class="l">{% trans "Стоимость, UZS" %}</div></div>
 </div>
 
 <div class="card" style="padding:0;overflow:hidden;">
   <table>
-    <thead><tr><th>Наименование</th><th>Категория</th><th class="num">Стоимость</th></tr></thead>
+    <thead><tr><th>{% trans "Наименование" %}</th><th>{% trans "Категория" %}</th><th class="num">{% trans "Стоимость" %}</th></tr></thead>
     <tbody>
       {% for r in rows %}
       <tr>
@@ -35,7 +36,7 @@ tr:last-child td{border-bottom:0;}
         <td class="num">{% if r.value %}{{ r.value|floatformat:0 }}{% else %}<span class="muted">—</span>{% endif %}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="3" style="padding:22px;text-align:center;" class="muted">Активов пока нет. Отметьте товары категорией с типом «Основное средство».</td></tr>
+      <tr><td colspan="3" style="padding:22px;text-align:center;" class="muted">{% trans "Активов пока нет. Отметьте товары категорией с типом «Основное средство»." %}</td></tr>
       {% endfor %}
     </tbody>
   </table>

@@ -1,30 +1,32 @@
 {% extends "foodcost/platform/base.html" %}
-{% block title %}Команда · Платформа{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Команда · Платформа" %}{% endblock %}
 {% block content %}
-<h1>Команда платформы</h1>
-<p class="sub">Супер-админ и платформенные менеджеры. Менеджеры управляют клиентами, но не могут заводить других менеджеров.</p>
+<h1>{% trans "Команда платформы" %}</h1>
+<p class="sub">{% trans "Супер-админ и платформенные менеджеры. Менеджеры управляют клиентами, но не могут заводить других менеджеров." %}</p>
 
 {% if error %}<div class="err">{{ error }}</div>{% endif %}
 
 <div class="card" style="padding:0;overflow:hidden;">
   <table>
     <thead>
-      <tr><th>Пользователь</th><th>Роль</th><th style="text-align:right;">Действие</th></tr>
+      <tr><th>{% trans "Пользователь" %}</th><th>{% trans "Роль" %}</th><th style="text-align:right;">{% trans "Действие" %}</th></tr>
     </thead>
     <tbody>
       {% for p in staff %}
       <tr>
         <td style="font-weight:600;">{{ p.user.username }}</td>
         <td>
-          {% if p.role == "super_admin" %}<span class="badge plan">Супер-админ</span>
-          {% else %}<span class="badge neutral">Менеджер</span>{% endif %}
+          {% if p.role == "super_admin" %}<span class="badge plan">{% trans "Супер-админ" %}</span>
+          {% else %}<span class="badge neutral">{% trans "Менеджер" %}</span>{% endif %}
         </td>
         <td style="text-align:right;">
           {% if p.role == "platform_manager" and p.user_id != me_id %}
+          {% blocktrans with u=p.user.username asvar _c_rm %}Снять доступ у менеджера {{ u }}?{% endblocktrans %}
           <form method="post" action="/platform/team/{{ p.user_id }}/remove/" class="inline"
-                onsubmit="return confirm('Снять доступ у менеджера {{ p.user.username }}?');">
+                onsubmit="return confirm('{{ _c_rm|escapejs }}');">
             {% csrf_token %}
-            <button class="btn danger sm" type="submit">Снять доступ</button>
+            <button class="btn danger sm" type="submit">{% trans "Снять доступ" %}</button>
           </form>
           {% else %}
           <span class="muted" style="font-size:12px;">—</span>
@@ -37,20 +39,20 @@
 </div>
 
 <div class="card" style="max-width:560px;">
-  <h2>Новый менеджер</h2>
-  <p class="muted" style="margin:-8px 0 14px;">Получит доступ к консоли (клиенты, тарифы, модули), но не сможет заводить других менеджеров.</p>
+  <h2>{% trans "Новый менеджер" %}</h2>
+  <p class="muted" style="margin:-8px 0 14px;">{% trans "Получит доступ к консоли (клиенты, тарифы, модули), но не сможет заводить других менеджеров." %}</p>
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="action" value="create_manager">
     <div class="field">
-      <label>Логин</label>
+      <label>{% trans "Логин" %}</label>
       <input type="text" name="login" required autocomplete="off">
     </div>
     <div class="field">
-      <label>Пароль</label>
+      <label>{% trans "Пароль" %}</label>
       <input type="text" name="password" required autocomplete="off">
     </div>
-    <button class="btn" type="submit">Создать менеджера</button>
+    <button class="btn" type="submit">{% trans "Создать менеджера" %}</button>
   </form>
 </div>
 {% endblock %}

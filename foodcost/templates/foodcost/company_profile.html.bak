@@ -1,0 +1,175 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Реквизиты компании · {{ country.name }}{% endblock %}
+{% block content %}
+<style>
+.cp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.cp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;}
+.cp-grid .full{grid-column:1 / -1;}
+.cp-field label{display:block;font-weight:600;font-size:13px;margin:0 0 6px;color:var(--text);}
+.cp-field input[type=text],.cp-field input[type=email],.cp-field textarea{
+  width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 12px;
+  font-family:inherit;font-size:14px;background:#fff;}
+.cp-field textarea{height:auto;min-height:72px;padding:10px 12px;resize:vertical;}
+.cp-field .hint{color:var(--muted);font-size:12px;margin-top:4px;}
+.cp-check{display:flex;align-items:center;gap:10px;font-weight:600;}
+.cp-check input{width:18px;height:18px;}
+.cp-sec-title{font-size:15px;font-weight:700;margin:0 0 14px;}
+.cp-saved{background:var(--green-soft);color:var(--primary);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-weight:600;}
+.cp-logo{display:flex;align-items:center;gap:16px;}
+.cp-logo img{height:64px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:6px;}
+@media(max-width:720px){.cp-grid{grid-template-columns:1fr;}}
+</style>
+
+<div class="cp-head">
+  <div>
+    <h1 style="margin:0;">Реквизиты компании</h1>
+    <div style="color:var(--muted);margin-top:4px;">Данные для документов, счетов и договоров.</div>
+  </div>
+</div>
+
+{% if saved %}<div class="cp-saved">Реквизиты сохранены.</div>{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <!-- Основное -->
+  <div class="card">
+    <div class="cp-sec-title">Основное</div>
+    <div class="cp-grid">
+      <div class="cp-field full">
+        <label>Полное наименование</label>
+        <input type="text" name="legal_name" value="{{ profile.legal_name }}" placeholder="ООО «Navruz Catering»">
+      </div>
+      <div class="cp-field">
+        <label>Краткое наименование</label>
+        <input type="text" name="short_name" value="{{ profile.short_name }}">
+      </div>
+      <div class="cp-field">
+        <label>Форма собственности</label>
+        <input type="text" name="ownership_form" value="{{ profile.ownership_form }}" placeholder="ООО / ЧП / МЧЖ / АО">
+      </div>
+    </div>
+  </div>
+
+  <!-- Налоговые реквизиты -->
+  <div class="card">
+    <div class="cp-sec-title">Налоговые реквизиты</div>
+    <div class="cp-grid">
+      <div class="cp-field">
+        <label>СТИР (ИНН)</label>
+        <input type="text" name="inn" value="{{ profile.inn }}" maxlength="9" inputmode="numeric" pattern="\d{9}" placeholder="9 цифр">
+        <div class="hint">9 цифр</div>
+      </div>
+      <div class="cp-field">
+        <label>ОКЭД</label>
+        <input type="text" name="oked" value="{{ profile.oked }}" placeholder="Код вида деятельности">
+      </div>
+      <div class="cp-field">
+        <label>ОКПО</label>
+        <input type="text" name="okpo" value="{{ profile.okpo }}">
+      </div>
+      <div class="cp-field">
+        <label>&nbsp;</label>
+        <label class="cp-check">
+          <input type="checkbox" name="vat_payer" {% if profile.vat_payer %}checked{% endif %}>
+          Плательщик НДС
+        </label>
+      </div>
+      <div class="cp-field full">
+        <label>Рег. код плательщика НДС</label>
+        <input type="text" name="vat_code" value="{{ profile.vat_code }}" placeholder="Заполняется, если плательщик НДС">
+      </div>
+    </div>
+  </div>
+
+  <!-- Банк -->
+  <div class="card">
+    <div class="cp-sec-title">Банковские реквизиты</div>
+    <div class="cp-grid">
+      <div class="cp-field full">
+        <label>Расчётный счёт (р/с)</label>
+        <input type="text" name="bank_account" value="{{ profile.bank_account }}" maxlength="20" inputmode="numeric" pattern="\d{20}" placeholder="20 цифр">
+        <div class="hint">20 цифр</div>
+      </div>
+      <div class="cp-field">
+        <label>Банк</label>
+        <input type="text" name="bank_name" value="{{ profile.bank_name }}">
+      </div>
+      <div class="cp-field">
+        <label>МФО банка</label>
+        <input type="text" name="mfo" value="{{ profile.mfo }}" maxlength="5" inputmode="numeric" pattern="\d{5}" placeholder="5 цифр">
+        <div class="hint">5 цифр</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Адреса -->
+  <div class="card">
+    <div class="cp-sec-title">Адреса</div>
+    <div class="cp-grid">
+      <div class="cp-field full">
+        <label>Юридический адрес</label>
+        <textarea name="legal_address">{{ profile.legal_address }}</textarea>
+      </div>
+      <div class="cp-field full">
+        <label>Фактический адрес</label>
+        <textarea name="actual_address">{{ profile.actual_address }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Руководство -->
+  <div class="card">
+    <div class="cp-sec-title">Руководство</div>
+    <div class="cp-grid">
+      <div class="cp-field">
+        <label>ФИО директора</label>
+        <input type="text" name="director_name" value="{{ profile.director_name }}">
+      </div>
+      <div class="cp-field">
+        <label>Действует на основании</label>
+        <input type="text" name="director_basis" value="{{ profile.director_basis }}" placeholder="Устава">
+      </div>
+      <div class="cp-field full">
+        <label>ФИО главного бухгалтера</label>
+        <input type="text" name="accountant_name" value="{{ profile.accountant_name }}">
+      </div>
+    </div>
+  </div>
+
+  <!-- Контакты + логотип -->
+  <div class="card">
+    <div class="cp-sec-title">Контакты и логотип</div>
+    <div class="cp-grid">
+      <div class="cp-field">
+        <label>Телефон</label>
+        <input type="text" name="phone" value="{{ profile.phone }}">
+      </div>
+      <div class="cp-field">
+        <label>E-mail</label>
+        <input type="email" name="email" value="{{ profile.email }}">
+      </div>
+      <div class="cp-field full">
+        <label>Логотип</label>
+        <div class="cp-logo">
+          {% if profile.logo %}<img src="{{ profile.logo.url }}" alt="логотип">{% endif %}
+          <input type="file" name="logo" accept="image/*">
+        </div>
+        {% if profile.logo %}
+        <label class="cp-check" style="margin-top:10px;font-weight:500;">
+          <input type="checkbox" name="logo_clear"> Удалить текущий логотип
+        </label>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if can_edit %}
+  <div style="display:flex;gap:12px;">
+    <button type="submit">Сохранить реквизиты</button>
+  </div>
+  {% else %}
+  <div style="color:var(--muted);">У вас нет прав на изменение реквизитов (только просмотр).</div>
+  {% endif %}
+</form>
+{% endblock %}

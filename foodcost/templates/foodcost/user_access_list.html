@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Пользователи{% endblock %}
+{% block title %}{% trans "Пользователи" %}{% endblock %}
 
 {% block content %}
 
@@ -157,10 +158,10 @@ details > summary::-webkit-details-marker{ display:none; }
 
     <div class="fc-page-head">
         <div>
-            <h1>Пользователи</h1>
-            <p class="muted">Список всех пользователей системы и их доступы</p>
+            <h1>{% trans "Пользователи" %}</h1>
+            <p class="muted">{% trans "Список всех пользователей системы и их доступы" %}</p>
         </div>
-        <a href="#create-user" class="fc-btn fc-btn-primary">+ Создать пользователя</a>
+        <a href="#create-user" class="fc-btn fc-btn-primary">{% trans "+ Создать пользователя" %}</a>
     </div>
 
     {% if error %}
@@ -169,17 +170,17 @@ details > summary::-webkit-details-marker{ display:none; }
 
     {# ============================ СПИСОК ПОЛЬЗОВАТЕЛЕЙ ============================ #}
     <div class="card">
-        <input class="fc-input u-search" id="userSearch" type="text" placeholder="Поиск пользователя...">
+        <input class="fc-input u-search" id="userSearch" type="text" placeholder="{% trans "Поиск пользователя..." %}">
 
         <div class="fc-table">
             <div class="u-head">
-                <div>Пользователь</div>
-                <div>Роль</div>
-                <div>Страны</div>
-                <div>Разделы</div>
-                <div>Филиал</div>
+                <div>{% trans "Пользователь" %}</div>
+                <div>{% trans "Роль" %}</div>
+                <div>{% trans "Страны" %}</div>
+                <div>{% trans "Разделы" %}</div>
+                <div>{% trans "Филиал" %}</div>
                 <div>Superuser</div>
-                <div>Действия</div>
+                <div>{% trans "Действия" %}</div>
             </div>
 
             <div class="users-list">
@@ -190,50 +191,50 @@ details > summary::-webkit-details-marker{ display:none; }
                             <div class="u-avatar">{{ user.username|first|upper }}</div>
                             <div>
                                 <div class="username">{{ user.username }}</div>
-                                <div class="u-login">Логин: {{ user.username }}</div>
+                                <div class="u-login">{% trans "Логин:" %} {{ user.username }}</div>
                             </div>
                         </div>
 
                         <div>
-                            <div class="small-label">Роль</div>
+                            <div class="small-label">{% trans "Роль" %}</div>
                             <span class="role-badge">{{ user.profile.get_role_display }}</span>
                         </div>
 
                         <div>
-                            <div class="small-label">Страны</div>
+                            <div class="small-label">{% trans "Страны" %}</div>
                             <div class="country-list">
                                 {% if user.is_superuser %}
-                                    Все страны
+                                    {% trans "Все страны" %}
                                 {% else %}
                                     {% for c in user.profile.countries.all %}
                                         {{ c.name }}{% if not forloop.last %}, {% endif %}
                                     {% empty %}
-                                        <span class="muted">Не выбраны</span>
+                                        <span class="muted">{% trans "Не выбраны" %}</span>
                                     {% endfor %}
                                 {% endif %}
                             </div>
                         </div>
 
                         <div>
-                            <div class="small-label">Разделы</div>
+                            <div class="small-label">{% trans "Разделы" %}</div>
                             <div class="section-list">
                                 {% if user.is_superuser %}
-                                    Все разделы
+                                    {% trans "Все разделы" %}
                                 {% else %}
-                                    {{ user.profile.allowed_sections|length }} разделов
+                                    {{ user.profile.allowed_sections|length }} {% trans "разделов" %}
                                 {% endif %}
                             </div>
                         </div>
 
                         <div>
-                            <div class="small-label">Филиалы</div>
+                            <div class="small-label">{% trans "Филиалы" %}</div>
                             <div class="country-list">
                                 {% if user.profile.locations.all %}
                                     {% for loc in user.profile.locations.all %}{{ loc.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
                                 {% elif user.profile.location %}
                                     {{ user.profile.location.name }}
                                 {% else %}
-                                    <span class="muted">Все филиалы</span>
+                                    <span class="muted">{% trans "Все филиалы" %}</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -241,15 +242,15 @@ details > summary::-webkit-details-marker{ display:none; }
                         <div>
                             <div class="small-label">Superuser</div>
                             {% if user.is_superuser %}
-                                <span class="superuser-yes">Да</span>
+                                <span class="superuser-yes">{% trans "Да" %}</span>
                             {% else %}
-                                <span class="superuser-no">Нет</span>
+                                <span class="superuser-no">{% trans "Нет" %}</span>
                             {% endif %}
                         </div>
 
                         <div class="u-actions">
-                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm edit-btn">✎ Редактировать</button>
-                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm u-chevron edit-btn" aria-label="Развернуть">⌄</button>
+                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm edit-btn">{% trans "✎ Редактировать" %}</button>
+                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm u-chevron edit-btn" aria-label="{% trans "Развернуть" %}">⌄</button>
                         </div>
                     </div>
 
@@ -261,15 +262,15 @@ details > summary::-webkit-details-marker{ display:none; }
 
                             <div class="edit-main-grid">
                                 <div>
-                                    <label>Логин</label>
+                                    <label>{% trans "Логин" %}</label>
                                     <input name="username" value="{{ user.username }}">
                                 </div>
                                 <div>
-                                    <label>Новый пароль</label>
-                                    <input name="password" type="password" placeholder="Если нужно">
+                                    <label>{% trans "Новый пароль" %}</label>
+                                    <input name="password" type="password" placeholder="{% trans "Если нужно" %}">
                                 </div>
                                 <div>
-                                    <label>Роль</label>
+                                    <label>{% trans "Роль" %}</label>
                                     <select name="role">
                                         {% for value, label in roles %}
                                             <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>{{ label }}</option>
@@ -280,7 +281,7 @@ details > summary::-webkit-details-marker{ display:none; }
 
                             <div class="access-grid">
                                 <div class="checkbox-panel">
-                                    <div class="checkbox-title">Страны</div>
+                                    <div class="checkbox-title">{% trans "Страны" %}</div>
                                     <div class="checkboxes">
                                         {% for c in countries %}
                                             <label class="check-row">
@@ -292,7 +293,7 @@ details > summary::-webkit-details-marker{ display:none; }
                                 </div>
 
                                 <div class="checkbox-panel">
-                                    <div class="checkbox-title">Филиалы</div>
+                                    <div class="checkbox-title">{% trans "Филиалы" %}</div>
                                     <div class="checkboxes">
                                         {% for location in locations %}
                                             <label class="check-row">
@@ -301,11 +302,11 @@ details > summary::-webkit-details-marker{ display:none; }
                                             </label>
                                         {% endfor %}
                                     </div>
-                                    <p class="muted" style="margin-top:10px;font-size:12px;">Пусто = доступ ко всем филиалам.</p>
+                                    <p class="muted" style="margin-top:10px;font-size:12px;">{% trans "Пусто = доступ ко всем филиалам." %}</p>
                                 </div>
 
                                 <div class="checkbox-panel">
-                                    <div class="checkbox-title">Доступные разделы</div>
+                                    <div class="checkbox-title">{% trans "Доступные разделы" %}</div>
                                     <div class="sec-groups">
                                         {% for g in section_groups %}
                                             <div class="sec-group">
@@ -328,24 +329,24 @@ details > summary::-webkit-details-marker{ display:none; }
                             </div>
 
                             <div class="edit-actions">
-                                <button type="button" class="secondary-btn cancel-edit-btn">Отмена</button>
-                                <button type="submit">Сохранить</button>
+                                <button type="button" class="secondary-btn cancel-edit-btn">{% trans "Отмена" %}</button>
+                                <button type="submit">{% trans "Сохранить" %}</button>
                             </div>
                         </form>
                     </div>
                 </div>
                 {% empty %}
-                    <div class="empty">Пользователей пока нет.</div>
+                    <div class="empty">{% trans "Пользователей пока нет." %}</div>
                 {% endfor %}
             </div>
         </div>
 
-        <div class="u-foot muted">Показано 1–{{ users|length }} из {{ users|length }} пользователей</div>
+        <div class="u-foot muted">{% blocktrans with n=users|length %}Показано 1–{{ n }} из {{ n }} пользователей{% endblocktrans %}</div>
     </div>
 
     {# ============================ СОЗДАТЬ ПОЛЬЗОВАТЕЛЯ ============================ #}
     <div class="card" id="create-user">
-        <div class="fc-card-head"><h2>Создать пользователя</h2></div>
+        <div class="fc-card-head"><h2>{% trans "Создать пользователя" %}</h2></div>
 
         <form method="post" class="create-form">
             {% csrf_token %}
@@ -353,18 +354,18 @@ details > summary::-webkit-details-marker{ display:none; }
 
             <div class="create-top-grid">
                 <div>
-                    <label>Логин</label>
-                    <input name="username" placeholder="Например: manager_uz">
+                    <label>{% trans "Логин" %}</label>
+                    <input name="username" placeholder="{% trans "Например: manager_uz" %}">
                 </div>
                 <div>
-                    <label>Пароль</label>
+                    <label>{% trans "Пароль" %}</label>
                     <div class="pw-wrap">
-                        <input name="password" type="password" id="createPw" placeholder="Пароль">
-                        <button type="button" class="pw-eye" data-target="createPw" aria-label="Показать пароль">👁</button>
+                        <input name="password" type="password" id="createPw" placeholder="{% trans "Пароль" %}">
+                        <button type="button" class="pw-eye" data-target="createPw" aria-label="{% trans "Показать пароль" %}">👁</button>
                     </div>
                 </div>
                 <div>
-                    <label>Роль</label>
+                    <label>{% trans "Роль" %}</label>
                     <select name="role">
                         {% for value, label in roles %}
                             <option value="{{ value }}">{{ label }}</option>
@@ -375,7 +376,7 @@ details > summary::-webkit-details-marker{ display:none; }
 
             <div class="access-grid">
                 <div class="checkbox-panel">
-                    <div class="checkbox-title">Страны</div>
+                    <div class="checkbox-title">{% trans "Страны" %}</div>
                     <div class="checkboxes">
                         {% for c in countries %}
                             <label class="check-row">
@@ -387,7 +388,7 @@ details > summary::-webkit-details-marker{ display:none; }
                 </div>
 
                 <div class="checkbox-panel">
-                    <div class="checkbox-title">Филиалы</div>
+                    <div class="checkbox-title">{% trans "Филиалы" %}</div>
                     <div class="checkboxes">
                         {% for location in locations %}
                             <label class="check-row">
@@ -396,11 +397,11 @@ details > summary::-webkit-details-marker{ display:none; }
                             </label>
                         {% endfor %}
                     </div>
-                    <p class="muted" style="margin-top:10px;font-size:12px;">Пусто = доступ ко всем филиалам.</p>
+                    <p class="muted" style="margin-top:10px;font-size:12px;">{% trans "Пусто = доступ ко всем филиалам." %}</p>
                 </div>
 
                 <div class="checkbox-panel">
-                    <div class="checkbox-title">Доступные разделы</div>
+                    <div class="checkbox-title">{% trans "Доступные разделы" %}</div>
                     <div class="sec-groups">
                         {% for g in section_groups %}
                             <div class="sec-group">
@@ -423,7 +424,7 @@ details > summary::-webkit-details-marker{ display:none; }
             </div>
 
             <div class="edit-actions">
-                <button type="submit">Создать пользователя</button>
+                <button type="submit">{% trans "Создать пользователя" %}</button>
             </div>
         </form>
     </div>

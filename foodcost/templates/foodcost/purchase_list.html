@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Приходы{% endblock %}
+{% block title %}{% trans "Приходы" %}{% endblock %}
 
 {% block content %}
 
@@ -81,36 +82,36 @@
 
     <div class="fc-page-head">
         <div>
-            <h1>Приходы</h1>
-            <p class="muted">Учёт поступления товаров от поставщиков на склады.</p>
+            <h1>{% trans "Приходы" %}</h1>
+            <p class="muted">{% trans "Учёт поступления товаров от поставщиков на склады." %}</p>
         </div>
         {% if can_edit %}
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="create_draft">
-            <button type="submit" class="fc-btn fc-btn-dark">+ Новый приход</button>
+            <button type="submit" class="fc-btn fc-btn-dark">{% trans "+ Новый приход" %}</button>
         </form>
         {% endif %}
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Всего приходов</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">документов</div></div>
-        {% if show_money %}<div class="kpi"><div class="kpi-label">Сумма закупок</div><div class="kpi-value num">{{ kpi_sum_display }}</div><div class="kpi-sub">подтверждённых</div></div>{% endif %}
-        <div class="kpi"><div class="kpi-label">Не оплачено</div><div class="kpi-value">{{ kpi_unpaid_count }}{% if show_money %} <span class="num" style="font-size:15px;color:var(--fc-danger-text);">/ {{ kpi_unpaid_sum_display }}</span>{% endif %}</div><div class="kpi-sub">документов{% if show_money %} / долг{% endif %}</div></div>
-        <div class="kpi"><div class="kpi-label">Поставщиков</div><div class="kpi-value">{{ kpi_suppliers }}</div><div class="kpi-sub">в закупках</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Всего приходов" %}</div><div class="kpi-value">{{ kpi_total }}</div><div class="kpi-sub">{% trans "документов" %}</div></div>
+        {% if show_money %}<div class="kpi"><div class="kpi-label">{% trans "Сумма закупок" %}</div><div class="kpi-value num">{{ kpi_sum_display }}</div><div class="kpi-sub">{% trans "подтверждённых" %}</div></div>{% endif %}
+        <div class="kpi"><div class="kpi-label">{% trans "Не оплачено" %}</div><div class="kpi-value">{{ kpi_unpaid_count }}{% if show_money %} <span class="num" style="font-size:15px;color:var(--fc-danger-text);">/ {{ kpi_unpaid_sum_display }}</span>{% endif %}</div><div class="kpi-sub">{% trans "документов" %}{% if show_money %} / {% trans "долг" %}{% endif %}</div></div>
+        <div class="kpi"><div class="kpi-label">{% trans "Поставщиков" %}</div><div class="kpi-value">{{ kpi_suppliers }}</div><div class="kpi-sub">{% trans "в закупках" %}</div></div>
     </div>
 
     <div class="fc-card">
         <form method="get">
             <div class="filters">
-                <div><label class="fc-label">Дата от</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
-                <div><label class="fc-label">Дата до</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
-                <div><label class="fc-label">Склад</label><select class="fc-select" name="warehouse"><option value="">Все склады</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Поставщик</label><select class="fc-select" name="supplier"><option value="">Все</option>{% for s in suppliers %}<option value="{{ s.id }}" {% if supplier_id == s.id|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Статус</label><select class="fc-select" name="status"><option value="">Все</option>{% for v,l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Оплата</label><select class="fc-select" name="paid"><option value="">Все</option><option value="yes" {% if paid == 'yes' %}selected{% endif %}>Оплачено</option><option value="no" {% if paid == 'no' %}selected{% endif %}>Не оплачено</option></select></div>
-                <div style="grid-column:span 2;"><label class="fc-label">Поиск</label><input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="Номер, поставщик, комментарий"></div>
-                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">Применить</button><a href="/c/{{ country.slug }}/purchases/" class="fc-btn fc-btn-secondary">Сбросить</a></div>
+                <div><label class="fc-label">{% trans "Дата от" %}</label><input class="fc-input" type="date" name="date_from" value="{{ date_from }}"></div>
+                <div><label class="fc-label">{% trans "Дата до" %}</label><input class="fc-input" type="date" name="date_to" value="{{ date_to }}"></div>
+                <div><label class="fc-label">{% trans "Склад" %}</label><select class="fc-select" name="warehouse"><option value="">{% trans "Все склады" %}</option>{% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:'s' %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Поставщик" %}</label><select class="fc-select" name="supplier"><option value="">{% trans "Все" %}</option>{% for s in suppliers %}<option value="{{ s.id }}" {% if supplier_id == s.id|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Статус" %}</label><select class="fc-select" name="status"><option value="">{% trans "Все" %}</option>{% for v,l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Оплата" %}</label><select class="fc-select" name="paid"><option value="">{% trans "Все" %}</option><option value="yes" {% if paid == 'yes' %}selected{% endif %}>{% trans "Оплачено" %}</option><option value="no" {% if paid == 'no' %}selected{% endif %}>{% trans "Не оплачено" %}</option></select></div>
+                <div style="grid-column:span 2;"><label class="fc-label">{% trans "Поиск" %}</label><input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="{% trans "Номер, поставщик, комментарий" %}"></div>
+                <div class="filter-actions"><button type="submit" class="fc-btn fc-btn-primary">{% trans "Применить" %}</button><a href="/c/{{ country.slug }}/purchases/" class="fc-btn fc-btn-secondary">{% trans "Сбросить" %}</a></div>
             </div>
         </form>
     </div>
@@ -118,43 +119,43 @@
     <div class="fc-card">
         <div class="fc-table">
             <div class="t-head {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
-                <div>№ документа</div><div>Дата</div><div>Поставщик</div><div>Склад</div><div>Позиций</div>
-                {% if show_money %}<div>Сумма</div>{% endif %}
-                <div>Оплачен</div><div>Статус</div><div>Создал</div><div></div>
+                <div>{% trans "№ документа" %}</div><div>{% trans "Дата" %}</div><div>{% trans "Поставщик" %}</div><div>{% trans "Склад" %}</div><div>{% trans "Позиций" %}</div>
+                {% if show_money %}<div>{% trans "Сумма" %}</div>{% endif %}
+                <div>{% trans "Оплачен" %}</div><div>{% trans "Статус" %}</div><div>{% trans "Создал" %}</div><div></div>
             </div>
 
             {% for row in rows %}
             <div class="t-row {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
-                <div class="docnum">{% if row.obj.document_number %}{{ row.obj.document_number }}{% else %}<span class="muted">черновик #{{ row.obj.id }}</span>{% endif %}</div>
+                <div class="docnum">{% if row.obj.document_number %}{{ row.obj.document_number }}{% else %}<span class="muted">{% trans "черновик" %} #{{ row.obj.id }}</span>{% endif %}</div>
                 <div>{{ row.obj.receipt_date|date:"d.m.Y" }}</div>
                 <div>{{ row.obj.supplier.name|default:"—" }}</div>
                 <div>{{ row.obj.warehouse.name|default:"—" }}</div>
                 <div class="num">{{ row.obj.items_count }}</div>
                 {% if show_money %}<div class="num">{{ row.total_display }}</div>{% endif %}
-                <div>{% if row.obj.is_paid %}<span class="badge badge-green">Оплачен</span>{% else %}<span class="badge badge-gray">Нет</span>{% endif %}</div>
+                <div>{% if row.obj.is_paid %}<span class="badge badge-green">{% trans "Оплачен" %}</span>{% else %}<span class="badge badge-gray">{% trans "Нет" %}</span>{% endif %}</div>
                 <div>
-                    {% if row.obj.status == 'confirmed' %}<span class="badge badge-green">Подтверждён</span>
-                    {% elif row.obj.status == 'cancelled' %}<span class="badge badge-red">Отменён</span>
-                    {% else %}<span class="badge badge-amber">Черновик</span>{% endif %}
+                    {% if row.obj.status == 'confirmed' %}<span class="badge badge-green">{% trans "Подтверждён" %}</span>
+                    {% elif row.obj.status == 'cancelled' %}<span class="badge badge-red">{% trans "Отменён" %}</span>
+                    {% else %}<span class="badge badge-amber">{% trans "Черновик" %}</span>{% endif %}
                 </div>
                 <div class="muted">{{ row.obj.created_by.username|default:"—" }}</div>
                 <div class="row-actions">
-                    <a href="/c/{{ country.slug }}/purchases/{{ row.obj.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">Открыть</a>
+                    <a href="/c/{{ country.slug }}/purchases/{{ row.obj.id }}/" class="fc-btn fc-btn-secondary fc-btn-sm">{% trans "Открыть" %}</a>
                     {% if can_edit %}
-                        <form method="post" action="/c/{{ country.slug }}/purchases/{{ row.obj.id }}/">{% csrf_token %}<input type="hidden" name="action" value="copy"><button type="submit" class="fc-btn fc-btn-secondary fc-btn-sm" title="Копировать">⧉</button></form>
+                        <form method="post" action="/c/{{ country.slug }}/purchases/{{ row.obj.id }}/">{% csrf_token %}<input type="hidden" name="action" value="copy"><button type="submit" class="fc-btn fc-btn-secondary fc-btn-sm" title="{% trans "Копировать" %}">⧉</button></form>
                         {% if row.obj.status == 'draft' %}
-                        <form method="post" action="/c/{{ country.slug }}/purchases/{{ row.obj.id }}/" onsubmit="return confirm('Удалить черновик прихода?');">{% csrf_token %}<input type="hidden" name="action" value="delete"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="Удалить черновик">✕</button></form>
+                        <form method="post" action="/c/{{ country.slug }}/purchases/{{ row.obj.id }}/" onsubmit="return confirm('{% trans "Удалить черновик прихода?" as jt %}{{ jt|escapejs }}');">{% csrf_token %}<input type="hidden" name="action" value="delete"><button type="submit" class="fc-btn fc-btn-danger fc-btn-sm" title="{% trans "Удалить черновик" %}">✕</button></form>
                         {% endif %}
                     {% endif %}
                 </div>
             </div>
             {% empty %}
-                <div class="empty">Приходов пока нет.{% if can_edit %} Нажмите «+ Новый приход».{% endif %}</div>
+                <div class="empty">{% trans "Приходов пока нет." %}{% if can_edit %} {% trans "Нажмите «+ Новый приход»." %}{% endif %}</div>
             {% endfor %}
         </div>
 
         <div class="t-foot">
-            <div class="muted">{% if total_count %}Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}{% else %}Ничего не найдено{% endif %}</div>
+            <div class="muted">{% if total_count %}{% blocktrans with s=page_obj.start_index e=page_obj.end_index tot=total_count %}Показано {{ s }}–{{ e }} из {{ tot }}{% endblocktrans %}{% else %}{% trans "Ничего не найдено" %}{% endif %}</div>
             {% if page_obj.paginator.num_pages > 1 %}
             <div class="pager">
                 {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{{ base_qs }}">‹</a>{% else %}<span class="disabled">‹</span>{% endif %}

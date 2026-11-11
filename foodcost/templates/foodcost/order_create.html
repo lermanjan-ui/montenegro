@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Новый заказ{% endblock %}
+{% block title %}{% trans "Новый заказ" %}{% endblock %}
 
 {% block content %}
 
@@ -129,10 +130,10 @@ input:disabled,select:disabled{background:var(--bg);color:var(--faint);}
 
     <div class="topbar">
 
-        <h1>Новый заказ</h1>
+        <h1>{% trans "Новый заказ" %}</h1>
 
         <div class="muted">
-            Создание заказа кассиром
+            {% trans "Создание заказа кассиром" %}
         </div>
 
     </div>

@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Приход / расход{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Приход / расход" %}{% endblock %}
 {% block content %}
 <style>
 .fx-wrap{max-width:1100px;margin:0 auto;}
@@ -26,34 +27,34 @@
 </style>
 
 <div class="fx-wrap">
-  <h1 class="fx-h1">Приход / расход по месяцам</h1>
-  <p class="fx-sub">Сводка поступлений и расходов помесячно за выбранный год.</p>
+  <h1 class="fx-h1">{% trans "Приход / расход по месяцам" %}</h1>
+  <p class="fx-sub">{% trans "Сводка поступлений и расходов помесячно за выбранный год." %}</p>
 
   <div class="fx-tabs">
-    <a href="/c/{{ country.slug }}/finance/expenses/" class="fx-tab {% if active == 'expenses' %}active{% endif %}">Расходы</a>
-    <a href="/c/{{ country.slug }}/finance/income/" class="fx-tab {% if active == 'income' %}active{% endif %}">Поступление денег</a>
-    <a href="/c/{{ country.slug }}/finance/chart/" class="fx-tab {% if active == 'chart' %}active{% endif %}">Приход / расход</a>
+    <a href="/c/{{ country.slug }}/finance/expenses/" class="fx-tab {% if active == 'expenses' %}active{% endif %}">{% trans "Расходы" %}</a>
+    <a href="/c/{{ country.slug }}/finance/income/" class="fx-tab {% if active == 'income' %}active{% endif %}">{% trans "Поступление денег" %}</a>
+    <a href="/c/{{ country.slug }}/finance/chart/" class="fx-tab {% if active == 'chart' %}active{% endif %}">{% trans "Приход / расход" %}</a>
   </div>
 
   <form method="get" class="fx-card" style="display:flex;align-items:center;gap:12px;">
-    <span class="fx-card-title" style="margin:0;">Год</span>
+    <span class="fx-card-title" style="margin:0;">{% trans "Год" %}</span>
     <select class="fx-sel" name="year" onchange="this.form.submit()">
       {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
     </select>
-    <button type="submit" class="fx-tab">Показать</button>
+    <button type="submit" class="fx-tab">{% trans "Показать" %}</button>
   </form>
 
   <div class="fx-card">
     <div class="sum-row">
-      <div class="sum-box"><div class="sum-lbl">Приход за {{ year }}</div><div class="sum-val green">{{ total_income_fmt }}</div></div>
-      <div class="sum-box"><div class="sum-lbl">Расход за {{ year }}</div><div class="sum-val red">{{ total_expense_fmt }}</div></div>
-      <div class="sum-box"><div class="sum-lbl">Прибыль</div><div class="sum-val {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit_fmt }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">{% trans "Приход за" %} {{ year }}</div><div class="sum-val green">{{ total_income_fmt }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">{% trans "Расход за" %} {{ year }}</div><div class="sum-val red">{{ total_expense_fmt }}</div></div>
+      <div class="sum-box"><div class="sum-lbl">{% trans "Прибыль" %}</div><div class="sum-val {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit_fmt }}</div></div>
     </div>
   </div>
 
   <div class="fx-card">
-    <div class="fx-card-title">График по месяцам</div>
-    <div class="legend"><span><i class="g"></i>Приход</span><span><i class="r"></i>Расход</span></div>
+    <div class="fx-card-title">{% trans "График по месяцам" %}</div>
+    <div class="legend"><span><i class="g"></i>{% trans "Приход" %}</span><span><i class="r"></i>{% trans "Расход" %}</span></div>
     <svg viewBox="0 0 760 240" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;max-height:320px;">
       <line x1="40" y1="{{ base_y }}" x2="755" y2="{{ base_y }}" stroke="#e5e7eb" stroke-width="2"></line>
       {% for mo in months %}
@@ -65,9 +66,9 @@
   </div>
 
   <div class="fx-card">
-    <div class="fx-card-title">Помесячно</div>
+    <div class="fx-card-title">{% trans "Помесячно" %}</div>
     <table class="fx-table">
-      <thead><tr><th>Месяц</th><th style="text-align:right;">Приход</th><th style="text-align:right;">Расход</th><th style="text-align:right;">Прибыль</th></tr></thead>
+      <thead><tr><th>{% trans "Месяц" %}</th><th style="text-align:right;">{% trans "Приход" %}</th><th style="text-align:right;">{% trans "Расход" %}</th><th style="text-align:right;">{% trans "Прибыль" %}</th></tr></thead>
       <tbody>
         {% for mo in months %}
         <tr>
@@ -78,7 +79,7 @@
         </tr>
         {% endfor %}
         <tr style="border-top:2px solid #e5e7eb;font-weight:900;">
-          <td>Итого</td>
+          <td>{% trans "Итого" %}</td>
           <td class="num green">{{ total_income_fmt }}</td>
           <td class="num red">{{ total_expense_fmt }}</td>
           <td class="num {% if total_profit < 0 %}red{% else %}green{% endif %}">{{ total_profit_fmt }}</td>

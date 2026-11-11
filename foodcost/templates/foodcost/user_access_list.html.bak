@@ -1,0 +1,472 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Пользователи{% endblock %}
+
+{% block content %}
+
+<!-- CSS inline (без staticfiles). FoodCost UI Kit v2. Все поля/экшены/JS-хуки
+     сохранены 1:1: список и редактирование пользователей (.edit-btn /
+     .cancel-edit-btn / .user-card.editing), создание пользователя, филиалы и
+     зоны доставки — те же name= и value=action, что и раньше. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-warning:#F59E0B; --fc-warning-soft:#FEF3C7; --fc-warning-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-hover:#DC2626; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1280px; margin:0 auto; padding:24px; }
+
+.fc-page-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.fc-page-head h1{ margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
+
+.fc-card,.card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:24px; margin-bottom:16px; }
+.fc-card-head{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+.fc-card h1,.card h1{ margin:0 0 6px; font-size:26px; font-weight:600; }
+.fc-card h2,.card h2{ margin:0 0 4px; font-size:20px; font-weight:600; letter-spacing:-0.01em; }
+
+/* ---- buttons ---- */
+.fc-scope button,.fc-btn,.secondary-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    height:40px; padding:0 16px; border-radius:var(--fc-radius-input);
+    border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600;
+    cursor:pointer; text-decoration:none; white-space:nowrap; transition:background-color .12s,border-color .12s,color .12s;
+}
+.fc-scope button[type=submit],.fc-btn-primary{ background:var(--fc-green); color:#fff; }
+.fc-scope button[type=submit]:hover,.fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-secondary,.secondary-btn,.fc-scope button[type=button]{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.fc-btn-secondary:hover,.secondary-btn:hover,.fc-scope button[type=button]:hover{ border-color:var(--fc-text); }
+.fc-btn-sm{ height:34px; padding:0 12px; font-size:13px; }
+.branch-delete-btn,.fc-btn-danger{ background:var(--fc-danger)!important; color:#fff!important; border-color:transparent!important; }
+.branch-delete-btn:hover,.fc-btn-danger:hover{ background:var(--fc-danger-hover)!important; }
+
+/* ---- inputs (bare inputs in branch/zone/user forms get styled automatically) ---- */
+.fc-scope form input:not([type=checkbox]):not([type=radio]),
+.fc-scope form select,
+.fc-scope form textarea,
+.fc-input{
+    width:100%; height:40px; padding:0 12px; background:var(--fc-card);
+    border:1px solid var(--fc-border); border-radius:var(--fc-radius-input);
+    font-family:inherit; font-size:14px; color:var(--fc-text); transition:border-color .12s,box-shadow .12s;
+}
+.fc-scope form textarea{ height:auto; padding:10px 12px; min-height:64px; }
+.fc-scope form input:focus,.fc-scope form select:focus,.fc-scope form textarea:focus,.fc-input:focus{
+    outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12);
+}
+.fc-scope form label{ display:block; font-size:13px; font-weight:600; color:var(--fc-text); margin-bottom:6px; }
+.fc-scope form label.check-row,.fc-scope form label.checkbox-pill{ display:flex; align-items:center; gap:8px; font-weight:500; margin-bottom:0; cursor:pointer; }
+.fc-scope input[type=checkbox]{ width:17px; height:17px; accent-color:var(--fc-green); cursor:pointer; flex:0 0 auto; }
+
+.form-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:14px; }
+.form-grid > div[style*="span 2"]{ grid-column:span 2; }
+.edit-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; flex-wrap:wrap; }
+
+.error{ background:var(--fc-danger-soft); border:1px solid #FCA5A5; color:var(--fc-danger-text); padding:12px 14px; border-radius:var(--fc-radius-input); font-size:14px; margin-bottom:14px; }
+.empty{ text-align:center; padding:32px 16px; color:var(--fc-muted); font-size:14px; }
+
+/* ---- badges ---- */
+.fc-badge,.role-badge,.branch-badge,.superuser-yes,.superuser-no{
+    display:inline-flex; align-items:center; gap:4px; padding:3px 11px; border-radius:var(--fc-radius-pill);
+    font-size:12px; font-weight:600; line-height:1.5; white-space:nowrap;
+}
+.role-badge{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.superuser-yes{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.superuser-no{ background:var(--fc-border-soft); color:var(--fc-muted); }
+.branch-badge-on{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.branch-badge-off{ background:var(--fc-border-soft); color:var(--fc-muted); }
+
+/* ====================== USERS LIST (table-like) ====================== */
+.u-search{ max-width:360px; margin-bottom:16px; }
+.fc-table{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); overflow:hidden; }
+.u-head,.user-view{
+    display:grid;
+    grid-template-columns: minmax(190px,1.7fr) 1.1fr 1.1fr 0.9fr 1fr 0.8fr auto;
+    gap:14px; align-items:center; padding:14px 18px;
+}
+.u-head{ background:var(--fc-card-soft); border-bottom:1px solid var(--fc-border); font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; }
+.user-card{ border-bottom:1px solid var(--fc-border-soft); }
+.user-card:last-child{ border-bottom:0; }
+.user-view:hover{ background:var(--fc-card-soft); }
+.u-userbox{ display:flex; align-items:center; gap:12px; min-width:0; }
+.u-avatar{ width:38px; height:38px; border-radius:50%; background:var(--fc-green-soft); color:var(--fc-green-text); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex:0 0 auto; }
+.username{ font-weight:600; font-size:15px; color:var(--fc-text); }
+.u-login{ color:var(--fc-muted); font-size:13px; }
+.small-label{ display:none; }
+.country-list,.section-list{ font-size:14px; color:var(--fc-text); }
+.u-actions{ display:flex; align-items:center; gap:8px; justify-self:end; }
+.u-chevron{ width:36px!important; padding:0!important; font-size:16px; }
+.user-card.editing .u-chevron{ transform:rotate(180deg); }
+.u-foot{ text-align:center; margin-top:14px; }
+
+.edit-panel{ display:none; padding:18px; background:var(--fc-card-soft); border-top:1px solid var(--fc-border); }
+.user-card.editing .edit-panel{ display:block; }
+.edit-main-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
+
+/* ---- access panels / grouped sections ---- */
+.access-grid{ display:grid; grid-template-columns:minmax(190px,230px) minmax(190px,230px) 1fr; gap:16px; margin:6px 0 16px; }
+.checkbox-panel{ background:var(--fc-card-soft); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); padding:16px; }
+.checkbox-title{ font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--fc-muted); margin-bottom:12px; }
+.checkboxes{ display:flex; flex-direction:column; gap:10px; }
+.sec-groups{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.sec-group{ min-width:0; }
+.sec-group-title{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:700; color:var(--fc-text); margin-bottom:10px; }
+.sec-group-title svg{ width:16px; height:16px; color:var(--fc-muted); }
+.sec-items{ display:flex; flex-direction:column; gap:10px; }
+.create-top-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:6px; }
+.pw-wrap{ position:relative; }
+.pw-wrap .pw-eye{ position:absolute; right:6px; top:50%; transform:translateY(-50%); height:30px!important; width:34px!important; padding:0!important; border:0!important; background:transparent!important; color:var(--fc-muted)!important; }
+
+/* ---- branches / zones rows ---- */
+details > summary{ list-style:none; }
+details > summary::-webkit-details-marker{ display:none; }
+.create-summary{ cursor:pointer; font-weight:600; color:var(--fc-green-text); font-size:14px; user-select:none; display:inline-flex; align-items:center; gap:6px; }
+.branch-row{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); padding:16px 18px; margin-top:12px; }
+.branch-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+.branch-title{ font-weight:600; font-size:16px; }
+.branch-sub{ color:var(--fc-muted); font-size:13px; margin-top:3px; }
+.branch-badges{ display:flex; gap:6px; flex-wrap:wrap; }
+.branch-edit{ margin-top:12px; }
+.branch-edit > summary{ cursor:pointer; font-weight:600; font-size:13px; color:var(--fc-info-text); user-select:none; }
+
+@media (max-width:1024px){
+    .form-grid,.edit-main-grid,.create-top-grid,.sec-groups{ grid-template-columns:1fr 1fr; }
+    .access-grid{ grid-template-columns:1fr; }
+}
+@media (max-width:720px){
+    .fc-page{ padding:16px; }
+    .form-grid,.edit-main-grid,.create-top-grid,.sec-groups{ grid-template-columns:1fr; }
+    .u-head{ display:none; }
+    .user-view{ grid-template-columns:1fr 1fr; }
+    .u-userbox{ grid-column:1 / -1; }
+    .small-label{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--fc-muted-soft); font-weight:600; margin-bottom:2px; }
+    .u-actions{ grid-column:1 / -1; justify-self:start; }
+}
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="fc-page-head">
+        <div>
+            <h1>Пользователи</h1>
+            <p class="muted">Список всех пользователей системы и их доступы</p>
+        </div>
+        <a href="#create-user" class="fc-btn fc-btn-primary">+ Создать пользователя</a>
+    </div>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {# ============================ СПИСОК ПОЛЬЗОВАТЕЛЕЙ ============================ #}
+    <div class="card">
+        <input class="fc-input u-search" id="userSearch" type="text" placeholder="Поиск пользователя...">
+
+        <div class="fc-table">
+            <div class="u-head">
+                <div>Пользователь</div>
+                <div>Роль</div>
+                <div>Страны</div>
+                <div>Разделы</div>
+                <div>Филиал</div>
+                <div>Superuser</div>
+                <div>Действия</div>
+            </div>
+
+            <div class="users-list">
+                {% for user in users %}
+                <div class="user-card" data-name="{{ user.username|lower }}">
+                    <div class="user-view">
+                        <div class="u-userbox">
+                            <div class="u-avatar">{{ user.username|first|upper }}</div>
+                            <div>
+                                <div class="username">{{ user.username }}</div>
+                                <div class="u-login">Логин: {{ user.username }}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Роль</div>
+                            <span class="role-badge">{{ user.profile.get_role_display }}</span>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Страны</div>
+                            <div class="country-list">
+                                {% if user.is_superuser %}
+                                    Все страны
+                                {% else %}
+                                    {% for c in user.profile.countries.all %}
+                                        {{ c.name }}{% if not forloop.last %}, {% endif %}
+                                    {% empty %}
+                                        <span class="muted">Не выбраны</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Разделы</div>
+                            <div class="section-list">
+                                {% if user.is_superuser %}
+                                    Все разделы
+                                {% else %}
+                                    {{ user.profile.allowed_sections|length }} разделов
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Филиалы</div>
+                            <div class="country-list">
+                                {% if user.profile.locations.all %}
+                                    {% for loc in user.profile.locations.all %}{{ loc.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                {% elif user.profile.location %}
+                                    {{ user.profile.location.name }}
+                                {% else %}
+                                    <span class="muted">Все филиалы</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="small-label">Superuser</div>
+                            {% if user.is_superuser %}
+                                <span class="superuser-yes">Да</span>
+                            {% else %}
+                                <span class="superuser-no">Нет</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="u-actions">
+                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm edit-btn">✎ Редактировать</button>
+                            <button type="button" class="fc-btn fc-btn-secondary fc-btn-sm u-chevron edit-btn" aria-label="Развернуть">⌄</button>
+                        </div>
+                    </div>
+
+                    <div class="edit-panel">
+                        <form method="post" class="edit-grid">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_user">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+
+                            <div class="edit-main-grid">
+                                <div>
+                                    <label>Логин</label>
+                                    <input name="username" value="{{ user.username }}">
+                                </div>
+                                <div>
+                                    <label>Новый пароль</label>
+                                    <input name="password" type="password" placeholder="Если нужно">
+                                </div>
+                                <div>
+                                    <label>Роль</label>
+                                    <select name="role">
+                                        {% for value, label in roles %}
+                                            <option value="{{ value }}" {% if user.profile.role == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="access-grid">
+                                <div class="checkbox-panel">
+                                    <div class="checkbox-title">Страны</div>
+                                    <div class="checkboxes">
+                                        {% for c in countries %}
+                                            <label class="check-row">
+                                                <input type="checkbox" name="countries" value="{{ c.id }}" {% if c in user.profile.countries.all %}checked{% endif %}>
+                                                <span>{{ c.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="checkbox-panel">
+                                    <div class="checkbox-title">Филиалы</div>
+                                    <div class="checkboxes">
+                                        {% for location in locations %}
+                                            <label class="check-row">
+                                                <input type="checkbox" name="locations" value="{{ location.id }}" {% if location in user.profile.locations.all or user.profile.location_id == location.id %}checked{% endif %}>
+                                                <span>{{ location.name }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <p class="muted" style="margin-top:10px;font-size:12px;">Пусто = доступ ко всем филиалам.</p>
+                                </div>
+
+                                <div class="checkbox-panel">
+                                    <div class="checkbox-title">Доступные разделы</div>
+                                    <div class="sec-groups">
+                                        {% for g in section_groups %}
+                                            <div class="sec-group">
+                                                <div class="sec-group-title">
+                                                    <svg class="grp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                                                    {{ g.label }}
+                                                </div>
+                                                <div class="sec-items">
+                                                    {% for value, label in g.items %}
+                                                        <label class="check-row">
+                                                            <input type="checkbox" name="allowed_sections" value="{{ value }}" {% if value in user.profile.allowed_sections %}checked{% endif %}>
+                                                            <span>{{ label }}</span>
+                                                        </label>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="edit-actions">
+                                <button type="button" class="secondary-btn cancel-edit-btn">Отмена</button>
+                                <button type="submit">Сохранить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                    <div class="empty">Пользователей пока нет.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="u-foot muted">Показано 1–{{ users|length }} из {{ users|length }} пользователей</div>
+    </div>
+
+    {# ============================ СОЗДАТЬ ПОЛЬЗОВАТЕЛЯ ============================ #}
+    <div class="card" id="create-user">
+        <div class="fc-card-head"><h2>Создать пользователя</h2></div>
+
+        <form method="post" class="create-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_user">
+
+            <div class="create-top-grid">
+                <div>
+                    <label>Логин</label>
+                    <input name="username" placeholder="Например: manager_uz">
+                </div>
+                <div>
+                    <label>Пароль</label>
+                    <div class="pw-wrap">
+                        <input name="password" type="password" id="createPw" placeholder="Пароль">
+                        <button type="button" class="pw-eye" data-target="createPw" aria-label="Показать пароль">👁</button>
+                    </div>
+                </div>
+                <div>
+                    <label>Роль</label>
+                    <select name="role">
+                        {% for value, label in roles %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="access-grid">
+                <div class="checkbox-panel">
+                    <div class="checkbox-title">Страны</div>
+                    <div class="checkboxes">
+                        {% for c in countries %}
+                            <label class="check-row">
+                                <input type="checkbox" name="countries" value="{{ c.id }}">
+                                <span>{{ c.name }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="checkbox-panel">
+                    <div class="checkbox-title">Филиалы</div>
+                    <div class="checkboxes">
+                        {% for location in locations %}
+                            <label class="check-row">
+                                <input type="checkbox" name="locations" value="{{ location.id }}">
+                                <span>{{ location.name }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    <p class="muted" style="margin-top:10px;font-size:12px;">Пусто = доступ ко всем филиалам.</p>
+                </div>
+
+                <div class="checkbox-panel">
+                    <div class="checkbox-title">Доступные разделы</div>
+                    <div class="sec-groups">
+                        {% for g in section_groups %}
+                            <div class="sec-group">
+                                <div class="sec-group-title">
+                                    <svg class="grp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                                    {{ g.label }}
+                                </div>
+                                <div class="sec-items">
+                                    {% for value, label in g.items %}
+                                        <label class="check-row">
+                                            <input type="checkbox" name="allowed_sections" value="{{ value }}">
+                                            <span>{{ label }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-actions">
+                <button type="submit">Создать пользователя</button>
+            </div>
+        </form>
+    </div>
+
+
+</div>
+</div>
+
+<script>
+document.addEventListener("click", function(e) {
+    const editBtn = e.target.closest(".edit-btn");
+    if (editBtn) {
+        e.preventDefault();
+        editBtn.closest(".user-card").classList.toggle("editing");
+        return;
+    }
+
+    const cancelBtn = e.target.closest(".cancel-edit-btn");
+    if (cancelBtn) {
+        e.preventDefault();
+        cancelBtn.closest(".user-card").classList.remove("editing");
+        return;
+    }
+
+    const eye = e.target.closest(".pw-eye");
+    if (eye) {
+        e.preventDefault();
+        const input = document.getElementById(eye.dataset.target);
+        if (input) input.type = input.type === "password" ? "text" : "password";
+    }
+});
+
+(function() {
+    const search = document.getElementById("userSearch");
+    if (!search) return;
+    search.addEventListener("input", function() {
+        const q = this.value.trim().toLowerCase();
+        document.querySelectorAll(".users-list .user-card").forEach(function(card) {
+            const name = card.getAttribute("data-name") || "";
+            card.style.display = name.indexOf(q) !== -1 ? "" : "none";
+        });
+    });
+})();
+</script>
+
+{% endblock %}

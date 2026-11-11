@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Новый пароль · FoodCost</title>
+  <title>{% trans "Новый пароль · ЧекМейт" %}</title>
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 :root{--bg:#F7F8FA;--text:#111827;--muted:#667085;--border:#E5E7EB;--primary:#123B7A;--primary-dark:#0D2D5F;--primary-soft:#E7EDF7;--danger:#E23B3B;--danger-soft:#FDECEC;--ok-soft:#E6F4EC;--ok:#157347;}
@@ -28,22 +29,22 @@ input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--
 </head>
 <body>
   <div class="wrap">
-    <div class="brand">FoodCost</div>
+    <div class="brand">ЧекМейт</div>
     <div class="card">
-      <h1>Новый пароль</h1>
-      <p class="sub">Код отправлен на<br><b>{{ target }}</b></p>
-      {% if debug_code %}<div class="debug">Код (режим разработки): {{ debug_code }}</div>{% endif %}
+      <h1>{% trans "Новый пароль" %}</h1>
+      <p class="sub">{% trans "Код отправлен на" %}<br><b>{{ target }}</b></p>
+      {% if debug_code %}<div class="debug">{% trans "Код (режим разработки):" %} {{ debug_code }}</div>{% endif %}
       {% if error %}<div class="err">{{ error }}</div>{% endif %}
       <form method="post">
         {% csrf_token %}
-        <label>Код из сообщения</label>
+        <label>{% trans "Код из сообщения" %}</label>
         <input class="code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" autofocus placeholder="• • • • •">
-        <label>Новый пароль</label>
-        <input type="password" name="password" required placeholder="Не короче 6 символов">
-        <button class="btn" type="submit">Сохранить пароль</button>
+        <label>{% trans "Новый пароль" %}</label>
+        <input type="password" name="password" required placeholder="{% trans "Не короче 6 символов" %}">
+        <button class="btn" type="submit">{% trans "Сохранить пароль" %}</button>
       </form>
     </div>
-    <div class="foot"><a href="/login/forgot/">← Запросить код заново</a></div>
+    <div class="foot"><a href="/login/forgot/">{% trans "← Запросить код заново" %}</a></div>
   </div>
 </body>
 </html>

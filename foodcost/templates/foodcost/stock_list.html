@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Остатки{% endblock %}
+{% block title %}{% trans "Остатки" %}{% endblock %}
 
 {% block content %}
 
@@ -107,8 +108,8 @@
 <div class="fc-page">
 
     <div class="fc-page-head">
-        <h1>Остатки</h1>
-        <p class="muted">Текущие остатки товаров по складам, минимальные уровни и предупреждения.</p>
+        <h1>{% trans "Остатки" %}</h1>
+        <p class="muted">{% trans "Текущие остатки товаров по складам, минимальные уровни и предупреждения." %}</p>
     </div>
 
     <!-- KPI -->
@@ -117,9 +118,9 @@
             <div class="kpi-ico ico-green">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
             </div>
-            <div class="kpi-label">Товаров на складе</div>
+            <div class="kpi-label">{% trans "Товаров на складе" %}</div>
             <div class="kpi-value">{{ kpi_positions }}</div>
-            <div class="kpi-sub">Позиций с остатком ≠ 0</div>
+            <div class="kpi-sub">{% trans "Позиций с остатком ≠ 0" %}</div>
         </div>
 
         {% if show_money %}
@@ -127,9 +128,9 @@
             <div class="kpi-ico ico-info">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
             </div>
-            <div class="kpi-label">Сумма остатков</div>
+            <div class="kpi-label">{% trans "Сумма остатков" %}</div>
             <div class="kpi-value num">{{ kpi_value_display }}</div>
-            <div class="kpi-sub">Сумма по текущему фильтру</div>
+            <div class="kpi-sub">{% trans "Сумма по текущему фильтру" %}</div>
         </div>
         {% endif %}
 
@@ -137,18 +138,18 @@
             <div class="kpi-ico ico-amber">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.7 18-9-15a1 1 0 0 0-1.7 0l-9 15A1 1 0 0 0 3 19.5h18a1 1 0 0 0 .7-1.5z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
             </div>
-            <div class="kpi-label">Ниже минимума</div>
+            <div class="kpi-label">{% trans "Ниже минимума" %}</div>
             <div class="kpi-value">{{ kpi_low }}</div>
-            <div class="kpi-sub">Товаров</div>
+            <div class="kpi-sub">{% trans "Товаров" %}</div>
         </div>
 
         <div class="kpi">
             <div class="kpi-ico ico-danger">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
             </div>
-            <div class="kpi-label">Отрицательные остатки</div>
+            <div class="kpi-label">{% trans "Отрицательные остатки" %}</div>
             <div class="kpi-value">{{ kpi_negative }}</div>
-            <div class="kpi-sub">Товаров</div>
+            <div class="kpi-sub">{% trans "Товаров" %}</div>
         </div>
     </div>
 
@@ -157,9 +158,9 @@
         <form method="get">
             <div class="filters">
                 <div>
-                    <label class="fc-label">Склад</label>
+                    <label class="fc-label">{% trans "Склад" %}</label>
                     <select class="fc-select" name="warehouse">
-                        <option value="">Все склады</option>
+                        <option value="">{% trans "Все склады" %}</option>
                         {% for loc in locations %}
                             <option value="{{ loc.id }}" {% if warehouse_id == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.name }}</option>
                         {% endfor %}
@@ -167,21 +168,21 @@
                 </div>
 
                 <div>
-                    <label class="fc-label">Поиск товара</label>
-                    <input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="Название или артикул">
+                    <label class="fc-label">{% trans "Поиск товара" %}</label>
+                    <input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="{% trans "Название или артикул" %}">
                 </div>
 
                 <div>
-                    <label class="fc-label">Показывать</label>
+                    <label class="fc-label">{% trans "Показывать" %}</label>
                     <div class="checks">
-                        <label class="check-row"><input type="checkbox" name="only_low" value="1" {% if only_low %}checked{% endif %}> <span>Только ниже минимума</span></label>
-                        <label class="check-row"><input type="checkbox" name="only_negative" value="1" {% if only_negative %}checked{% endif %}> <span>Только отрицательные</span></label>
+                        <label class="check-row"><input type="checkbox" name="only_low" value="1" {% if only_low %}checked{% endif %}> <span>{% trans "Только ниже минимума" %}</span></label>
+                        <label class="check-row"><input type="checkbox" name="only_negative" value="1" {% if only_negative %}checked{% endif %}> <span>{% trans "Только отрицательные" %}</span></label>
                     </div>
                 </div>
 
                 <div class="filter-actions">
-                    <button type="submit" class="fc-btn fc-btn-primary">Применить</button>
-                    <a href="/c/{{ country.slug }}/stock/" class="fc-btn fc-btn-secondary">Сбросить</a>
+                    <button type="submit" class="fc-btn fc-btn-primary">{% trans "Применить" %}</button>
+                    <a href="/c/{{ country.slug }}/stock/" class="fc-btn fc-btn-secondary">{% trans "Сбросить" %}</a>
                 </div>
             </div>
         </form>
@@ -191,13 +192,13 @@
     <div class="fc-card">
         <div class="fc-table">
             <div class="t-head {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
-                <div>Продукт</div>
-                <div>Ед.</div>
-                <div>Склад</div>
-                <div>Остаток</div>
-                <div>Мин. остаток</div>
-                {% if show_money %}<div>Цена</div><div>Стоимость</div>{% endif %}
-                <div>Статус</div>
+                <div>{% trans "Продукт" %}</div>
+                <div>{% trans "Ед." %}</div>
+                <div>{% trans "Склад" %}</div>
+                <div>{% trans "Остаток" %}</div>
+                <div>{% trans "Мин. остаток" %}</div>
+                {% if show_money %}<div>{% trans "Цена" %}</div><div>{% trans "Стоимость" %}</div>{% endif %}
+                <div>{% trans "Статус" %}</div>
                 <div></div>
             </div>
 
@@ -217,36 +218,36 @@
                 {% endif %}
                 <div>
                     {% if r.status == 'negative' %}
-                        <span class="badge badge-neg">Минусовой</span>
+                        <span class="badge badge-neg">{% trans "Минусовой" %}</span>
                     {% elif r.status == 'low' %}
-                        <span class="badge badge-low">Ниже минимума</span>
+                        <span class="badge badge-low">{% trans "Ниже минимума" %}</span>
                     {% else %}
-                        <span class="badge badge-ok">ОК</span>
+                        <span class="badge badge-ok">{% trans "ОК" %}</span>
                     {% endif %}
                 </div>
                 <div>
                     {% if r.type == 'product' %}
-                        <a class="kebab" href="/c/{{ country.slug }}/stock/product/{{ r.id }}/" title="Карточка товара" style="cursor:pointer;opacity:1;text-decoration:none;">
+                        <a class="kebab" href="/c/{{ country.slug }}/stock/product/{{ r.id }}/" title="{% trans "Карточка товара" %}" style="cursor:pointer;opacity:1;text-decoration:none;">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
                         </a>
                     {% else %}
-                        <div class="kebab" title="Карточка заготовки появится позже">
+                        <div class="kebab" title="{% trans "Карточка заготовки появится позже" %}">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
                         </div>
                     {% endif %}
                 </div>
             </div>
             {% empty %}
-                <div class="empty">Остатков по выбранным условиям нет.</div>
+                <div class="empty">{% trans "Остатков по выбранным условиям нет." %}</div>
             {% endfor %}
         </div>
 
         <div class="t-foot">
             <div class="muted">
                 {% if total_count %}
-                    Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}
+                    {% blocktrans with s=page_obj.start_index e=page_obj.end_index tot=total_count %}Показано {{ s }}–{{ e }} из {{ tot }}{% endblocktrans %}
                 {% else %}
-                    Ничего не найдено
+                    {% trans "Ничего не найдено" %}
                 {% endif %}
             </div>
 
@@ -279,7 +280,7 @@
                 {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
                 {% if only_low %}<input type="hidden" name="only_low" value="1">{% endif %}
                 {% if only_negative %}<input type="hidden" name="only_negative" value="1">{% endif %}
-                <span class="muted">На странице</span>
+                <span class="muted">{% trans "На странице" %}</span>
                 <select class="fc-select" name="per_page" onchange="this.form.submit()" style="width:auto;height:36px;">
                     <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
                     <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>

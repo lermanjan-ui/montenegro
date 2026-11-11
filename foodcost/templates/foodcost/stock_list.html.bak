@@ -1,0 +1,295 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Остатки{% endblock %}
+
+{% block content %}
+
+<!-- CSS inline (без staticfiles). FoodCost UI Kit v2. Страница только для
+     чтения: остатки считаются из StockMovement. Деньги скрыты для кухни
+     (show_money). Действия в строке пока неактивны (заглушки). -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-hover:#15803D; --fc-green-soft:#DCFCE7; --fc-green-text:#166534;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1320px; margin:0 auto; padding:24px; }
+
+.fc-page-head{ margin-bottom:20px; }
+.fc-page-head h1{ margin:0 0 6px; font-size:30px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); font-size:14px; margin:0; }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+
+/* ---- KPI ---- */
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:18px; }
+.kpi .kpi-ico{ width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+.kpi .kpi-ico svg{ width:20px; height:20px; }
+.kpi-label{ color:var(--fc-muted); font-size:13px; font-weight:600; margin-bottom:4px; }
+.kpi-value{ font-size:26px; font-weight:700; letter-spacing:-0.01em; }
+.kpi-sub{ color:var(--fc-muted-soft); font-size:12px; margin-top:2px; }
+.ico-green{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.ico-info{ background:var(--fc-info-soft); color:var(--fc-info-text); }
+.ico-amber{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.ico-danger{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+
+/* ---- filters ---- */
+.filters{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-items:end; }
+.fc-label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.fc-input,.fc-select{ width:100%; height:40px; padding:0 12px; background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-input); font-family:inherit; font-size:14px; color:var(--fc-text); }
+.fc-input:focus,.fc-select:focus{ outline:none; border-color:var(--fc-green); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+.checks{ display:flex; flex-direction:column; gap:8px; }
+.check-row{ display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; }
+.check-row input{ width:17px; height:17px; accent-color:var(--fc-green); }
+.filter-actions{ display:flex; gap:10px; }
+.fc-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border-radius:var(--fc-radius-input); border:1px solid transparent; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap; }
+.fc-btn-primary{ background:var(--fc-green); color:#fff; }
+.fc-btn-primary:hover{ background:var(--fc-green-hover); }
+.fc-btn-secondary{ background:var(--fc-card); color:var(--fc-text); border-color:var(--fc-border); }
+.fc-btn-secondary:hover{ border-color:var(--fc-text); }
+
+/* ---- table ---- */
+.fc-table{ border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); overflow:hidden; }
+.t-head,.t-row{ display:grid; gap:12px; align-items:center; padding:13px 16px; }
+.t-head{ background:var(--fc-card-soft); border-bottom:1px solid var(--fc-border); font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; }
+.t-row{ border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.t-row:last-child{ border-bottom:0; }
+.t-row:hover{ background:var(--fc-card-soft); }
+.cols-money{ grid-template-columns: minmax(180px,2fr) 60px 1.2fr 1fr 1fr 1fr 1.1fr 1fr 44px; }
+.cols-nomoney{ grid-template-columns: minmax(180px,2fr) 60px 1.4fr 1.1fr 1.1fr 1.1fr 44px; }
+.p-name{ font-weight:600; color:var(--fc-text); }
+.p-sku{ color:var(--fc-muted-soft); font-size:12px; }
+.num{ font-variant-numeric:tabular-nums; }
+.qty-ok{ color:var(--fc-green-text); font-weight:700; }
+.qty-low{ color:var(--fc-amber-text); font-weight:700; }
+.qty-neg{ color:var(--fc-danger-text); font-weight:700; }
+.val-neg{ color:var(--fc-danger-text); }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 11px; border-radius:var(--fc-radius-pill); font-size:12px; font-weight:600; white-space:nowrap; }
+.badge-ok{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-low{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.badge-neg{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+
+.kebab{ width:32px; height:32px; border-radius:8px; border:1px solid var(--fc-border); background:var(--fc-card); color:var(--fc-muted-soft); display:flex; align-items:center; justify-content:center; cursor:not-allowed; opacity:.55; }
+
+.t-foot{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+.pager{ display:flex; gap:6px; align-items:center; }
+.pager a,.pager span{ min-width:36px; height:36px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--fc-border); border-radius:8px; text-decoration:none; color:var(--fc-text); font-size:14px; font-weight:600; }
+.pager .cur{ background:var(--fc-text); color:#fff; border-color:var(--fc-text); }
+.pager .disabled{ color:var(--fc-muted-soft); pointer-events:none; opacity:.5; }
+
+.empty{ text-align:center; padding:36px 16px; color:var(--fc-muted); font-size:14px; }
+
+@media (max-width:1024px){
+    .kpi-grid{ grid-template-columns:1fr 1fr; }
+    .filters{ grid-template-columns:1fr 1fr; }
+    .t-head{ display:none; }
+    .cols-money,.cols-nomoney{ grid-template-columns:1fr 1fr; }
+    .t-row{ position:relative; }
+}
+@media (max-width:560px){
+    .fc-page{ padding:16px; }
+    .kpi-grid,.filters,.cols-money,.cols-nomoney{ grid-template-columns:1fr; }
+}
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="fc-page-head">
+        <h1>Остатки</h1>
+        <p class="muted">Текущие остатки товаров по складам, минимальные уровни и предупреждения.</p>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+        <div class="kpi">
+            <div class="kpi-ico ico-green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <div class="kpi-label">Товаров на складе</div>
+            <div class="kpi-value">{{ kpi_positions }}</div>
+            <div class="kpi-sub">Позиций с остатком ≠ 0</div>
+        </div>
+
+        {% if show_money %}
+        <div class="kpi">
+            <div class="kpi-ico ico-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+            </div>
+            <div class="kpi-label">Сумма остатков</div>
+            <div class="kpi-value num">{{ kpi_value_display }}</div>
+            <div class="kpi-sub">Сумма по текущему фильтру</div>
+        </div>
+        {% endif %}
+
+        <div class="kpi">
+            <div class="kpi-ico ico-amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.7 18-9-15a1 1 0 0 0-1.7 0l-9 15A1 1 0 0 0 3 19.5h18a1 1 0 0 0 .7-1.5z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </div>
+            <div class="kpi-label">Ниже минимума</div>
+            <div class="kpi-value">{{ kpi_low }}</div>
+            <div class="kpi-sub">Товаров</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-ico ico-danger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+            </div>
+            <div class="kpi-label">Отрицательные остатки</div>
+            <div class="kpi-value">{{ kpi_negative }}</div>
+            <div class="kpi-sub">Товаров</div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="fc-card">
+        <form method="get">
+            <div class="filters">
+                <div>
+                    <label class="fc-label">Склад</label>
+                    <select class="fc-select" name="warehouse">
+                        <option value="">Все склады</option>
+                        {% for loc in locations %}
+                            <option value="{{ loc.id }}" {% if warehouse_id == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="fc-label">Поиск товара</label>
+                    <input class="fc-input" type="text" name="search" value="{{ search }}" placeholder="Название или артикул">
+                </div>
+
+                <div>
+                    <label class="fc-label">Показывать</label>
+                    <div class="checks">
+                        <label class="check-row"><input type="checkbox" name="only_low" value="1" {% if only_low %}checked{% endif %}> <span>Только ниже минимума</span></label>
+                        <label class="check-row"><input type="checkbox" name="only_negative" value="1" {% if only_negative %}checked{% endif %}> <span>Только отрицательные</span></label>
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="fc-btn fc-btn-primary">Применить</button>
+                    <a href="/c/{{ country.slug }}/stock/" class="fc-btn fc-btn-secondary">Сбросить</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Таблица -->
+    <div class="fc-card">
+        <div class="fc-table">
+            <div class="t-head {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
+                <div>Продукт</div>
+                <div>Ед.</div>
+                <div>Склад</div>
+                <div>Остаток</div>
+                <div>Мин. остаток</div>
+                {% if show_money %}<div>Цена</div><div>Стоимость</div>{% endif %}
+                <div>Статус</div>
+                <div></div>
+            </div>
+
+            {% for r in page_obj %}
+            <div class="t-row {% if show_money %}cols-money{% else %}cols-nomoney{% endif %}">
+                <div>
+                    <div class="p-name">{{ r.name }}</div>
+                    {% if r.sku %}<div class="p-sku">{{ r.sku }}</div>{% else %}<div class="p-sku">{{ r.type_label }}</div>{% endif %}
+                </div>
+                <div class="muted">{{ r.unit }}</div>
+                <div>{{ r.warehouse_name }}</div>
+                <div class="num {% if r.status == 'negative' %}qty-neg{% elif r.status == 'low' %}qty-low{% else %}qty-ok{% endif %}">{{ r.qty_display }}</div>
+                <div class="num muted">{{ r.min_display }}</div>
+                {% if show_money %}
+                    <div class="num">{{ r.price_display }}</div>
+                    <div class="num {% if r.value < 0 %}val-neg{% endif %}">{{ r.value_display }}</div>
+                {% endif %}
+                <div>
+                    {% if r.status == 'negative' %}
+                        <span class="badge badge-neg">Минусовой</span>
+                    {% elif r.status == 'low' %}
+                        <span class="badge badge-low">Ниже минимума</span>
+                    {% else %}
+                        <span class="badge badge-ok">ОК</span>
+                    {% endif %}
+                </div>
+                <div>
+                    {% if r.type == 'product' %}
+                        <a class="kebab" href="/c/{{ country.slug }}/stock/product/{{ r.id }}/" title="Карточка товара" style="cursor:pointer;opacity:1;text-decoration:none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        </a>
+                    {% else %}
+                        <div class="kebab" title="Карточка заготовки появится позже">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+                <div class="empty">Остатков по выбранным условиям нет.</div>
+            {% endfor %}
+        </div>
+
+        <div class="t-foot">
+            <div class="muted">
+                {% if total_count %}
+                    Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ total_count }}
+                {% else %}
+                    Ничего не найдено
+                {% endif %}
+            </div>
+
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="pager">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{{ base_qs }}">‹</a>
+                {% else %}
+                    <span class="disabled">‹</span>
+                {% endif %}
+
+                {% for n in page_obj.paginator.page_range %}
+                    {% if n == page_obj.number %}
+                        <span class="cur">{{ n }}</span>
+                    {% elif n > page_obj.number|add:'-3' and n < page_obj.number|add:'3' %}
+                        <a href="?page={{ n }}{{ base_qs }}">{{ n }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{{ base_qs }}">›</a>
+                {% else %}
+                    <span class="disabled">›</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <form method="get" style="display:flex;align-items:center;gap:8px;">
+                {% if warehouse_id %}<input type="hidden" name="warehouse" value="{{ warehouse_id }}">{% endif %}
+                {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
+                {% if only_low %}<input type="hidden" name="only_low" value="1">{% endif %}
+                {% if only_negative %}<input type="hidden" name="only_negative" value="1">{% endif %}
+                <span class="muted">На странице</span>
+                <select class="fc-select" name="per_page" onchange="this.form.submit()" style="width:auto;height:36px;">
+                    <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                    <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+</div>
+</div>
+
+{% endblock %}

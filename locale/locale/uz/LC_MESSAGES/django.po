@@ -1,0 +1,333 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-27 17:31+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: uz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: foodcost/templates/foodcost/base.html:129
+msgid "Главная"
+msgstr "Bosh sahifa"
+
+#: foodcost/templates/foodcost/base.html:151
+msgid "🧾 Касса (зал)"
+msgstr "🧾 Kassa (zal)"
+
+#: foodcost/templates/foodcost/base.html:154
+msgid "🍳 Кухня (KDS)"
+msgstr "🍳 Oshxona (KDS)"
+
+#: foodcost/templates/foodcost/base.html:165
+msgid "Настройка кассы"
+msgstr "Kassa sozlamalari"
+
+#: foodcost/templates/foodcost/base.html:170
+msgid "Экраны и пороги кухни"
+msgstr "Oshxona ekranlari va vaqt chegaralari"
+
+#: foodcost/templates/foodcost/base.html:171
+msgid "Обслуживание и чаевые"
+msgstr "Xizmat va choychaqa"
+
+#: foodcost/templates/foodcost/base.html:172
+msgid "Лояльность и баллы"
+msgstr "Sodiqlik va ballar"
+
+#: foodcost/templates/foodcost/base.html:173
+msgid "Оплаты и фискализация"
+msgstr "To'lovlar va fiskalizatsiya"
+
+#: foodcost/templates/foodcost/base.html:174
+msgid "Расстановка столов"
+msgstr "Stollar joylashuvi"
+
+#: foodcost/templates/foodcost/base.html:175
+msgid "Доступы кассы"
+msgstr "Kassa ruxsatlari"
+
+#: foodcost/templates/foodcost/base.html:189
+msgid "Касса"
+msgstr "Kassa"
+
+#: foodcost/templates/foodcost/base.html:195
+msgid "Управление заказами"
+msgstr "Buyurtmalarni boshqarish"
+
+#: foodcost/templates/foodcost/base.html:208
+msgid "Меню"
+msgstr "Menyu"
+
+#: foodcost/templates/foodcost/base.html:213
+msgid "Блюда"
+msgstr "Taomlar"
+
+#: foodcost/templates/foodcost/base.html:214
+msgid "Цены и стоп-лист"
+msgstr "Narxlar va stop-list"
+
+#: foodcost/templates/foodcost/base.html:226
+msgid "Обеды"
+msgstr "Tushliklar"
+
+#: foodcost/templates/foodcost/base.html:232
+msgid "Обед дня"
+msgstr "Kun tushligi"
+
+#: foodcost/templates/foodcost/base.html:233
+msgid "Конструктор обедов"
+msgstr "Tushlik konstruktori"
+
+#: foodcost/templates/foodcost/base.html:234
+msgid "Апсейл обедов"
+msgstr "Tushlik apseyli"
+
+#: foodcost/templates/foodcost/base.html:237
+msgid "Учёт обедов"
+msgstr "Tushliklar hisobi"
+
+#: foodcost/templates/foodcost/base.html:240
+msgid "Статистика обедов"
+msgstr "Tushliklar statistikasi"
+
+#: foodcost/templates/foodcost/base.html:254
+msgid "Товары и склад"
+msgstr "Mahsulotlar va ombor"
+
+#: foodcost/templates/foodcost/base.html:260
+msgid "Товары"
+msgstr "Mahsulotlar"
+
+#: foodcost/templates/foodcost/base.html:261
+msgid "Категории товаров"
+msgstr "Mahsulot turkumlari"
+
+#: foodcost/templates/foodcost/base.html:262
+msgid "Активы"
+msgstr "Aktivlar"
+
+#: foodcost/templates/foodcost/base.html:265
+msgid "Заготовки"
+msgstr "Yarim tayyor mahsulotlar"
+
+#: foodcost/templates/foodcost/base.html:268
+msgid "Упаковка"
+msgstr "Qadoqlash"
+
+#: foodcost/templates/foodcost/base.html:271
+msgid "Остатки"
+msgstr "Qoldiqlar"
+
+#: foodcost/templates/foodcost/base.html:274
+msgid "Приходы"
+msgstr "Kirimlar"
+
+#: foodcost/templates/foodcost/base.html:277
+msgid "Перемещения"
+msgstr "Ko'chirishlar"
+
+#: foodcost/templates/foodcost/base.html:280
+msgid "Поставщики"
+msgstr "Yetkazib beruvchilar"
+
+#: foodcost/templates/foodcost/base.html:283
+msgid "Инвентаризация"
+msgstr "Inventarizatsiya"
+
+#: foodcost/templates/foodcost/base.html:286
+msgid "Движения склада"
+msgstr "Ombor harakatlari"
+
+#: foodcost/templates/foodcost/base.html:288
+msgid "Автосписание продаж"
+msgstr "Sotuvlarni avto-hisobdan chiqarish"
+
+#: foodcost/templates/foodcost/base.html:302
+msgid "CRM и аналитика"
+msgstr "CRM va tahlil"
+
+#: foodcost/templates/foodcost/base.html:308
+#: foodcost/templates/foodcost/base.html:489
+msgid "Клиенты"
+msgstr "Mijozlar"
+
+#: foodcost/templates/foodcost/base.html:311
+msgid "Все заказы"
+msgstr "Barcha buyurtmalar"
+
+#: foodcost/templates/foodcost/base.html:314
+msgid "Аналитика заказов"
+msgstr "Buyurtmalar tahlili"
+
+#: foodcost/templates/foodcost/base.html:315
+msgid "Аналитика по блюдам"
+msgstr "Taomlar bo'yicha tahlil"
+
+#: foodcost/templates/foodcost/base.html:318
+msgid "Аналитика списаний"
+msgstr "Hisobdan chiqarish tahlili"
+
+#: foodcost/templates/foodcost/base.html:321
+msgid "Журнал передач смен"
+msgstr "Smena topshirish jurnali"
+
+#: foodcost/templates/foodcost/base.html:332
+msgid "Финансы"
+msgstr "Moliya"
+
+#: foodcost/templates/foodcost/base.html:338
+msgid "Расходы"
+msgstr "Xarajatlar"
+
+#: foodcost/templates/foodcost/base.html:339
+msgid "Поступление денег"
+msgstr "Pul tushumi"
+
+#: foodcost/templates/foodcost/base.html:340
+msgid "Приход / расход"
+msgstr "Kirim / chiqim"
+
+#: foodcost/templates/foodcost/base.html:343
+msgid "Коммуналка"
+msgstr "Kommunal to'lovlar"
+
+#: foodcost/templates/foodcost/base.html:354
+msgid "Кухня (операции)"
+msgstr "Oshxona (operatsiyalar)"
+
+#: foodcost/templates/foodcost/base.html:360
+msgid "Списания"
+msgstr "Hisobdan chiqarishlar"
+
+#: foodcost/templates/foodcost/base.html:363
+msgid "Передача смены"
+msgstr "Smena topshirish"
+
+#: foodcost/templates/foodcost/base.html:366
+msgid "Техкарты"
+msgstr "Texkartalar"
+
+#: foodcost/templates/foodcost/base.html:377
+msgid "Персонал"
+msgstr "Xodimlar"
+
+#: foodcost/templates/foodcost/base.html:383
+msgid "Сотрудники"
+msgstr "Xodimlar"
+
+#: foodcost/templates/foodcost/base.html:386
+msgid "График смен"
+msgstr "Smena jadvali"
+
+#: foodcost/templates/foodcost/base.html:389
+msgid "Журнал смен"
+msgstr "Smena jurnali"
+
+#: foodcost/templates/foodcost/base.html:400
+msgid "Мой кабинет"
+msgstr "Mening kabinetim"
+
+#: foodcost/templates/foodcost/base.html:405
+msgid "Мои смены и зарплата"
+msgstr "Smenalarim va oylik"
+
+#: foodcost/templates/foodcost/base.html:415
+msgid "Сайт / витрина"
+msgstr "Sayt / vitrina"
+
+#: foodcost/templates/foodcost/base.html:421
+msgid "Главная сайта"
+msgstr "Sayt bosh sahifasi"
+
+#: foodcost/templates/foodcost/base.html:422
+msgid "Промокоды и акции"
+msgstr "Promokodlar va aksiyalar"
+
+#: foodcost/templates/foodcost/base.html:425
+msgid "Категории блюд"
+msgstr "Taom turkumlari"
+
+#: foodcost/templates/foodcost/base.html:426
+msgid "Комбо на главной"
+msgstr "Bosh sahifadagi kombo"
+
+#: foodcost/templates/foodcost/base.html:437
+msgid "Интеграции"
+msgstr "Integratsiyalar"
+
+#: foodcost/templates/foodcost/base.html:442
+msgid "Локации (Uzum и пр.)"
+msgstr "Lokatsiyalar (Uzum va b.)"
+
+#: foodcost/templates/foodcost/base.html:452
+msgid "Компания"
+msgstr "Kompaniya"
+
+#: foodcost/templates/foodcost/base.html:457
+msgid "Моя подписка"
+msgstr "Mening obunam"
+
+#: foodcost/templates/foodcost/base.html:458
+msgid "Настройки"
+msgstr "Sozlamalar"
+
+#: foodcost/templates/foodcost/base.html:468
+#: foodcost/templates/foodcost/base.html:500
+msgid "Админка"
+msgstr "Admin panel"
+
+#: foodcost/templates/foodcost/base.html:473
+msgid "Пользователи"
+msgstr "Foydalanuvchilar"
+
+#: foodcost/templates/foodcost/base.html:484
+msgid "Платформа"
+msgstr "Platforma"
+
+#: foodcost/templates/foodcost/base.html:490
+msgid "Команда"
+msgstr "Jamoa"
+
+#: foodcost/templates/foodcost/base.html:499
+msgid "Страны"
+msgstr "Mamlakatlar"
+
+#: foodcost/templates/foodcost/base.html:525
+msgid "Язык"
+msgstr "Til"
+
+#: foodcost/templates/foodcost/base.html:539
+msgid "Главный админ"
+msgstr "Bosh admin"
+
+#: foodcost/templates/foodcost/base.html:541
+msgid "Пользователь"
+msgstr "Foydalanuvchi"
+
+#: foodcost/templates/foodcost/base.html:548
+msgid "Профиль"
+msgstr "Profil"
+
+#: foodcost/templates/foodcost/base.html:549
+msgid "Реквизиты компании"
+msgstr "Kompaniya rekvizitlari"
+
+#: foodcost/templates/foodcost/base.html:550
+msgid "Сотрудники компании"
+msgstr "Kompaniya xodimlari"
+
+#: foodcost/templates/foodcost/base.html:553
+msgid "Выход"
+msgstr "Chiqish"

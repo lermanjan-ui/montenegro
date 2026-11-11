@@ -1,0 +1,76 @@
+{% extends "foodcost/base.html" %}
+{% load i18n %}
+
+{% block title %}Оплаты и фискализация{% endblock %}
+
+{% block content %}
+<style>
+.poswrap{--pw-ink:#111827;--pw-muted:#667085;--pw-subtle:#98a2b3;--pw-border:#e5e7eb;--pw-bstrong:#d1d5db;--pw-surface:#fff;--pw-sunken:#eef1f5;--pw-primary:#123b7a;--pw-primary-soft:#e7edf7;--pw-success:#157347;--pw-success-soft:#e6f4ec;
+  max-width:800px;margin:0 auto;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--pw-ink);}
+.poswrap .pw-h1{font-weight:700;font-size:24px;letter-spacing:-.02em;margin:0 0 4px;}
+.poswrap .pw-scope{font-size:13px;color:var(--pw-muted);margin-bottom:16px;}
+.poswrap .pw-card{border:1px solid var(--pw-border);border-radius:12px;background:var(--pw-surface);box-shadow:0 1px 2px rgba(16,24,40,.06);margin-bottom:16px;}
+.poswrap .pw-ch{font-weight:700;font-size:15px;padding:14px 16px;border-bottom:1px solid var(--pw-border);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.poswrap .pw-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--pw-success-soft);color:var(--pw-success);}
+.poswrap .pw-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:13px 16px;border-top:1px solid var(--pw-border);}
+.poswrap .pw-fl{flex:1 1 220px;min-width:0;}
+.poswrap .pw-fn{font-weight:600;font-size:14px;}
+.poswrap .pw-fd{font-size:12px;color:var(--pw-muted);margin-top:2px;}
+.poswrap select.pw-in{height:38px;padding:0 10px;border:1px solid var(--pw-bstrong);border-radius:8px;background:var(--pw-surface);font-family:inherit;font-size:13px;color:var(--pw-ink);outline:none;}
+.poswrap select.pw-in:focus{border-color:var(--pw-primary);box-shadow:0 0 0 3px var(--pw-primary-soft);}
+.poswrap .pw-check{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.poswrap .pw-check input{width:18px;height:18px;accent-color:var(--pw-primary);cursor:pointer;}
+.poswrap .pw-pmname{flex:1 1 160px;min-width:0;font-weight:600;font-size:14px;}
+.poswrap .pw-gl{font-size:12px;color:var(--pw-muted);}
+.poswrap .pw-save{display:flex;justify-content:flex-end;padding:14px 16px;border-top:1px solid var(--pw-border);}
+.poswrap .pw-btn{height:46px;padding:0 22px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;border:0;background:var(--pw-primary);color:#fff;}
+.poswrap .pw-empty{padding:16px;color:var(--pw-subtle);font-size:13px;}
+</style>
+
+<div class="poswrap">
+  <div class="pw-h1">{% trans "Оплаты и фискализация" %}</div>
+  <div class="pw-scope">{% trans "Применяется ко всем точкам. Реквизиты юр.лица/ИНН берутся из «Настройки»." %}</div>
+
+  <!-- ФИСКАЛИЗАЦИЯ -->
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="save_fiscal">
+    <div class="pw-card">
+      <div class="pw-ch"><span>{% trans "Фискализация" %}</span>{% if fiscal.is_connected %}<span class="pw-pill">{% trans "Подключено" %}</span>{% endif %}</div>
+      <div class="pw-row">
+        <div class="pw-fl"><div class="pw-fn">{% trans "Режим работы" %}</div><div class="pw-fd">{% trans "в тесте чеки не уходят в налоговую" %}</div></div>
+        <select class="pw-in" name="mode">
+          {% for value, label in mode_choices %}<option value="{{ value }}" {% if fiscal.mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="pw-row">
+        <div class="pw-fl"><div class="pw-fn">{% trans "НДС в чеке" %}</div><div class="pw-fd">{% trans "показывается только в фискальном чеке, на кассе не виден" %}</div></div>
+        <select class="pw-in" name="vat_mode">
+          {% for value, label in vat_choices %}<option value="{{ value }}" {% if fiscal.vat_mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="pw-save"><button class="pw-btn" type="submit">{% trans "Сохранить" %}</button></div>
+    </div>
+  </form>
+
+  <!-- СПОСОБЫ ОПЛАТЫ -->
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="save_methods">
+    <div class="pw-card">
+      <div class="pw-ch"><span>{% trans "Способы оплаты" %}</span><span class="pw-fd" style="font-weight:500;color:var(--pw-muted)">{% trans "создаются в «Настройки»" %}</span></div>
+      {% for row in rows %}
+        <div class="pw-row">
+          <span class="pw-pmname">{{ row.m.name }}</span>
+          <label class="pw-check"><input type="checkbox" name="visible_{{ row.m.id }}" {% if row.cfg.is_visible %}checked{% endif %}> {% trans "показывать на кассе" %}</label>
+          <span class="pw-gl">{% trans "Фискализация:" %}</span>
+          <select class="pw-in" name="fiscal_{{ row.m.id }}">
+            {% for value, label in fiscal_choices %}<option value="{{ value }}" {% if row.cfg.fiscalization == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+      {% empty %}
+        <div class="pw-empty">{% trans "Способов оплаты пока нет — создайте их в разделе «Настройки»." %}</div>
+      {% endfor %}
+      {% if rows %}<div class="pw-save"><button class="pw-btn" type="submit">{% trans "Сохранить" %}</button></div>{% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,21 +1,22 @@
 {% extends "foodcost/platform/base.html" %}
-{% block title %}Клиенты · Платформа{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Клиенты · Платформа" %}{% endblock %}
 {% block content %}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
   <div>
-    <h1>Клиенты</h1>
-    <p class="sub">Арендаторы платформы, их тарифы и активность.</p>
+    <h1>{% trans "Клиенты" %}</h1>
+    <p class="sub">{% trans "Арендаторы платформы, их тарифы и активность." %}</p>
   </div>
-  <a class="btn" href="/platform/clients/new/">+ Новый клиент</a>
+  <a class="btn" href="/platform/clients/new/">{% trans "+ Новый клиент" %}</a>
 </div>
 
 <div class="card">
   <div class="stat-grid">
-    <div class="stat"><div class="n">{{ totals.clients }}</div><div class="l">Всего клиентов</div></div>
-    <div class="stat"><div class="n">{{ totals.active }}</div><div class="l">Активные</div></div>
-    <div class="stat"><div class="n">{{ totals.trial }}</div><div class="l">Триал</div></div>
-    <div class="stat"><div class="n">{{ totals.suspended }}</div><div class="l">Приостановлены</div></div>
-    <div class="stat"><div class="n">{{ totals.orders_30d }}</div><div class="l">Заказов за 30 дней</div></div>
+    <div class="stat"><div class="n">{{ totals.clients }}</div><div class="l">{% trans "Всего клиентов" %}</div></div>
+    <div class="stat"><div class="n">{{ totals.active }}</div><div class="l">{% trans "Активные" %}</div></div>
+    <div class="stat"><div class="n">{{ totals.trial }}</div><div class="l">{% trans "Триал" %}</div></div>
+    <div class="stat"><div class="n">{{ totals.suspended }}</div><div class="l">{% trans "Приостановлены" %}</div></div>
+    <div class="stat"><div class="n">{{ totals.orders_30d }}</div><div class="l">{% trans "Заказов за 30 дней" %}</div></div>
   </div>
 </div>
 
@@ -23,12 +24,12 @@
   <table>
     <thead>
       <tr>
-        <th>Клиент</th>
-        <th>Тариф</th>
-        <th>Статус</th>
-        <th>Модулей</th>
-        <th>Филиалов</th>
-        <th>Заказов (30д / всего)</th>
+        <th>{% trans "Клиент" %}</th>
+        <th>{% trans "Тариф" %}</th>
+        <th>{% trans "Статус" %}</th>
+        <th>{% trans "Модулей" %}</th>
+        <th>{% trans "Филиалов" %}</th>
+        <th>{% trans "Заказов (30д / всего)" %}</th>
         <th></th>
       </tr>
     </thead>
@@ -47,15 +48,15 @@
           {% elif x.status == "cancelled" %}<span class="badge off">{{ x.status_label }}</span>
           {% else %}<span class="badge neutral">{{ x.status_label }}</span>{% endif %}
         </td>
-        <td>{% if x.module_count is None %}<span class="muted">без лимита</span>{% else %}{{ x.module_count }}{% endif %}</td>
+        <td>{% if x.module_count is None %}<span class="muted">{% trans "без лимита" %}</span>{% else %}{{ x.module_count }}{% endif %}</td>
         <td>{{ x.locations }}</td>
         <td>{{ x.orders_30d }} / {{ x.orders_total }}</td>
         <td style="text-align:right;white-space:nowrap;">
-          <a class="btn sec sm" href="/platform/clients/{{ x.country.slug }}/">Открыть</a>
+          <a class="btn sec sm" href="/platform/clients/{{ x.country.slug }}/">{% trans "Открыть" %}</a>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="7" class="muted" style="padding:24px;text-align:center;">Клиентов пока нет.</td></tr>
+      <tr><td colspan="7" class="muted" style="padding:24px;text-align:center;">{% trans "Клиентов пока нет." %}</td></tr>
       {% endfor %}
     </tbody>
   </table>

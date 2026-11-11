@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Обеды{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Обеды" %}{% endblock %}
 {% block content %}
 <style>
 .lb-wrap{max-width:1100px;margin:0 auto;}
@@ -23,25 +24,25 @@
 </style>
 
 <div class="lb-wrap">
-  <h1 class="lb-h1">Обеды</h1>
-  <p class="lb-sub">Комплексные обеды по датам: несколько обедов на день, размеры со своей ценой и составом, расчёт себестоимости и маржи.</p>
+  <h1 class="lb-h1">{% trans "Обеды" %}</h1>
+  <p class="lb-sub">{% trans "Комплексные обеды по датам: несколько обедов на день, размеры со своей ценой и составом, расчёт себестоимости и маржи." %}</p>
 
   <div class="lb-card">
-    <div class="lb-title">Создать обед</div>
+    <div class="lb-title">{% trans "Создать обед" %}</div>
     <form method="post" class="lb-row">
       {% csrf_token %}
       <input type="hidden" name="action" value="create_lunch">
       <input class="lb-in" type="date" name="date" value="{{ today }}" required>
-      <input class="lb-in" type="text" name="name" placeholder="Название (напр. Сытный)" style="min-width:240px;" required>
-      <button class="lb-btn lb-green" type="submit">Создать и открыть →</button>
+      <input class="lb-in" type="text" name="name" placeholder="{% trans "Название (напр. Сытный)" %}" style="min-width:240px;" required>
+      <button class="lb-btn lb-green" type="submit">{% trans "Создать и открыть →" %}</button>
     </form>
   </div>
 
   <div class="lb-card">
-    <div class="lb-title">Список обедов</div>
+    <div class="lb-title">{% trans "Список обедов" %}</div>
     <table class="lb-table">
       <thead>
-        <tr><th>Дата</th><th>Название</th><th>Размеров</th><th>Цена (деф.)</th><th>Маржа</th><th>Фудкост</th><th>Статус</th><th></th></tr>
+        <tr><th>{% trans "Дата" %}</th><th>{% trans "Название" %}</th><th>{% trans "Размеров" %}</th><th>{% trans "Цена (деф.)" %}</th><th>{% trans "Маржа" %}</th><th>{% trans "Фудкост" %}</th><th>{% trans "Статус" %}</th><th></th></tr>
       </thead>
       <tbody>
         {% for r in rows %}
@@ -53,21 +54,21 @@
           <td>{{ r.margin_fmt }}</td>
           <td>{{ r.foodcost }}%</td>
           <td>
-            {% if r.lunch.is_active and r.lunch.available %}<span class="lb-badge lb-on">Активен</span>
-            {% else %}<span class="lb-badge lb-off">Выкл</span>{% endif %}
+            {% if r.lunch.is_active and r.lunch.available %}<span class="lb-badge lb-on">{% trans "Активен" %}</span>
+            {% else %}<span class="lb-badge lb-off">{% trans "Выкл" %}</span>{% endif %}
           </td>
           <td style="white-space:nowrap;text-align:right;">
-            <a class="lb-btn lb-gray" href="/c/{{ country.slug }}/lunches/{{ r.lunch.id }}/">Открыть →</a>
-            <form method="post" style="display:inline;" onsubmit="return confirm('Удалить обед целиком?');">
+            <a class="lb-btn lb-gray" href="/c/{{ country.slug }}/lunches/{{ r.lunch.id }}/">{% trans "Открыть →" %}</a>
+            <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Удалить обед целиком?" as jt %}{{ jt|escapejs }}');">
               {% csrf_token %}
               <input type="hidden" name="action" value="delete_lunch">
               <input type="hidden" name="lunch_id" value="{{ r.lunch.id }}">
-              <button class="lb-btn lb-red" type="submit">Удалить</button>
+              <button class="lb-btn lb-red" type="submit">{% trans "Удалить" %}</button>
             </form>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="lb-empty">Обедов пока нет. Создайте первый выше.</td></tr>
+        <tr><td colspan="8" class="lb-empty">{% trans "Обедов пока нет. Создайте первый выше." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

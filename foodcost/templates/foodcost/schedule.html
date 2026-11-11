@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}График смен{% endblock %}
+{% block title %}{% trans "График смен" %}{% endblock %}
 
 {% block content %}
 
@@ -100,15 +101,15 @@ th.col-emp{ z-index:3; }
 <div class="fc-page">
 
     <div class="fc-head">
-        <div><h1>График смен</h1><p class="muted">Планирование и управление графиком работы сотрудников</p></div>
-        {% if can_edit %}<button type="button" class="fc-btn fc-btn-dark" onclick="openShift('','')">+ Добавить смену</button>{% endif %}
+        <div><h1>{% trans "График смен" %}</h1><p class="muted">{% trans "Планирование и управление графиком работы сотрудников" %}</p></div>
+        {% if can_edit %}<button type="button" class="fc-btn fc-btn-dark" onclick="openShift('','')">{% trans "+ Добавить смену" %}</button>{% endif %}
     </div>
 
     <div class="fc-card">
         <div class="toolbar">
             <div class="viewtoggle">
-                <a href="?view=week&week={{ toggle_week_value }}{% if location_id %}&location={{ location_id }}{% endif %}" class="{% if view == 'week' %}active{% endif %}">Неделя</a>
-                <a href="?view=month&month={{ toggle_month_value }}{% if location_id %}&location={{ location_id }}{% endif %}" class="{% if view == 'month' %}active{% endif %}">Месяц</a>
+                <a href="?view=week&week={{ toggle_week_value }}{% if location_id %}&location={{ location_id }}{% endif %}" class="{% if view == 'week' %}active{% endif %}">{% trans "Неделя" %}</a>
+                <a href="?view=month&month={{ toggle_month_value }}{% if location_id %}&location={{ location_id }}{% endif %}" class="{% if view == 'month' %}active{% endif %}">{% trans "Месяц" %}</a>
             </div>
             {% if view == 'week' %}
             <div class="month-nav">
@@ -116,20 +117,20 @@ th.col-emp{ z-index:3; }
                 <span class="week-lbl">{{ week_label }}</span>
                 <a href="?view=week&week={{ next_week }}{% if location_id %}&location={{ location_id }}{% endif %}">›</a>
             </div>
-            <a class="btn-today" href="?view=week&week={{ today_week }}{% if location_id %}&location={{ location_id }}{% endif %}">Сегодня</a>
+            <a class="btn-today" href="?view=week&week={{ today_week }}{% if location_id %}&location={{ location_id }}{% endif %}">{% trans "Сегодня" %}</a>
             {% else %}
             <div class="month-nav">
                 <a href="?view=month&month={{ prev_month }}{% if location_id %}&location={{ location_id }}{% endif %}">‹</a>
                 <span class="week-lbl">{{ month_label }}</span>
                 <a href="?view=month&month={{ next_month }}{% if location_id %}&location={{ location_id }}{% endif %}">›</a>
             </div>
-            <a class="btn-today" href="?view=month&month={{ today_month }}{% if location_id %}&location={{ location_id }}{% endif %}">Сегодня</a>
+            <a class="btn-today" href="?view=month&month={{ today_month }}{% if location_id %}&location={{ location_id }}{% endif %}">{% trans "Сегодня" %}</a>
             {% endif %}
             <form method="get" style="display:flex;gap:10px;align-items:center;">
                 <input type="hidden" name="view" value="{{ view }}">
                 {% if view == 'week' %}<input type="hidden" name="week" value="{{ week_value }}">{% else %}<input type="hidden" name="month" value="{{ month_value }}">{% endif %}
                 <select class="fc-select" name="location" onchange="this.form.submit()">
-                    <option value="">Все филиалы</option>
+                    <option value="">{% trans "Все филиалы" %}</option>
                     {% for l in locations %}<option value="{{ l.id }}" {% if location_id == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}
                 </select>
             </form>
@@ -142,7 +143,7 @@ th.col-emp{ z-index:3; }
             <table class="grid">
                 <thead>
                     <tr>
-                        <th class="col-emp">Сотрудник</th>
+                        <th class="col-emp">{% trans "Сотрудник" %}</th>
                         {% for h in header_days %}<th class="day-h {% if h.is_weekend %}wknd{% endif %}"><div class="dn">{{ h.label }}</div><div class="dd">{{ h.day }}</div></th>{% endfor %}
                     </tr>
                 </thead>
@@ -156,7 +157,7 @@ th.col-emp{ z-index:3; }
                                 {% for sh in c.shifts %}
                                 <div class="chip {{ sh.status }}"{% if can_edit %} onclick="openEdit(this);event.stopPropagation();" style="cursor:pointer;" data-id="{{ sh.id }}" data-emp="{{ sh.employee_id }}" data-loc="{{ sh.location_id }}" data-date="{{ sh.date }}" data-start="{{ sh.start }}" data-end="{{ sh.end }}" data-break="{{ sh.break_minutes }}" data-type="{{ sh.shift_type }}" data-status="{{ sh.status }}" data-comment="{{ sh.comment }}" data-planned="{{ sh.planned_hours }}" data-actual="{{ sh.actual_hours }}" data-name="{{ sh.employee }}"{% endif %}>
                                     <div class="t">{{ sh.time }}</div>{% if sh.location %}<div class="l">{{ sh.location }}</div>{% endif %}
-                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('Удалить смену?');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="view" value="week"><input type="hidden" name="week" value="{{ week_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
+                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Удалить смену?" as jt %}{{ jt|escapejs }}');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="view" value="week"><input type="hidden" name="week" value="{{ week_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
                                 </div>
                                 {% endfor %}
                                 {% if can_edit %}<div class="add-hint">+</div>{% endif %}
@@ -165,11 +166,11 @@ th.col-emp{ z-index:3; }
                         {% endfor %}
                     </tr>
                     {% empty %}
-                    <tr><td class="col-emp">—</td><td colspan="7" style="padding:24px;color:var(--fc-muted);text-align:center;">Активных сотрудников нет.</td></tr>
+                    <tr><td class="col-emp">—</td><td colspan="7" style="padding:24px;color:var(--fc-muted);text-align:center;">{% trans "Активных сотрудников нет." %}</td></tr>
                     {% endfor %}
                     <tr class="totals">
-                        <td class="col-emp">Итого часов</td>
-                        {% for h in header_days %}<td class="{% if h.is_weekend %}wknd{% endif %}" style="text-align:center;">{{ h.hours }} ч</td>{% endfor %}
+                        <td class="col-emp">{% trans "Итого часов" %}</td>
+                        {% for h in header_days %}<td class="{% if h.is_weekend %}wknd{% endif %}" style="text-align:center;">{{ h.hours }} {% trans "ч" %}</td>{% endfor %}
                     </tr>
                 </tbody>
             </table>
@@ -188,7 +189,7 @@ th.col-emp{ z-index:3; }
                                 {% for sh in c.shifts %}
                                 <div class="mchip {{ sh.status }}"{% if can_edit %} onclick="openEdit(this);event.stopPropagation();" style="cursor:pointer;" data-id="{{ sh.id }}" data-emp="{{ sh.employee_id }}" data-loc="{{ sh.location_id }}" data-date="{{ sh.date }}" data-start="{{ sh.start }}" data-end="{{ sh.end }}" data-break="{{ sh.break_minutes }}" data-type="{{ sh.shift_type }}" data-status="{{ sh.status }}" data-comment="{{ sh.comment }}" data-planned="{{ sh.planned_hours }}" data-actual="{{ sh.actual_hours }}" data-name="{{ sh.employee }}"{% endif %}>
                                     <span class="who">{{ sh.employee }}</span> <span class="tm">{{ sh.time }}</span>
-                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('Удалить смену?');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="view" value="month"><input type="hidden" name="month" value="{{ month_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
+                                    {% if can_edit %}<form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Удалить смену?" as jt %}{{ jt|escapejs }}');"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="delete_shift"><input type="hidden" name="shift_id" value="{{ sh.id }}"><input type="hidden" name="view" value="month"><input type="hidden" name="month" value="{{ month_value }}"><input type="hidden" name="flt_location" value="{{ location_id }}"><button type="submit" class="del" onclick="event.stopPropagation();">✕</button></form>{% endif %}
                                 </div>
                                 {% endfor %}
                             </div>
@@ -201,10 +202,10 @@ th.col-emp{ z-index:3; }
         </div>
         {% endif %}
         <div class="legend">
-            <span><span class="dot" style="background:var(--fc-info-soft);"></span> Запланирована</span>
-            <span><span class="dot" style="background:var(--fc-green-soft);"></span> Отработана</span>
-            <span><span class="dot" style="background:var(--fc-amber-soft);"></span> Опоздание</span>
-            <span><span class="dot" style="background:var(--fc-danger-soft);"></span> Пропуск</span>
+            <span><span class="dot" style="background:var(--fc-info-soft);"></span> {% trans "Запланирована" %}</span>
+            <span><span class="dot" style="background:var(--fc-green-soft);"></span> {% trans "Отработана" %}</span>
+            <span><span class="dot" style="background:var(--fc-amber-soft);"></span> {% trans "Опоздание" %}</span>
+            <span><span class="dot" style="background:var(--fc-danger-soft);"></span> {% trans "Пропуск" %}</span>
         </div>
     </div>
 
@@ -214,7 +215,7 @@ th.col-emp{ z-index:3; }
 {% if can_edit %}
 <div class="ov" id="ovShift">
     <div class="modal">
-        <h3>Добавить смену</h3>
+        <h3>{% trans "Добавить смену" %}</h3>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_shift">
@@ -223,17 +224,17 @@ th.col-emp{ z-index:3; }
             <input type="hidden" name="month" value="{{ month_value }}">
             <input type="hidden" name="flt_location" value="{{ location_id }}">
             <div class="mg">
-                <div class="full"><label class="fc-label">Сотрудник</label><select class="fc-input" name="employee_id" id="sEmp" required><option value="">— выберите —</option>{% for e in popup_employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select></div>
-                <div class="full"><label class="fc-label">Дата</label><input class="fc-input" type="date" name="shift_date" id="sDate" required></div>
-                <div><label class="fc-label">Время начала</label><input class="fc-input" type="time" name="start_time" value="08:00"></div>
-                <div><label class="fc-label">Время окончания</label><input class="fc-input" type="time" name="end_time" value="17:00"></div>
-                <div><label class="fc-label">Перерыв, мин</label><input class="fc-input" name="break_minutes" value="0" inputmode="numeric"></div>
-                <div><label class="fc-label">Тип смены</label><select class="fc-input" name="shift_type">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Локация</label><select class="fc-input" name="location_id"><option value="">— по умолчанию —</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Статус</label><select class="fc-input" name="status">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div class="full"><label class="fc-label">Комментарий</label><input class="fc-input" name="comment"></div>
+                <div class="full"><label class="fc-label">{% trans "Сотрудник" %}</label><select class="fc-input" name="employee_id" id="sEmp" required><option value="">{% trans "— выберите —" %}</option>{% for e in popup_employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">{% trans "Дата" %}</label><input class="fc-input" type="date" name="shift_date" id="sDate" required></div>
+                <div><label class="fc-label">{% trans "Время начала" %}</label><input class="fc-input" type="time" name="start_time" value="08:00"></div>
+                <div><label class="fc-label">{% trans "Время окончания" %}</label><input class="fc-input" type="time" name="end_time" value="17:00"></div>
+                <div><label class="fc-label">{% trans "Перерыв, мин" %}</label><input class="fc-input" name="break_minutes" value="0" inputmode="numeric"></div>
+                <div><label class="fc-label">{% trans "Тип смены" %}</label><select class="fc-input" name="shift_type">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Локация" %}</label><select class="fc-input" name="location_id"><option value="">{% trans "— по умолчанию —" %}</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Статус" %}</label><select class="fc-input" name="status">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">{% trans "Комментарий" %}</label><input class="fc-input" name="comment"></div>
             </div>
-            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeShift()">Отмена</button><button type="submit" class="fc-btn fc-btn-dark">Сохранить</button></div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeShift()">{% trans "Отмена" %}</button><button type="submit" class="fc-btn fc-btn-dark">{% trans "Сохранить" %}</button></div>
         </form>
     </div>
 </div>
@@ -242,7 +243,7 @@ th.col-emp{ z-index:3; }
 {% if can_edit %}
 <div class="ov" id="ovEdit">
     <div class="modal">
-        <h3>Редактировать смену</h3>
+        <h3>{% trans "Редактировать смену" %}</h3>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="edit_shift">
@@ -252,19 +253,19 @@ th.col-emp{ z-index:3; }
             <input type="hidden" name="month" value="{{ month_value }}">
             <input type="hidden" name="flt_location" value="{{ location_id }}">
             <div class="mg">
-                <div class="full"><label class="fc-label">Сотрудник</label><select class="fc-input" name="employee_id" id="eEmp" required>{% for e in popup_employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select></div>
-                <div class="full"><label class="fc-label">Дата</label><input class="fc-input" type="date" name="shift_date" id="eDate" required></div>
-                <div><label class="fc-label">Время начала</label><input class="fc-input" type="time" name="start_time" id="eStart"></div>
-                <div><label class="fc-label">Время окончания</label><input class="fc-input" type="time" name="end_time" id="eEnd"></div>
-                <div><label class="fc-label">Перерыв, мин</label><input class="fc-input" name="break_minutes" id="eBreak" inputmode="numeric"></div>
-                <div><label class="fc-label">Тип смены</label><select class="fc-input" name="shift_type" id="eType">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Локация</label><select class="fc-input" name="location_id" id="eLoc"><option value="">— по умолчанию —</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">Статус</label><select class="fc-input" name="status" id="eStatus">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-                <div><label class="fc-label">План часов (полная смена)</label><input class="fc-input" name="planned_hours" id="ePlanned" inputmode="decimal"></div>
-                <div><label class="fc-label">Факт часов (отработано)</label><input class="fc-input" name="actual_hours" id="eActual" inputmode="decimal"></div>
-                <div class="full"><label class="fc-label">Комментарий</label><input class="fc-input" name="comment" id="eComment"></div>
+                <div class="full"><label class="fc-label">{% trans "Сотрудник" %}</label><select class="fc-input" name="employee_id" id="eEmp" required>{% for e in popup_employees %}<option value="{{ e.id }}">{{ e.name }}{% if e.position %} · {{ e.position }}{% endif %}</option>{% endfor %}</select></div>
+                <div class="full"><label class="fc-label">{% trans "Дата" %}</label><input class="fc-input" type="date" name="shift_date" id="eDate" required></div>
+                <div><label class="fc-label">{% trans "Время начала" %}</label><input class="fc-input" type="time" name="start_time" id="eStart"></div>
+                <div><label class="fc-label">{% trans "Время окончания" %}</label><input class="fc-input" type="time" name="end_time" id="eEnd"></div>
+                <div><label class="fc-label">{% trans "Перерыв, мин" %}</label><input class="fc-input" name="break_minutes" id="eBreak" inputmode="numeric"></div>
+                <div><label class="fc-label">{% trans "Тип смены" %}</label><select class="fc-input" name="shift_type" id="eType">{% for v,l in shift_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Локация" %}</label><select class="fc-input" name="location_id" id="eLoc"><option value="">{% trans "— по умолчанию —" %}</option>{% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "Статус" %}</label><select class="fc-input" name="status" id="eStatus">{% for v,l in shift_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="fc-label">{% trans "План часов (полная смена)" %}</label><input class="fc-input" name="planned_hours" id="ePlanned" inputmode="decimal"></div>
+                <div><label class="fc-label">{% trans "Факт часов (отработано)" %}</label><input class="fc-input" name="actual_hours" id="eActual" inputmode="decimal"></div>
+                <div class="full"><label class="fc-label">{% trans "Комментарий" %}</label><input class="fc-input" name="comment" id="eComment"></div>
             </div>
-            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeEdit()">Отмена</button><button type="submit" class="fc-btn fc-btn-dark">Сохранить</button></div>
+            <div class="modal-actions"><button type="button" class="fc-btn fc-btn-secondary" onclick="closeEdit()">{% trans "Отмена" %}</button><button type="submit" class="fc-btn fc-btn-dark">{% trans "Сохранить" %}</button></div>
         </form>
     </div>
 </div>

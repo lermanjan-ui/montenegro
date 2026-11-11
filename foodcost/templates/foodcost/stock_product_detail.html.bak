@@ -1,0 +1,129 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}{{ product.name }} — остаток{% endblock %}
+
+{% block content %}
+
+<!-- FoodCost UI Kit v2. Карточка остатка товара: по складам, цены, движения.
+     Деньги скрыты для кухни. -->
+<style>
+:root{
+    --fc-bg:#F5F7FA; --fc-card:#FFFFFF; --fc-card-soft:#F9FAFB;
+    --fc-border:#E5E7EB; --fc-border-soft:#F3F4F6;
+    --fc-text:#111827; --fc-muted:#6B7280; --fc-muted-soft:#9CA3AF;
+    --fc-green:#16A34A; --fc-green-text:#166534; --fc-green-soft:#DCFCE7;
+    --fc-amber:#F59E0B; --fc-amber-soft:#FEF3C7; --fc-amber-text:#92400E;
+    --fc-danger:#EF4444; --fc-danger-soft:#FEE2E2; --fc-danger-text:#991B1B;
+    --fc-info:#3B82F6; --fc-info-soft:#DBEAFE; --fc-info-text:#1E40AF;
+    --fc-radius-card:12px; --fc-radius-input:10px; --fc-radius-pill:999px;
+    --fc-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --fc-font:"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.fc-scope{ background:var(--fc-bg); color:var(--fc-text); font-family:var(--fc-font); min-height:100vh; }
+.fc-scope *{ box-sizing:border-box; }
+.fc-page{ max-width:1080px; margin:0 auto; padding:24px; }
+.crumbs{ font-size:13px; color:var(--fc-muted); margin-bottom:10px; }
+.crumbs a{ color:var(--fc-muted); text-decoration:none; }
+.fc-head{ margin-bottom:18px; }
+.fc-head h1{ margin:0 0 4px; font-size:26px; font-weight:600; letter-spacing:-0.02em; }
+.muted{ color:var(--fc-muted); }
+.sku{ color:var(--fc-muted-soft); font-size:13px; }
+
+.fc-card{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:20px; margin-bottom:16px; }
+.fc-card h2{ margin:0 0 14px; font-size:18px; font-weight:600; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:var(--fc-card); border:1px solid var(--fc-border); border-radius:var(--fc-radius-card); box-shadow:var(--fc-shadow); padding:18px; }
+.kpi-label{ color:var(--fc-muted); font-size:13px; font-weight:600; margin-bottom:4px; }
+.kpi-value{ font-size:22px; font-weight:700; }
+
+.items{ width:100%; border-collapse:collapse; }
+.items th{ text-align:left; font-size:12px; font-weight:600; color:var(--fc-muted); text-transform:uppercase; letter-spacing:.04em; padding:10px 8px; border-bottom:1px solid var(--fc-border); }
+.items td{ padding:11px 8px; border-bottom:1px solid var(--fc-border-soft); font-size:14px; }
+.items tr:last-child td{ border-bottom:0; }
+.items th.r,.items td.r{ text-align:right; }
+.num{ font-variant-numeric:tabular-nums; }
+.in{ color:var(--fc-green-text); font-weight:700; } .out{ color:var(--fc-danger-text); font-weight:700; } .zero{ color:var(--fc-muted); }
+.badge{ display:inline-flex; align-items:center; padding:3px 10px; border-radius:var(--fc-radius-pill); font-size:12px; font-weight:600; }
+.badge-ok{ background:var(--fc-green-soft); color:var(--fc-green-text); }
+.badge-low{ background:var(--fc-amber-soft); color:var(--fc-amber-text); }
+.badge-neg{ background:var(--fc-danger-soft); color:var(--fc-danger-text); }
+.tg{ display:inline-block; padding:2px 9px; border-radius:var(--fc-radius-pill); font-size:11px; font-weight:600; background:var(--fc-border-soft); color:var(--fc-muted); }
+.empty{ color:var(--fc-muted); padding:14px 8px; }
+.two{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:860px){ .kpi-grid{ grid-template-columns:1fr 1fr; } .two{ grid-template-columns:1fr; } .fc-page{ padding:16px; } }
+
+@media (max-width:680px){ table.items{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; } table.items th,table.items td{ white-space:nowrap; } }
+</style>
+
+<div class="fc-scope">
+<div class="fc-page">
+
+    <div class="crumbs"><a href="/c/{{ country.slug }}/stock/">Остатки</a> › {{ product.name }}</div>
+
+    <div class="fc-head">
+        <h1>{{ product.name }}</h1>
+        <div class="sku">{% if sku %}Артикул: {{ sku }} · {% endif %}Ед.: {{ unit }} · Мин. остаток: {{ min_display }}</div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Всего на складах</div><div class="kpi-value num">{{ total_qty_display }} <span style="font-size:14px;color:var(--fc-muted);">{{ unit }}</span></div></div>
+        {% if show_money %}<div class="kpi"><div class="kpi-label">Последняя закуп. цена</div><div class="kpi-value num">{{ last_price_display }}</div></div>{% endif %}
+        {% if show_money %}<div class="kpi"><div class="kpi-label">Стоимость остатка</div><div class="kpi-value num">{{ total_value_display }}</div></div>{% endif %}
+        <div class="kpi"><div class="kpi-label">Складов с остатком</div><div class="kpi-value">{{ wh_rows|length }}</div></div>
+    </div>
+
+    <div class="fc-card">
+        <h2>Остаток по складам</h2>
+        <table class="items">
+            <thead><tr><th>Склад</th><th class="r">Остаток</th><th>Статус</th>{% if show_money %}<th class="r">Стоимость</th>{% endif %}</tr></thead>
+            <tbody>
+                {% for w in wh_rows %}
+                <tr>
+                    <td>{{ w.warehouse }}</td>
+                    <td class="r num">{{ w.qty_display }}</td>
+                    <td>{% if w.status == 'negative' %}<span class="badge badge-neg">Минусовой</span>{% elif w.status == 'low' %}<span class="badge badge-low">Ниже минимума</span>{% else %}<span class="badge badge-ok">ОК</span>{% endif %}</td>
+                    {% if show_money %}<td class="r num">{{ w.value_display }}</td>{% endif %}
+                </tr>
+                {% empty %}<tr><td colspan="4" class="empty">Движений по этому товару пока нет.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="two">
+        {% if show_money %}
+        <div class="fc-card">
+            <h2>История закупочных цен</h2>
+            <table class="items">
+                <thead><tr><th>Дата</th><th class="r">Цена</th></tr></thead>
+                <tbody>
+                    {% for p in price_history %}<tr><td>{{ p.date|date:"d.m.Y" }}</td><td class="r num">{{ p.price_display }}</td></tr>
+                    {% empty %}<tr><td colspan="2" class="empty">Цен пока нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="fc-card">
+            <h2>Последние движения</h2>
+            <table class="items">
+                <thead><tr><th>Дата</th><th>Склад</th><th>Тип</th><th class="r">Кол-во</th>{% if show_money %}<th class="r">Сумма</th>{% endif %}<th>Автор</th></tr></thead>
+                <tbody>
+                    {% for m in movements %}
+                    <tr>
+                        <td class="num">{{ m.obj.movement_datetime|date:"d.m.Y H:i" }}</td>
+                        <td>{{ m.warehouse }}</td>
+                        <td><span class="tg">{{ m.obj.get_movement_type_display }}</span></td>
+                        <td class="r num {{ m.qty_dir }}">{{ m.qty_display }}</td>
+                        {% if show_money %}<td class="r num">{{ m.total_cost_display }}</td>{% endif %}
+                        <td class="muted">{{ m.obj.created_by.username|default:"—" }}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="6" class="empty">Движений нет.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</div>
+{% endblock %}

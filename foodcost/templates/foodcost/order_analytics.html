@@ -1,7 +1,8 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 {% load humanize %}
 
-{% block title %}Аналитика{% endblock %}
+{% block title %}{% trans "Аналитика" %}{% endblock %}
 
 {% block content %}
 
@@ -357,82 +358,82 @@ button{
 <div class="page">
 
     <div class="topbar">
-        <h1>Аналитика</h1>
+        <h1>{% trans "Аналитика" %}</h1>
         <div class="muted">
-            Период: {{ date_from|date:"d.m.Y" }} — {{ date_to|date:"d.m.Y" }}
+            {% trans "Период:" %} {{ date_from|date:"d.m.Y" }} — {{ date_to|date:"d.m.Y" }}
         </div>
     </div>
 
     <div class="card">
         <form method="get" class="filter-form">
-            <a class="period-btn {% if period == 'today' %}active{% endif %}" href="?period=today">Сегодня</a>
-            <a class="period-btn {% if period == 'yesterday' %}active{% endif %}" href="?period=yesterday">Вчера</a>
-            <a class="period-btn {% if period == '7days' %}active{% endif %}" href="?period=7days">7 дней</a>
-            <a class="period-btn {% if period == '30days' %}active{% endif %}" href="?period=30days">30 дней</a>
-            <a class="period-btn {% if period == 'month' %}active{% endif %}" href="?period=month">Этот месяц</a>
+            <a class="period-btn {% if period == 'today' %}active{% endif %}" href="?period=today">{% trans "Сегодня" %}</a>
+            <a class="period-btn {% if period == 'yesterday' %}active{% endif %}" href="?period=yesterday">{% trans "Вчера" %}</a>
+            <a class="period-btn {% if period == '7days' %}active{% endif %}" href="?period=7days">{% trans "7 дней" %}</a>
+            <a class="period-btn {% if period == '30days' %}active{% endif %}" href="?period=30days">{% trans "30 дней" %}</a>
+            <a class="period-btn {% if period == 'month' %}active{% endif %}" href="?period=month">{% trans "Этот месяц" %}</a>
 
             <div>
-                <label>С даты</label>
+                <label>{% trans "С даты" %}</label>
                 <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
             </div>
 
             <div>
-                <label>По дату</label>
+                <label>{% trans "По дату" %}</label>
                 <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
             </div>
 
-            <button type="submit">Применить</button>
+            <button type="submit">{% trans "Применить" %}</button>
         </form>
     </div>
 
     <div class="stats-grid">
 
         <div class="stat-card">
-            <div class="stat-label">Валовая выручка</div>
+            <div class="stat-label">{% trans "Валовая выручка" %}</div>
             <div class="stat-value">{{ gross_revenue|floatformat:0|intcomma }}</div>
-            <div class="stat-sub">еда + доставка клиента</div>
+            <div class="stat-sub">{% trans "еда + доставка клиента" %}</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Выручка после комиссий</div>
+            <div class="stat-label">{% trans "Выручка после комиссий" %}</div>
             <div class="stat-value green">{{ net_revenue|floatformat:0|intcomma }}</div>
-            <div class="stat-sub">минус комиссии агрегаторов</div>
+            <div class="stat-sub">{% trans "минус комиссии агрегаторов" %}</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Прибыль до фикс. расходов</div>
+            <div class="stat-label">{% trans "Прибыль до фикс. расходов" %}</div>
             <div class="stat-value green">{{ profit_before_fixed|floatformat:0|intcomma }}</div>
-            <div class="stat-sub">еда, доставка, списания</div>
+            <div class="stat-sub">{% trans "еда, доставка, списания" %}</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-label">EBITDA</div>
             <div class="stat-value purple">{{ ebitda|floatformat:0|intcomma }}</div>
-            <div class="stat-sub">пока без будущих расходов</div>
+            <div class="stat-sub">{% trans "пока без будущих расходов" %}</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Заказы</div>
+            <div class="stat-label">{% trans "Заказы" %}</div>
             <div class="stat-value">{{ active_orders_count }}</div>
-            <div class="stat-sub">отказов: {{ cancelled_orders_count }} / {{ cancel_percent|floatformat:1 }}%</div>
+            <div class="stat-sub">{% trans "отказов:" %} {{ cancelled_orders_count }} / {{ cancel_percent|floatformat:1 }}%</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Средний чек</div>
+            <div class="stat-label">{% trans "Средний чек" %}</div>
             <div class="stat-value">{{ average_check|floatformat:0|intcomma }}</div>
-            <div class="stat-sub">по активным заказам</div>
+            <div class="stat-sub">{% trans "по активным заказам" %}</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Новые клиенты</div>
+            <div class="stat-label">{% trans "Новые клиенты" %}</div>
             <div class="stat-value blue">{{ new_customers_count }}</div>
-            <div class="stat-sub">вернувшиеся: {{ returning_customers_count }}</div>
+            <div class="stat-sub">{% trans "вернувшиеся:" %} {{ returning_customers_count }}</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Скидки</div>
+            <div class="stat-label">{% trans "Скидки" %}</div>
             <div class="stat-value red">{{ discount_loss|floatformat:0|intcomma }}</div>
-            <div class="stat-sub">потерянная выручка</div>
+            <div class="stat-sub">{% trans "потерянная выручка" %}</div>
         </div>
 
     </div>
@@ -442,58 +443,58 @@ button{
         <div>
 
             <div class="card">
-                <div class="section-title">Финансовая раскладка</div>
+                <div class="section-title">{% trans "Финансовая раскладка" %}</div>
 
                 <div class="kpi-grid">
                     <div class="kpi">
-                        <div class="kpi-label">Себестоимость блюд</div>
+                        <div class="kpi-label">{% trans "Себестоимость блюд" %}</div>
                         <div class="kpi-value red">{{ total_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Комиссии агрегаторов</div>
+                        <div class="kpi-label">{% trans "Комиссии агрегаторов" %}</div>
                         <div class="kpi-value orange">{{ commission_total|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Списания</div>
+                        <div class="kpi-label">{% trans "Списания" %}</div>
                         <div class="kpi-value red">{{ writeoffs_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Оплачено клиентами за доставку</div>
+                        <div class="kpi-label">{% trans "Оплачено клиентами за доставку" %}</div>
                         <div class="kpi-value green">{{ customer_delivery_total|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Всего потрачено на доставку</div>
+                        <div class="kpi-label">{% trans "Всего потрачено на доставку" %}</div>
                         <div class="kpi-value">{{ total_delivery|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Наша доплата за доставку</div>
+                        <div class="kpi-label">{% trans "Наша доплата за доставку" %}</div>
                         <div class="kpi-value red">{{ company_delivery_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Наличные</div>
+                        <div class="kpi-label">{% trans "Наличные" %}</div>
                         <div class="kpi-value">{{ cash_total|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Расчетный счет / безнал</div>
+                        <div class="kpi-label">{% trans "Расчетный счет / безнал" %}</div>
                         <div class="kpi-value">{{ bank_total|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="kpi">
-                        <div class="kpi-label">Опер. расходы</div>
+                        <div class="kpi-label">{% trans "Опер. расходы" %}</div>
                         <div class="kpi-value">{{ operating_expenses|floatformat:0|intcomma }}</div>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="section-title">По филиалам</div>
+                <div class="section-title">{% trans "По филиалам" %}</div>
 
                 {% for item in locations_summary %}
                     <div class="branch-card">
@@ -501,7 +502,7 @@ button{
                             <div>
                                 <div class="branch-name">{{ item.name }}</div>
                                 <div class="branch-meta">
-                                    Заказов: {{ item.active_orders_count }} · Отказов: {{ item.cancelled_orders_count }}
+                                    {% trans "Заказов:" %} {{ item.active_orders_count }} · {% trans "Отказов:" %} {{ item.cancelled_orders_count }}
                                 </div>
                             </div>
 
@@ -512,83 +513,83 @@ button{
 
                         <div class="branch-grid">
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Выручка</div>
+                                <div class="branch-kpi-label">{% trans "Выручка" %}</div>
                                 <div class="branch-kpi-value">{{ item.revenue|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">После комиссий</div>
+                                <div class="branch-kpi-label">{% trans "После комиссий" %}</div>
                                 <div class="branch-kpi-value green">{{ item.net_revenue|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Комиссии</div>
+                                <div class="branch-kpi-label">{% trans "Комиссии" %}</div>
                                 <div class="branch-kpi-value orange">{{ item.commission|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Средний чек</div>
+                                <div class="branch-kpi-label">{% trans "Средний чек" %}</div>
                                 <div class="branch-kpi-value">{{ item.average_check|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Доставка клиента</div>
+                                <div class="branch-kpi-label">{% trans "Доставка клиента" %}</div>
                                 <div class="branch-kpi-value green">{{ item.customer_delivery|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Доставка всего</div>
+                                <div class="branch-kpi-label">{% trans "Доставка всего" %}</div>
                                 <div class="branch-kpi-value">{{ item.delivery_total|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Наша доставка</div>
+                                <div class="branch-kpi-label">{% trans "Наша доставка" %}</div>
                                 <div class="branch-kpi-value red">{{ item.company_delivery|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Скидки</div>
+                                <div class="branch-kpi-label">{% trans "Скидки" %}</div>
                                 <div class="branch-kpi-value red">{{ item.discount_loss|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Себестоимость</div>
+                                <div class="branch-kpi-label">{% trans "Себестоимость" %}</div>
                                 <div class="branch-kpi-value red">{{ item.food_cost|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Списания</div>
+                                <div class="branch-kpi-label">{% trans "Списания" %}</div>
                                 <div class="branch-kpi-value red">{{ item.writeoffs_cost|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Наличные</div>
+                                <div class="branch-kpi-label">{% trans "Наличные" %}</div>
                                 <div class="branch-kpi-value">{{ item.cash_total|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Безнал</div>
+                                <div class="branch-kpi-label">{% trans "Безнал" %}</div>
                                 <div class="branch-kpi-value">{{ item.bank_total|floatformat:0|intcomma }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Новые клиенты</div>
+                                <div class="branch-kpi-label">{% trans "Новые клиенты" %}</div>
                                 <div class="branch-kpi-value blue">{{ item.new_customers }}</div>
                             </div>
 
                             <div class="branch-kpi">
-                                <div class="branch-kpi-label">Вернувшиеся</div>
+                                <div class="branch-kpi-label">{% trans "Вернувшиеся" %}</div>
                                 <div class="branch-kpi-value blue">{{ item.returning_customers }}</div>
                             </div>
                         </div>
                     </div>
                 {% empty %}
-                    <div class="muted">Нет филиалов</div>
+                    <div class="muted">{% trans "Нет филиалов" %}</div>
                 {% endfor %}
             </div>
 
             <div class="card">
-                <div class="section-title">Динамика выручки</div>
+                <div class="section-title">{% trans "Динамика выручки" %}</div>
 
                 <div class="days-grid">
                     {% for item in daily_stats %}
@@ -596,7 +597,7 @@ button{
                             <div class="day-date">{{ item.date|date:"d.m" }}</div>
                             <div class="day-value">{{ item.revenue|floatformat:0|intcomma }}</div>
                             <div class="day-meta">
-                                Заказов: {{ item.orders }} · Отказов: {{ item.cancelled }}
+                                {% trans "Заказов:" %} {{ item.orders }} · {% trans "Отказов:" %} {{ item.cancelled }}
                             </div>
                         </div>
                     {% endfor %}
@@ -604,7 +605,7 @@ button{
             </div>
 
             <div class="card">
-                <div class="section-title">Активность по часам</div>
+                <div class="section-title">{% trans "Активность по часам" %}</div>
 
                 <div class="hour-heatmap">
                     {% for item in hourly_stats %}
@@ -621,7 +622,7 @@ button{
         <div>
 
             <div class="card">
-                <div class="section-title">Источники заказов</div>
+                <div class="section-title">{% trans "Источники заказов" %}</div>
 
                 <div class="table">
                     {% for item in source_summary %}
@@ -631,13 +632,13 @@ button{
                             <div class="value green">{{ item.net_revenue|floatformat:0|intcomma }}</div>
                         </div>
                     {% empty %}
-                        <div class="muted">Нет данных</div>
+                        <div class="muted">{% trans "Нет данных" %}</div>
                     {% endfor %}
                 </div>
             </div>
 
             <div class="card">
-                <div class="section-title">Оплаты</div>
+                <div class="section-title">{% trans "Оплаты" %}</div>
 
                 <div class="table">
                     {% for item in payment_summary %}
@@ -647,13 +648,13 @@ button{
                             <div class="value green">{{ item.revenue|floatformat:0|intcomma }}</div>
                         </div>
                     {% empty %}
-                        <div class="muted">Нет оплат</div>
+                        <div class="muted">{% trans "Нет оплат" %}</div>
                     {% endfor %}
                 </div>
             </div>
 
             <div class="card">
-                <div class="section-title">Доставка</div>
+                <div class="section-title">{% trans "Доставка" %}</div>
 
                 <div class="table">
                     {% for item in delivery_summary %}
@@ -663,13 +664,13 @@ button{
                             <div class="value red">{{ item.company_delivery|floatformat:0|intcomma }}</div>
                         </div>
                     {% empty %}
-                        <div class="muted">Нет доставки</div>
+                        <div class="muted">{% trans "Нет доставки" %}</div>
                     {% endfor %}
                 </div>
             </div>
 
             <div class="card">
-                <div class="section-title">Топ блюд</div>
+                <div class="section-title">{% trans "Топ блюд" %}</div>
 
                 <div class="table">
                     {% for item in top_dishes %}
@@ -679,63 +680,63 @@ button{
                             <div class="value green">{{ item.total_sum|floatformat:0|intcomma }}</div>
                         </div>
                     {% empty %}
-                        <div class="muted">Нет данных</div>
+                        <div class="muted">{% trans "Нет данных" %}</div>
                     {% endfor %}
                 </div>
             </div>
 
             <div class="card">
-                <div class="section-title">Причины отказов</div>
+                <div class="section-title">{% trans "Причины отказов" %}</div>
 
                 <div class="table">
                     {% for item in cancel_reasons_stats %}
                         <div class="row">
-                            <div class="name">{{ item.cancel_reason__name|default:"Без причины" }}</div>
+                            <div class="name">{% if item.cancel_reason__name %}{{ item.cancel_reason__name }}{% else %}{% trans "Без причины" %}{% endif %}</div>
                             <div class="value">{{ item.total }}</div>
                             <div></div>
                         </div>
                     {% empty %}
-                        <div class="muted">Отказов за выбранный период нет</div>
+                        <div class="muted">{% trans "Отказов за выбранный период нет" %}</div>
                     {% endfor %}
                 </div>
             </div>
 
             <div class="card">
-                <div class="section-title">Будущие расходы</div>
+                <div class="section-title">{% trans "Будущие расходы" %}</div>
 
                 <div class="table">
                     <div class="row">
-                        <div class="name">Зарплаты</div>
+                        <div class="name">{% trans "Зарплаты" %}</div>
                         <div></div>
                         <div class="value">{{ labor_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="row">
-                        <div class="name">Аренда</div>
+                        <div class="name">{% trans "Аренда" %}</div>
                         <div></div>
                         <div class="value">{{ rent_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="row">
-                        <div class="name">Коммуналка</div>
+                        <div class="name">{% trans "Коммуналка" %}</div>
                         <div></div>
                         <div class="value">{{ utilities_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="row">
-                        <div class="name">Реклама</div>
+                        <div class="name">{% trans "Реклама" %}</div>
                         <div></div>
                         <div class="value">{{ marketing_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="row">
-                        <div class="name">Налоги</div>
+                        <div class="name">{% trans "Налоги" %}</div>
                         <div></div>
                         <div class="value">{{ tax_cost|floatformat:0|intcomma }}</div>
                     </div>
 
                     <div class="row">
-                        <div class="name">Прочие</div>
+                        <div class="name">{% trans "Прочие" %}</div>
                         <div></div>
                         <div class="value">{{ other_expenses|floatformat:0|intcomma }}</div>
                     </div>

@@ -1,10 +1,11 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FoodCost — ERP для ресторанов и кафе</title>
-  <meta name="description" content="Учёт, себестоимость, склад, заказы и аналитика для ресторанного бизнеса. Попробуйте бесплатно.">
+  <title>{% trans "ЧекМейт — ERP для ресторанов и кафе" %}</title>
+  {% trans "Учёт, себестоимость, склад, заказы и аналитика для ресторанного бизнеса. Попробуйте бесплатно." as _meta_desc %}<meta name="description" content="{{ _meta_desc }}">
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{--bg:#F7F8FA;--text:#111827;--muted:#667085;--border:#E5E7EB;
@@ -72,13 +73,13 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
 <body>
   <header>
     <div class="wrap nav">
-      <div class="logo">FoodCost</div>
+      <div class="logo">ЧекМейт</div>
       <div class="nav-actions">
         {% if request.user.is_authenticated %}
-        <a class="btn btn-primary" href="/">Личный кабинет</a>
+        <a class="btn btn-primary" href="/">{% trans "Личный кабинет" %}</a>
         {% else %}
-        <a class="btn btn-ghost" href="/login/">Войти</a>
-        <a class="btn btn-primary" href="/signup/">Создать аккаунт</a>
+        <a class="btn btn-ghost" href="/login/">{% trans "Войти" %}</a>
+        <a class="btn btn-primary" href="/signup/">{% trans "Создать аккаунт" %}</a>
         {% endif %}
       </div>
     </div>
@@ -86,28 +87,28 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
 
   <section class="hero">
     <div class="wrap">
-      <span class="pill">ERP для ресторанного бизнеса · Узбекистан</span>
-      <h1>Весь учёт ресторана<br>в одной системе</h1>
-      <p class="lead">Заказы, себестоимость блюд, склад, финансы и аналитика — для кафе, ресторанов и сетей. Подключайтесь за 5 минут.</p>
+      <span class="pill">{% trans "ERP для ресторанного бизнеса · Узбекистан" %}</span>
+      <h1>{% trans "Весь учёт ресторана" %}<br>{% trans "в одной системе" %}</h1>
+      <p class="lead">{% trans "Заказы, себестоимость блюд, склад, финансы и аналитика — для кафе, ресторанов и сетей. Подключайтесь за 5 минут." %}</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="/signup/">Попробовать бесплатно</a>
-        <a class="btn btn-ghost" href="/login/">У меня уже есть аккаунт</a>
+        <a class="btn btn-primary" href="/signup/">{% trans "Попробовать бесплатно" %}</a>
+        <a class="btn btn-ghost" href="/login/">{% trans "У меня уже есть аккаунт" %}</a>
       </div>
-      <div class="note">{{ trial_days }} дней бесплатно · без карты · с любого устройства</div>
+      <div class="note">{% blocktrans with d=trial_days %}{{ d }} дней бесплатно · без карты · с любого устройства{% endblocktrans %}</div>
     </div>
   </section>
 
   <section class="section">
     <div class="wrap">
-      <h2>Что внутри</h2>
-      <p class="sub">Модули под каждую задачу — подключаете только нужное.</p>
+      <h2>{% trans "Что внутри" %}</h2>
+      <p class="sub">{% trans "Модули под каждую задачу — подключаете только нужное." %}</p>
       <div class="features">
-        <div class="feature"><div class="ic">1</div><h3>Заказы и касса</h3><p>Приём и обработка заказов, источники, доставка, онлайн-оплата.</p></div>
-        <div class="feature"><div class="ic">2</div><h3>Меню и техкарты</h3><p>Блюда, заготовки, упаковка и точная себестоимость каждой позиции.</p></div>
-        <div class="feature"><div class="ic">3</div><h3>Склад</h3><p>Остатки, приходы, перемещения, инвентаризация и поставщики.</p></div>
-        <div class="feature"><div class="ic">4</div><h3>Финансы</h3><p>Доходы, расходы, коммуналка и прибыль по периодам.</p></div>
-        <div class="feature"><div class="ic">5</div><h3>CRM и аналитика</h3><p>Клиенты, продаваемость блюд, аналитика заказов и списаний.</p></div>
-        <div class="feature"><div class="ic">6</div><h3>Персонал и филиалы</h3><p>Сотрудники, графики, смены и несколько филиалов в одном кабинете.</p></div>
+        <div class="feature"><div class="ic">1</div><h3>{% trans "Заказы и касса" %}</h3><p>{% trans "Приём и обработка заказов, источники, доставка, онлайн-оплата." %}</p></div>
+        <div class="feature"><div class="ic">2</div><h3>{% trans "Меню и техкарты" %}</h3><p>{% trans "Блюда, заготовки, упаковка и точная себестоимость каждой позиции." %}</p></div>
+        <div class="feature"><div class="ic">3</div><h3>{% trans "Склад" %}</h3><p>{% trans "Остатки, приходы, перемещения, инвентаризация и поставщики." %}</p></div>
+        <div class="feature"><div class="ic">4</div><h3>{% trans "Финансы" %}</h3><p>{% trans "Доходы, расходы, коммуналка и прибыль по периодам." %}</p></div>
+        <div class="feature"><div class="ic">5</div><h3>{% trans "CRM и аналитика" %}</h3><p>{% trans "Клиенты, продаваемость блюд, аналитика заказов и списаний." %}</p></div>
+        <div class="feature"><div class="ic">6</div><h3>{% trans "Персонал и филиалы" %}</h3><p>{% trans "Сотрудники, графики, смены и несколько филиалов в одном кабинете." %}</p></div>
       </div>
     </div>
   </section>
@@ -115,15 +116,15 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   {% if plans %}
   <section class="section" style="padding-top:12px;">
     <div class="wrap">
-      <h2>Тарифы</h2>
-      <p class="sub">Начните с бесплатного периода, платите только за нужные модули.</p>
+      <h2>{% trans "Тарифы" %}</h2>
+      <p class="sub">{% trans "Начните с бесплатного периода, платите только за нужные модули." %}</p>
       <div class="pricing">
         {% for p in plans %}
         <div class="plan {% if forloop.counter == 2 %}featured{% endif %}">
           <div class="pname">{{ p.name }}</div>
-          <div class="pprice">{{ p.price|floatformat:0 }} <small>UZS/мес</small></div>
-          <div class="pmods">{{ p.modules }} модулей</div>
-          <a class="btn btn-primary" href="/signup/">Выбрать</a>
+          <div class="pprice">{{ p.price|floatformat:0 }} <small>{% trans "UZS/мес" %}</small></div>
+          <div class="pmods">{% blocktrans with m=p.modules %}{{ m }} модулей{% endblocktrans %}</div>
+          <a class="btn btn-primary" href="/signup/">{% trans "Выбрать" %}</a>
         </div>
         {% endfor %}
       </div>
@@ -134,15 +135,15 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   <section class="section">
     <div class="wrap">
       <div class="band">
-        <h2>Попробуйте FoodCost бесплатно</h2>
-        <p>{{ trial_days }} дней полного доступа. Заведите компанию прямо сейчас.</p>
-        <a class="btn btn-primary" href="/signup/">Создать аккаунт</a>
+        <h2>{% trans "Попробуйте ЧекМейт бесплатно" %}</h2>
+        <p>{% blocktrans with d=trial_days %}{{ d }} дней полного доступа. Заведите компанию прямо сейчас.{% endblocktrans %}</p>
+        <a class="btn btn-primary" href="/signup/">{% trans "Создать аккаунт" %}</a>
       </div>
     </div>
   </section>
 
   <footer>
-    <div class="wrap">© FoodCost — ERP для ресторанов. <a href="/login/" style="color:var(--primary);font-weight:600;">Войти</a></div>
+    <div class="wrap">{% trans "© ЧекМейт — ERP для ресторанов." %} <a href="/login/" style="color:var(--primary);font-weight:600;">{% trans "Войти" %}</a></div>
   </footer>
 </body>
 </html>

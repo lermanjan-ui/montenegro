@@ -1,19 +1,20 @@
+{% load i18n %}
 <div class="layout">
 
     <div>
 
         <div class="card">
-            <div class="section-title">Клиент</div>
+            <div class="section-title">{% trans "Клиент" %}</div>
 
             <div class="grid-2">
                 <div>
-                    <label>Телефон</label>
+                    <label>{% trans "Телефон" %}</label>
                     <input type="text" name="customer_phone" id="customer-phone" placeholder="+998" value="{{ order.customer_phone|default:'' }}" required>
                     <div id="customer-info" style="display:none;margin-top:10px;padding:12px;border-radius:12px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-weight:800;"></div>
                 </div>
 
                 <div>
-                    <label>Имя клиента</label>
+                    <label>{% trans "Имя клиента" %}</label>
                     <input type="text" name="customer_name" value="{{ order.customer_name|default:'' }}" required>
                 </div>
             </div>
@@ -24,14 +25,14 @@
             </div>
 
             <div id="customer-addresses-wrap" style="display:none; margin-top:14px;">
-                <label>Сохраненные адреса клиента</label>
+                <label>{% trans "Сохраненные адреса клиента" %}</label>
                 <select id="customer-addresses">
-                    <option value="">Выбрать адрес</option>
+                    <option value="">{% trans "Выбрать адрес" %}</option>
                 </select>
             </div>
 
             <div style="margin-top:14px;">
-                <label>Адрес доставки</label>
+                <label>{% trans "Адрес доставки" %}</label>
                 <textarea name="delivery_address" required>{{ order.delivery_address|default:'' }}</textarea>
             </div>
 
@@ -42,42 +43,42 @@
             {# blank in the DB.                                                #}
             <div style="margin-top:14px;padding:14px 16px;border:1px solid #e5e7eb;border-radius:14px;background:#fbfcfd;">
                 <div style="font-weight:950;font-size:14px;color:#111827;margin-bottom:10px;">
-                    Курьеру
+                    {% trans "Курьеру" %}
                 </div>
 
                 <div style="margin-bottom:12px;">
-                    <label>Ориентир для курьера</label>
+                    <label>{% trans "Ориентир для курьера" %}</label>
                     <input type="text" name="delivery_landmark"
-                           placeholder="Вход со двора, рядом аптека"
+                           placeholder="{% trans "Вход со двора, рядом аптека" %}"
                            value="{{ order.delivery_landmark|default:'' }}">
                 </div>
 
                 <div style="margin-bottom:12px;">
-                    <label>Комментарий курьеру</label>
+                    <label>{% trans "Комментарий курьеру" %}</label>
                     <textarea name="courier_comment"
-                              placeholder="Позвоните заранее, не звоните в домофон и т.д.">{{ order.courier_comment|default:'' }}</textarea>
+                              placeholder="{% trans "Позвоните заранее, не звоните в домофон и т.д." %}">{{ order.courier_comment|default:'' }}</textarea>
                 </div>
 
                 <label style="display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;border:1px solid #e5e7eb;border-radius:12px;cursor:pointer;background:white;">
                     <input type="checkbox" name="leave_at_door" id="leave-at-door"
                            style="width:18px;height:18px;"
                            {% if order.leave_at_door %}checked{% endif %}>
-                    <span style="font-weight:900;font-size:14px;">Оставить у двери</span>
+                    <span style="font-weight:900;font-size:14px;">{% trans "Оставить у двери" %}</span>
                 </label>
             </div>
 
             <div style="margin-top:14px;">
-                <label>Комментарий к заказу</label>
-                <textarea name="cashier_comment" placeholder="Уточнения по заказу, пожелания клиента и т.д.">{{ order.cashier_comment|default:'' }}</textarea>
+                <label>{% trans "Комментарий к заказу" %}</label>
+                <textarea name="cashier_comment" placeholder="{% trans "Уточнения по заказу, пожелания клиента и т.д." %}">{{ order.cashier_comment|default:'' }}</textarea>
             </div>
         </div>
 
 	   <div class="card">
-	       <div class="section-title">Заказ</div>
+	       <div class="section-title">{% trans "Заказ" %}</div>
 
 	       <div class="grid-3">
 	           <div>
-	               <label>Филиал</label>
+	               <label>{% trans "Филиал" %}</label>
 	               <select name="location_id" required>
 	                   {% for item in locations %}
 	                       <option value="{{ item.id }}" {% if order.location_id == item.id %}selected{% endif %}>{{ item.name }}</option>
@@ -86,7 +87,7 @@
 	           </div>
 
 	           <div>
-	               <label>Источник заказа</label>
+	               <label>{% trans "Источник заказа" %}</label>
 				   <select
 				       name="source_id"
 				       id="source-select"
@@ -106,7 +107,7 @@
 	           </div>
 
 	           <div>
-	               <label>Тип оплаты</label>
+	               <label>{% trans "Тип оплаты" %}</label>
 				   <select
 				       name="payment_method_id"
 				       id="payment-method-select"
@@ -119,7 +120,7 @@
 	           </div>
 			   {% if can_edit_orders %}
 			   <div>
-			       <label>Дата заказа</label>
+			       <label>{% trans "Дата заказа" %}</label>
 
 			       <input
 			           type="datetime-local"
@@ -132,7 +133,7 @@
 
 	       <div class="grid-3" style="margin-top:14px;">
 	           <div>
-	               <label>Доставка</label>
+	               <label>{% trans "Доставка" %}</label>
 				   <select
 				       name="delivery_provider_id"
 				       id="delivery-provider-select"
@@ -145,7 +146,7 @@
 	           </div>
 
 	           <div>
-	               <label>Стоимость доставки</label>
+	               <label>{% trans "Стоимость доставки" %}</label>
 	               <input
 	                   type="number"
 	                   step="0.01"
@@ -174,14 +175,14 @@
 			       >
 
 			       <span style="font-weight:900;font-size:14px;">
-			           Клиент не оплачивает доставку
+			           {% trans "Клиент не оплачивает доставку" %}
 			       </span>
 			   </label>
 
 	           <div>
-	               <label>Промокод</label>
+	               <label>{% trans "Промокод" %}</label>
 	               <select name="promo_code_id" id="promo-code-select">
-	                   <option value="">Без промокода</option>
+	                   <option value="">{% trans "Без промокода" %}</option>
 	                   {% for item in promo_codes %}
 	                       <option value="{{ item.id }}" data-percent="{{ item.percent }}" {% if order.promo_code_id == item.id %}selected{% endif %}>
 	                           {{ item.code }}
@@ -203,13 +204,13 @@
 	                   style="width:20px;height:20px;"
 	                   {% if order.is_cancelled %}checked{% endif %}
 	               >
-	               <span style="font-size:15px;font-weight:900;">Заказ отменен</span>
+	               <span style="font-size:15px;font-weight:900;">{% trans "Заказ отменен" %}</span>
 	           </label>
 
 	           <div>
-	               <label>Причина отказа</label>
+	               <label>{% trans "Причина отказа" %}</label>
 	               <select name="cancel_reason_id">
-	                   <option value="">Не выбрано</option>
+	                   <option value="">{% trans "Не выбрано" %}</option>
 	                   {% for item in cancel_reasons %}
 	                       <option value="{{ item.id }}" {% if order.cancel_reason_id == item.id %}selected{% endif %}>
 	                           {{ item.name }}
@@ -221,17 +222,17 @@
 	   </div>
 
         <div class="card">
-            <div class="section-title">Позиции заказа</div>
+            <div class="section-title">{% trans "Позиции заказа" %}</div>
 
             <div class="add-dish-row">
                 <div>
-                    <label>Добавить блюдо</label>
+                    <label>{% trans "Добавить блюдо" %}</label>
 					<div class="dish-search-wrap">
 
 					    <input
 					        type="text"
 					        id="add-dish-search"
-					        placeholder="Начните вводить название блюда..."
+					        placeholder="{% trans "Начните вводить название блюда..." %}"
 					        autocomplete="off"
 					    >
 
@@ -275,19 +276,19 @@
                 </div>
 
                 <div>
-                    <label>Кол-во</label>
+                    <label>{% trans "Кол-во" %}</label>
                     <input type="number" id="add-dish-quantity" value="1" min="1" step="1">
                 </div>
 
-                <button type="button" id="add-item-btn">Добавить</button>
+                <button type="button" id="add-item-btn">{% trans "Добавить" %}</button>
             </div>
 
             <div class="order-items-table">
                 <div class="order-items-head">
-                    <div>Блюдо</div>
-                    <div>Цена</div>
-                    <div>Кол-во</div>
-                    <div>Сумма</div>
+                    <div>{% trans "Блюдо" %}</div>
+                    <div>{% trans "Цена" %}</div>
+                    <div>{% trans "Кол-во" %}</div>
+                    <div>{% trans "Сумма" %}</div>
                     <div></div>
                 </div>
 
@@ -325,7 +326,7 @@
                         {% endfor %}
                         {% for combo in order.lunch_combos.all %}
                             <div class="order-items-row" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;">
-                                <div class="item-name">🍱 {{ combo.name }}{% if combo.date %} <span style="color:#9a3412;font-weight:800;font-size:12px;">на {{ combo.date|date:"d.m.Y" }}</span>{% endif %}{% if combo.composition %}<div style="color:#6b7280;font-weight:600;font-size:12px;margin-top:2px;">{{ combo.composition }}</div>{% endif %}</div>
+                                <div class="item-name">🍱 {{ combo.name }}{% if combo.date %} <span style="color:#9a3412;font-weight:800;font-size:12px;">{% blocktrans with d=combo.date|date:"d.m.Y" %}на {{ d }}{% endblocktrans %}</span>{% endif %}{% if combo.composition %}<div style="color:#6b7280;font-weight:600;font-size:12px;margin-top:2px;">{{ combo.composition }}</div>{% endif %}</div>
                                 <div style="font-weight:800;color:#374151;align-self:center;">{{ combo.unit_price|floatformat:0 }}</div>
                                 <div style="font-weight:800;color:#374151;align-self:center;">× {{ combo.quantity }}</div>
                                 <div style="font-weight:900;align-self:center;">{{ combo.total_price|floatformat:0 }}</div>
@@ -341,24 +342,24 @@
 
     <div>
         <div class="card summary-card-sticky">
-            <div class="section-title">Итоги заказа</div>
+            <div class="section-title">{% trans "Итоги заказа" %}</div>
 
             <div class="summary-box">
                 <div class="summary-row">
-                    <div class="summary-label">Сумма блюд</div>
+                    <div class="summary-label">{% trans "Сумма блюд" %}</div>
                     <div class="summary-value" id="summary-subtotal">0</div>
                 </div>
 
                 <div class="summary-row">
-                    <div class="summary-label">Скидка</div>
+                    <div class="summary-label">{% trans "Скидка" %}</div>
                     <div class="summary-value" id="summary-discount">0</div>
                 </div>
 
 			 <div class="summary-row">
 			     <div>
-			         <div class="summary-label">Итого по еде</div>
+			         <div class="summary-label">{% trans "Итого по еде" %}</div>
 			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-			             После скидки
+			             {% trans "После скидки" %}
 			         </div>
 			     </div>
 
@@ -367,9 +368,9 @@
 
 			 <div class="summary-row">
 			     <div>
-			         <div class="summary-label">Доставка клиента</div>
+			         <div class="summary-label">{% trans "Доставка клиента" %}</div>
 			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-			             15 000 до 150 000 на сайте
+			             {% trans "15 000 до 150 000 на сайте" %}
 			         </div>
 			     </div>
 
@@ -380,9 +381,9 @@
 
 			 <div class="summary-row">
 			     <div>
-			         <div class="summary-label">Расход на доставку</div>
+			         <div class="summary-label">{% trans "Расход на доставку" %}</div>
 			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-			             Вводит кассир
+			             {% trans "Вводит кассир" %}
 			         </div>
 			     </div>
 
@@ -393,9 +394,9 @@
 
 			 <div class="summary-row">
 			     <div>
-			         <div class="summary-label">Итого к оплате</div>
+			         <div class="summary-label">{% trans "Итого к оплате" %}</div>
 			         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-			             Еда + доставка клиента
+			             {% trans "Еда + доставка клиента" %}
 			         </div>
 			     </div>
 
@@ -404,7 +405,7 @@
             </div>
 
             <button type="submit" class="save-btn">
-                {% if order %}Сохранить изменения{% else %}Сохранить заказ{% endif %}
+                {% if order %}{% trans "Сохранить изменения" %}{% else %}{% trans "Сохранить заказ" %}{% endif %}
             </button>
         </div>
     </div>
@@ -419,7 +420,7 @@
         "
     >
         <div class="section-title" style="margin-bottom:0;">
-            История клиента
+            {% trans "История клиента" %}
         </div>
 
 		<a
@@ -437,14 +438,14 @@
 		        justify-content:center;
 		    "
 		>
-		    Открыть
+		    {% trans "Открыть" %}
 		</a>
     </div>
 
     <div class="grid-3">
 
         <div>
-            <label>Кол-во заказов</label>
+            <label>{% trans "Кол-во заказов" %}</label>
 
             <input
                 type="text"
@@ -454,7 +455,7 @@
         </div>
 
         <div>
-            <label>Последний заказ</label>
+            <label>{% trans "Последний заказ" %}</label>
 
             <input
                 type="text"
@@ -464,7 +465,7 @@
         </div>
 
         <div>
-            <label>Комментарий клиента</label>
+            <label>{% trans "Комментарий клиента" %}</label>
 
             <input
                 type="text"

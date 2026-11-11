@@ -1,6 +1,7 @@
 {% extends "foodcost/base.html" %}
+{% load i18n %}
 
-{% block title %}Аналитика списаний{% endblock %}
+{% block title %}{% trans "Аналитика списаний" %}{% endblock %}
 
 {% block content %}
 
@@ -192,36 +193,36 @@
 <div class="page">
 
 <div class="card">
-    <h1>Аналитика списаний</h1>
-    <div class="muted">Фильтры пересчитывают показатели и таблицу ниже.</div>
+    <h1>{% trans "Аналитика списаний" %}</h1>
+    <div class="muted">{% trans "Фильтры пересчитывают показатели и таблицу ниже." %}</div>
 </div>
 
 <div class="card">
     <form method="get">
         <div class="filters">
             <div>
-                <label>Дата от</label>
+                <label>{% trans "Дата от" %}</label>
                 <input type="date" name="date_from" value="{{ date_from }}">
             </div>
 
             <div>
-                <label>Дата до</label>
+                <label>{% trans "Дата до" %}</label>
                 <input type="date" name="date_to" value="{{ date_to }}">
             </div>
 
             <div>
-                <label>Тип позиции</label>
+                <label>{% trans "Тип позиции" %}</label>
                 <select name="item_type">
-                    <option value="">Все</option>
-                    <option value="product" {% if item_type == "product" %}selected{% endif %}>Продукты</option>
-                    <option value="preparation" {% if item_type == "preparation" %}selected{% endif %}>Заготовки</option>
+                    <option value="">{% trans "Все" %}</option>
+                    <option value="product" {% if item_type == "product" %}selected{% endif %}>{% trans "Продукты" %}</option>
+                    <option value="preparation" {% if item_type == "preparation" %}selected{% endif %}>{% trans "Заготовки" %}</option>
                 </select>
             </div>
 
             <div>
-                <label>Причина</label>
+                <label>{% trans "Причина" %}</label>
                 <select name="reason">
-                    <option value="">Все</option>
+                    <option value="">{% trans "Все" %}</option>
                     {% for value, label in reasons %}
                         <option value="{{ value }}" {% if reason == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -229,13 +230,13 @@
             </div>
 
             <div class="filter-actions">
-                <button type="submit">Применить</button>
+                <button type="submit">{% trans "Применить" %}</button>
             </div>
 
             <div>
-                <label>Продукт</label>
+                <label>{% trans "Продукт" %}</label>
                 <select name="product_id">
-                    <option value="">Все</option>
+                    <option value="">{% trans "Все" %}</option>
                     {% for product in products %}
                         <option value="{{ product.id }}" {% if product_id == product.id|stringformat:"s" %}selected{% endif %}>
                             {{ product.name }}
@@ -245,9 +246,9 @@
             </div>
 
             <div>
-                <label>Заготовка</label>
+                <label>{% trans "Заготовка" %}</label>
                 <select name="preparation_id">
-                    <option value="">Все</option>
+                    <option value="">{% trans "Все" %}</option>
                     {% for preparation in preparations %}
                         <option value="{{ preparation.id }}" {% if preparation_id == preparation.id|stringformat:"s" %}selected{% endif %}>
                             {{ preparation.name }}
@@ -257,9 +258,9 @@
             </div>
 
             <div>
-                <label>Сотрудник</label>
+                <label>{% trans "Сотрудник" %}</label>
                 <select name="user_id">
-                    <option value="">Все</option>
+                    <option value="">{% trans "Все" %}</option>
                     {% for user in users %}
                         <option value="{{ user.id }}" {% if user_id == user.id|stringformat:"s" %}selected{% endif %}>
                             {{ user.username }}
@@ -271,7 +272,7 @@
             <div></div>
 
             <div class="filter-actions">
-                <a class="reset-link" href="/c/{{ country.slug }}/writeoffs/analytics/">Сбросить</a>
+                <a class="reset-link" href="/c/{{ country.slug }}/writeoffs/analytics/">{% trans "Сбросить" %}</a>
             </div>
         </div>
     </form>
@@ -280,37 +281,37 @@
 <div class="card">
     <div class="stats">
         <div class="metric danger">
-            <span>Общая сумма списаний</span>
+            <span>{% trans "Общая сумма списаний" %}</span>
             <b>{{ total_cost|floatformat:0 }}</b>
         </div>
 
         <div class="metric">
-            <span>Количество списаний</span>
+            <span>{% trans "Количество списаний" %}</span>
             <b>{{ writeoffs.count }}</b>
         </div>
 
         <div class="metric green">
-            <span>Период</span>
+            <span>{% trans "Период" %}</span>
             <b>{{ date_from }}</b>
-            <div class="muted">до {{ date_to }}</div>
+            <div class="muted">{% trans "до" %} {{ date_to }}</div>
         </div>
     </div>
 </div>
 
 <div class="card">
-    <h2>Списания за выбранный период</h2>
+    <h2>{% trans "Списания за выбранный период" %}</h2>
 
     <div class="table-wrap">
         <table>
             <tr>
-                <th>Дата</th>
-                <th>Тип</th>
-                <th>Позиция</th>
-                <th>Кол-во</th>
-                <th>Причина</th>
-                <th>Комментарий</th>
-                <th>Сотрудник</th>
-                <th>Стоимость</th>
+                <th>{% trans "Дата" %}</th>
+                <th>{% trans "Тип" %}</th>
+                <th>{% trans "Позиция" %}</th>
+                <th>{% trans "Кол-во" %}</th>
+                <th>{% trans "Причина" %}</th>
+                <th>{% trans "Комментарий" %}</th>
+                <th>{% trans "Сотрудник" %}</th>
+                <th>{% trans "Стоимость" %}</th>
             </tr>
 
             {% for item in writeoffs %}
@@ -354,7 +355,7 @@
             {% empty %}
             <tr>
                 <td colspan="8">
-                    <div class="empty">Списаний по выбранным фильтрам нет</div>
+                    <div class="empty">{% trans "Списаний по выбранным фильтрам нет" %}</div>
                 </td>
             </tr>
             {% endfor %}

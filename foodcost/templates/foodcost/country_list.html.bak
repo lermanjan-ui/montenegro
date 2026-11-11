@@ -1,0 +1,59 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Страны{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-title {
+        margin-bottom: 20px;
+    }
+
+    .country-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 360px));
+        gap: 20px;
+    }
+
+    .country-card {
+        display: block;
+        background: white;
+        border-radius: 20px;
+        padding: 28px;
+        text-decoration: none;
+        color: #111827;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+        transition: 0.2s;
+    }
+
+    .country-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+    }
+
+    .country-name {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
+
+    .country-link {
+        color: #047857;
+        font-weight: bold;
+    }
+</style>
+
+<div class="card page-title">
+    <h1>Страны</h1>
+</div>
+
+<div class="country-grid">
+    {% for country in countries %}
+        <a class="country-card" href="/c/{{ country.slug }}/">
+            <div class="country-name">{{ country.name }}</div>
+            <div class="country-link">Открыть →</div>
+        </a>
+    {% endfor %}
+</div>
+
+{% endblock %}

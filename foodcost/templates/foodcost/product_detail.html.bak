@@ -1,0 +1,574 @@
+{% extends "foodcost/base.html" %}
+
+{% block title %}Продукт: {{ product.name }}{% endblock %}
+
+{% block content %}
+
+<style>
+    .page {
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .back {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #374151;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 14px;
+    }
+
+    .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 22px 26px;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        font-size: 36px;
+        line-height: 1.1;
+        color: #111827;
+        letter-spacing: -0.03em;
+    }
+
+    h2 {
+        margin: 0 0 16px;
+        font-size: 24px;
+        color: #111827;
+        letter-spacing: -0.02em;
+    }
+
+    .muted {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        overflow: hidden;
+        margin-top: 18px;
+        background: white;
+    }
+
+    .metric {
+        padding: 16px 18px;
+        border-right: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+
+    .metric:last-child {
+        border-right: 0;
+    }
+
+    .metric span {
+        display: block;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 900;
+        margin-bottom: 8px;
+    }
+
+    .metric strong {
+        color: #111827;
+        font-size: 24px;
+        line-height: 1;
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .metric .green {
+        color: #047857;
+    }
+
+    .readonly-note {
+        background: #f9fafb;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 800;
+        margin-top: 14px;
+        font-size: 14px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    label {
+        font-weight: 900;
+        font-size: 13px;
+        margin-bottom: 6px;
+        display: block;
+        color: #111827;
+    }
+
+    input,
+    select {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 15px;
+        box-sizing: border-box;
+        background: white;
+        color: #111827;
+        font-weight: 700;
+    }
+
+    select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        cursor: pointer;
+        padding-right: 38px;
+        background-image: url("data:image/svg+xml;utf8,<svg fill='%23111827' height='18' viewBox='0 0 20 20' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M5.5 7.5L10 12l4.5-4.5' stroke='%23111827' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+    }
+
+    input:focus,
+    select:focus {
+        outline: none;
+        border-color: #111827;
+        box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+    }
+
+    button {
+        background: #111827;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 16px;
+        cursor: pointer;
+        font-weight: 900;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .danger-button {
+        background: white;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    .table-grid {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .impact-scroll {
+        overflow-x: auto;
+    }
+
+    .impact-table {
+        min-width: 1180px;
+    }
+
+    .grid-head,
+    .grid-row {
+        display: grid;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .impact-table .grid-head,
+    .impact-table .grid-row {
+        grid-template-columns: 1.2fr 1.4fr 0.8fr 0.9fr 0.9fr 0.8fr 1fr 1fr 0.9fr 0.9fr 90px;
+    }
+
+    .prices-table .grid-head,
+    .prices-table .grid-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .grid-head {
+        background: #f3f4f6;
+        color: #111827;
+        padding: 13px 14px;
+        font-size: 13px;
+        font-weight: 950;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .grid-row {
+        padding: 13px 14px;
+        border-bottom: 1px solid #eef2f7;
+        font-size: 14px;
+    }
+
+    .grid-row:last-child {
+        border-bottom: 0;
+    }
+
+    .price {
+        color: #047857;
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .warn {
+        color: #b91c1c;
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .delta-plus {
+        color: #b91c1c;
+        font-weight: 950;
+        white-space: nowrap;
+    }
+
+    .delta-minus {
+        color: #047857;
+        font-weight: 950;
+        white-space: nowrap;
+    }
+
+    .delta-zero {
+        color: #6b7280;
+        font-weight: 950;
+        white-space: nowrap;
+    }
+
+    .open {
+        font-weight: 950;
+        text-decoration: none;
+        color: #111827;
+        white-space: nowrap;
+    }
+
+    .add-price-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px;
+        background: #fbfcfd;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .delete-card {
+        border-color: #fecaca;
+        background: #fffafa;
+    }
+
+    @media (max-width: 900px) {
+        .summary,
+        .form-grid,
+        .add-price-form {
+            grid-template-columns: 1fr;
+        }
+
+        .metric {
+            border-right: 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .metric:last-child {
+            border-bottom: 0;
+        }
+    }
+</style>
+
+<div class="page">
+
+<a class="back" href="/c/{{ country.slug }}/products/">← Назад к продуктам</a>
+
+<div class="card">
+    <h1>Продукт: {{ product.name }}</h1>
+    <p class="muted">Карточка продукта, история закупочных цен и влияние на блюда.</p>
+
+    {% if not can_edit %}
+        <div class="readonly-note">Режим просмотра: редактирование продукта недоступно.</div>
+    {% endif %}
+
+    <div class="summary">
+        <div class="metric">
+            <span>Единица</span>
+            <strong>{{ product.unit_label }}</strong>
+        </div>
+
+        <div class="metric">
+            <span>Текущая цена</span>
+            {% if current_price %}
+                <strong class="green">{{ current_price|floatformat:2 }}</strong>
+            {% else %}
+                <strong>—</strong>
+            {% endif %}
+        </div>
+
+        <div class="metric">
+            <span>Предыдущая цена</span>
+            {% if previous_price %}
+                <strong>{{ previous_price|floatformat:2 }}</strong>
+            {% else %}
+                <strong>—</strong>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Данные товара</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save">
+
+        <div class="form-grid">
+            <div>
+                <label>Название</label>
+                <input type="text" name="name" value="{{ product.name }}" {% if not can_edit %}readonly{% endif %}>
+            </div>
+
+            <div>
+                <label>Единица</label>
+
+                {% if can_edit %}
+                    <select name="unit">
+                        <option value="kg" {% if product.unit == "kg" %}selected{% endif %}>кг</option>
+                        <option value="g" {% if product.unit == "g" %}selected{% endif %}>г</option>
+                        <option value="l" {% if product.unit == "l" %}selected{% endif %}>л</option>
+                        <option value="ml" {% if product.unit == "ml" %}selected{% endif %}>мл</option>
+                        <option value="pcs" {% if product.unit == "pcs" %}selected{% endif %}>шт</option>
+                    </select>
+                {% else %}
+                    <input type="text" value="{{ product.unit_label }}" readonly>
+                {% endif %}
+            </div>
+
+            <div>
+                <label>Категория товара</label>
+                {% if can_edit %}
+                <select name="category_id">
+                    <option value="">— без категории (ингредиент) —</option>
+                    {% for c in product_categories %}
+                    <option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>{{ c.name }} · {{ c.get_accounting_type_display }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="text" value="{% if product.category %}{{ product.category.name }}{% else %}—{% endif %}" readonly>
+                {% endif %}
+            </div>
+
+            {% if can_edit %}
+                <button type="submit">Сохранить</button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Каскадное влияние на блюда</h2>
+
+    {% if previous_price and current_price %}
+        <p class="muted">
+            Сравнение между предыдущей ценой <strong>{{ previous_price|floatformat:2 }}</strong>
+            и текущей ценой <strong>{{ current_price|floatformat:2 }}</strong>.
+        </p>
+    {% else %}
+        <p class="muted">Для сравнения нужно минимум две цены в истории продукта.</p>
+    {% endif %}
+
+    {% if affected_dishes %}
+    <div class="impact-scroll" style="margin-top:14px;">
+        <div class="table-grid impact-table">
+            <div class="grid-head">
+                <div>Тип</div>
+                <div>Блюдо</div>
+                <div>Кол-во</div>
+                <div>Было</div>
+                <div>Стало</div>
+                <div>Разница</div>
+                <div>Себест. была</div>
+                <div>Себест. стала</div>
+                <div>Фудкост был</div>
+                <div>Фудкост стал</div>
+                <div></div>
+            </div>
+
+            {% for row in affected_dishes %}
+            <div class="grid-row">
+                <div>{{ row.type }}</div>
+                <div><strong>{{ row.name }}</strong></div>
+                <div>{{ row.quantity }} {{ row.unit }}</div>
+
+                <div>
+                    {% if row.previous_cost != None %}
+                        {{ row.previous_cost|floatformat:2 }}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </div>
+
+                <div class="price">{{ row.cost|floatformat:2 }}</div>
+
+                <div>
+                    {% if row.difference != None %}
+                        {% if row.difference > 0 %}
+                            <span class="delta-plus">+{{ row.difference|floatformat:2 }}</span>
+                        {% elif row.difference < 0 %}
+                            <span class="delta-minus">{{ row.difference|floatformat:2 }}</span>
+                        {% else %}
+                            <span class="delta-zero">0.00</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </div>
+
+                <div>
+                    {% if row.previous_dish_cost != None %}
+                        {{ row.previous_dish_cost|floatformat:2 }}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </div>
+
+                <div class="price">{{ row.dish_cost|floatformat:2 }}</div>
+
+                <div>
+                    {% if row.previous_foodcost != None %}
+                        {% if row.previous_foodcost > 35 %}
+                            <span class="warn">{{ row.previous_foodcost|floatformat:1 }}%</span>
+                        {% else %}
+                            <span class="price">{{ row.previous_foodcost|floatformat:1 }}%</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </div>
+
+                <div>
+                    {% if row.foodcost > 35 %}
+                        <span class="warn">{{ row.foodcost|floatformat:1 }}%</span>
+                    {% else %}
+                        <span class="price">{{ row.foodcost|floatformat:1 }}%</span>
+                    {% endif %}
+                </div>
+
+                <div>
+                    {% if row.replace_action and can_edit %}
+                    <form method="post" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap;" onsubmit="return confirm('Заменить продукт в блюде «{{ row.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="{{ row.replace_action }}">
+                        <input type="hidden" name="item_id" value="{{ row.item_id }}">
+                        <select name="new_product_id" required style="min-width:120px;font-size:13px;padding:7px 24px 7px 8px;">
+                            <option value="">Заменить…</option>
+                            {% for p in all_products %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" style="padding:7px 10px;font-size:13px;">OK</button>
+                    </form>
+                    {% endif %}
+                    <a class="open" href="{{ row.url }}">Открыть →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+        <p class="muted" style="margin-top:14px;">Нет использования в блюдах.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Используется в заготовках</h2>
+
+    {% if preparation_items %}
+    <div class="table-grid" style="margin-top:6px;">
+        {% for item in preparation_items %}
+        <div class="grid-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eef2f7;flex-wrap:wrap;">
+            <div><strong>{{ item.preparation.name }}</strong> <span class="muted">· {{ item.net }} {{ item.unit_label }}</span></div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                {% if can_edit %}
+                <form method="post" style="display:flex;gap:8px;align-items:center;" onsubmit="return confirm('Заменить продукт в заготовке «{{ item.preparation.name|escapejs }}»? Количество сохранится, себестоимость пересчитается.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="replace_in_preparation_item">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <select name="new_product_id" required style="min-width:160px;">
+                        <option value="">Заменить на…</option>
+                        {% for p in all_products %}
+                            <option value="{{ p.id }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Заменить</button>
+                </form>
+                {% endif %}
+                <a class="open" href="/c/{{ country.slug }}/preparations/{{ item.preparation.id }}/">Открыть →</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p class="muted" style="margin-top:6px;">Не используется ни в одной заготовке.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>История цен</h2>
+
+    <div class="table-grid prices-table">
+        <div class="grid-head">
+            <div>Дата</div>
+            <div>Цена</div>
+        </div>
+
+        {% for price in prices %}
+        <div class="grid-row">
+            <div>{{ price.date_from }}</div>
+            <div class="price">{{ price.price|floatformat:2 }}</div>
+        </div>
+        {% endfor %}
+
+        {% if can_edit %}
+        <form method="post" class="add-price-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save">
+            <input type="hidden" name="name" value="{{ product.name }}">
+            <input type="hidden" name="unit" value="{{ product.unit }}">
+
+            <input type="date" name="date">
+            <input type="number" step="0.01" name="price">
+            <button type="submit">Добавить</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if can_edit %}
+<div class="card delete-card">
+    <h2>Удаление</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+
+        <button class="danger-button" type="submit">
+            Удалить товар
+        </button>
+    </form>
+</div>
+{% endif %}
+
+</div>
+
+{% endblock %}

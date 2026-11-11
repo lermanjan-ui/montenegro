@@ -1,0 +1,76 @@
+{% extends "foodcost/base.html" %}
+{% block title %}Обеды{% endblock %}
+{% block content %}
+<style>
+.lb-wrap{max-width:1100px;margin:0 auto;}
+.lb-h1{font-size:24px;font-weight:800;margin:0 0 4px;}
+.lb-sub{color:#6b7280;font-size:14px;margin:0 0 18px;}
+.lb-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;}
+.lb-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin:0 0 12px;}
+.lb-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.lb-in,.lb-sel{border:1px solid #d1d5db;border-radius:10px;padding:9px 11px;font-size:14px;background:#fff;}
+.lb-btn{border:0;border-radius:10px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block;}
+.lb-green{background:#047857;color:#fff;}
+.lb-gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+.lb-red{background:#fff;color:#b91c1c;border:1px solid #fee2e2;}
+.lb-table{width:100%;border-collapse:collapse;}
+.lb-table th{text-align:left;font-size:12px;text-transform:uppercase;color:#6b7280;padding:8px 10px;border-bottom:2px solid #e5e7eb;}
+.lb-table td{padding:10px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:middle;}
+.lb-muted{color:#9ca3af;}
+.lb-badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;}
+.lb-on{background:#ecfdf5;color:#047857;} .lb-off{background:#f3f4f6;color:#6b7280;}
+.lb-empty{text-align:center;color:#9ca3af;padding:26px;}
+</style>
+
+<div class="lb-wrap">
+  <h1 class="lb-h1">Обеды</h1>
+  <p class="lb-sub">Комплексные обеды по датам: несколько обедов на день, размеры со своей ценой и составом, расчёт себестоимости и маржи.</p>
+
+  <div class="lb-card">
+    <div class="lb-title">Создать обед</div>
+    <form method="post" class="lb-row">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create_lunch">
+      <input class="lb-in" type="date" name="date" value="{{ today }}" required>
+      <input class="lb-in" type="text" name="name" placeholder="Название (напр. Сытный)" style="min-width:240px;" required>
+      <button class="lb-btn lb-green" type="submit">Создать и открыть →</button>
+    </form>
+  </div>
+
+  <div class="lb-card">
+    <div class="lb-title">Список обедов</div>
+    <table class="lb-table">
+      <thead>
+        <tr><th>Дата</th><th>Название</th><th>Размеров</th><th>Цена (деф.)</th><th>Маржа</th><th>Фудкост</th><th>Статус</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><strong>{{ r.lunch.date|date:"d.m.Y" }}</strong></td>
+          <td>{{ r.lunch.name }}{% if r.lunch.badge %} <span class="lb-badge lb-on">{{ r.lunch.get_badge_display }}</span>{% endif %}</td>
+          <td>{{ r.sizes_count }}</td>
+          <td>{{ r.price_fmt }}</td>
+          <td>{{ r.margin_fmt }}</td>
+          <td>{{ r.foodcost }}%</td>
+          <td>
+            {% if r.lunch.is_active and r.lunch.available %}<span class="lb-badge lb-on">Активен</span>
+            {% else %}<span class="lb-badge lb-off">Выкл</span>{% endif %}
+          </td>
+          <td style="white-space:nowrap;text-align:right;">
+            <a class="lb-btn lb-gray" href="/c/{{ country.slug }}/lunches/{{ r.lunch.id }}/">Открыть →</a>
+            <form method="post" style="display:inline;" onsubmit="return confirm('Удалить обед целиком?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_lunch">
+              <input type="hidden" name="lunch_id" value="{{ r.lunch.id }}">
+              <button class="lb-btn lb-red" type="submit">Удалить</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="lb-empty">Обедов пока нет. Создайте первый выше.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

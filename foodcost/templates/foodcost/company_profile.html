@@ -1,5 +1,6 @@
 {% extends "foodcost/base.html" %}
-{% block title %}Реквизиты компании · {{ country.name }}{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Реквизиты компании" %} · {{ country.name }}{% endblock %}
 {% block content %}
 <style>
 .cp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
@@ -22,97 +23,97 @@
 
 <div class="cp-head">
   <div>
-    <h1 style="margin:0;">Реквизиты компании</h1>
-    <div style="color:var(--muted);margin-top:4px;">Данные для документов, счетов и договоров.</div>
+    <h1 style="margin:0;">{% trans "Реквизиты компании" %}</h1>
+    <div style="color:var(--muted);margin-top:4px;">{% trans "Данные для документов, счетов и договоров." %}</div>
   </div>
 </div>
 
-{% if saved %}<div class="cp-saved">Реквизиты сохранены.</div>{% endif %}
+{% if saved %}<div class="cp-saved">{% trans "Реквизиты сохранены." %}</div>{% endif %}
 
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
 
   <!-- Основное -->
   <div class="card">
-    <div class="cp-sec-title">Основное</div>
+    <div class="cp-sec-title">{% trans "Основное" %}</div>
     <div class="cp-grid">
       <div class="cp-field full">
-        <label>Полное наименование</label>
-        <input type="text" name="legal_name" value="{{ profile.legal_name }}" placeholder="ООО «Navruz Catering»">
+        <label>{% trans "Полное наименование" %}</label>
+        <input type="text" name="legal_name" value="{{ profile.legal_name }}" placeholder="{% trans "ООО «Navruz Catering»" %}">
       </div>
       <div class="cp-field">
-        <label>Краткое наименование</label>
+        <label>{% trans "Краткое наименование" %}</label>
         <input type="text" name="short_name" value="{{ profile.short_name }}">
       </div>
       <div class="cp-field">
-        <label>Форма собственности</label>
-        <input type="text" name="ownership_form" value="{{ profile.ownership_form }}" placeholder="ООО / ЧП / МЧЖ / АО">
+        <label>{% trans "Форма собственности" %}</label>
+        <input type="text" name="ownership_form" value="{{ profile.ownership_form }}" placeholder="{% trans "ООО / ЧП / МЧЖ / АО" %}">
       </div>
     </div>
   </div>
 
   <!-- Налоговые реквизиты -->
   <div class="card">
-    <div class="cp-sec-title">Налоговые реквизиты</div>
+    <div class="cp-sec-title">{% trans "Налоговые реквизиты" %}</div>
     <div class="cp-grid">
       <div class="cp-field">
-        <label>СТИР (ИНН)</label>
-        <input type="text" name="inn" value="{{ profile.inn }}" maxlength="9" inputmode="numeric" pattern="\d{9}" placeholder="9 цифр">
-        <div class="hint">9 цифр</div>
+        <label>{% trans "СТИР (ИНН)" %}</label>
+        <input type="text" name="inn" value="{{ profile.inn }}" maxlength="9" inputmode="numeric" pattern="\d{9}" placeholder="{% trans "9 цифр" %}">
+        <div class="hint">{% trans "9 цифр" %}</div>
       </div>
       <div class="cp-field">
-        <label>ОКЭД</label>
-        <input type="text" name="oked" value="{{ profile.oked }}" placeholder="Код вида деятельности">
+        <label>{% trans "ОКЭД" %}</label>
+        <input type="text" name="oked" value="{{ profile.oked }}" placeholder="{% trans "Код вида деятельности" %}">
       </div>
       <div class="cp-field">
-        <label>ОКПО</label>
+        <label>{% trans "ОКПО" %}</label>
         <input type="text" name="okpo" value="{{ profile.okpo }}">
       </div>
       <div class="cp-field">
         <label>&nbsp;</label>
         <label class="cp-check">
           <input type="checkbox" name="vat_payer" {% if profile.vat_payer %}checked{% endif %}>
-          Плательщик НДС
+          {% trans "Плательщик НДС" %}
         </label>
       </div>
       <div class="cp-field full">
-        <label>Рег. код плательщика НДС</label>
-        <input type="text" name="vat_code" value="{{ profile.vat_code }}" placeholder="Заполняется, если плательщик НДС">
+        <label>{% trans "Рег. код плательщика НДС" %}</label>
+        <input type="text" name="vat_code" value="{{ profile.vat_code }}" placeholder="{% trans "Заполняется, если плательщик НДС" %}">
       </div>
     </div>
   </div>
 
   <!-- Банк -->
   <div class="card">
-    <div class="cp-sec-title">Банковские реквизиты</div>
+    <div class="cp-sec-title">{% trans "Банковские реквизиты" %}</div>
     <div class="cp-grid">
       <div class="cp-field full">
-        <label>Расчётный счёт (р/с)</label>
-        <input type="text" name="bank_account" value="{{ profile.bank_account }}" maxlength="20" inputmode="numeric" pattern="\d{20}" placeholder="20 цифр">
-        <div class="hint">20 цифр</div>
+        <label>{% trans "Расчётный счёт (р/с)" %}</label>
+        <input type="text" name="bank_account" value="{{ profile.bank_account }}" maxlength="20" inputmode="numeric" pattern="\d{20}" placeholder="{% trans "20 цифр" %}">
+        <div class="hint">{% trans "20 цифр" %}</div>
       </div>
       <div class="cp-field">
-        <label>Банк</label>
+        <label>{% trans "Банк" %}</label>
         <input type="text" name="bank_name" value="{{ profile.bank_name }}">
       </div>
       <div class="cp-field">
-        <label>МФО банка</label>
-        <input type="text" name="mfo" value="{{ profile.mfo }}" maxlength="5" inputmode="numeric" pattern="\d{5}" placeholder="5 цифр">
-        <div class="hint">5 цифр</div>
+        <label>{% trans "МФО банка" %}</label>
+        <input type="text" name="mfo" value="{{ profile.mfo }}" maxlength="5" inputmode="numeric" pattern="\d{5}" placeholder="{% trans "5 цифр" %}">
+        <div class="hint">{% trans "5 цифр" %}</div>
       </div>
     </div>
   </div>
 
   <!-- Адреса -->
   <div class="card">
-    <div class="cp-sec-title">Адреса</div>
+    <div class="cp-sec-title">{% trans "Адреса" %}</div>
     <div class="cp-grid">
       <div class="cp-field full">
-        <label>Юридический адрес</label>
+        <label>{% trans "Юридический адрес" %}</label>
         <textarea name="legal_address">{{ profile.legal_address }}</textarea>
       </div>
       <div class="cp-field full">
-        <label>Фактический адрес</label>
+        <label>{% trans "Фактический адрес" %}</label>
         <textarea name="actual_address">{{ profile.actual_address }}</textarea>
       </div>
     </div>
@@ -120,18 +121,18 @@
 
   <!-- Руководство -->
   <div class="card">
-    <div class="cp-sec-title">Руководство</div>
+    <div class="cp-sec-title">{% trans "Руководство" %}</div>
     <div class="cp-grid">
       <div class="cp-field">
-        <label>ФИО директора</label>
+        <label>{% trans "ФИО директора" %}</label>
         <input type="text" name="director_name" value="{{ profile.director_name }}">
       </div>
       <div class="cp-field">
-        <label>Действует на основании</label>
-        <input type="text" name="director_basis" value="{{ profile.director_basis }}" placeholder="Устава">
+        <label>{% trans "Действует на основании" %}</label>
+        <input type="text" name="director_basis" value="{{ profile.director_basis }}" placeholder="{% trans "Устава" %}">
       </div>
       <div class="cp-field full">
-        <label>ФИО главного бухгалтера</label>
+        <label>{% trans "ФИО главного бухгалтера" %}</label>
         <input type="text" name="accountant_name" value="{{ profile.accountant_name }}">
       </div>
     </div>
@@ -139,10 +140,10 @@
 
   <!-- Контакты + логотип -->
   <div class="card">
-    <div class="cp-sec-title">Контакты и логотип</div>
+    <div class="cp-sec-title">{% trans "Контакты и логотип" %}</div>
     <div class="cp-grid">
       <div class="cp-field">
-        <label>Телефон</label>
+        <label>{% trans "Телефон" %}</label>
         <input type="text" name="phone" value="{{ profile.phone }}">
       </div>
       <div class="cp-field">
@@ -150,14 +151,14 @@
         <input type="email" name="email" value="{{ profile.email }}">
       </div>
       <div class="cp-field full">
-        <label>Логотип</label>
+        <label>{% trans "Логотип" %}</label>
         <div class="cp-logo">
-          {% if profile.logo %}<img src="{{ profile.logo.url }}" alt="логотип">{% endif %}
+          {% if profile.logo %}<img src="{{ profile.logo.url }}" alt="{% trans "логотип" %}">{% endif %}
           <input type="file" name="logo" accept="image/*">
         </div>
         {% if profile.logo %}
         <label class="cp-check" style="margin-top:10px;font-weight:500;">
-          <input type="checkbox" name="logo_clear"> Удалить текущий логотип
+          <input type="checkbox" name="logo_clear"> {% trans "Удалить текущий логотип" %}
         </label>
         {% endif %}
       </div>
@@ -166,10 +167,10 @@
 
   {% if can_edit %}
   <div style="display:flex;gap:12px;">
-    <button type="submit">Сохранить реквизиты</button>
+    <button type="submit">{% trans "Сохранить реквизиты" %}</button>
   </div>
   {% else %}
-  <div style="color:var(--muted);">У вас нет прав на изменение реквизитов (только просмотр).</div>
+  <div style="color:var(--muted);">{% trans "У вас нет прав на изменение реквизитов (только просмотр)." %}</div>
   {% endif %}
 </form>
 {% endblock %}
