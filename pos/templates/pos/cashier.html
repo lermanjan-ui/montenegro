@@ -28,10 +28,10 @@
 /* блюда */
 .poswrap .pw-search{width:100%;margin-bottom:10px;}
 .poswrap .pw-dishes{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
-.poswrap .pw-dish{border:1px solid var(--pw-border);border-radius:11px;background:var(--pw-surface);color:var(--pw-ink);padding:11px 12px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .12s,box-shadow .12s,transform .05s;min-height:76px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;}
+.poswrap .pw-dish{border:1px solid var(--pw-border);border-radius:11px;background:var(--pw-surface);color:var(--pw-ink);padding:11px 12px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .12s,box-shadow .12s,transform .05s;height:96px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;}
 .poswrap .pw-dish:hover{border-color:var(--pw-primary);box-shadow:0 2px 8px rgba(18,59,122,.12);}
 .poswrap .pw-dish:active{transform:scale(.98);}
-.poswrap .pw-dish .pw-dn{font-size:13px;font-weight:600;line-height:1.25;}
+.poswrap .pw-dish .pw-dn{font-size:13px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .poswrap .pw-dish .pw-dp{font-size:13px;font-weight:700;color:var(--pw-primary);}
 .poswrap .pw-dish[hidden]{display:none;}
 .poswrap .pw-noitems{color:var(--pw-subtle);font-size:13px;padding:20px 4px;}
@@ -185,7 +185,8 @@
                   {% if row.color %}style="border-color:{{ row.color }};border-width:2px;"{% endif %}
                   data-id="{{ row.obj.id }}"
                   data-cat="{{ row.cat_id }}"
-                  data-name="{{ row.obj.name|lower }}">
+                  data-name="{{ row.obj.name|lower }}"
+                  title="{{ row.obj.name }}">
             <span class="pw-dn">{{ row.obj.name }}</span>
             <span class="pw-dp">{{ row.obj.selling_price|floatformat:0 }}</span>
           </button>
