@@ -171,7 +171,7 @@
       <div class="pw-cats" id="pw-cats">
         <button class="pw-cat active" data-cat="all" type="button">{% trans "Все" %}</button>
         {% for c in categories %}
-          <button class="pw-cat" data-cat="{{ c.id }}" type="button">{{ c.name }}</button>
+          <button class="pw-cat" data-cat="{{ c.id }}" type="button"{% if c.color %} style="border-left:4px solid {{ c.color }};"{% endif %}>{{ c.name }}</button>
         {% endfor %}
       </div>
     </div>
@@ -182,6 +182,7 @@
       <div class="pw-dishes" id="pw-dishes">
         {% for row in dish_rows %}
           <button class="pw-dish" type="button"
+                  {% if row.color %}style="border-color:{{ row.color }};border-width:2px;"{% endif %}
                   data-id="{{ row.obj.id }}"
                   data-cat="{{ row.cat_id }}"
                   data-name="{{ row.obj.name|lower }}">

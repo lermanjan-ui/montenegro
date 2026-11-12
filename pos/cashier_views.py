@@ -178,7 +178,7 @@ def cashier(request, country_slug):
         DishCategory.objects.filter(country=country, show_in_pos=True).order_by("name")
     )
     dishes = list(
-        Dish.objects.filter(country=country).order_by("name")
+        Dish.objects.filter(country=country).select_related("category").order_by("name")
     )
     tables = list(_tenant_tables(country))
 
@@ -186,7 +186,11 @@ def cashier(request, country_slug):
     table_id = _int(request.GET.get("table"), 0) or ""
 
     # блюда с id категории для группировки/фильтра в разметке
-    dish_rows = [{"obj": d, "cat_id": d.category_id or 0} for d in dishes]
+    dish_rows = [
+        {"obj": d, "cat_id": d.category_id or 0,
+         "color": (d.category.color if d.category_id and d.category.color else "")}
+        for d in dishes
+    ]
 
     return render(request, "pos/cashier.html", {
         "country": country,

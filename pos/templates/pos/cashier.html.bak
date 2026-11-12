@@ -1,0 +1,775 @@
+{% extends "foodcost/base.html" %}
+{% load i18n %}
+
+{% block title %}Касса — заказ{% endblock %}
+
+{% block content %}
+<style>
+.poswrap{--pw-ink:#111827;--pw-muted:#667085;--pw-subtle:#98a2b3;--pw-border:#e5e7eb;--pw-bstrong:#d1d5db;--pw-surface:#fff;--pw-sunken:#f4f6f9;--pw-primary:#123b7a;--pw-primary-soft:#e7edf7;--pw-success:#157347;--pw-success-soft:#e6f4ec;--pw-warning:#9a6700;--pw-danger:#d92d20;--pw-danger-soft:#fdecec;
+  font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--pw-ink);}
+.poswrap *{box-sizing:border-box;}
+.poswrap [hidden]{display:none !important;}
+.poswrap .pw-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:14px;}
+.poswrap .pw-h1{font-weight:700;font-size:22px;letter-spacing:-.02em;margin:0;}
+.poswrap .pw-top .pw-sp{flex:1 1 auto;}
+.poswrap .pw-lbl{font-size:12px;color:var(--pw-muted);font-weight:600;}
+.poswrap select.pw-in,.poswrap input.pw-in{height:38px;padding:0 10px;border:1px solid var(--pw-bstrong);border-radius:8px;background:var(--pw-surface);font-family:inherit;font-size:13px;color:var(--pw-ink);outline:none;}
+.poswrap select.pw-in:focus,.poswrap input.pw-in:focus{border-color:var(--pw-primary);box-shadow:0 0 0 3px var(--pw-primary-soft);}
+.poswrap .pw-badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;background:var(--pw-primary-soft);color:var(--pw-primary);}
+
+.poswrap .pw-grid{display:grid;grid-template-columns:168px 1fr 340px;gap:14px;align-items:start;}
+.poswrap .pw-col{min-width:0;}
+
+/* категории */
+.poswrap .pw-cats{display:flex;flex-direction:column;gap:6px;position:sticky;top:8px;}
+.poswrap .pw-cat{text-align:left;border:1px solid var(--pw-border);background:var(--pw-surface);border-radius:9px;padding:9px 11px;font-size:13px;font-weight:600;color:var(--pw-ink);cursor:pointer;font-family:inherit;}
+.poswrap .pw-cat.active{background:var(--pw-primary);border-color:var(--pw-primary);color:#fff;}
+
+/* блюда */
+.poswrap .pw-search{width:100%;margin-bottom:10px;}
+.poswrap .pw-dishes{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.poswrap .pw-dish{border:1px solid var(--pw-border);border-radius:11px;background:var(--pw-surface);padding:11px 12px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .12s,box-shadow .12s,transform .05s;min-height:76px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;}
+.poswrap .pw-dish:hover{border-color:var(--pw-primary);box-shadow:0 2px 8px rgba(18,59,122,.12);}
+.poswrap .pw-dish:active{transform:scale(.98);}
+.poswrap .pw-dish .pw-dn{font-size:13px;font-weight:600;line-height:1.25;}
+.poswrap .pw-dish .pw-dp{font-size:13px;font-weight:700;color:var(--pw-primary);}
+.poswrap .pw-dish[hidden]{display:none;}
+.poswrap .pw-noitems{color:var(--pw-subtle);font-size:13px;padding:20px 4px;}
+
+/* чек */
+.poswrap .pw-check{border:1px solid var(--pw-border);border-radius:12px;background:var(--pw-surface);box-shadow:0 1px 2px rgba(16,24,40,.06);position:sticky;top:8px;display:flex;flex-direction:column;max-height:calc(100vh - 24px);}
+.poswrap .pw-ch{padding:13px 15px;border-bottom:1px solid var(--pw-border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.poswrap .pw-ch b{font-size:15px;}
+.poswrap .pw-guests{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--pw-muted);font-weight:600;}
+.poswrap .pw-guests input{width:48px;height:30px;text-align:center;}
+.poswrap .pw-lines{overflow-y:auto;flex:1 1 auto;padding:6px 0;min-height:80px;}
+.poswrap .pw-line{display:flex;align-items:center;gap:8px;padding:9px 15px;border-bottom:1px solid var(--pw-sunken);}
+.poswrap .pw-line:last-child{border-bottom:0;}
+.poswrap .pw-ln{flex:1 1 auto;min-width:0;}
+.poswrap .pw-lname{font-size:13px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.poswrap .pw-lsub{font-size:11px;color:var(--pw-muted);margin-top:2px;}
+.poswrap .pw-sent{color:var(--pw-success);font-weight:700;}
+.poswrap .pw-stepper{display:inline-flex;align-items:center;border:1px solid var(--pw-bstrong);border-radius:8px;overflow:hidden;}
+.poswrap .pw-stepper button{width:28px;height:30px;border:0;background:var(--pw-surface);font-size:16px;font-weight:700;cursor:pointer;color:var(--pw-ink);font-family:inherit;line-height:1;}
+.poswrap .pw-stepper button:hover{background:var(--pw-sunken);}
+.poswrap .pw-stepper button:disabled{opacity:.35;cursor:not-allowed;}
+.poswrap .pw-qv{min-width:30px;text-align:center;font-size:13px;font-weight:700;}
+.poswrap .pw-lt{min-width:74px;text-align:right;font-size:13px;font-weight:700;}
+.poswrap .pw-x{border:0;background:none;color:var(--pw-danger);font-size:16px;cursor:pointer;padding:2px 4px;line-height:1;}
+.poswrap .pw-x:disabled{opacity:.3;cursor:not-allowed;}
+.poswrap .pw-foot{border-top:1px solid var(--pw-border);padding:13px 15px;}
+.poswrap .pw-total{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
+.poswrap .pw-total .l{font-size:14px;color:var(--pw-muted);font-weight:600;}
+.poswrap .pw-total .v{font-size:22px;font-weight:800;letter-spacing:-.02em;}
+.poswrap .pw-send{width:100%;height:48px;border:0;border-radius:10px;background:var(--pw-primary);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.poswrap .pw-send:disabled{background:var(--pw-bstrong);cursor:not-allowed;}
+.poswrap .pw-empty{padding:26px 15px;text-align:center;color:var(--pw-subtle);font-size:13px;}
+.poswrap .pw-hint{padding:8px 15px 0;font-size:12px;color:var(--pw-warning);font-weight:600;}
+
+.poswrap .pw-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;}
+.poswrap .pw-toast.show{opacity:1;}
+.poswrap .pw-toast.err{background:var(--pw-danger);}
+
+.poswrap .pw-actions{display:flex;gap:8px;}
+.poswrap .pw-pay{flex:1 1 0;height:48px;border:0;border-radius:10px;background:var(--pw-success);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}
+.poswrap .pw-pay:disabled{background:var(--pw-bstrong);cursor:not-allowed;}
+.poswrap .pw-send{flex:1 1 0;}
+
+/* модалка оплаты */
+.poswrap .pw-ov{position:fixed;inset:0;background:rgba(16,24,40,.45);display:flex;align-items:flex-end;justify-content:center;z-index:60;padding:0;}
+@media(min-width:620px){.poswrap .pw-ov{align-items:center;padding:20px;}}
+.poswrap .pw-modal{background:var(--pw-surface);width:100%;max-width:520px;max-height:94vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.25);}
+@media(min-width:620px){.poswrap .pw-modal{border-radius:16px;}}
+.poswrap .pw-mh{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--pw-border);}
+.poswrap .pw-mh b{font-size:17px;}
+.poswrap .pw-mx{border:0;background:none;font-size:22px;cursor:pointer;color:var(--pw-muted);line-height:1;}
+.poswrap .pw-mb{overflow-y:auto;padding:14px 18px;}
+.poswrap .pw-sec{margin-bottom:16px;}
+.poswrap .pw-sect{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--pw-muted);margin-bottom:9px;}
+.poswrap .pw-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.poswrap .pw-chip{border:1px solid var(--pw-bstrong);background:var(--pw-surface);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;color:var(--pw-ink);font-family:inherit;}
+.poswrap .pw-chip.active{background:var(--pw-primary);border-color:var(--pw-primary);color:#fff;}
+.poswrap .pw-field{display:flex;align-items:center;gap:8px;margin-top:9px;}
+.poswrap .pw-field input{height:38px;padding:0 10px;border:1px solid var(--pw-bstrong);border-radius:8px;font-family:inherit;font-size:14px;color:var(--pw-ink);background:var(--pw-surface);width:100%;outline:none;}
+.poswrap .pw-field input:focus{border-color:var(--pw-primary);box-shadow:0 0 0 3px var(--pw-primary-soft);}
+.poswrap .pw-sum{border-top:1px dashed var(--pw-border);padding-top:11px;margin-top:4px;}
+.poswrap .pw-sr{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;padding:3px 0;color:var(--pw-muted);}
+.poswrap .pw-sr b{color:var(--pw-ink);font-weight:600;}
+.poswrap .pw-sr.neg b{color:var(--pw-danger);}
+.poswrap .pw-sr.grand{font-size:20px;color:var(--pw-ink);font-weight:800;padding-top:8px;}
+.poswrap .pw-sr.grand span:last-child{font-weight:800;}
+.poswrap .pw-cap{font-size:12px;color:var(--pw-warning);font-weight:600;margin-top:4px;}
+.poswrap .pw-tender{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.poswrap .pw-tender select{flex:1 1 0;height:40px;border:1px solid var(--pw-bstrong);border-radius:8px;font-family:inherit;font-size:14px;padding:0 10px;background:var(--pw-surface);color:var(--pw-ink);}
+.poswrap .pw-tender input{width:120px;height:40px;border:1px solid var(--pw-bstrong);border-radius:8px;font-family:inherit;font-size:14px;padding:0 10px;text-align:right;background:var(--pw-surface);color:var(--pw-ink);}
+.poswrap .pw-tx{border:0;background:none;color:var(--pw-danger);font-size:18px;cursor:pointer;}
+.poswrap .pw-addt{margin-top:8px;border:1px dashed var(--pw-bstrong);background:none;border-radius:8px;padding:8px;width:100%;font-size:13px;font-weight:700;color:var(--pw-primary);cursor:pointer;font-family:inherit;}
+.poswrap .pw-mf{border-top:1px solid var(--pw-border);padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
+.poswrap .pw-paybtn{height:52px;border:0;border-radius:10px;background:var(--pw-success);color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;}
+.poswrap .pw-paybtn:disabled{background:var(--pw-bstrong);cursor:not-allowed;}
+.poswrap .pw-remain{text-align:center;font-size:13px;font-weight:700;color:var(--pw-muted);}
+.poswrap .pw-remain.ok{color:var(--pw-success);}
+.poswrap .pw-fiscal{font-size:11px;color:var(--pw-subtle);text-align:center;}
+/* деление счёта */
+.poswrap .pw-posrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--pw-sunken);}
+.poswrap .pw-posrow .n{flex:1 1 auto;font-size:14px;font-weight:600;min-width:0;}
+.poswrap .pw-posrow .amt{font-size:13px;font-weight:700;color:var(--pw-muted);}
+.poswrap .pw-posrow select{height:34px;border:1px solid var(--pw-bstrong);border-radius:7px;font-family:inherit;font-size:13px;padding:0 8px;background:var(--pw-surface);color:var(--pw-ink);}
+.poswrap .pw-billrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--pw-sunken);}
+.poswrap .pw-billrow .bl{font-weight:700;font-size:14px;}
+.poswrap .pw-billrow .ba{font-weight:800;font-size:15px;margin-left:auto;}
+.poswrap .pw-billrow.paid{opacity:.7;}
+.poswrap .pw-billrow .paidtag{color:var(--pw-success);font-weight:800;font-size:13px;margin-left:auto;}
+.poswrap .pw-billpay{display:flex;gap:7px;width:100%;}
+.poswrap .pw-billpay select{flex:1 1 0;height:38px;border:1px solid var(--pw-bstrong);border-radius:8px;font-family:inherit;font-size:13px;padding:0 9px;background:var(--pw-surface);color:var(--pw-ink);}
+.poswrap .pw-billpay button{height:38px;padding:0 16px;border:0;border-radius:8px;background:var(--pw-success);color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;}
+
+@media (max-width:980px){
+  .poswrap .pw-grid{grid-template-columns:1fr;}
+  .poswrap .pw-cats{position:static;flex-direction:row;flex-wrap:wrap;}
+  .poswrap .pw-check{position:static;max-height:none;}
+}
+
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .poswrap{
+  --pw-ink:#e5e7eb;--pw-muted:#9aa4b2;--pw-subtle:#6b7280;--pw-border:#2a2f3a;--pw-bstrong:#3a4150;--pw-surface:#161b22;--pw-sunken:#1e242e;--pw-primary:#4f82d6;--pw-primary-soft:#1b2740;}}
+:root[data-theme="dark"] .poswrap{
+  --pw-ink:#e5e7eb;--pw-muted:#9aa4b2;--pw-subtle:#6b7280;--pw-border:#2a2f3a;--pw-bstrong:#3a4150;--pw-surface:#161b22;--pw-sunken:#1e242e;--pw-primary:#4f82d6;--pw-primary-soft:#1b2740;}
+</style>
+
+<div class="poswrap"
+     data-open-url="/c/{{ country.slug }}/pos/order/api/open/"
+     data-add-url="/c/{{ country.slug }}/pos/order/api/add/"
+     data-qty-url="/c/{{ country.slug }}/pos/order/api/qty/"
+     data-remove-url="/c/{{ country.slug }}/pos/order/api/remove/"
+     data-send-url="/c/{{ country.slug }}/pos/order/api/send/"
+     data-quote-url="/c/{{ country.slug }}/pos/order/api/quote/"
+     data-loyalty-url="/c/{{ country.slug }}/pos/order/api/loyalty/"
+     data-pay-url="/c/{{ country.slug }}/pos/order/api/pay/"
+     data-splitset-url="/c/{{ country.slug }}/pos/order/api/split/set/"
+     data-splitstate-url="/c/{{ country.slug }}/pos/order/api/split/state/"
+     data-splitclear-url="/c/{{ country.slug }}/pos/order/api/split/clear/"
+     data-splitpay-url="/c/{{ country.slug }}/pos/order/api/split/pay/"
+     data-preselect="{{ preselect_table }}">
+  {% csrf_token %}
+
+  <div class="pw-top">
+    <h1 class="pw-h1">{% trans "Касса — заказ" %}</h1>
+    <span class="pw-sp"></span>
+    <span class="pw-lbl">{% trans "Стол" %}</span>
+    <select class="pw-in" id="pw-table">
+      <option value="">{% trans "— выберите —" %}</option>
+      {% for t in tables %}
+        <option value="{{ t.id }}">Стол {{ t.number }} · {{ t.zone.name }} ({{ t.seats }} мест)</option>
+      {% endfor %}
+    </select>
+    <span class="pw-badge" id="pw-tablebadge" hidden></span>
+  </div>
+
+  <div class="pw-grid">
+    <!-- категории -->
+    <div class="pw-col">
+      <div class="pw-cats" id="pw-cats">
+        <button class="pw-cat active" data-cat="all" type="button">{% trans "Все" %}</button>
+        {% for c in categories %}
+          <button class="pw-cat" data-cat="{{ c.id }}" type="button">{{ c.name }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- блюда -->
+    <div class="pw-col">
+      <input class="pw-in pw-search" id="pw-search" type="search" placeholder="{% trans "Поиск блюда…" %}" autocomplete="off">
+      <div class="pw-dishes" id="pw-dishes">
+        {% for row in dish_rows %}
+          <button class="pw-dish" type="button"
+                  data-id="{{ row.obj.id }}"
+                  data-cat="{{ row.cat_id }}"
+                  data-name="{{ row.obj.name|lower }}">
+            <span class="pw-dn">{{ row.obj.name }}</span>
+            <span class="pw-dp">{{ row.obj.selling_price|floatformat:0 }}</span>
+          </button>
+        {% empty %}
+          <div class="pw-noitems">{% trans "Блюд нет — заведите их в разделе «Блюда»." %}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- чек -->
+    <div class="pw-col">
+      <div class="pw-check">
+        <div class="pw-ch">
+          <b id="pw-checktitle">{% trans "Чек" %}</b>
+          <span class="pw-guests">{% trans "Гостей" %}
+            <input class="pw-in" id="pw-guests" type="number" min="1" value="1" disabled>
+          </span>
+        </div>
+        <div class="pw-hint" id="pw-hint" hidden>{% trans "Выберите стол, чтобы открыть заказ." %}</div>
+        <div class="pw-lines" id="pw-lines">
+          <div class="pw-empty" id="pw-empty">{% trans "Заказ пуст. Выберите стол и добавьте блюда." %}</div>
+        </div>
+        <div class="pw-foot">
+          <div class="pw-total"><span class="l">{% trans "Итого" %}</span><span class="v" id="pw-total">0</span></div>
+          <div class="pw-actions">
+            <button class="pw-send" id="pw-send" type="button" disabled>{% trans "Отправить на кухню" %}</button>
+            <button class="pw-pay" id="pw-pay" type="button" disabled>{% trans "К оплате" %}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА ОПЛАТЫ -->
+  <div class="pw-ov" id="pw-payov" hidden>
+    <div class="pw-modal">
+      <div class="pw-mh"><b>{% trans "Оплата счёта" %}</b><button class="pw-mx" id="pw-payclose" type="button">×</button></div>
+      <div class="pw-mb">
+        <button class="pw-addt" id="pw-splitbtn" type="button" style="margin-bottom:14px;margin-top:0">{% trans "⑂ Разделить счёт" %}</button>
+
+        <div id="pw-normalpay">
+        <!-- Скидка -->
+        <div class="pw-sec">
+          <div class="pw-sect">{% trans "Скидка" %}</div>
+          <div class="pw-chips" id="pw-disc">
+            <button class="pw-chip active" data-dt="" data-dv="0" type="button">{% trans "Нет" %}</button>
+            <button class="pw-chip" data-dt="percent" data-dv="5" type="button">5%</button>
+            <button class="pw-chip" data-dt="percent" data-dv="10" type="button">10%</button>
+            <button class="pw-chip" data-dt="percent" data-dv="15" type="button">15%</button>
+            <button class="pw-chip" data-dt="amount" data-dv="custom" type="button">{% trans "Сумма…" %}</button>
+          </div>
+          <div class="pw-field" id="pw-discamt" hidden>
+            <input type="number" min="0" id="pw-discval" placeholder="{% trans "Сумма скидки" %}">
+          </div>
+        </div>
+
+        <!-- Бонусы -->
+        <div class="pw-sec" id="pw-loyalsec">
+          <div class="pw-sect">{% trans "Баллы гостя" %}</div>
+          <div class="pw-field">
+            <input type="tel" id="pw-phone" placeholder="{% trans "Телефон гостя (+998…)" %}">
+            <button class="pw-chip" id="pw-findguest" type="button">{% trans "Найти" %}</button>
+          </div>
+          <div id="pw-guestbox" hidden>
+            <div class="pw-sr"><span id="pw-guestname">—</span><b id="pw-guestbal">{% trans "0 баллов" %}</b></div>
+            <div class="pw-field">
+              <input type="number" min="0" id="pw-bonusval" placeholder="{% trans "Списать баллов" %}">
+            </div>
+            <div class="pw-cap" id="pw-smsnote" hidden>{% trans "Требуется SMS-подтверждение (в этой сборке — заглушка)." %}</div>
+          </div>
+        </div>
+
+        <!-- Сервис и чаевые -->
+        <div class="pw-sec" id="pw-tipsec">
+          <div class="pw-sect">{% trans "Сервис и чаевые" %}</div>
+          <label class="pw-sr" id="pw-servicerow" hidden style="cursor:pointer">
+            <span><input type="checkbox" id="pw-servicechk" checked style="width:16px;height:16px;vertical-align:-2px;margin-right:6px"> {% trans "Сервисный сбор" %}</span>
+            <b id="pw-serviceamt">0</b>
+          </label>
+          <div class="pw-chips" id="pw-tips" style="margin-top:8px"></div>
+          <div class="pw-field" id="pw-tipscustom" hidden>
+            <input type="number" min="0" id="pw-tipsval" placeholder="{% trans "Своя сумма чаевых" %}">
+          </div>
+        </div>
+
+        <!-- Итог -->
+        <div class="pw-sum" id="pw-breakdown"></div>
+
+        <!-- Оплата -->
+        <div class="pw-sec" style="margin-top:14px">
+          <div class="pw-sect">{% trans "Способы оплаты" %}</div>
+          <div id="pw-tenders"></div>
+          <button class="pw-addt" id="pw-addtender" type="button">{% trans "＋ Оплата несколькими способами" %}</button>
+        </div>
+        </div><!-- /#pw-normalpay -->
+
+        <!-- ДЕЛЕНИЕ СЧЁТА -->
+        <div id="pw-splitpanel" hidden>
+          <div class="pw-sec">
+            <div class="pw-chips" id="pw-splitmode">
+              <button class="pw-chip active" data-sm="even" type="button">{% trans "Поровну" %}</button>
+              <button class="pw-chip" data-sm="positions" type="button">{% trans "По позициям" %}</button>
+            </div>
+          </div>
+          <div class="pw-sec" id="pw-evencfg">
+            <div class="pw-field"><input type="number" min="2" id="pw-evenn" placeholder="{% trans "Гостей" %}"><button class="pw-chip" id="pw-evengo" type="button">{% trans "Разделить" %}</button></div>
+          </div>
+          <div class="pw-sec" id="pw-poscfg" hidden>
+            <div class="pw-sect">{% trans "Позиции по счетам" %}</div>
+            <div id="pw-positems"></div>
+            <button class="pw-addt" id="pw-addbill" type="button">{% trans "＋ Ещё счёт" %}</button>
+          </div>
+          <div class="pw-sec">
+            <div class="pw-sect">{% trans "Под-счета" %}</div>
+            <div id="pw-bills"></div>
+          </div>
+          <button class="pw-addt" id="pw-splitcancel" type="button">{% trans "↩ Вернуть к общей оплате" %}</button>
+        </div>
+      </div>
+      <div class="pw-mf" id="pw-payfooter">
+        <div class="pw-remain" id="pw-remain"></div>
+        <button class="pw-paybtn" id="pw-dopay" type="button" disabled>{% trans "Оплатить" %}</button>
+        <div class="pw-fiscal" id="pw-fiscalnote"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pw-toast" id="pw-toast"></div>
+</div>
+
+<script>
+(function(){
+  var root = document.querySelector('.poswrap');
+  if(!root) return;
+  var URLS = {
+    open: root.dataset.openUrl, add: root.dataset.addUrl,
+    qty: root.dataset.qtyUrl, remove: root.dataset.removeUrl, send: root.dataset.sendUrl,
+    quote: root.dataset.quoteUrl, loyalty: root.dataset.loyaltyUrl, pay: root.dataset.payUrl,
+    splitSet: root.dataset.splitsetUrl, splitState: root.dataset.splitstateUrl,
+    splitClear: root.dataset.splitclearUrl, splitPay: root.dataset.splitpayUrl
+  };
+  var csrf = (root.querySelector('[name=csrfmiddlewaretoken]')||{}).value || '';
+  var state = {orderId:null, items:[], hasUnsent:false};
+
+  function fmt(n){ n = Math.round(Number(n)||0); return n.toLocaleString('ru-RU'); }
+
+  var toastT;
+  function toast(msg, isErr){
+    var el = document.getElementById('pw-toast');
+    el.textContent = msg; el.classList.toggle('err', !!isErr); el.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+  }
+
+  function post(url, data){
+    var body = new URLSearchParams(data);
+    return fetch(url, {
+      method:'POST',
+      headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest',
+               'Content-Type':'application/x-www-form-urlencoded'},
+      body: body.toString()
+    }).then(function(r){
+      return r.json().catch(function(){ return {error:'{% trans "Ошибка сервера" as jt %}{{ jt|escapejs }} ('+r.status+')'}; })
+        .then(function(j){ if(!r.ok || j.error){ throw new Error(j.error||('HTTP '+r.status)); } return j; });
+    });
+  }
+
+  function apply(payload){
+    state.orderId = payload.order_id;
+    state.items = payload.items || [];
+    state.hasUnsent = !!payload.has_unsent;
+    // заголовок / стол
+    var badge = document.getElementById('pw-tablebadge');
+    if(payload.table_number){ badge.hidden=false; badge.textContent='{% trans "Стол" as jt %}{{ jt|escapejs }} '+payload.table_number; }
+    document.getElementById('pw-checktitle').textContent = payload.table_number ? ('{% trans "Чек · стол" as jt %}{{ jt|escapejs }} '+payload.table_number) : '{% trans "Чек" as jt %}{{ jt|escapejs }}';
+    var g = document.getElementById('pw-guests'); g.disabled=false; g.value = payload.guests||1;
+    document.getElementById('pw-hint').hidden = true;
+    renderLines();
+    document.getElementById('pw-total').textContent = fmt(payload.subtotal);
+    var send = document.getElementById('pw-send');
+    send.disabled = !(state.items.length && state.hasUnsent);
+    document.getElementById('pw-pay').disabled = !state.items.length;
+  }
+
+  function renderLines(){
+    var box = document.getElementById('pw-lines');
+    if(!state.items.length){
+      box.innerHTML = '<div class="pw-empty">{% trans "Заказ пуст. Нажмите на блюдо слева." as jt %}{{ jt|escapejs }}</div>';
+      return;
+    }
+    var h = '';
+    state.items.forEach(function(it){
+      var locked = it.sent;
+      var sub = locked ? ('<span class="pw-sent">'+(it.kitchen_status_display||'{% trans "на кухне" as jt %}{{ jt|escapejs }}')+'</span>')
+                       : (fmt(it.price)+' × '+it.qty);
+      h += '<div class="pw-line" data-id="'+it.id+'">'
+         +   '<div class="pw-ln"><div class="pw-lname">'+esc(it.name)+'</div><div class="pw-lsub">'+sub+'</div></div>'
+         +   '<div class="pw-stepper">'
+         +     '<button type="button" data-act="dec" '+(locked?'disabled':'')+'>−</button>'
+         +     '<span class="pw-qv">'+it.qty+'</span>'
+         +     '<button type="button" data-act="inc" '+(locked?'disabled':'')+'>+</button>'
+         +   '</div>'
+         +   '<div class="pw-lt">'+fmt(it.line_total)+'</div>'
+         +   '<button class="pw-x" data-act="rm" '+(locked?'disabled':'')+'>✕</button>'
+         + '</div>';
+    });
+    box.innerHTML = h;
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function needOrder(){
+    if(state.orderId) return true;
+    document.getElementById('pw-hint').hidden = false;
+    toast('{% trans "Сначала выберите стол" as jt %}{{ jt|escapejs }}', true);
+    return false;
+  }
+
+  // выбор стола -> открыть/создать заказ
+  document.getElementById('pw-table').addEventListener('change', function(){
+    var id = this.value;
+    if(!id){ return; }
+    post(URLS.open, {table_id:id, guests:document.getElementById('pw-guests').value||1})
+      .then(apply).catch(function(e){ toast(e.message, true); });
+  });
+
+  // тап по блюду -> добавить
+  document.getElementById('pw-dishes').addEventListener('click', function(e){
+    var card = e.target.closest('.pw-dish'); if(!card) return;
+    if(!needOrder()) return;
+    post(URLS.add, {order_id:state.orderId, dish_id:card.dataset.id})
+      .then(apply).catch(function(e){ toast(e.message, true); });
+  });
+
+  // чек: +/- и удаление
+  document.getElementById('pw-lines').addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-act]'); if(!btn) return;
+    var line = e.target.closest('.pw-line'); if(!line) return;
+    var id = line.dataset.id;
+    var it = state.items.filter(function(x){ return String(x.id)===String(id); })[0];
+    if(!it) return;
+    var act = btn.dataset.act;
+    if(act==='rm'){
+      post(URLS.remove, {item_id:id}).then(apply).catch(function(e){ toast(e.message, true); });
+    } else if(act==='inc'){
+      post(URLS.qty, {item_id:id, qty:it.qty+1}).then(apply).catch(function(e){ toast(e.message, true); });
+    } else if(act==='dec'){
+      post(URLS.qty, {item_id:id, qty:Math.max(0,it.qty-1)}).then(apply).catch(function(e){ toast(e.message, true); });
+    }
+  });
+
+  // отправить на кухню
+  document.getElementById('pw-send').addEventListener('click', function(){
+    if(!state.orderId) return;
+    post(URLS.send, {order_id:state.orderId}).then(function(p){
+      apply(p);
+      toast('{% trans "Отправлено на кухню:" as jt %}{{ jt|escapejs }} '+(p.sent_count||0));
+    }).catch(function(e){ toast(e.message, true); });
+  });
+
+  // категории-фильтр
+  document.getElementById('pw-cats').addEventListener('click', function(e){
+    var b = e.target.closest('.pw-cat'); if(!b) return;
+    this.querySelectorAll('.pw-cat').forEach(function(x){ x.classList.remove('active'); });
+    b.classList.add('active');
+    applyFilter(b.dataset.cat, document.getElementById('pw-search').value);
+  });
+  document.getElementById('pw-search').addEventListener('input', function(){
+    var active = document.querySelector('#pw-cats .pw-cat.active');
+    applyFilter(active?active.dataset.cat:'all', this.value);
+  });
+  function applyFilter(cat, q){
+    q = (q||'').trim().toLowerCase();
+    document.querySelectorAll('#pw-dishes .pw-dish').forEach(function(d){
+      var okCat = (cat==='all') || (d.dataset.cat===String(cat));
+      var okQ = !q || (d.dataset.name.indexOf(q) !== -1);
+      d.hidden = !(okCat && okQ);
+    });
+  }
+
+  // гостей — обновляем при повторном open (простая перезапись при создании);
+  // в B1 меняем локально, фиксация гостей идёт при открытии заказа.
+  document.getElementById('pw-guests').addEventListener('change', function(){
+    if(!state.orderId) return;
+    // гостей меняем переоткрытием стола (значение уйдёт в новый заказ);
+    // для существующего заказа это чисто визуально до B3.
+  });
+
+  // ======================= ОПЛАТА (B3) =======================
+  var pay = {dt:'', dv:0, bonus:0, tips:0, includeService:true, quote:null, tenders:[]};
+  var $ = function(id){ return document.getElementById(id); };
+
+  function payParams(){
+    return {
+      order_id: state.orderId,
+      discount_type: pay.dt, discount_value: pay.dv,
+      bonus_points: pay.bonus, tips: pay.tips,
+      include_service: pay.includeService ? '1' : '0'
+    };
+  }
+
+  function openPay(){
+    if(!state.orderId || !state.items.length) return;
+    pay = {dt:'', dv:0, bonus:0, tips:0, includeService:true, quote:null, tenders:[]};
+    // сброс контролов
+    $('pw-disc').querySelectorAll('.pw-chip').forEach(function(c){ c.classList.toggle('active', c.dataset.dt===''); });
+    $('pw-discamt').hidden = true; $('pw-discval').value='';
+    $('pw-guestbox').hidden = true; $('pw-phone').value=''; $('pw-bonusval').value='';
+    $('pw-tipscustom').hidden = true;
+    // сброс режима деления
+    $('pw-splitpanel').hidden = true; $('pw-normalpay').hidden = false;
+    $('pw-payfooter').hidden = false; $('pw-splitbtn').hidden = false;
+    $('pw-payov').hidden = false;
+    refreshQuote();
+  }
+  function closePay(){ $('pw-payov').hidden = true; }
+
+  function refreshQuote(){
+    return post(URLS.quote, payParams()).then(function(q){
+      pay.quote = q;
+      renderQuote(q);
+    }).catch(function(e){ toast(e.message, true); });
+  }
+
+  function renderQuote(q){
+    // сервис
+    var srow = $('pw-servicerow');
+    srow.hidden = !q.service_available;
+    $('pw-serviceamt').textContent = fmt(q.service);
+    $('pw-servicechk').checked = q.include_service;
+    $('pw-servicechk').disabled = !q.service_removable;
+    // лояльность-секция
+    $('pw-loyalsec').hidden = !q.loyalty_enabled;
+    // чаевые пресеты (строим один раз по первому ответу)
+    buildTips(q);
+    // разбивка
+    var h = '<div class="pw-sr"><span>{% trans "Подытог" as jt %}{{ jt|escapejs }}</span><b>'+fmt(q.subtotal)+'</b></div>';
+    if(q.discount>0) h += '<div class="pw-sr neg"><span>{% trans "Скидка" as jt %}{{ jt|escapejs }}</span><b>−'+fmt(q.discount)+'</b></div>';
+    if(q.bonus>0) h += '<div class="pw-sr neg"><span>{% trans "Баллы" as jt %}{{ jt|escapejs }} ('+q.bonus_points+')</span><b>−'+fmt(q.bonus)+'</b></div>';
+    if(q.service>0) h += '<div class="pw-sr"><span>{% trans "Сервис" as jt %}{{ jt|escapejs }}'+(q.service_percent?(' '+q.service_percent+'%'):'')+'</span><b>'+fmt(q.service)+'</b></div>';
+    if(q.tips>0) h += '<div class="pw-sr"><span>{% trans "Чаевые" as jt %}{{ jt|escapejs }}</span><b>'+fmt(q.tips)+'</b></div>';
+    h += '<div class="pw-sr grand"><span>{% trans "Итого к оплате" as jt %}{{ jt|escapejs }}</span><span>'+fmt(q.total)+'</span></div>';
+    if(q.bonus_capped_reason) h += '<div class="pw-cap">'+esc(q.bonus_capped_reason)+'</div>';
+    $('pw-breakdown').innerHTML = h;
+    // тендеры
+    if(!pay.tenders.length){ pay.tenders = [{method:'', amount:q.total}]; }
+    else { autoFillLastTender(q.total); }
+    renderTenders(q);
+  }
+
+  var tipsBuilt = false;
+  function buildTips(q){
+    if(tipsBuilt) return; tipsBuilt = true;
+    var box = $('pw-tips');
+    if(!q.tips_enabled){ $('pw-tipsec').querySelector('.pw-sect').textContent = '{% trans "Сервис" as jt %}{{ jt|escapejs }}'; box.hidden=true; return; }
+    var h = '<button class="pw-chip active" data-tip="0" type="button">{% trans "Без чаевых" as jt %}{{ jt|escapejs }}</button>';
+    (q.tips_presets||[]).forEach(function(p){ h += '<button class="pw-chip" data-tip="'+p+'p" type="button">'+p+'%</button>'; });
+    if(q.tips_allow_custom) h += '<button class="pw-chip" data-tip="custom" type="button">{% trans "Своя…" as jt %}{{ jt|escapejs }}</button>';
+    box.innerHTML = h;
+  }
+
+  function autoFillLastTender(total){
+    var sum = 0; for(var i=0;i<pay.tenders.length-1;i++){ sum += Number(pay.tenders[i].amount)||0; }
+    var rest = Math.max(0, total - sum);
+    pay.tenders[pay.tenders.length-1].amount = rest;
+  }
+
+  function renderTenders(q){
+    var methods = q.methods||[];
+    var box = $('pw-tenders');
+    var opts = '<option value="">{% trans "— способ —" as jt %}{{ jt|escapejs }}</option>' + methods.map(function(m){ return '<option value="'+m.id+'">'+esc(m.name)+'</option>'; }).join('');
+    box.innerHTML = pay.tenders.map(function(t,i){
+      var sel = opts.replace('value="'+t.method+'"', 'value="'+t.method+'" selected');
+      return '<div class="pw-tender" data-i="'+i+'"><select class="pw-tm">'+sel+'</select>'
+           + '<input class="pw-ta" type="number" min="0" value="'+(Math.round(t.amount)||0)+'">'
+           + (pay.tenders.length>1?'<button class="pw-tx" data-rt="'+i+'" type="button">×</button>':'')
+           + '</div>';
+    }).join('');
+    updateRemain();
+  }
+
+  function updateRemain(){
+    if(!pay.quote) return;
+    var total = pay.quote.total;
+    var sum = pay.tenders.reduce(function(a,t){ return a + (Number(t.amount)||0); }, 0);
+    var diff = Math.round(total - sum);
+    var el = $('pw-remain');
+    if(diff>0){ el.textContent = '{% trans "Осталось внести:" as jt %}{{ jt|escapejs }} '+fmt(diff); el.className='pw-remain'; }
+    else if(diff<0){ el.textContent = '{% trans "Перебор:" as jt %}{{ jt|escapejs }} '+fmt(-diff); el.className='pw-remain'; }
+    else { el.textContent = '{% trans "Сумма сходится" as jt %}{{ jt|escapejs }}'; el.className='pw-remain ok'; }
+    var methodsOk = pay.tenders.every(function(t){ return t.method; });
+    $('pw-dopay').disabled = !(diff===0 && methodsOk && total>0);
+  }
+
+  // --- обработчики модалки ---
+  $('pw-pay').addEventListener('click', openPay);
+  $('pw-payclose').addEventListener('click', closePay);
+  $('pw-payov').addEventListener('click', function(e){ if(e.target===this) closePay(); });
+
+  $('pw-disc').addEventListener('click', function(e){
+    var c = e.target.closest('.pw-chip'); if(!c) return;
+    this.querySelectorAll('.pw-chip').forEach(function(x){ x.classList.remove('active'); });
+    c.classList.add('active');
+    if(c.dataset.dv==='custom'){ $('pw-discamt').hidden=false; pay.dt='amount'; pay.dv=Number($('pw-discval').value)||0; }
+    else { $('pw-discamt').hidden=true; pay.dt=c.dataset.dt; pay.dv=Number(c.dataset.dv)||0; }
+    refreshQuote();
+  });
+  $('pw-discval').addEventListener('input', function(){ pay.dt='amount'; pay.dv=Number(this.value)||0; refreshQuote(); });
+
+  $('pw-findguest').addEventListener('click', function(){
+    var phone = $('pw-phone').value.trim(); if(!phone){ toast('{% trans "Введите телефон" as jt %}{{ jt|escapejs }}', true); return; }
+    var d = Object.assign({}, payParams(), {phone:phone});
+    post(URLS.loyalty, d).then(function(r){
+      if(!r.found){ toast('{% trans "Гость не найден" as jt %}{{ jt|escapejs }}', true); $('pw-guestbox').hidden=true; return; }
+      $('pw-guestbox').hidden=false;
+      $('pw-guestname').textContent = r.name || phone;
+      $('pw-guestbal').textContent = fmt(r.balance)+' {% trans "баллов" as jt %}{{ jt|escapejs }}';
+      $('pw-bonusval').max = r.max_redeem;
+      $('pw-bonusval').placeholder = '{% trans "Списать до" as jt %}{{ jt|escapejs }} '+r.max_redeem;
+      $('pw-smsnote').hidden = !r.require_sms;
+    }).catch(function(e){ toast(e.message, true); });
+  });
+  $('pw-bonusval').addEventListener('input', function(){ pay.bonus=Number(this.value)||0; refreshQuote(); });
+
+  $('pw-servicechk').addEventListener('change', function(){ pay.includeService=this.checked; refreshQuote(); });
+
+  $('pw-tips').addEventListener('click', function(e){
+    var c = e.target.closest('.pw-chip'); if(!c) return;
+    this.querySelectorAll('.pw-chip').forEach(function(x){ x.classList.remove('active'); });
+    c.classList.add('active');
+    var v = c.dataset.tip;
+    if(v==='custom'){ $('pw-tipscustom').hidden=false; pay.tips=Number($('pw-tipsval').value)||0; }
+    else if(v.slice(-1)==='p'){ // процент от подытога
+      $('pw-tipscustom').hidden=true;
+      var pct = Number(v.slice(0,-1))||0;
+      pay.tips = Math.round((pay.quote? pay.quote.subtotal:0) * pct / 100);
+    } else { $('pw-tipscustom').hidden=true; pay.tips=0; }
+    refreshQuote();
+  });
+  $('pw-tipsval').addEventListener('input', function(){ pay.tips=Number(this.value)||0; refreshQuote(); });
+
+  $('pw-addtender').addEventListener('click', function(){
+    pay.tenders.push({method:'', amount:0}); renderTenders(pay.quote);
+  });
+  $('pw-tenders').addEventListener('input', function(e){
+    var row = e.target.closest('.pw-tender'); if(!row) return;
+    var i = Number(row.dataset.i);
+    if(e.target.classList.contains('pw-tm')) pay.tenders[i].method = e.target.value;
+    if(e.target.classList.contains('pw-ta')) pay.tenders[i].amount = Number(e.target.value)||0;
+    updateRemain();
+  });
+  $('pw-tenders').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rt]'); if(!b) return;
+    pay.tenders.splice(Number(b.dataset.rt),1); renderTenders(pay.quote);
+  });
+
+  $('pw-dopay').addEventListener('click', function(){
+    var d = payParams();
+    var mids = [], amts = [];
+    pay.tenders.forEach(function(t){ if(t.method && Number(t.amount)>0){ mids.push(t.method); amts.push(t.amount); } });
+    var body = new URLSearchParams(d);
+    mids.forEach(function(m){ body.append('method_id', m); });
+    amts.forEach(function(a){ body.append('amount', a); });
+    fetch(URLS.pay, {method:'POST',headers:{'X-CSRFToken':csrf,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'},body:body.toString()})
+      .then(function(r){ return r.json().then(function(j){ if(!r.ok||j.error){throw new Error(j.error||('HTTP '+r.status));} return j; }); })
+      .then(function(res){
+        closePay();
+        var msg = '{% trans "Счёт оплачен:" as jt %}{{ jt|escapejs }} '+fmt(res.total);
+        if(res.points_earned) msg += ' · +'+res.points_earned+' {% trans "баллов" as jt %}{{ jt|escapejs }}';
+        toast(msg);
+        // сбрасываем экран к выбору стола
+        state.orderId=null; state.items=[]; state.hasUnsent=false;
+        renderLines();
+        $('pw-total').textContent='0';
+        $('pw-send').disabled=true; $('pw-pay').disabled=true;
+        $('pw-tablebadge').hidden=true;
+        document.getElementById('pw-table').value='';
+        document.getElementById('pw-checktitle').textContent='{% trans "Чек" as jt %}{{ jt|escapejs }}';
+      }).catch(function(e){ toast(e.message, true); });
+  });
+
+  // ======================= ДЕЛЕНИЕ СЧЁТА (B3.1) =======================
+  var sp = {mode:'even', items:[], billCount:2, assignments:{}, state:null};
+
+  function enterSplit(){
+    $('pw-normalpay').hidden = true;
+    $('pw-payfooter').hidden = true;
+    $('pw-splitpanel').hidden = false;
+    $('pw-splitbtn').hidden = true;
+    sp = {mode:'even', items:[], billCount:2, assignments:{}, state:null};
+    setSplitMode('even');
+    post(URLS.splitState, {order_id:state.orderId}).then(function(s){
+      sp.items = s.items || [];
+      if(s.bills && s.bills.length){ sp.state = s; renderBills(s); }
+    }).catch(function(e){ toast(e.message, true); });
+  }
+  function exitSplit(){
+    post(URLS.splitClear, {order_id:state.orderId}).then(function(){
+      $('pw-splitpanel').hidden = true;
+      $('pw-normalpay').hidden = false;
+      $('pw-payfooter').hidden = false;
+      $('pw-splitbtn').hidden = false;
+      refreshQuote();
+    }).catch(function(e){ toast(e.message, true); });
+  }
+  function setSplitMode(m){
+    sp.mode = m;
+    $('pw-splitmode').querySelectorAll('.pw-chip').forEach(function(c){ c.classList.toggle('active', c.dataset.sm===m); });
+    $('pw-evencfg').hidden = m!=='even';
+    $('pw-poscfg').hidden = m!=='positions';
+    // при смене режима прошлые под-счета больше не актуальны
+    sp.state = null; sp.assignments = {};
+    $('pw-bills').innerHTML = '';
+    if(m==='positions') renderPosItems();
+  }
+  function renderPosItems(){
+    $('pw-positems').innerHTML = sp.items.map(function(it){
+      var opts = '<option value="">{% trans "— счёт —" as jt %}{{ jt|escapejs }}</option>';
+      for(var g=0; g<sp.billCount; g++){ opts += '<option value="'+g+'"'+(sp.assignments[it.id]===g?' selected':'')+'>{% trans "Счёт" as jt %}{{ jt|escapejs }} '+(g+1)+'</option>'; }
+      return '<div class="pw-posrow"><span class="n">'+esc(it.name)+'</span><span class="amt">'+fmt(it.line_total)+'</span><select data-item="'+it.id+'">'+opts+'</select></div>';
+    }).join('');
+  }
+  function doSplitEven(){
+    var n = parseInt($('pw-evenn').value,10)||0;
+    if(n<2){ toast('{% trans "Укажите число гостей (от 2)" as jt %}{{ jt|escapejs }}', true); return; }
+    post(URLS.splitSet, {order_id:state.orderId, mode:'even', n:n}).then(function(s){ sp.state=s; renderBills(s); }).catch(function(e){ toast(e.message, true); });
+  }
+  function doSplitPositions(){
+    var a = {};
+    Object.keys(sp.assignments).forEach(function(k){ if(sp.assignments[k]!=null) a[k]=sp.assignments[k]; });
+    post(URLS.splitSet, {order_id:state.orderId, mode:'positions', assignments:JSON.stringify(a)}).then(function(s){ sp.state=s; renderBills(s); }).catch(function(e){ toast(e.message, true); });
+  }
+  function renderBills(s){
+    var box = $('pw-bills');
+    if(!s.bills.length){ box.innerHTML='<div class="pw-ist" style="padding:6px 0">{% trans "Под-счетов пока нет." as jt %}{{ jt|escapejs }}</div>'; return; }
+    box.innerHTML = s.bills.map(function(b){
+      if(b.is_paid){ return '<div class="pw-billrow paid"><span class="bl">'+esc(b.label)+'</span><span class="paidtag">{% trans "✓ Оплачено" as jt %}{{ jt|escapejs }} '+fmt(b.amount)+'</span></div>'; }
+      var opts = '<option value="">{% trans "— способ —" as jt %}{{ jt|escapejs }}</option>' + (s.methods||[]).map(function(m){ return '<option value="'+m.id+'">'+esc(m.name)+'</option>'; }).join('');
+      return '<div class="pw-billrow" data-bill="'+b.id+'" data-amt="'+b.amount+'"><span class="bl">'+esc(b.label)+'</span><span class="ba">'+fmt(b.amount)+'</span>'
+        + '<div class="pw-billpay"><select class="bm">'+opts+'</select><button data-paybill="'+b.id+'" type="button">{% trans "Оплатить" as jt %}{{ jt|escapejs }}</button></div></div>';
+    }).join('');
+    if(s.mode==='positions' && s.unassigned>0){ box.innerHTML += '<div class="pw-cap">{% trans "Осталось распределить:" as jt %}{{ jt|escapejs }} '+fmt(s.unassigned)+'</div>'; }
+  }
+
+  function resetAfterPaid(){
+    closePay();
+    state.orderId=null; state.items=[]; state.hasUnsent=false;
+    renderLines(); $('pw-total').textContent='0';
+    $('pw-send').disabled=true; $('pw-pay').disabled=true;
+    $('pw-tablebadge').hidden=true; document.getElementById('pw-table').value='';
+    document.getElementById('pw-checktitle').textContent='{% trans "Чек" as jt %}{{ jt|escapejs }}';
+    // восстановить обычный режим попапа для следующего раза
+    $('pw-splitpanel').hidden=true; $('pw-normalpay').hidden=false;
+    $('pw-payfooter').hidden=false; $('pw-splitbtn').hidden=false;
+  }
+
+  $('pw-splitbtn').addEventListener('click', enterSplit);
+  $('pw-splitcancel').addEventListener('click', exitSplit);
+  $('pw-splitmode').addEventListener('click', function(e){ var b=e.target.closest('.pw-chip'); if(b) setSplitMode(b.dataset.sm); });
+  $('pw-evengo').addEventListener('click', doSplitEven);
+  $('pw-addbill').addEventListener('click', function(){ sp.billCount++; renderPosItems(); });
+  $('pw-positems').addEventListener('change', function(e){
+    var sel=e.target.closest('select[data-item]'); if(!sel) return;
+    var id=sel.dataset.item; var v=sel.value;
+    if(v==='') delete sp.assignments[id]; else sp.assignments[id]=parseInt(v,10);
+    doSplitPositions();
+  });
+  $('pw-bills').addEventListener('click', function(e){
+    var btn=e.target.closest('[data-paybill]'); if(!btn) return;
+    var row=e.target.closest('.pw-billrow'); var bid=btn.dataset.paybill;
+    var method=row.querySelector('.bm').value;
+    if(!method){ toast('{% trans "Выберите способ оплаты" as jt %}{{ jt|escapejs }}', true); return; }
+    post(URLS.splitPay, {order_id:state.orderId, bill_id:bid, method_id:method, amount:row.dataset.amt}).then(function(s){
+      sp.state=s;
+      if(s.order_closed){ toast('{% trans "Счёт полностью оплачен" as jt %}{{ jt|escapejs }}'); resetAfterPaid(); }
+      else { renderBills(s); toast('{% trans "Под-счёт оплачен" as jt %}{{ jt|escapejs }}'); }
+    }).catch(function(e){ toast(e.message, true); });
+  });
+
+  // авто-открытие стола из плана зала (?table=)
+  var pre = root.dataset.preselect;
+  if(pre){
+    var sel = document.getElementById('pw-table');
+    sel.value = pre;
+    if(sel.value){ sel.dispatchEvent(new Event('change')); }
+  }
+})();
+</script>
+{% endblock %}

@@ -279,6 +279,9 @@ class DishCategory(models.Model):
     # Показывать категорию в кассе (POS). По умолчанию — да.
     show_in_pos = models.BooleanField(default=True)
 
+    # Цвет категории в кассе (hex, напр. #3b82f6). Пусто — без рамки.
+    color = models.CharField(max_length=7, blank=True, default="")
+
     # ===== Public website fields =====
     public_name = models.CharField(
         max_length=255,
