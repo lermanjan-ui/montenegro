@@ -106,6 +106,7 @@
             <div class="fc-block-title">{% trans "Сайт" %}</div>
             <div class="fc-checks">
                 <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1"> {% trans "Показывать на сайте" %}</label>
+                <label class="fc-check"><input type="checkbox" name="show_in_pos" value="1" checked> {% trans "Показывать в кассе" %}</label>
                 <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" checked> {% trans "Блок 1 (основной)" %}</label>
                 <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1"> {% trans "Блок 2 (новый)" %}</label>
             </div>
@@ -244,6 +245,7 @@
                     <div class="fc-block-title">{% trans "Сайт" %}</div>
                     <div class="fc-checks">
                         <label class="fc-check"><input type="checkbox" name="is_visible_on_site" value="1" {% if item.is_visible_on_site %}checked{% endif %}> {% trans "Показывать на сайте" %}</label>
+                        <label class="fc-check"><input type="checkbox" name="show_in_pos" value="1" {% if item.show_in_pos %}checked{% endif %}> {% trans "Показывать в кассе" %}</label>
                         <label class="fc-check"><input type="checkbox" name="in_home_block_1" value="1" {% if item.in_home_block_1 %}checked{% endif %}> {% trans "Блок 1 (основной)" %}</label>
                         <label class="fc-check"><input type="checkbox" name="in_home_block_2" value="1" {% if item.in_home_block_2 %}checked{% endif %}> {% trans "Блок 2 (новый)" %}</label>
                     </div>

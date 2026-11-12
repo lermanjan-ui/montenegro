@@ -276,6 +276,9 @@ class DishCategory(models.Model):
 
     name = models.CharField(max_length=255)
 
+    # Показывать категорию в кассе (POS). По умолчанию — да.
+    show_in_pos = models.BooleanField(default=True)
+
     # ===== Public website fields =====
     public_name = models.CharField(
         max_length=255,

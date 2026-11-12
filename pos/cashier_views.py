@@ -175,7 +175,7 @@ def cashier(request, country_slug):
         return access_error
 
     categories = list(
-        DishCategory.objects.filter(country=country).order_by("name")
+        DishCategory.objects.filter(country=country, show_in_pos=True).order_by("name")
     )
     dishes = list(
         Dish.objects.filter(country=country).order_by("name")

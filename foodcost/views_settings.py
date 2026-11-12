@@ -256,6 +256,7 @@ def dish_categories_page(request, country_slug):
                     is_visible_on_site=bool(
                         request.POST.get("is_visible_on_site")
                     ),
+                    show_in_pos=bool(request.POST.get("show_in_pos")),
                     photo_url=(request.POST.get("photo_url") or "").strip(),
                     in_home_block_1=bool(request.POST.get("in_home_block_1")),
                     in_home_block_2=bool(request.POST.get("in_home_block_2")),
@@ -299,6 +300,7 @@ def dish_categories_page(request, country_slug):
             item.is_visible_on_site = bool(
                 request.POST.get("is_visible_on_site")
             )
+            item.show_in_pos = bool(request.POST.get("show_in_pos"))
 
             item.in_home_block_1 = bool(request.POST.get("in_home_block_1"))
             item.in_home_block_2 = bool(request.POST.get("in_home_block_2"))
